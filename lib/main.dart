@@ -116,7 +116,7 @@ class _DreamEatsAppState extends ConsumerState<DreamEatsApp> {
           final Widget destination;
           if (profile.role == 'merchant') {
             destination = const MerchantDashboardScreen();
-          } else if (profile.role == 'admin') {
+          } else if (profile.role == 'admin' || profile.role == 'super_admin') {
             destination = const AdminDashboardScreen();
           } else {
             destination = const CustomerNavigation();

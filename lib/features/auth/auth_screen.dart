@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -152,16 +151,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     final user = ref.read(appStateProvider).currentUser;
     if (!mounted || user == null) return;
 
-    if (user.role == 'admin' && !kIsWeb) {
-      ref.read(appStateProvider.notifier).signOut();
-      _showSnackBar('Admin access is restricted to the web dashboard only.', isError: true);
-      return;
-    }
-
     final Widget destination;
     if (user.role == 'merchant') {
       destination = const MerchantDashboardScreen();
-    } else if (user.role == 'admin') {
+    } else if (user.role == 'admin' || user.role == 'super_admin') {
       destination = const AdminDashboardScreen();
     } else {
       destination = const CustomerNavigation();
@@ -198,17 +191,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     final user = ref.read(appStateProvider).currentUser;
     if (!mounted || user == null) return;
 
-    if (user.role == 'admin' && !kIsWeb) {
-      ref.read(appStateProvider.notifier).signOut();
-      _showSnackBar('Admin access is restricted to the web dashboard only.',
-          isError: true);
-      return;
-    }
-
     final Widget destination;
     if (user.role == 'merchant') {
       destination = const MerchantDashboardScreen();
-    } else if (user.role == 'admin') {
+    } else if (user.role == 'admin' || user.role == 'super_admin') {
       destination = const AdminDashboardScreen();
     } else {
       destination = const CustomerNavigation();

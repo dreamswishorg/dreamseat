@@ -1660,7 +1660,7 @@ class SupabaseService {
         final List<Order> orders;
         if (role == 'customer') {
           orders = await fetchCustomerOrders(userId);
-        } else if (role == 'admin') {
+        } else if (role == 'admin' || role == 'super_admin') {
           orders = await fetchAllOrders();
         } else {
           // Merchant: resolve businessId then fetch scoped orders.

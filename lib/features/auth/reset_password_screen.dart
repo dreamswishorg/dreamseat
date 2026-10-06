@@ -76,7 +76,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       destination = const WelcomeScreen();
     } else if (user.role == 'merchant') {
       destination = const MerchantDashboardScreen();
-    } else if (user.role == 'admin') {
+    } else if (user.role == 'admin' || user.role == 'super_admin') {
       destination = const AdminDashboardScreen();
     } else {
       destination = const CustomerNavigation();

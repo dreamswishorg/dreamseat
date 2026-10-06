@@ -75,7 +75,7 @@ class NotificationService {
       await FirebaseMessaging.instance.subscribeToTopic('all_customers');
     } else if (role == 'merchant') {
       await FirebaseMessaging.instance.subscribeToTopic('all_merchants');
-    } else if (role == 'admin') {
+    } else if (role == 'admin' || role == 'super_admin') {
       await FirebaseMessaging.instance.subscribeToTopic('all_admins');
     }
   }
