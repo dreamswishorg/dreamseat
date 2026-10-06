@@ -1353,7 +1353,8 @@ class AppStateManager extends Notifier<AppState> {
   }
 
   void setThemeMode(ThemeMode mode) {
-    state = state.copyWith(themeMode: mode);
+    // Dark mode permanently disabled
+    state = state.copyWith(themeMode: ThemeMode.light);
   }
 
   Future<void> toggleDealStatus(String dealId, bool active) async {

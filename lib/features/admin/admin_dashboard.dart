@@ -325,17 +325,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         actions: [
           if (isWide) ...[
             _HeaderAction(
-              count: 0,
-              icon: state.themeMode == ThemeMode.light ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
-              color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.charcoal,
-              onTap: () {
-                ref.read(appStateProvider.notifier).setThemeMode(
-                  state.themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light,
-                );
-              },
-            ),
-            const SizedBox(width: 8),
-            _HeaderAction(
               count: pendingApprovals,
               icon: Icons.how_to_reg_rounded,
               color: AppTheme.warningOrange,
@@ -352,9 +341,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               width: 32,
               indent: 20,
               endIndent: 20,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : const Color(0xFFE2E8F0),
+              color: const Color(0xFFE2E8F0),
             ),
             ElevatedButton.icon(
               onPressed: () {
@@ -374,22 +361,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               ),
             ),
             const SizedBox(width: 12),
-          ],
-
-          if (!isWide) ...[
-            IconButton(
-              icon: Icon(
-                state.themeMode == ThemeMode.light ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
-                size: 20,
-                color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : AppTheme.charcoal,
-              ),
-              onPressed: () {
-                ref.read(appStateProvider.notifier).setThemeMode(
-                  state.themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light,
-                );
-              },
-              tooltip: "Toggle Theme",
-            ),
           ],
 
           PopupMenuButton<int>(

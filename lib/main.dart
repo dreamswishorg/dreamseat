@@ -148,15 +148,14 @@ class _DreamEatsAppState extends ConsumerState<DreamEatsApp> {
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(appStateProvider.select((s) => s.platformSettings));
-    final themeMode = ref.watch(appStateProvider.select((s) => s.themeMode));
 
     if (settings.maintenanceMode) {
       return MaterialApp(
         title: 'DREAMEATS',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: themeMode,
+        darkTheme: AppTheme.lightTheme,
+        themeMode: ThemeMode.light,
         builder: (context, child) => ResponsiveAppWrapper(child: child),
         home: const MaintenanceScreen(),
       );
@@ -166,8 +165,8 @@ class _DreamEatsAppState extends ConsumerState<DreamEatsApp> {
       title: 'DREAMEATS',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: themeMode,
+      darkTheme: AppTheme.lightTheme,
+      themeMode: ThemeMode.light,
       navigatorKey: navigatorKey,
       builder: (context, child) => ResponsiveAppWrapper(child: child),
       home: const SplashScreen(),

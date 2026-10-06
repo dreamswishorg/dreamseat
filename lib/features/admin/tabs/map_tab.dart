@@ -39,27 +39,82 @@ class _TabMapState extends ConsumerState<TabMap> {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: FlutterMap(
-        mapController: _mapController,
-        options: MapOptions(
-          initialCenter: _kAccra,
-          initialZoom: 13.0,
-          maxZoom: 18,
-          minZoom: 10,
-        ),
+      child: Stack(
         children: [
-          // OpenStreetMap Tiles (CartoDB Positron - Clean/Silver style)
-          TileLayer(
-            urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-            userAgentPackageName: 'com.dreameats.app',
-            subdomains: const ['a', 'b', 'c', 'd'],
-            retinaMode: RetinaMode.isHighDensity(context),
-            tileProvider: CancellableNetworkTileProvider(),
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: _kAccra,
+              initialZoom: 13.0,
+              maxZoom: 19,
+              minZoom: 3,
+            ),
+            children: [
+              // 100% Free & Open-Source OpenStreetMap (OSM) Tiles
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'org.dreamswish.dreamseat',
+                tileProvider: CancellableNetworkTileProvider(),
+                maxZoom: 19,
+              ),
+
+              // Markers Layer (Hubs)
+              MarkerLayer(
+                markers: markers,
+              ),
+            ],
           ),
 
-          // Markers Layer (Hubs)
-          MarkerLayer(
-            markers: markers,
+          // Map Zoom & Recenter Controls
+          Positioned(
+            right: 14,
+            bottom: 14,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildMapFloatingBtn(
+                  icon: Icons.add_rounded,
+                  tooltip: "Zoom In",
+                  onTap: () {
+                    final nextZoom = (_mapController.camera.zoom + 1).clamp(3.0, 19.0);
+                    _mapController.move(_mapController.camera.center, nextZoom);
+                  },
+                ),
+                const SizedBox(height: 8),
+                _buildMapFloatingBtn(
+                  icon: Icons.remove_rounded,
+                  tooltip: "Zoom Out",
+                  onTap: () {
+                    final nextZoom = (_mapController.camera.zoom - 1).clamp(3.0, 19.0);
+                    _mapController.move(_mapController.camera.center, nextZoom);
+                  },
+                ),
+                const SizedBox(height: 8),
+                _buildMapFloatingBtn(
+                  icon: Icons.my_location_rounded,
+                  tooltip: "Recenter on Accra",
+                  onTap: () => _mapController.move(_kAccra, 13.0),
+                ),
+              ],
+            ),
+          ),
+
+          // OpenStreetMap Attribution
+          Positioned(
+            left: 10,
+            bottom: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: const Text(
+                '© OpenStreetMap contributors',
+                style: TextStyle(fontSize: 10, color: AppTheme.mutedGrey, fontWeight: FontWeight.w600),
+              ),
+            ),
           ),
         ],
       ),
@@ -95,7 +150,7 @@ class _TabMapState extends ConsumerState<TabMap> {
                   )
                 : Row(
                     children: [
-                      // Interactive OpenStreetMap (Free Forever)
+                      // Interactive OpenStreetMap (Free & Open Source)
                       Expanded(
                         flex: 3,
                         child: mapWidget,
@@ -117,6 +172,35 @@ class _TabMapState extends ConsumerState<TabMap> {
                   ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMapFloatingBtn({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.white,
+      elevation: 4,
+      shadowColor: Colors.black.withValues(alpha: 0.15),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Tooltip(
+          message: tooltip,
+          child: Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Icon(icon, size: 20, color: AppTheme.charcoal),
+          ),
+        ),
       ),
     );
   }
@@ -156,17 +240,44 @@ class _TabMapState extends ConsumerState<TabMap> {
 
     if (_showBusinesses) {
       for (final b in state.businesses) {
+        if (b.latitude == 0 && b.longitude == 0) continue;
+        final isSelected = _selectedBusinessId == b.id;
         markers.add(
           Marker(
             point: LatLng(b.latitude, b.longitude),
-            width: 40,
-            height: 40,
+            width: isSelected ? 48 : 40,
+            height: isSelected ? 48 : 40,
             child: GestureDetector(
-              onTap: () => setState(() => _selectedBusinessId = b.id),
-              child: Icon(
-                Icons.location_on_rounded,
-                color: _selectedBusinessId == b.id ? AppTheme.primaryGreen : AppTheme.charcoal,
-                size: 30,
+              onTap: () {
+                setState(() => _selectedBusinessId = b.id);
+                _mapController.move(LatLng(b.latitude, b.longitude), 15.0);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppTheme.primaryGreen : Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: isSelected
+                          ? AppTheme.primaryGreen.withValues(alpha: 0.4)
+                          : Colors.black.withValues(alpha: 0.15),
+                      blurRadius: isSelected ? 12 : 6,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: isSelected ? Colors.white : AppTheme.primaryGreen,
+                    width: isSelected ? 3 : 2,
+                  ),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.storefront_rounded,
+                    color: isSelected ? Colors.white : AppTheme.primaryGreen,
+                    size: isSelected ? 24 : 20,
+                  ),
+                ),
               ),
             ),
           ),

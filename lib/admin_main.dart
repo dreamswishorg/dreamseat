@@ -7,7 +7,6 @@ import 'core/cache_manager.dart';
 import 'features/auth/admin_login_screen.dart';
 
 
-import 'providers/app_state.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,14 +36,12 @@ class DreamEatsAdminApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(appStateProvider.select((s) => s.themeMode));
-
     return MaterialApp(
       title: 'DREAMEATS ADMIN',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: themeMode,
+      darkTheme: AppTheme.lightTheme,
+      themeMode: ThemeMode.light,
       // On the admin port, the home is ALWAYS the admin login
       home: const AdminLoginScreen(),
     );

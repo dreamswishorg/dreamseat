@@ -99,7 +99,6 @@ class _CustomerSettingsScreenState
   Widget build(BuildContext context) {
     final state = ref.watch(appStateProvider);
     final user = state.currentUser;
-    final currentThemeMode = state.themeMode;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
@@ -277,69 +276,7 @@ class _CustomerSettingsScreenState
               ),
               const SizedBox(height: 28),
 
-              // Section: Appearance / Dark Theme
-              Text(
-                'Appearance & Theme',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  color: primaryTextColor,
-                  letterSpacing: -0.3,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: borderColor),
-                  boxShadow: [
-                    BoxShadow(
-                      color: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0x06000000),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    _buildThemeTile(
-                      title: "System Default",
-                      subtitle: "Matches your device's operating system setting",
-                      icon: Icons.brightness_auto_rounded,
-                      mode: ThemeMode.system,
-                      selected: currentThemeMode == ThemeMode.system,
-                      primaryTextColor: primaryTextColor,
-                      secondaryTextColor: secondaryTextColor,
-                      isDark: isDark,
-                    ),
-                    Divider(height: 16, color: borderColor),
-                    _buildThemeTile(
-                      title: "Light Theme",
-                      subtitle: "Clean, high-contrast crisp white interface",
-                      icon: Icons.wb_sunny_outlined,
-                      mode: ThemeMode.light,
-                      selected: currentThemeMode == ThemeMode.light,
-                      primaryTextColor: primaryTextColor,
-                      secondaryTextColor: secondaryTextColor,
-                      isDark: isDark,
-                    ),
-                    Divider(height: 16, color: borderColor),
-                    _buildThemeTile(
-                      title: "Dark Theme",
-                      subtitle: "Sleek slate dark interface easy on the eyes",
-                      icon: Icons.nightlight_round,
-                      mode: ThemeMode.dark,
-                      selected: currentThemeMode == ThemeMode.dark,
-                      primaryTextColor: primaryTextColor,
-                      secondaryTextColor: secondaryTextColor,
-                      isDark: isDark,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 28),
+
 
               // Section: Personal Information
               Text(
@@ -569,67 +506,7 @@ class _CustomerSettingsScreenState
     );
   }
 
-  Widget _buildThemeTile({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required ThemeMode mode,
-    required bool selected,
-    required Color primaryTextColor,
-    required Color secondaryTextColor,
-    required bool isDark,
-  }) {
-    return InkWell(
-      onTap: () => ref.read(appStateProvider.notifier).setThemeMode(mode),
-      borderRadius: BorderRadius.circular(14),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: selected
-                    ? AppTheme.primaryGreen.withValues(alpha: 0.15)
-                    : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                color: selected ? AppTheme.primaryGreen : secondaryTextColor,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w800,
-                      color: selected ? AppTheme.primaryGreen : primaryTextColor,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(fontSize: 12, color: secondaryTextColor),
-                  ),
-                ],
-              ),
-            ),
-            if (selected)
-              const Icon(Icons.check_circle_rounded, color: AppTheme.primaryGreen, size: 22)
-            else
-              Icon(Icons.radio_button_unchecked_rounded, color: secondaryTextColor.withValues(alpha: 0.4), size: 22),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildInputField({
     required TextEditingController controller,
