@@ -4,6 +4,8 @@ import '../../../core/theme.dart';
 import '../../../providers/app_state.dart';
 import '../../../models/models.dart';
 
+import '../../customer/customer_navigation.dart';
+
 class AdminSidebar extends ConsumerWidget {
   final int currentTab;
   final int approvals;
@@ -62,6 +64,27 @@ class AdminSidebar extends ConsumerWidget {
       child: Column(
         children: [
           const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CustomerNavigation()),
+                );
+              },
+              icon: const Icon(Icons.storefront_rounded, size: 18),
+              label: const Text("Use Customer App", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryGreen,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(44),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
           Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),

@@ -467,59 +467,181 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
 
   Widget _buildCompactCard(Order order, double rate) {
     final share = order.price * (1 - rate);
+    final platformFee = order.price * rate;
     final isP = order.payoutStatus == 'pending';
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
+    final dateStr = DateFormat('MMM d, yyyy • h:mm a').format(order.timestamp);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
+          // Row 1: Transaction ID + Payout Badge
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.receipt_long_rounded, size: 16, color: AppTheme.charcoal),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    "#${order.id.length > 10 ? order.id.substring(0, 10).toUpperCase() : order.id.toUpperCase()}",
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppTheme.charcoal, letterSpacing: 0.5),
+                  ),
+                ],
+              ),
+              PayoutStatusBadge(status: order.payoutStatus),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Row 2: Merchant & Customer Information
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFF1F5F9)),
+            ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Flexible(
+                    const Icon(Icons.storefront_rounded, size: 14, color: AppTheme.mutedGrey),
+                    const SizedBox(width: 6),
+                    const Text("Merchant: ", style: TextStyle(fontSize: 11, color: AppTheme.mutedGrey, fontWeight: FontWeight.w600)),
+                    Expanded(
                       child: Text(
-                        order.id.substring(0, 12).toUpperCase(),
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppTheme.charcoal, letterSpacing: 0.5),
+                        order.businessName.isNotEmpty ? order.businessName : "Partner Hub",
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.charcoal),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    PayoutStatusBadge(status: order.payoutStatus),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  "${order.businessName} • Rescued by ${order.customerName}",
-                  style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.person_outline_rounded, size: 14, color: AppTheme.mutedGrey),
+                    const SizedBox(width: 6),
+                    const Text("Customer: ", style: TextStyle(fontSize: 11, color: AppTheme.mutedGrey, fontWeight: FontWeight.w600)),
+                    Expanded(
+                      child: Text(
+                        order.customerName.isNotEmpty ? order.customerName : "Rescuer",
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.charcoal),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.access_time_rounded, size: 14, color: AppTheme.mutedGrey),
+                    const SizedBox(width: 6),
+                    const Text("Date: ", style: TextStyle(fontSize: 11, color: AppTheme.mutedGrey, fontWeight: FontWeight.w600)),
+                    Text(
+                      dateStr,
+                      style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          const SizedBox(height: 12),
+
+          // Row 3: Vertical Financial Breakdown
+          Row(
             children: [
-              Text("GHS ${share.toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.charcoal)),
-              Text("Net Payout", style: TextStyle(fontSize: 10, color: isP ? AppTheme.warningOrange : AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Gross Total", style: TextStyle(fontSize: 10, color: AppTheme.mutedGrey, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 2),
+                    Text("GHS ${order.price.toStringAsFixed(2)}", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.charcoal)),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Text("Platform Fee", style: TextStyle(fontSize: 10, color: AppTheme.mutedGrey, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 2),
+                    Text("GHS ${platformFee.toStringAsFixed(2)}", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.indigo)),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const Text("Net Payout", style: TextStyle(fontSize: 10, color: AppTheme.primaryGreen, fontWeight: FontWeight.w900)),
+                    const SizedBox(height: 2),
+                    Text("GHS ${share.toStringAsFixed(2)}", style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen)),
+                  ],
+                ),
+              ),
             ],
           ),
-          const SizedBox(width: 24),
+          const SizedBox(height: 14),
+
+          // Row 4: Full-width Action Button
           if (isP)
-            ElevatedButton(
-              onPressed: () => _pay(context, ref, order, share),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.charcoal,
-                minimumSize: const Size(80, 40),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            SizedBox(
+              width: double.infinity,
+              height: 40,
+              child: ElevatedButton.icon(
+                onPressed: () => _pay(context, ref, order, share),
+                icon: const Icon(Icons.check_rounded, size: 16),
+                label: Text("Settle Payout (GHS ${share.toStringAsFixed(2)})", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.charcoal,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  elevation: 0,
+                ),
               ),
-              child: const Text("Settle", style: TextStyle(fontSize: 11)),
             )
           else
-            const Icon(Icons.check_circle_rounded, color: AppTheme.primaryGreen, size: 24),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryGreen.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle_rounded, size: 15, color: AppTheme.primaryGreen),
+                  SizedBox(width: 6),
+                  Text("Payout Disbursed to Merchant", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -579,30 +701,56 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
                         ],
                       ),
                       const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFF1F5F9)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text("PENDING BALANCE", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.mutedGrey)),
+                            Text("GHS ${p.toStringAsFixed(2)}", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: p > 0 ? AppTheme.warningOrange : AppTheme.primaryGreen)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (p > 0)
+                        SizedBox(
+                          width: double.infinity,
+                          height: 42,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _confirmBatch(m['name'] as String, p, m['orders'] as List<Order>),
+                            icon: const Icon(Icons.payment_rounded, size: 16),
+                            label: Text("Batch Payout (GHS ${p.toStringAsFixed(2)})", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.charcoal,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              elevation: 0,
+                            ),
+                          ),
+                        )
+                      else
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryGreen.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text("PENDING BALANCE", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppTheme.mutedGrey)),
-                              Text("GHS ${p.toStringAsFixed(2)}", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: p > 0 ? AppTheme.warningOrange : AppTheme.primaryGreen)),
+                              Icon(Icons.check_circle_rounded, size: 16, color: AppTheme.primaryGreen),
+                              SizedBox(width: 6),
+                              Text("All Balances Settled", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
                             ],
                           ),
-                          if (p > 0)
-                            ElevatedButton(
-                              onPressed: () => _confirmBatch(m['name'] as String, p, m['orders'] as List<Order>),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.charcoal,
-                                minimumSize: const Size(120, 44),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              ),
-                              child: const Text("Batch Payout", style: TextStyle(fontSize: 12)),
-                            )
-                          else
-                            const Icon(Icons.check_circle_rounded, color: AppTheme.primaryGreen),
-                        ],
-                      ),
+                        ),
                     ],
                   )
                 : Row(

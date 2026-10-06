@@ -4,6 +4,7 @@ import '../../core/theme.dart';
 import '../../core/ui_utils.dart';
 import '../../providers/app_state.dart';
 import 'customer_home.dart';
+import '../admin/admin_dashboard.dart';
 
 class CustomerSettingsScreen extends ConsumerStatefulWidget {
   const CustomerSettingsScreen({super.key});
@@ -137,6 +138,75 @@ class _CustomerSettingsScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (user?.role == 'admin' || user?.role == 'super_admin') ...[
+                Container(
+                  margin: const EdgeInsets.only(bottom: 20),
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.6), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.25),
+                        blurRadius: 14,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryGreen.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.admin_panel_settings_rounded, color: AppTheme.primaryGreen, size: 24),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Executive Administration",
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14.5),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              "Access live metrics, orders & governance",
+                              style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
+                            (route) => false,
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryGreen,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 0,
+                        ),
+                        child: const Text("HQ Console", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               // Header Card
               Container(
                 padding: const EdgeInsets.all(20),

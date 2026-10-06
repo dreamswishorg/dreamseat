@@ -716,15 +716,16 @@ class _UserRow extends ConsumerWidget {
 
     if (isMobile) {
       return Container(
+        margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: const Color(0xFFE2E8F0)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 8,
+              blurRadius: 10,
               offset: const Offset(0, 4),
             )
           ],
@@ -732,20 +733,25 @@ class _UserRow extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Row 1: Avatar, Name, Email, Checkbox
             Row(
               children: [
                 CircleAvatar(
-                  radius: 18,
+                  radius: 20,
                   backgroundColor: isStaff ? AppTheme.charcoal : const Color(0xFFF1F5F9),
-                  child: Text(user.name[0].toUpperCase(), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isStaff ? Colors.white : AppTheme.charcoal)),
+                  child: Text(
+                    user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: isStaff ? Colors.white : AppTheme.charcoal),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(user.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.charcoal)),
-                      Text(user.email, style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey), overflow: TextOverflow.ellipsis),
+                      Text(user.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppTheme.charcoal)),
+                      const SizedBox(height: 2),
+                      Text(user.email, style: const TextStyle(fontSize: 11.5, color: AppTheme.mutedGrey), overflow: TextOverflow.ellipsis),
                     ],
                   ),
                 ),
@@ -760,43 +766,70 @@ class _UserRow extends ConsumerWidget {
                 else
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: AppTheme.lightGreenBg, borderRadius: BorderRadius.circular(6)),
+                    decoration: BoxDecoration(color: AppTheme.lightGreenBg, borderRadius: BorderRadius.circular(8)),
                     child: const Text("ME", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen)),
                   ),
               ],
             ),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12.0),
-              child: Divider(height: 1, color: Color(0xFFF1F5F9)),
-            ),
-            Row(
-              children: [
-                _RoleBadge(role: user.role),
-                const SizedBox(width: 12),
-                Container(
-                  width: 6, height: 6,
-                  decoration: BoxDecoration(shape: BoxShape.circle, color: user.isSuspended ? AppTheme.errorRed : AppTheme.primaryGreen),
-                ),
-                const SizedBox(width: 6),
-                Text(user.isSuspended ? "Suspended" : "Active", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: user.isSuspended ? AppTheme.errorRed : AppTheme.primaryGreen)),
-              ],
+            const SizedBox(height: 12),
+
+            // Row 2: Badges Bar (Role + Status + Points)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFF1F5F9)),
+              ),
+              child: Row(
+                children: [
+                  _RoleBadge(role: user.role),
+                  const Spacer(),
+                  Container(
+                    width: 7, height: 7,
+                    decoration: BoxDecoration(shape: BoxShape.circle, color: user.isSuspended ? AppTheme.errorRed : AppTheme.primaryGreen),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    user.isSuspended ? "Suspended" : "Active",
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: user.isSuspended ? AppTheme.errorRed : AppTheme.primaryGreen),
+                  ),
+                  if (user.dreamPoints > 0) ...[
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        "⭐ ${user.dreamPoints} pts",
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFB45309)),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
             const SizedBox(height: 12),
+
+            // Row 3: Admin Controls & Action
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    if (!isSelf && isSuperAdmin) ...[
-                      _RoleSwitcher(
-                        currentRole: user.role,
-                        onChanged: (newRole) => ref.read(appStateProvider.notifier).updateUserRole(user.id, newRole),
-                      ),
-                      const SizedBox(width: 12),
-                    ],
-                    if (!isSelf) ...[
-                      const Text("Active Status:", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.mutedGrey)),
-                      const SizedBox(width: 6),
+                if (!isSelf && isSuperAdmin) ...[
+                  Expanded(
+                    child: _RoleSwitcher(
+                      currentRole: user.role,
+                      onChanged: (newRole) => ref.read(appStateProvider.notifier).updateUserRole(user.id, newRole),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                if (!isSelf) ...[
+                  Row(
+                    children: [
+                      Text(user.isSuspended ? "Unblock:" : "Active:", style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.mutedGrey)),
+                      const SizedBox(width: 4),
                       Switch(
                         value: !user.isSuspended,
                         activeThumbColor: AppTheme.primaryGreen,
@@ -804,13 +837,18 @@ class _UserRow extends ConsumerWidget {
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     ],
-                  ],
-                ),
-                IconButton(
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                IconButton.filledTonal(
                   onPressed: onView,
-                  icon: const Icon(Icons.info_outline_rounded, size: 20, color: AppTheme.mutedGrey),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.chevron_right_rounded, size: 20),
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFFF1F5F9),
+                    foregroundColor: AppTheme.charcoal,
+                    padding: const EdgeInsets.all(8),
+                    minimumSize: Size.zero,
+                  ),
                 ),
               ],
             ),

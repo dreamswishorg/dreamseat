@@ -5,6 +5,7 @@ import '../../models/models.dart';
 import '../../providers/app_state.dart';
 import '../common/help_support_screen.dart';
 import 'settings/admin_profile_screen.dart';
+import '../customer/customer_navigation.dart';
 
 // Tabs
 import 'tabs/analytics_tab.dart';
@@ -351,6 +352,25 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             ),
           ],
 
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CustomerNavigation()),
+              );
+            },
+            icon: const Icon(Icons.storefront_rounded, size: 16),
+            label: Text(isWide ? "Customer App" : "App"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryGreen,
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: isWide ? 14 : 10, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              elevation: 0,
+            ),
+          ),
+          const SizedBox(width: 12),
+
           PopupMenuButton<int>(
             offset: const Offset(0, 60),
             shape: RoundedRectangleBorder(
@@ -369,6 +389,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               if (v == 0) Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminProfileScreen()));
               if (v == 1) Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
               if (v == 2) _onDeactivateAccess();
+              if (v == 3) Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerNavigation()));
             },
             itemBuilder: (context) => [
               PopupMenuItem(
@@ -480,6 +501,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               ),
               const PopupMenuDivider(),
               const PopupMenuItem(value: 0, child: PopupItem(icon: Icons.person_outline_rounded, label: "Profile Settings", color: Colors.blue)),
+              const PopupMenuItem(value: 3, child: PopupItem(icon: Icons.storefront_rounded, label: "Switch to Customer App", color: AppTheme.primaryGreen)),
               const PopupMenuItem(value: 1, child: PopupItem(icon: Icons.help_outline_rounded, label: "Technical Support", color: AppTheme.warningOrange)),
               const PopupMenuDivider(),
               const PopupMenuItem(value: 2, child: PopupItem(icon: Icons.logout_rounded, label: "Terminate Session", color: AppTheme.errorRed)),
