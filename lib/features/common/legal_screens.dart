@@ -143,7 +143,7 @@ class TermsOfServiceScreen extends StatelessWidget {
             Center(
               child: TextButton.icon(
                 icon: const Icon(Icons.language_rounded, size: 18),
-                label: const Text("View Hosted Document at dreameatsgh.com"),
+                label: const Text("View Hosted Document at dreameats.fly.dev"),
                 style: TextButton.styleFrom(
                   foregroundColor: AppTheme.primaryGreen,
                   textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
@@ -307,7 +307,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             Center(
               child: TextButton.icon(
                 icon: const Icon(Icons.language_rounded, size: 18),
-                label: const Text("View Hosted Document at dreameatsgh.com"),
+                label: const Text("View Hosted Document at dreameats.fly.dev"),
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.blue,
                   textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),

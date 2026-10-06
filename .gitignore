@@ -67,7 +67,6 @@ migrate_working_dir/
 **/ios/Release
 
 # Web
-lib/generated_plugin_registrant.dart
 
 # Symbolication related
 app.*.symbols

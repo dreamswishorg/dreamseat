@@ -34,7 +34,7 @@ class EmailTemplates {
         </div>
         <div class="footer">
             <p><strong>DreamEats Ghana</strong><br>Saving meals, saving the planet 🌿</p>
-            <p>Accra, Ghana • <a href="https://dreameatsgh.com" style="color: $_primaryColor; text-decoration: none;">Website</a></p>
+            <p>Accra, Ghana • <a href="https://dreameats.fly.dev" style="color: $_primaryColor; text-decoration: none;">Website</a></p>
             <p style="opacity: 0.6; margin-top: 20px;">© 2024 DreamEats. All rights reserved.</p>
         </div>
     </div>
