@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme.dart';
+import '../../../core/web_utils.dart';
 import '../../../models/models.dart';
 import '../../../providers/app_state.dart';
 import '../widgets/admin_components.dart';
@@ -18,37 +19,34 @@ class _TabAuditState extends ConsumerState<TabAudit> {
   String _query = '';
   String _actorFilter = 'All';
   String _actionFilter = 'All';
-  bool _isRefreshing = false;
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(appStateProvider);
-    final allLogs = state.auditLogs;
+    final logs = state.auditLogs;
 
-    // Filter logic
-    final filteredLogs = allLogs.where((l) {
-      final matchesSearch = l.description.toLowerCase().contains(_query.toLowerCase()) ||
-                            l.actorName.toLowerCase().contains(_query.toLowerCase()) ||
-                            l.action.toLowerCase().contains(_query.toLowerCase());
-      
-      final matchesActor = _actorFilter == 'All' || 
-                            l.actorRole.toLowerCase() == _actorFilter.toLowerCase();
-      
-      final matchesAction = _actionFilter == 'All' || 
-                            l.action.toUpperCase().contains(_actionFilter.toUpperCase());
+    // Filter logs
+    final filteredLogs = logs.where((l) {
+      final matchesQuery = _query.isEmpty ||
+          l.description.toLowerCase().contains(_query.toLowerCase()) ||
+          l.actorName.toLowerCase().contains(_query.toLowerCase()) ||
+          l.action.toLowerCase().contains(_query.toLowerCase()) ||
+          l.entityId.toLowerCase().contains(_query.toLowerCase());
 
-      return matchesSearch && matchesActor && matchesAction;
+      final matchesActor = _actorFilter == 'All' || l.actorRole.toLowerCase() == _actorFilter.toLowerCase();
+      final matchesAction = _actionFilter == 'All' || l.action.toLowerCase().contains(_actionFilter.toLowerCase());
+
+      return matchesQuery && matchesActor && matchesAction;
     }).toList();
 
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 900;
+    final isMobile = MediaQuery.of(context).size.width < 900;
 
     return Padding(
       padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 12, 32, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header + Refresh
+          // Header & Stats
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -57,80 +55,85 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "System Audit Trail",
-                      style: TextStyle(fontSize: isMobile ? 18 : 22, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.5),
+                      "Immutable Audit Trail",
+                      style: TextStyle(
+                        fontSize: isMobile ? 18 : 22,
+                        fontWeight: FontWeight.w900,
+                        color: context.textPrimary,
+                        letterSpacing: -0.5,
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      "Monitor staff settings changes, security updates, and administrative overrides.",
-                      style: TextStyle(fontSize: 12, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500),
+                    const SizedBox(height: 2),
+                    Text(
+                      "Cryptographically recorded timeline of administrative platform activities.",
+                      style: TextStyle(fontSize: 12, color: context.textSecondary),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
-              IconButton.filledTonal(
-                onPressed: _isRefreshing
-                    ? null
-                    : () async {
-                        final messenger = ScaffoldMessenger.of(context);
-                        setState(() => _isRefreshing = true);
-                        await ref.read(appStateProvider.notifier).adminRefresh();
-                        setState(() => _isRefreshing = false);
-                        if (mounted) {
-                          messenger.showSnackBar(
-                            const SnackBar(content: Text("✅ Audit logs reloaded successfully!"), backgroundColor: AppTheme.primaryGreen),
-                          );
-                        }
-                      },
-                icon: _isRefreshing
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryGreen))
-                    : const Icon(Icons.refresh_rounded, size: 20),
-                style: IconButton.styleFrom(
-                  backgroundColor: AppTheme.lightGreenBg,
-                  foregroundColor: AppTheme.primaryGreen,
+              ElevatedButton.icon(
+                onPressed: () => _exportAuditCsv(filteredLogs),
+                icon: const Icon(Icons.download_rounded, size: 16),
+                label: Text(isMobile ? "CSV" : "Export CSV", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.charcoal,
+                  foregroundColor: Colors.white,
+                  minimumSize: Size(isMobile ? 70 : 120, 44),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
-          // Toolbar (Search + Filters)
+          // Search and Filters Toolbar
           LayoutBuilder(
             builder: (context, constraints) {
               final isCompact = constraints.maxWidth < 900;
+
               return Column(
                 children: [
                   Row(
                     children: [
+                      // Search Bar
                       Expanded(
                         child: Container(
                           height: 48,
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            color: context.cardColor,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: context.borderColor),
                           ),
                           child: TextField(
                             onChanged: (v) => setState(() => _query = v),
-                            decoration: const InputDecoration(
-                              hintText: "Search logs by description, staff name, action...",
-                              prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppTheme.mutedGrey),
+                            style: TextStyle(fontSize: 13.5, color: context.textPrimary, fontWeight: FontWeight.w600),
+                            decoration: InputDecoration(
+                              hintText: "Search logs by description, staff, action...",
+                              hintStyle: TextStyle(fontSize: 13, color: context.textSecondary),
+                              prefixIcon: Icon(Icons.search_rounded, size: 18, color: context.textSecondary),
                               border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 12),
+                              contentPadding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                           ),
                         ),
                       ),
                       if (!isCompact) ...[
-                        const SizedBox(width: 16),
-                        _buildFilterDropdown("Actor Role", _actorFilter, ['All', 'Super_Admin', 'Admin', 'System'], (val) {
-                          setState(() => _actorFilter = val ?? 'All');
-                        }),
-                        const SizedBox(width: 16),
-                        _buildFilterDropdown("Action Category", _actionFilter, ['All', 'USER', 'PAYOUT', 'CONFIG', 'BROADCAST', 'SYSTEM'], (val) {
-                          setState(() => _actionFilter = val ?? 'All');
-                        }),
+                        const SizedBox(width: 14),
+                        AdminDropdown<String>(
+                          label: "Actor Role",
+                          value: _actorFilter,
+                          items: const ['All', 'Super_Admin', 'Admin', 'System'],
+                          onChanged: (val) => setState(() => _actorFilter = val ?? 'All'),
+                        ),
+                        const SizedBox(width: 14),
+                        AdminDropdown<String>(
+                          label: "Category",
+                          value: _actionFilter,
+                          items: const ['All', 'USER', 'PAYOUT', 'CONFIG', 'BROADCAST', 'SYSTEM'],
+                          onChanged: (val) => setState(() => _actionFilter = val ?? 'All'),
+                        ),
                       ]
                     ],
                   ),
@@ -139,15 +142,21 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                     Row(
                       children: [
                         Expanded(
-                          child: _buildFilterDropdown("Actor Role", _actorFilter, ['All', 'Super_Admin', 'Admin', 'System'], (val) {
-                            setState(() => _actorFilter = val ?? 'All');
-                          }),
+                          child: AdminDropdown<String>(
+                            label: "Role",
+                            value: _actorFilter,
+                            items: const ['All', 'Super_Admin', 'Admin', 'System'],
+                            onChanged: (val) => setState(() => _actorFilter = val ?? 'All'),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: _buildFilterDropdown("Action Category", _actionFilter, ['All', 'USER', 'PAYOUT', 'CONFIG', 'BROADCAST', 'SYSTEM'], (val) {
-                            setState(() => _actionFilter = val ?? 'All');
-                          }),
+                          child: AdminDropdown<String>(
+                            label: "Category",
+                            value: _actionFilter,
+                            items: const ['All', 'USER', 'PAYOUT', 'CONFIG', 'BROADCAST', 'SYSTEM'],
+                            onChanged: (val) => setState(() => _actionFilter = val ?? 'All'),
+                          ),
                         ),
                       ],
                     ),
@@ -163,20 +172,20 @@ class _TabAuditState extends ConsumerState<TabAudit> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final isCompact = constraints.maxWidth < 1000;
-                
+
                 if (isCompact) {
                   return Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.cardColor,
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: const Color(0xFFF1F5F9)),
+                      border: Border.all(color: context.borderColor),
                     ),
                     child: filteredLogs.isEmpty
                         ? const NoDataState(msg: "No matching audit logs found.")
                         : ListView.separated(
                             padding: const EdgeInsets.all(16),
                             itemCount: filteredLogs.length,
-                            separatorBuilder: (ctx, idx) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                            separatorBuilder: (ctx, idx) => Divider(height: 1, color: context.borderColor),
                             itemBuilder: (ctx, i) => _buildCompactCard(filteredLogs[i]),
                           ),
                   );
@@ -185,26 +194,28 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                 // Desktop Table structure
                 return Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: context.cardColor,
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: const Color(0xFFF1F5F9)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.01),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                    border: Border.all(color: context.borderColor),
+                    boxShadow: context.isDark
+                        ? []
+                        : [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.01),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: Column(
                     children: [
                       // Sticky table header
                       Container(
-                        color: const Color(0xFFF8FAFC),
+                        color: context.cardAltColor,
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                        decoration: const BoxDecoration(
-                          border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+                        decoration: BoxDecoration(
+                          border: Border(bottom: BorderSide(color: context.borderColor)),
                         ),
                         child: Row(
                           children: [
@@ -223,7 +234,7 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                             ? const NoDataState(msg: "No matching audit logs found.")
                             : ListView.separated(
                                 itemCount: filteredLogs.length,
-                                separatorBuilder: (ctx, idx) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                                separatorBuilder: (ctx, idx) => Divider(height: 1, color: context.borderColor),
                                 itemBuilder: (ctx, i) => _buildTableRow(filteredLogs[i]),
                               ),
                       ),
@@ -242,39 +253,19 @@ class _TabAuditState extends ConsumerState<TabAudit> {
     return Text(
       label,
       textAlign: align,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 10.5,
         fontWeight: FontWeight.w900,
-        color: AppTheme.mutedGrey,
+        color: context.textSecondary,
         letterSpacing: 0.8,
-      ),
-    );
-  }
-
-  Widget _buildFilterDropdown(String label, String value, List<String> options, ValueChanged<String?> onChanged) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      height: 48,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          onChanged: onChanged,
-          items: options.map((o) => DropdownMenuItem(value: o, child: Text(o, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)))).toList(),
-        ),
       ),
     );
   }
 
   Widget _buildTableRow(AuditLog log) {
     final timeStr = DateFormat('MMM d, yyyy • h:mm a').format(log.createdAt);
-    
-    // Determine colors/badges based on actions
-    Color actionColor = AppTheme.charcoal;
+
+    Color actionColor = AppTheme.primaryGreen;
     IconData actionIcon = Icons.info_outline_rounded;
     if (log.action.contains('SUSPEND') || log.action.contains('DELETE') || log.action.contains('BAN')) {
       actionColor = AppTheme.errorRed;
@@ -301,7 +292,7 @@ class _TabAuditState extends ConsumerState<TabAudit> {
               flex: 3,
               child: Text(
                 timeStr,
-                style: const TextStyle(fontSize: 12.5, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500),
+                style: TextStyle(fontSize: 12.5, color: context.textSecondary, fontWeight: FontWeight.w500),
               ),
             ),
             // Actor Name + Role
@@ -310,9 +301,9 @@ class _TabAuditState extends ConsumerState<TabAudit> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(log.actorName, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppTheme.charcoal)),
+                  Text(log.actorName, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: context.textPrimary)),
                   const SizedBox(height: 2),
-                  Text(log.actorRole.toUpperCase(), style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppTheme.mutedGrey, letterSpacing: 0.5)),
+                  Text(log.actorRole.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: context.textSecondary, letterSpacing: 0.5)),
                 ],
               ),
             ),
@@ -326,7 +317,7 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                   Flexible(
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(color: actionColor.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
+                      decoration: BoxDecoration(color: actionColor.withValues(alpha: context.isDark ? 0.2 : 0.08), borderRadius: BorderRadius.circular(6)),
                       child: Text(
                         log.action,
                         style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: actionColor),
@@ -343,11 +334,11 @@ class _TabAuditState extends ConsumerState<TabAudit> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(log.entityType.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppTheme.charcoal)),
+                  Text(log.entityType.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: context.textPrimary)),
                   const SizedBox(height: 2),
                   Text(
                     log.entityId.length > 8 ? log.entityId.substring(0, 8).toUpperCase() : log.entityId,
-                    style: const TextStyle(fontSize: 10, fontFamily: 'Courier', color: AppTheme.mutedGrey),
+                    style: TextStyle(fontSize: 10, fontFamily: 'Courier', color: context.textSecondary),
                   ),
                 ],
               ),
@@ -357,7 +348,7 @@ class _TabAuditState extends ConsumerState<TabAudit> {
               flex: 6,
               child: Text(
                 log.description,
-                style: const TextStyle(fontSize: 13, color: AppTheme.charcoal, fontWeight: FontWeight.w500),
+                style: TextStyle(fontSize: 13, color: context.textPrimary, fontWeight: FontWeight.w500),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -389,25 +380,25 @@ class _TabAuditState extends ConsumerState<TabAudit> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(timeStr, style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey, fontWeight: FontWeight.bold)),
+              Text(timeStr, style: TextStyle(fontSize: 11, color: context.textSecondary, fontWeight: FontWeight.bold)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(6)),
-                child: Text(log.action, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
+                decoration: BoxDecoration(color: context.cardSubtleColor, borderRadius: BorderRadius.circular(6)),
+                child: Text(log.action, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: context.textPrimary)),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(log.description, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: AppTheme.charcoal)),
+          Text(log.description, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: context.textPrimary)),
           const SizedBox(height: 6),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Actor: ${log.actorName} (${log.actorRole})", style: const TextStyle(fontSize: 11.5, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500)),
+              Text("Actor: ${log.actorName} (${log.actorRole})", style: TextStyle(fontSize: 11.5, color: context.textSecondary, fontWeight: FontWeight.w500)),
               TextButton(
                 onPressed: () => _showAuditDetails(log),
                 style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
-                child: const Text("Details", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                child: const Text("Details", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
               ),
             ],
           ),
@@ -424,6 +415,26 @@ class _TabAuditState extends ConsumerState<TabAudit> {
       builder: (ctx) => _AuditDetailDrawer(log: log),
     );
   }
+
+  void _exportAuditCsv(List<AuditLog> logs) {
+    final buffer = StringBuffer();
+    buffer.writeln("Log ID,Timestamp,Actor,Role,Action,Entity Type,Entity ID,Description");
+    for (var l in logs) {
+      buffer.writeln("${l.id},${l.createdAt},${l.actorName},${l.actorRole},${l.action},${l.entityType},${l.entityId},\"${l.description.replaceAll('"', '""')}\"");
+    }
+
+    try {
+      downloadFile(
+        content: buffer.toString(),
+        fileName: "audit_trail_${DateTime.now().millisecondsSinceEpoch}.csv",
+        mimeType: 'text/csv',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Export failed: $e")));
+      }
+    }
+  }
 }
 
 class _AuditDetailDrawer extends StatelessWidget {
@@ -437,9 +448,9 @@ class _AuditDetailDrawer extends StatelessWidget {
     final metaJson = hasMetadata ? const JsonEncoder.withIndent('  ').convert(log.metadata) : '';
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: const BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
       ),
       padding: const EdgeInsets.fromLTRB(28, 20, 28, 32),
       child: Column(
@@ -447,14 +458,17 @@ class _AuditDetailDrawer extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Center(
-            child: Container(width: 44, height: 5, decoration: BoxDecoration(color: const Color(0xFFE2E8F0), borderRadius: BorderRadius.circular(10))),
+            child: Container(width: 44, height: 5, decoration: BoxDecoration(color: context.borderColor, borderRadius: BorderRadius.circular(10))),
           ),
           const SizedBox(height: 24),
           Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppTheme.lightGreenBg, borderRadius: BorderRadius.circular(16)),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryGreen.withValues(alpha: context.isDark ? 0.2 : 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: const Icon(Icons.history_edu_rounded, color: AppTheme.primaryGreen),
               ),
               const SizedBox(width: 16),
@@ -462,9 +476,9 @@ class _AuditDetailDrawer extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Audit Record Details", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppTheme.charcoal, letterSpacing: -0.3)),
+                    Text("Audit Record Details", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: context.textPrimary, letterSpacing: -0.3)),
                     const SizedBox(height: 2),
-                    Text("Action ID: ${log.id}", style: const TextStyle(fontSize: 11.5, color: AppTheme.mutedGrey, fontFamily: 'Courier')),
+                    Text("Action ID: ${log.id}", style: TextStyle(fontSize: 11.5, color: context.textSecondary, fontFamily: 'Courier')),
                   ],
                 ),
               ),
@@ -473,26 +487,30 @@ class _AuditDetailDrawer extends StatelessWidget {
           const SizedBox(height: 24),
 
           // Detail list items
-          _detailItem("Timestamp", timeStr),
-          _detailItem("Action Code", log.action.toUpperCase()),
-          _detailItem("Actor Account", "${log.actorName} (${log.actorRole.toUpperCase()})"),
-          _detailItem("Target Entity", "${log.entityType.toUpperCase()} (ID: ${log.entityId})"),
-          _detailItem("Action Summary", log.description),
+          _detailItem(context, "Timestamp", timeStr),
+          _detailItem(context, "Action Code", log.action.toUpperCase()),
+          _detailItem(context, "Actor Account", "${log.actorName} (${log.actorRole.toUpperCase()})"),
+          _detailItem(context, "Target Entity", "${log.entityType.toUpperCase()} (ID: ${log.entityId})"),
+          _detailItem(context, "Action Summary", log.description),
 
           if (hasMetadata) ...[
             const SizedBox(height: 16),
-            const Text("Payload Metadata (JSON)", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.charcoal)),
+            Text("Payload Metadata (JSON)", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: context.textPrimary)),
             const SizedBox(height: 8),
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 180),
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE2E8F0))),
+                decoration: BoxDecoration(
+                  color: context.cardAltColor,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: context.borderColor),
+                ),
                 child: SingleChildScrollView(
                   child: Text(
                     metaJson,
-                    style: const TextStyle(fontSize: 11.5, fontFamily: 'Courier', color: AppTheme.charcoal),
+                    style: TextStyle(fontSize: 11.5, fontFamily: 'Courier', color: context.textPrimary),
                   ),
                 ),
               ),
@@ -518,7 +536,7 @@ class _AuditDetailDrawer extends StatelessWidget {
     );
   }
 
-  Widget _detailItem(String label, String value) {
+  Widget _detailItem(BuildContext context, String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -526,10 +544,10 @@ class _AuditDetailDrawer extends StatelessWidget {
         children: [
           SizedBox(
             width: 140,
-            child: Text(label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey)),
+            child: Text(label, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: context.textSecondary)),
           ),
           Expanded(
-            child: Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.charcoal)),
+            child: Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: context.textPrimary)),
           ),
         ],
       ),

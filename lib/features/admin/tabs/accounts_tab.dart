@@ -74,9 +74,9 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
               decoration: isMobile
                   ? null
                   : BoxDecoration(
-                      color: Colors.white,
+                      color: context.cardColor,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFF1F5F9)),
+                      border: Border.all(color: context.borderColor),
                     ),
               clipBehavior: isMobile ? Clip.none : Clip.antiAlias,
               child: Column(
@@ -171,18 +171,19 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
             Container(
               height: 44,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                color: context.cardColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: context.borderColor),
               ),
               child: TextField(
                 onChanged: (v) => setState(() { _query = v; _currentPage = 0; }),
-                style: const TextStyle(fontSize: 13),
-                decoration: const InputDecoration(
+                style: TextStyle(fontSize: 13, color: context.textPrimary, fontWeight: FontWeight.w600),
+                decoration: InputDecoration(
                   hintText: "Search name, email...",
-                  prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppTheme.mutedGrey),
+                  hintStyle: TextStyle(fontSize: 12.5, color: context.textSecondary),
+                  prefixIcon: Icon(Icons.search_rounded, size: 18, color: context.textSecondary),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 10),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 ),
               ),
             ),
@@ -266,18 +267,19 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
             child: Container(
               height: 44,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                color: context.cardColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: context.borderColor),
               ),
               child: TextField(
                 onChanged: (v) => setState(() { _query = v; _currentPage = 0; }),
-                style: const TextStyle(fontSize: 13),
-                decoration: const InputDecoration(
+                style: TextStyle(fontSize: 13, color: context.textPrimary, fontWeight: FontWeight.w600),
+                decoration: InputDecoration(
                   hintText: "Search name, email...",
-                  prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppTheme.mutedGrey),
+                  hintStyle: TextStyle(fontSize: 12.5, color: context.textSecondary),
+                  prefixIcon: Icon(Icons.search_rounded, size: 18, color: context.textSecondary),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 10),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 ),
               ),
             ),
@@ -314,43 +316,11 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
   }
 
   Widget _buildFilterDropdown(String label, String value, List<String> options, ValueChanged<String?> onChanged) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 8, offset: const Offset(0, 2)),
-        ],
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: false,
-          onChanged: onChanged,
-          icon: const Padding(
-            padding: EdgeInsets.only(left: 6),
-            child: Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: AppTheme.mutedGrey),
-          ),
-          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppTheme.charcoal, letterSpacing: -0.2),
-          borderRadius: BorderRadius.circular(16),
-          elevation: 16,
-          dropdownColor: Colors.white,
-          items: options.map((o) {
-            return DropdownMenuItem(
-              value: o,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text("$label: ", style: const TextStyle(fontWeight: FontWeight.w500, color: AppTheme.mutedGrey)),
-                  Text(o, style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.charcoal)),
-                ],
-              ),
-            );
-          }).toList(),
-        ),
-      ),
+    return AdminDropdown<String>(
+      label: label,
+      value: value,
+      items: options,
+      onChanged: onChanged,
     );
   }
 
@@ -360,13 +330,13 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      color: const Color(0xFFF8FAFC),
+      color: context.cardAltColor,
       child: Row(
-        children: const [
-          Expanded(flex: 3, child: Text("USER IDENTITY", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.mutedGrey, letterSpacing: 0.5))),
-          Expanded(flex: 2, child: Text("ROLE", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.mutedGrey, letterSpacing: 0.5))),
-          Expanded(flex: 2, child: Text("STATUS", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.mutedGrey, letterSpacing: 0.5))),
-          SizedBox(width: 200, child: Text("ACTIONS", textAlign: TextAlign.right, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.mutedGrey, letterSpacing: 0.5))),
+        children: [
+          Expanded(flex: 3, child: Text("USER IDENTITY", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: context.textSecondary, letterSpacing: 0.5))),
+          Expanded(flex: 2, child: Text("ROLE", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: context.textSecondary, letterSpacing: 0.5))),
+          Expanded(flex: 2, child: Text("STATUS", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: context.textSecondary, letterSpacing: 0.5))),
+          SizedBox(width: 200, child: Text("ACTIONS", textAlign: TextAlign.right, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: context.textSecondary, letterSpacing: 0.5))),
         ],
       ),
     );
@@ -375,7 +345,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
   Widget _buildPagination(int totalPages) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-      decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFFF1F5F9)))),
+      decoration: BoxDecoration(border: Border(top: BorderSide(color: context.borderColor))),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -719,16 +689,18 @@ class _UserRow extends ConsumerWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.cardColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ],
+          border: Border.all(color: context.borderColor),
+          boxShadow: context.isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -738,10 +710,10 @@ class _UserRow extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 20,
-                  backgroundColor: isStaff ? AppTheme.charcoal : const Color(0xFFF1F5F9),
+                  backgroundColor: isStaff ? AppTheme.primaryGreen : context.cardSubtleColor,
                   child: Text(
                     user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: isStaff ? Colors.white : AppTheme.charcoal),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: isStaff ? Colors.white : context.textPrimary),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -749,9 +721,9 @@ class _UserRow extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(user.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppTheme.charcoal)),
+                      Text(user.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: context.textPrimary)),
                       const SizedBox(height: 2),
-                      Text(user.email, style: const TextStyle(fontSize: 11.5, color: AppTheme.mutedGrey), overflow: TextOverflow.ellipsis),
+                      Text(user.email, style: TextStyle(fontSize: 11.5, color: context.textSecondary), overflow: TextOverflow.ellipsis),
                     ],
                   ),
                 ),
@@ -777,9 +749,9 @@ class _UserRow extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: context.cardAltColor,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFF1F5F9)),
+                border: Border.all(color: context.borderSubtleColor),
               ),
               child: Row(
                 children: [
@@ -882,16 +854,16 @@ class _UserRow extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 14,
-                  backgroundColor: isStaff ? AppTheme.charcoal : const Color(0xFFF1F5F9),
-                  child: Text(user.name[0].toUpperCase(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isStaff ? Colors.white : AppTheme.charcoal)),
+                  backgroundColor: isStaff ? AppTheme.primaryGreen : context.cardSubtleColor,
+                  child: Text(user.name[0].toUpperCase(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isStaff ? Colors.white : context.textPrimary)),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(user.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.charcoal)),
-                      Text(user.email, style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey), overflow: TextOverflow.ellipsis),
+                      Text(user.name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: context.textPrimary)),
+                      Text(user.email, style: TextStyle(fontSize: 11, color: context.textSecondary), overflow: TextOverflow.ellipsis),
                     ],
                   ),
                 ),
@@ -962,9 +934,9 @@ class _UserDetailDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       ),
       padding: const EdgeInsets.all(40),
       child: Column(
@@ -1072,40 +1044,40 @@ class _RoleSwitcher extends StatelessWidget {
       offset: const Offset(0, 42),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Color(0xFFE2E8F0)),
+        side: BorderSide(color: context.borderColor),
       ),
-      color: Colors.white,
+      color: context.cardColor,
       elevation: 16,
-      shadowColor: Colors.black.withValues(alpha: 0.15),
+      shadowColor: Colors.black.withValues(alpha: context.isDark ? 0.3 : 0.15),
       onSelected: onChanged,
       itemBuilder: (context) => [
-        _roleItem('customer', 'Customer', Icons.person_outline_rounded, Colors.blue),
-        _roleItem('merchant', 'Merchant Hub', Icons.storefront_rounded, AppTheme.warningOrange),
-        _roleItem('admin', 'Staff Admin', Icons.shield_outlined, AppTheme.primaryGreen),
-        _roleItem('super_admin', 'Super Admin', Icons.admin_panel_settings_rounded, AppTheme.errorRed),
+        _roleItem(context, 'customer', 'Customer', Icons.person_outline_rounded, Colors.blue),
+        _roleItem(context, 'merchant', 'Merchant Hub', Icons.storefront_rounded, AppTheme.warningOrange),
+        _roleItem(context, 'admin', 'Staff Admin', Icons.shield_outlined, AppTheme.primaryGreen),
+        _roleItem(context, 'super_admin', 'Super Admin', Icons.admin_panel_settings_rounded, AppTheme.errorRed),
       ],
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
+          color: context.cardAltColor,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: context.borderColor),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.manage_accounts_rounded, size: 15, color: AppTheme.charcoal),
+            Icon(Icons.manage_accounts_rounded, size: 15, color: context.textPrimary),
             const SizedBox(width: 6),
-            const Text("Role", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.charcoal)),
+            Text("Role", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: context.textPrimary)),
             const SizedBox(width: 4),
-            Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: AppTheme.mutedGrey.withValues(alpha: 0.8)),
+            Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: context.textSecondary),
           ],
         ),
       ),
     );
   }
 
-  PopupMenuItem<String> _roleItem(String value, String label, IconData icon, Color color) {
+  PopupMenuItem<String> _roleItem(BuildContext context, String value, String label, IconData icon, Color color) {
     final isSelected = currentRole == value;
     return PopupMenuItem<String>(
       value: value,
@@ -1122,7 +1094,7 @@ class _RoleSwitcher extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: TextStyle(fontSize: 12.5, fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700, color: isSelected ? color : AppTheme.charcoal),
+                style: TextStyle(fontSize: 12.5, fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700, color: isSelected ? color : context.textPrimary),
               ),
             ),
             if (isSelected)

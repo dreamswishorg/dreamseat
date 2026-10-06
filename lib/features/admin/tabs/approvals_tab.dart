@@ -48,9 +48,9 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: context.cardSubtleColor,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: context.borderColor),
                 ),
                 child: Row(
                   children: [
@@ -131,9 +131,9 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: sel ? Colors.white : Colors.transparent,
+          color: sel ? context.cardColor : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
-          boxShadow: sel ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))] : [],
+          boxShadow: sel && !context.isDark ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))] : [],
         ),
         child: Row(
           children: [
@@ -142,7 +142,7 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
-                color: sel ? AppTheme.primaryGreen : AppTheme.mutedGrey,
+                color: sel ? AppTheme.primaryGreen : context.textSecondary,
               ),
             ),
             if (count > 0) ...[
@@ -150,7 +150,7 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: sel ? AppTheme.primaryGreen.withValues(alpha: 0.1) : const Color(0xFFE2E8F0),
+                  color: sel ? AppTheme.primaryGreen.withValues(alpha: 0.12) : context.borderColor,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -158,7 +158,7 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
                   style: TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.w900,
-                    color: sel ? AppTheme.primaryGreen : AppTheme.mutedGrey,
+                    color: sel ? AppTheme.primaryGreen : context.textSecondary,
                   ),
                 ),
               ),
@@ -498,24 +498,24 @@ class _CompactKycCard extends StatelessWidget {
         width: 310,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
+          color: context.cardAltColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: context.borderColor),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-              child: Icon(icon, color: AppTheme.charcoal, size: 20),
+              decoration: BoxDecoration(color: context.cardColor, borderRadius: BorderRadius.circular(12)),
+              child: Icon(icon, color: context.textPrimary, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  Text(sub, style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey)),
+                  Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: context.textPrimary)),
+                  Text(sub, style: TextStyle(fontSize: 11, color: context.textSecondary)),
                 ],
               ),
             ),
@@ -550,12 +550,14 @@ class _MerchantApprovalCard extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 12),
           padding: EdgeInsets.all(isCompact ? 16 : 20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.cardColor,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFF1F5F9)),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.005), blurRadius: 5, offset: const Offset(0, 2))
-            ],
+            border: Border.all(color: context.borderColor),
+            boxShadow: context.isDark
+                ? []
+                : [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.005), blurRadius: 5, offset: const Offset(0, 2))
+                  ],
           ),
           child: isCompact
             ? Column(
@@ -565,13 +567,13 @@ class _MerchantApprovalCard extends StatelessWidget {
                     children: [
                       _buildLogo(48),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildInfo(16, 12, 11)),
+                      Expanded(child: _buildInfo(context, 16, 12, 11)),
                     ],
                   ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      Expanded(child: _buildVaultBtn(40, 12)),
+                      Expanded(child: _buildVaultBtn(context, 40, 12)),
                       const SizedBox(width: 12),
                       Expanded(child: _buildActionBtn(40, 12)),
                     ],
@@ -582,9 +584,9 @@ class _MerchantApprovalCard extends StatelessWidget {
                 children: [
                   _buildLogo(56),
                   const SizedBox(width: 16),
-                  Expanded(child: _buildInfo(18, 13, 11)),
+                  Expanded(child: _buildInfo(context, 18, 13, 11)),
                   const SizedBox(width: 16),
-                  _buildVaultBtn(44, 12),
+                  _buildVaultBtn(context, 44, 12),
                   const SizedBox(width: 12),
                   _buildActionBtn(44, 12),
                 ],
@@ -611,7 +613,7 @@ class _MerchantApprovalCard extends StatelessWidget {
     );
   }
 
-  Widget _buildInfo(double titleSize, double subSize, double metaSize) {
+  Widget _buildInfo(BuildContext context, double titleSize, double subSize, double metaSize) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -620,7 +622,7 @@ class _MerchantApprovalCard extends StatelessWidget {
             Flexible(
               child: Text(
                 business.name,
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: titleSize, color: AppTheme.charcoal),
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: titleSize, color: context.textPrimary),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -631,7 +633,7 @@ class _MerchantApprovalCard extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           "${business.category} • ${business.location}",
-          style: TextStyle(fontSize: subSize, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500),
+          style: TextStyle(fontSize: subSize, color: context.textSecondary, fontWeight: FontWeight.w500),
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 4),
@@ -641,19 +643,19 @@ class _MerchantApprovalCard extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               business.rating.toStringAsFixed(1),
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: metaSize, color: AppTheme.charcoal),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: metaSize, color: context.textPrimary),
             ),
             const SizedBox(width: 12),
-            Icon(Icons.access_time_rounded, size: 12, color: AppTheme.mutedGrey.withValues(alpha: 0.6)),
+            Icon(Icons.access_time_rounded, size: 12, color: context.textSecondary.withValues(alpha: 0.6)),
             const SizedBox(width: 4),
-            Text("Applied 2d ago", style: TextStyle(fontSize: metaSize - 1, color: AppTheme.mutedGrey, fontWeight: FontWeight.w600)),
+            Text("Applied 2d ago", style: TextStyle(fontSize: metaSize - 1, color: context.textSecondary, fontWeight: FontWeight.w600)),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildVaultBtn(double height, double fontSize) {
+  Widget _buildVaultBtn(BuildContext context, double height, double fontSize) {
     return OutlinedButton.icon(
       onPressed: onViewVault,
       icon: const Icon(Icons.folder_shared_rounded, size: 14),
@@ -661,8 +663,8 @@ class _MerchantApprovalCard extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         minimumSize: Size(120, height),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
-        foregroundColor: AppTheme.charcoal,
+        side: BorderSide(color: context.borderColor, width: 1.5),
+        foregroundColor: context.textPrimary,
       ),
     );
   }

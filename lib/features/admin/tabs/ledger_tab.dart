@@ -21,7 +21,11 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(appStateProvider);
-    final orders = state.orders.where((o) => o.status == 'collected' || o.status == 'completed' || o.payoutStatus == 'paid' || o.payoutStatus == 'pending').toList();
+    final orders = state.orders.where((o) =>
+        o.status == 'collected' ||
+        o.status == 'completed' ||
+        o.payoutStatus == 'paid' ||
+        o.payoutStatus == 'pending').toList();
 
     final isMobile = MediaQuery.of(context).size.width < 900;
 
@@ -44,8 +48,9 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
           // Toolbar
           LayoutBuilder(
             builder: (context, constraints) {
-              final isCompact = constraints.maxWidth < 800;
+              final isCompact = constraints.maxWidth < 900;
               return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Row(
                     children: [
@@ -53,49 +58,57 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
                         child: Container(
                           height: 48,
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            color: context.cardColor,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: context.borderColor),
                           ),
                           child: TextField(
                             onChanged: (v) => setState(() => _query = v),
-                            decoration: const InputDecoration(
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              color: context.textPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            decoration: InputDecoration(
                               hintText: "Search Transaction ID, Merchant...",
-                              prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppTheme.mutedGrey),
+                              hintStyle: TextStyle(fontSize: 13, color: context.textSecondary),
+                              prefixIcon: Icon(Icons.search_rounded, size: 18, color: context.textSecondary),
                               border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 12),
+                              contentPadding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                           ),
                         ),
                       ),
-                      if (!isCompact) ...[
-                        const SizedBox(width: 16),
-                        _buildViewToggle(),
-                        const SizedBox(width: 16),
-                        _buildPayoutFilter(),
-                        const SizedBox(width: 16),
-                        ElevatedButton.icon(
-                          onPressed: () => _exportLedger(orders, state.commissionRate),
-                          icon: const Icon(Icons.download_rounded, size: 16),
-                          label: const Text("Export CSV", style: TextStyle(fontSize: 12)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.charcoal,
-                            minimumSize: const Size(120, 48),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
+                      const SizedBox(width: 12),
+                      ElevatedButton.icon(
+                        onPressed: () => _exportLedger(orders, state.commissionRate),
+                        icon: const Icon(Icons.download_rounded, size: 16),
+                        label: Text(
+                          isCompact ? "CSV" : "Export CSV",
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                         ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.charcoal,
+                          foregroundColor: Colors.white,
+                          minimumSize: Size(isCompact ? 70 : 120, 48),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          elevation: 0,
+                        ),
+                      ),
+                      if (!isCompact) ...[
+                        const SizedBox(width: 14),
+                        _buildViewToggle(fullWidth: false),
+                        const SizedBox(width: 14),
+                        _buildPayoutFilter(orders, fullWidth: false),
                       ],
                     ],
                   ),
                   if (isCompact) ...[
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(child: _buildViewToggle()),
-                        const SizedBox(width: 12),
-                        Expanded(child: _buildPayoutFilter()),
-                      ],
-                    ),
+                    const SizedBox(height: 12),
+                    // Distinct, dedicated full-width segmented rows so they NEVER collide or merge!
+                    _buildViewToggle(fullWidth: true),
+                    const SizedBox(height: 10),
+                    _buildPayoutFilter(orders, fullWidth: true),
                   ],
                 ],
               );
@@ -162,76 +175,154 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+        color: color.withValues(alpha: context.isDark ? 0.15 : 0.08),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.1), width: 1.5),
+        border: Border.all(color: color.withValues(alpha: context.isDark ? 0.25 : 0.1), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Text(label, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: color, letterSpacing: 0.5), maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(
+            label,
+            style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: color, letterSpacing: 0.5),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
           const SizedBox(height: 4),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerRight,
-            child: Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
+            child: Text(
+              value,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: context.textPrimary),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildViewToggle() {
+  Widget _buildViewToggle({bool fullWidth = false}) {
     return Container(
       padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(
+        color: context.cardSubtleColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: context.borderSubtleColor),
+      ),
       child: Row(
+        mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
         children: [
-          _toggleBtn("Orders", !_groupByMerchant, Icons.receipt_long_rounded),
-          _toggleBtn("Merchants", _groupByMerchant, Icons.storefront_rounded),
+          _toggleBtn("Orders", !_groupByMerchant, Icons.receipt_long_rounded, expanded: fullWidth),
+          _toggleBtn("Merchants", _groupByMerchant, Icons.storefront_rounded, expanded: fullWidth),
         ],
       ),
     );
   }
 
-  Widget _toggleBtn(String label, bool sel, IconData icon) {
-    return GestureDetector(
+  Widget _toggleBtn(String label, bool sel, IconData icon, {bool expanded = false}) {
+    final btn = GestureDetector(
       onTap: () => setState(() => _groupByMerchant = label == "Merchants"),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: sel ? Colors.white : Colors.transparent,
+          color: sel ? context.cardColor : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
-          boxShadow: sel ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)] : [],
+          boxShadow: sel && !context.isDark
+              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)]
+              : [],
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: sel ? AppTheme.primaryGreen : AppTheme.mutedGrey),
+            Icon(icon, size: 16, color: sel ? AppTheme.primaryGreen : context.textSecondary),
             const SizedBox(width: 8),
-            Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: sel ? AppTheme.primaryGreen : AppTheme.mutedGrey)),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: sel ? AppTheme.primaryGreen : context.textSecondary,
+              ),
+            ),
           ],
         ),
       ),
     );
+    return expanded ? Expanded(child: btn) : btn;
   }
 
-  Widget _buildPayoutFilter() {
+  Widget _buildPayoutFilter(List<Order> orders, {bool fullWidth = false}) {
+    final pendingCount = orders.where((o) => o.payoutStatus == 'pending').length;
+    final paidCount = orders.where((o) => o.payoutStatus == 'paid').length;
+    final allCount = orders.length;
+
+    final filterCounts = {
+      'All': allCount,
+      'Pending': pendingCount,
+      'Paid': paidCount,
+    };
+
     return Container(
       padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(
+        color: context.cardSubtleColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: context.borderSubtleColor),
+      ),
       child: Row(
+        mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
         children: ['All', 'Pending', 'Paid'].map((f) {
           final sel = _filter == f;
-          return GestureDetector(
+          final count = filterCounts[f] ?? 0;
+          final btn = GestureDetector(
             onTap: () => setState(() => _filter = f),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              decoration: BoxDecoration(color: sel ? Colors.white : Colors.transparent, borderRadius: BorderRadius.circular(10)),
-              child: Text(f, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: sel ? AppTheme.primaryGreen : AppTheme.mutedGrey)),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: sel ? context.cardColor : Colors.transparent,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: sel && !context.isDark
+                    ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)]
+                    : [],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    f,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: sel ? AppTheme.primaryGreen : context.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                    decoration: BoxDecoration(
+                      color: sel
+                          ? AppTheme.primaryGreen.withValues(alpha: 0.15)
+                          : context.textSecondary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      "$count",
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: sel ? AppTheme.primaryGreen : context.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
+          return fullWidth ? Expanded(child: btn) : btn;
         }).toList(),
       ),
     );
@@ -240,7 +331,7 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
   Widget _buildIndividual(List<Order> orders, double rate) {
     final filtered = orders.where((o) {
       final matchesSearch = o.id.toLowerCase().contains(_query.toLowerCase()) ||
-                          o.businessName.toLowerCase().contains(_query.toLowerCase());
+          o.businessName.toLowerCase().contains(_query.toLowerCase());
       final matchesFilter = _filter == 'All' || o.payoutStatus == _filter.toLowerCase();
       return matchesSearch && matchesFilter;
     }).toList();
@@ -254,42 +345,44 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
         if (isCompact) {
           return Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.cardColor,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFFF1F5F9)),
+              border: Border.all(color: context.borderColor),
             ),
             child: ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: filtered.length,
-              separatorBuilder: (ctx, idx) => const Divider(height: 1, indent: 16, endIndent: 16),
+              separatorBuilder: (ctx, idx) => Divider(height: 1, indent: 16, endIndent: 16, color: context.borderColor),
               itemBuilder: (ctx, i) => _buildCompactCard(filtered[i], rate),
             ),
           );
         }
 
-        // Desktop/Tablet beautiful table form
+        // Desktop/Tablet table form
         return Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.cardColor,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFF1F5F9)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.01),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            border: Border.all(color: context.borderColor),
+            boxShadow: context.isDark
+                ? []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.01),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
               // Table Sticky Header
               Container(
-                color: const Color(0xFFF8FAFC),
+                color: context.cardAltColor,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                decoration: const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+                decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: context.borderColor)),
                 ),
                 child: Row(
                   children: [
@@ -314,14 +407,14 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
               Expanded(
                 child: ListView.separated(
                   itemCount: filtered.length,
-                  separatorBuilder: (ctx, idx) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                  separatorBuilder: (ctx, idx) => Divider(height: 1, color: context.borderColor),
                   itemBuilder: (ctx, i) => _buildIndividualRow(filtered[i], rate),
                 ),
               ),
             ],
           ),
         );
-      }
+      },
     );
   }
 
@@ -329,10 +422,10 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
     return Text(
       label,
       textAlign: align,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 10,
         fontWeight: FontWeight.w900,
-        color: AppTheme.mutedGrey,
+        color: context.textSecondary,
         letterSpacing: 0.8,
       ),
     );
@@ -354,10 +447,10 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
               flex: 2,
               child: Text(
                 order.id.substring(0, 8).toUpperCase(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 13,
-                  color: AppTheme.charcoal,
+                  color: context.textPrimary,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -367,10 +460,10 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
               flex: 3,
               child: Text(
                 order.businessName,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
-                  color: AppTheme.charcoal,
+                  color: context.textPrimary,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -381,10 +474,10 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
               flex: 3,
               child: Text(
                 order.customerName,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: AppTheme.charcoal,
+                  color: context.textPrimary,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -396,10 +489,10 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
               child: Text(
                 "GHS ${order.price.toStringAsFixed(2)}",
                 textAlign: TextAlign.end,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 13.5,
-                  color: AppTheme.mutedGrey,
+                  color: context.textSecondary,
                 ),
               ),
             ),
@@ -411,10 +504,10 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
                 child: Text(
                   "GHS ${share.toStringAsFixed(2)}",
                   textAlign: TextAlign.end,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 13.5,
-                    color: AppTheme.charcoal,
+                    color: context.textPrimary,
                   ),
                 ),
               ),
@@ -424,9 +517,9 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
               flex: 2,
               child: Text(
                 dateStr,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: AppTheme.mutedGrey,
+                  color: context.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -481,16 +574,18 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: context.borderColor),
+        boxShadow: context.isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -504,15 +599,20 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: context.cardSubtleColor,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.receipt_long_rounded, size: 16, color: AppTheme.charcoal),
+                    child: Icon(Icons.receipt_long_rounded, size: 16, color: context.textPrimary),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     "#${order.id.length > 10 ? order.id.substring(0, 10).toUpperCase() : order.id.toUpperCase()}",
-                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppTheme.charcoal, letterSpacing: 0.5),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 13,
+                      color: context.textPrimary,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ],
               ),
@@ -525,21 +625,21 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: context.cardAltColor,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFF1F5F9)),
+              border: Border.all(color: context.borderSubtleColor),
             ),
             child: Column(
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.storefront_rounded, size: 14, color: AppTheme.mutedGrey),
+                    Icon(Icons.storefront_rounded, size: 14, color: context.textSecondary),
                     const SizedBox(width: 6),
-                    const Text("Merchant: ", style: TextStyle(fontSize: 11, color: AppTheme.mutedGrey, fontWeight: FontWeight.w600)),
+                    Text("Merchant: ", style: TextStyle(fontSize: 11, color: context.textSecondary, fontWeight: FontWeight.w600)),
                     Expanded(
                       child: Text(
                         order.businessName.isNotEmpty ? order.businessName : "Partner Hub",
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.charcoal),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: context.textPrimary),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -548,13 +648,13 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.person_outline_rounded, size: 14, color: AppTheme.mutedGrey),
+                    Icon(Icons.person_outline_rounded, size: 14, color: context.textSecondary),
                     const SizedBox(width: 6),
-                    const Text("Customer: ", style: TextStyle(fontSize: 11, color: AppTheme.mutedGrey, fontWeight: FontWeight.w600)),
+                    Text("Customer: ", style: TextStyle(fontSize: 11, color: context.textSecondary, fontWeight: FontWeight.w600)),
                     Expanded(
                       child: Text(
                         order.customerName.isNotEmpty ? order.customerName : "Rescuer",
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.charcoal),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: context.textPrimary),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -563,12 +663,12 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.access_time_rounded, size: 14, color: AppTheme.mutedGrey),
+                    Icon(Icons.access_time_rounded, size: 14, color: context.textSecondary),
                     const SizedBox(width: 6),
-                    const Text("Date: ", style: TextStyle(fontSize: 11, color: AppTheme.mutedGrey, fontWeight: FontWeight.w600)),
+                    Text("Date: ", style: TextStyle(fontSize: 11, color: context.textSecondary, fontWeight: FontWeight.w600)),
                     Text(
                       dateStr,
-                      style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500),
+                      style: TextStyle(fontSize: 11, color: context.textSecondary, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
@@ -584,9 +684,9 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Gross Total", style: TextStyle(fontSize: 10, color: AppTheme.mutedGrey, fontWeight: FontWeight.bold)),
+                    Text("Gross Total", style: TextStyle(fontSize: 10, color: context.textSecondary, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 2),
-                    Text("GHS ${order.price.toStringAsFixed(2)}", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.charcoal)),
+                    Text("GHS ${order.price.toStringAsFixed(2)}", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: context.textPrimary)),
                   ],
                 ),
               ),
@@ -594,7 +694,7 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Text("Platform Fee", style: TextStyle(fontSize: 10, color: AppTheme.mutedGrey, fontWeight: FontWeight.bold)),
+                    Text("Platform Fee", style: TextStyle(fontSize: 10, color: context.textSecondary, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 2),
                     Text("GHS ${platformFee.toStringAsFixed(2)}", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.indigo)),
                   ],
@@ -636,7 +736,7 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: AppTheme.primaryGreen.withValues(alpha: 0.08),
+                color: AppTheme.primaryGreen.withValues(alpha: context.isDark ? 0.15 : 0.08),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Row(
@@ -679,133 +779,158 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
               margin: const EdgeInsets.only(bottom: 16),
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.cardColor,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFF1F5F9)),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 10, offset: const Offset(0, 4))],
+                border: Border.all(color: context.borderColor),
+                boxShadow: context.isDark ? [] : [BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 10, offset: const Offset(0, 4))],
               ),
               child: isCompact
-                ? Column(
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(color: AppTheme.lightGreenBg, borderRadius: BorderRadius.circular(12)),
-                            child: const Icon(Icons.storefront_rounded, color: AppTheme.primaryGreen, size: 20),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(m['name'] as String, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppTheme.charcoal)),
-                                Text("${(m['orders'] as List).length} Rescues", style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey)),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFF1F5F9)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  ? Column(
+                      children: [
+                        Row(
                           children: [
-                            const Text("PENDING BALANCE", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.mutedGrey)),
-                            Text("GHS ${p.toStringAsFixed(2)}", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: p > 0 ? AppTheme.warningOrange : AppTheme.primaryGreen)),
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryGreen.withValues(alpha: context.isDark ? 0.2 : 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.storefront_rounded, color: AppTheme.primaryGreen, size: 20),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    m['name'] as String,
+                                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: context.textPrimary),
+                                  ),
+                                  Text("${(m['orders'] as List).length} Rescues", style: TextStyle(fontSize: 12, color: context.textSecondary)),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      if (p > 0)
-                        SizedBox(
-                          width: double.infinity,
-                          height: 42,
-                          child: ElevatedButton.icon(
-                            onPressed: () => _confirmBatch(m['name'] as String, p, m['orders'] as List<Order>),
-                            icon: const Icon(Icons.payment_rounded, size: 16),
-                            label: Text("Batch Payout (GHS ${p.toStringAsFixed(2)})", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.charcoal,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              elevation: 0,
-                            ),
-                          ),
-                        )
-                      else
+                        const SizedBox(height: 20),
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryGreen.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(10),
+                            color: context.cardAltColor,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: context.borderSubtleColor),
                           ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Icon(Icons.check_circle_rounded, size: 16, color: AppTheme.primaryGreen),
-                              SizedBox(width: 6),
-                              Text("All Balances Settled", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
+                              Text("PENDING BALANCE", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: context.textSecondary)),
+                              Text(
+                                "GHS ${p.toStringAsFixed(2)}",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 18,
+                                  color: p > 0 ? AppTheme.warningOrange : AppTheme.primaryGreen,
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                    ],
-                  )
-                : Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(color: AppTheme.lightGreenBg, borderRadius: BorderRadius.circular(14)),
-                        child: const Icon(Icons.storefront_rounded, color: AppTheme.primaryGreen),
-                      ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        const SizedBox(height: 12),
+                        if (p > 0)
+                          SizedBox(
+                            width: double.infinity,
+                            height: 42,
+                            child: ElevatedButton.icon(
+                              onPressed: () => _confirmBatch(m['name'] as String, p, m['orders'] as List<Order>),
+                              icon: const Icon(Icons.payment_rounded, size: 16),
+                              label: Text("Batch Payout (GHS ${p.toStringAsFixed(2)})", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.charcoal,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                elevation: 0,
+                              ),
+                            ),
+                          )
+                        else
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryGreen.withValues(alpha: context.isDark ? 0.15 : 0.08),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check_circle_rounded, size: 16, color: AppTheme.primaryGreen),
+                                SizedBox(width: 6),
+                                Text("All Balances Settled", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
+                              ],
+                            ),
+                          ),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryGreen.withValues(alpha: context.isDark ? 0.2 : 0.1),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(Icons.storefront_rounded, color: AppTheme.primaryGreen),
+                        ),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                m['name'] as String,
+                                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: context.textPrimary),
+                              ),
+                              Text(
+                                "${(m['orders'] as List).length} Total Rescues",
+                                style: TextStyle(fontSize: 12, color: context.textSecondary, fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Text(m['name'] as String, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppTheme.charcoal)),
-                            Text("${(m['orders'] as List).length} Total Rescues", style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500)),
+                            Text(
+                              "GHS ${p.toStringAsFixed(2)}",
+                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: p > 0 ? AppTheme.warningOrange : AppTheme.primaryGreen),
+                            ),
+                            Text("PENDING BALANCE", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: context.textSecondary)),
                           ],
                         ),
-                      ),
-                      const SizedBox(width: 20),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text("GHS ${p.toStringAsFixed(2)}", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: p > 0 ? AppTheme.warningOrange : AppTheme.primaryGreen)),
-                          const Text("PENDING BALANCE", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppTheme.mutedGrey)),
-                        ],
-                      ),
-                      const SizedBox(width: 32),
-                      if (p > 0)
-                        ElevatedButton.icon(
-                          onPressed: () => _confirmBatch(m['name'] as String, p, m['orders'] as List<Order>),
-                          icon: const Icon(Icons.account_balance_wallet_rounded, size: 16),
-                          label: const Text("Batch Payout", style: TextStyle(fontSize: 13)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.charcoal,
-                            minimumSize: const Size(160, 48),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                        )
-                      else
-                        const Chip(
-                          label: Text("SETTLED", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen)),
-                          backgroundColor: AppTheme.lightGreenBg,
-                          side: BorderSide.none,
-                        )
-                    ],
-                  ),
+                        const SizedBox(width: 32),
+                        if (p > 0)
+                          ElevatedButton.icon(
+                            onPressed: () => _confirmBatch(m['name'] as String, p, m['orders'] as List<Order>),
+                            icon: const Icon(Icons.account_balance_wallet_rounded, size: 16),
+                            label: const Text("Batch Payout", style: TextStyle(fontSize: 13)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.charcoal,
+                              minimumSize: const Size(160, 48),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          )
+                        else
+                          Chip(
+                            label: const Text("SETTLED", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen)),
+                            backgroundColor: AppTheme.primaryGreen.withValues(alpha: context.isDark ? 0.2 : 0.1),
+                            side: BorderSide.none,
+                          )
+                      ],
+                    ),
             );
-          }
+          },
         );
       },
     );
@@ -816,12 +941,17 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: context.cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        title: const Text("Authorize Dispersal"),
-        content: Text("You are about to initiate a MoMo settlement of GHS ${amount.toStringAsFixed(2)} to $name for ${pending.length} rescues."),
+        title: Text("Authorize Dispersal", style: TextStyle(color: context.textPrimary, fontWeight: FontWeight.bold)),
+        content: Text(
+          "You are about to initiate a MoMo settlement of GHS ${amount.toStringAsFixed(2)} to $name for ${pending.length} rescues.",
+          style: TextStyle(color: context.textSecondary),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text("Cancel", style: TextStyle(color: context.textSecondary))),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryGreen, foregroundColor: Colors.white),
             onPressed: () async {
               for (var o in pending) {
                 await ref.read(appStateProvider.notifier).updatePayoutStatus(o.id, 'paid');
@@ -841,12 +971,14 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
   void _pay(BuildContext context, WidgetRef ref, Order order, double share) => showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
+          backgroundColor: context.cardColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text("Settle Transaction"),
-          content: Text("Disburse GHS ${share.toStringAsFixed(2)} to ${order.businessName}?"),
+          title: Text("Settle Transaction", style: TextStyle(color: context.textPrimary, fontWeight: FontWeight.bold)),
+          content: Text("Disburse GHS ${share.toStringAsFixed(2)} to ${order.businessName}?", style: TextStyle(color: context.textSecondary)),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text("Cancel", style: TextStyle(color: context.textSecondary))),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryGreen, foregroundColor: Colors.white),
               onPressed: () {
                 ref.read(appStateProvider.notifier).updatePayoutStatus(order.id, 'paid');
                 Navigator.pop(ctx);

@@ -419,8 +419,11 @@ class _MerchantProfileScreenState
                   ? DropdownButtonFormField<String>(
                       initialValue: _selectedCategory,
                       isExpanded: true,
+                      borderRadius: BorderRadius.circular(16),
+                      dropdownColor: context.cardColor,
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.mutedGrey),
                       decoration: _inputDecoration("Category", Icons.category_rounded),
-                      items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 14)))).toList(),
+                      items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c, style: TextStyle(fontSize: 14, color: context.textPrimary, fontWeight: FontWeight.w600)))).toList(),
                       onChanged: (v) => setState(() => _selectedCategory = v!),
                     )
                   : Container(

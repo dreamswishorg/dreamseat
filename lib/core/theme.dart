@@ -158,10 +158,47 @@ class AppTheme {
         filled: true,
         fillColor: const Color(0xFF1E293B),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryGreen, width: 2)),
         hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 15),
       ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        elevation: 8,
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 12,
+      ),
+      dropdownMenuTheme: DropdownMenuThemeData(
+        menuStyle: MenuStyle(
+          backgroundColor: const WidgetStatePropertyAll(Color(0xFF1E293B)),
+          surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+          ),
+          elevation: const WidgetStatePropertyAll(8),
+        ),
+      ),
     );
   }
+}
+
+extension ThemeContextExtension on BuildContext {
+  bool get isDark => Theme.of(this).brightness == Brightness.dark;
+  Color get cardColor => isDark ? const Color(0xFF1E293B) : Colors.white;
+  Color get cardAltColor => isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+  Color get cardSubtleColor => isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9);
+  Color get textPrimary => isDark ? Colors.white : AppTheme.charcoal;
+  Color get textSecondary => isDark ? const Color(0xFF94A3B8) : AppTheme.mutedGrey;
+  Color get borderColor => isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0);
+  Color get borderSubtleColor => isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9);
 }

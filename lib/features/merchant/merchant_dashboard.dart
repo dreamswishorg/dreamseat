@@ -1324,8 +1324,11 @@ class _MerchantListingsTabState extends ConsumerState<_MerchantListingsTab> {
                                   DropdownButtonFormField<String>(
                                     initialValue: _selectedCategory,
                                     isExpanded: true,
+                                    borderRadius: BorderRadius.circular(16),
+                                    dropdownColor: context.cardColor,
+                                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.mutedGrey),
                                     decoration: _inputDecoration("Category", Icons.category_rounded),
-                                    items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 13)))).toList(),
+                                    items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c, style: TextStyle(fontSize: 13, color: context.textPrimary, fontWeight: FontWeight.w600)))).toList(),
                                     onChanged: (val) => setState(() => _selectedCategory = val!),
                                   ),
                                 ],

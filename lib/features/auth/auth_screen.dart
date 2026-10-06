@@ -1254,6 +1254,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                   DropdownButtonFormField<String>(
                     initialValue: _suBizCategory,
                     isExpanded: true,
+                    borderRadius: BorderRadius.circular(16),
+                    dropdownColor: Colors.white,
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.mutedGrey),
                     decoration: InputDecoration(
                       prefixIcon: const Icon(Icons.category_outlined,
                           color: AppTheme.primaryGreen, size: 20),
