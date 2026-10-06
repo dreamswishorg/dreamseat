@@ -74,7 +74,7 @@ class _BiometricSwitchTileState extends ConsumerState<BiometricSwitchTile> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "Please confirm your account password to secure biometric credentials on this device.",
+                    "Please enter your password to turn on fingerprint or face login on this device.",
                     style: TextStyle(fontSize: 13, color: AppTheme.mutedGrey),
                   ),
                   const SizedBox(height: 16),

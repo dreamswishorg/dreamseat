@@ -376,7 +376,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             onSelected: (v) {
               if (v == 0) Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminProfileScreen()));
               if (v == 1) Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
-              if (v == 2) _onDeactivateAccess();
+              if (v == 2) _onLogout();
               if (v == 3) Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerNavigation()));
             },
             itemBuilder: (context) => [
@@ -668,18 +668,30 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     );
   }
 
-  void _onDeactivateAccess() async {
+  void _onLogout() async {
     final navigator = Navigator.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Deactivate Access'),
-        content: const Text('Are you sure you want to sign out and deactivate your session?'),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Log out', style: TextStyle(fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
+        content: const Text('Are you sure you want to log out?'),
         actions: [
-          // ignore: use_build_context_synchronously
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          // ignore: use_build_context_synchronously
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Deactivate')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel', style: TextStyle(color: AppTheme.mutedGrey, fontWeight: FontWeight.w600)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.errorRed,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            ),
+            child: const Text('Log out', style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
         ],
       ),
     );

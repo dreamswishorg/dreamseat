@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme.dart';
@@ -64,6 +65,10 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // KPI Metric Quick Filter Bar
+          _buildKpiCards(state),
+          const SizedBox(height: 16),
+
           // Filter Toolbar
           _buildToolbar(filteredUsers),
           const SizedBox(height: 16),
@@ -108,6 +113,88 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildKpiCards(AppState state) {
+    final total = state.users.length;
+    final customers = state.users.where((u) => u.role == 'customer').length;
+    final merchants = state.users.where((u) => u.role == 'merchant').length;
+    final staff = state.users.where((u) => u.role == 'admin' || u.role == 'super_admin').length;
+    final suspended = state.users.where((u) => u.isSuspended).length;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: [
+          _kpiPill("All Accounts", total, Icons.people_alt_rounded, _roleFilter == 'All' && _statusFilter == 'All', () {
+            setState(() { _roleFilter = 'All'; _statusFilter = 'All'; _currentPage = 0; });
+          }, color: AppTheme.primaryGreen),
+          const SizedBox(width: 8),
+          _kpiPill("Customers", customers, Icons.shopping_bag_outlined, _roleFilter == 'Customer', () {
+            setState(() { _roleFilter = 'Customer'; _statusFilter = 'All'; _currentPage = 0; });
+          }, color: const Color(0xFF2563EB)),
+          const SizedBox(width: 8),
+          _kpiPill("Merchants", merchants, Icons.storefront_rounded, _roleFilter == 'Merchant', () {
+            setState(() { _roleFilter = 'Merchant'; _statusFilter = 'All'; _currentPage = 0; });
+          }, color: const Color(0xFFD97706)),
+          const SizedBox(width: 8),
+          _kpiPill("Staff Team", staff, Icons.shield_rounded, _roleFilter == 'Staff', () {
+            setState(() { _roleFilter = 'Staff'; _statusFilter = 'All'; _currentPage = 0; });
+          }, color: AppTheme.charcoal),
+          const SizedBox(width: 8),
+          _kpiPill("Suspended", suspended, Icons.block_rounded, _statusFilter == 'Suspended', () {
+            setState(() { _statusFilter = 'Suspended'; _roleFilter = 'All'; _currentPage = 0; });
+          }, color: AppTheme.errorRed),
+        ],
+      ),
+    );
+  }
+
+  Widget _kpiPill(String title, int count, IconData icon, bool isActive, VoidCallback onTap, {required Color color}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: isActive ? color.withValues(alpha: 0.12) : context.cardColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isActive ? color : context.borderColor,
+            width: isActive ? 1.6 : 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 4, offset: const Offset(0, 2)),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: isActive ? color : context.textSecondary),
+            const SizedBox(width: 8),
+            Text(title, style: TextStyle(fontSize: 12, fontWeight: isActive ? FontWeight.w800 : FontWeight.w600, color: isActive ? color : context.textPrimary)),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color: isActive ? color : context.borderColor.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '$count',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: isActive ? Colors.white : context.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -333,9 +420,11 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
       color: context.cardAltColor,
       child: Row(
         children: [
+          const SizedBox(width: 56), // Multi-select Checkbox column offset
           Expanded(flex: 3, child: Text("USER IDENTITY", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: context.textSecondary, letterSpacing: 0.5))),
           Expanded(flex: 2, child: Text("ROLE", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: context.textSecondary, letterSpacing: 0.5))),
           Expanded(flex: 2, child: Text("STATUS", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: context.textSecondary, letterSpacing: 0.5))),
+          Expanded(flex: 2, child: Text("POINTS & WALLET", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: context.textSecondary, letterSpacing: 0.5))),
           SizedBox(width: 200, child: Text("ACTIONS", textAlign: TextAlign.right, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: context.textSecondary, letterSpacing: 0.5))),
         ],
       ),
@@ -462,7 +551,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text("Credentials", style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.mutedGrey, fontSize: 11, letterSpacing: 0.5)),
+                        const Text("Staff Details", style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.mutedGrey, fontSize: 11, letterSpacing: 0.5)),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: nameController,
@@ -502,7 +591,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                           validator: (val) => val == null || val.length < 8 ? "Password must be at least 8 chars" : null,
                         ),
                         const SizedBox(height: 24),
-                        const Text("Role & Menu Privileges", style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.mutedGrey, fontSize: 11, letterSpacing: 0.5)),
+                        const Text("Role & Access Permissions", style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.mutedGrey, fontSize: 11, letterSpacing: 0.5)),
                         const SizedBox(height: 12),
                         DropdownButtonFormField<String>(
                           initialValue: selectedRole,
@@ -523,7 +612,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                           },
                         ),
                         const SizedBox(height: 16),
-                        const Text("Select Pages/Privileges", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.charcoal)),
+                        const Text("Allowed App Sections", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.charcoal)),
                         const SizedBox(height: 8),
                         ConstrainedBox(
                           constraints: const BoxConstraints(maxHeight: 220),
@@ -574,7 +663,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                           if (!formKey.currentState!.validate()) return;
                           if (selectedPrivs.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Please select at least one privilege menu option."), backgroundColor: AppTheme.errorRed),
+                              const SnackBar(content: Text("Please select at least one permission section."), backgroundColor: AppTheme.errorRed),
                             );
                             return;
                           }
@@ -602,7 +691,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                   style: ElevatedButton.styleFrom(backgroundColor: AppTheme.charcoal, foregroundColor: Colors.white, minimumSize: const Size(120, 48), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                   child: isSaving
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text("Save Account", style: TextStyle(fontWeight: FontWeight.bold)),
+                      : const Text("Create Staff Account", style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
             );
@@ -886,6 +975,36 @@ class _UserRow extends ConsumerWidget {
               ],
             ),
           ),
+          // Points & Wallet
+          Expanded(
+            flex: 2,
+            child: Row(
+              children: [
+                if (user.dreamPoints > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      "⭐ ${user.dreamPoints} pts",
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFB45309)),
+                    ),
+                  )
+                else
+                  Text(
+                    "0 pts",
+                    style: TextStyle(fontSize: 11.5, color: context.textSecondary),
+                  ),
+                const SizedBox(width: 8),
+                Text(
+                  "GH₵ ${user.referralCredit.toStringAsFixed(2)}",
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: context.textPrimary),
+                ),
+              ],
+            ),
+          ),
           // Actions
           SizedBox(
             width: 200,
@@ -927,82 +1046,274 @@ class _UserRow extends ConsumerWidget {
   }
 }
 
-class _UserDetailDrawer extends StatelessWidget {
+class _UserDetailDrawer extends ConsumerWidget {
   final AppUser user;
   const _UserDetailDrawer({required this.user});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(appStateProvider);
+    // Find current updated user from state if available
+    final currentUser = state.users.firstWhere((u) => u.id == user.id, orElse: () => user);
+    final isSelf = currentUser.id == state.currentUser?.id;
+
+    void copyText(String label, String text) {
+      Clipboard.setData(ClipboardData(text: text));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Copied $label: $text"),
+          backgroundColor: AppTheme.primaryGreen,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: context.cardColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       ),
-      padding: const EdgeInsets.all(40),
+      padding: const EdgeInsets.fromLTRB(28, 24, 28, 36),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Drag handle
+          Center(
+            child: Container(
+              width: 44,
+              height: 5,
+              decoration: BoxDecoration(
+                color: context.borderColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("Account Intelligence", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
-              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded)),
-            ],
-          ),
-          const SizedBox(height: 32),
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 40,
-                backgroundColor: AppTheme.lightGrey,
-                child: Text(user.name[0].toUpperCase(), style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900)),
-              ),
-              const SizedBox(width: 24),
-              Column(
+              const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(user.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
-                  Text(user.email, style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 14)),
-                  const SizedBox(height: 8),
-                  _RoleBadge(role: user.role),
+                  Text("Account Profile", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+                  SizedBox(height: 2),
+                  Text("User details and access permissions", style: TextStyle(color: AppTheme.mutedGrey, fontSize: 12)),
                 ],
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close_rounded),
+                style: IconButton.styleFrom(backgroundColor: context.cardAltColor),
               ),
             ],
           ),
-          const SizedBox(height: 40),
-          const Divider(),
-          const SizedBox(height: 32),
-          _detailRow("Phone Number", user.phone ?? "Not Provided", Icons.phone_rounded),
-          _detailRow("Date Joined", DateFormat('MMM d, yyyy').format(user.createdAt), Icons.calendar_today_rounded),
-          _detailRow("Referral Code", user.referralCode, Icons.qr_code_rounded),
-          _detailRow("DreamPoints", "${user.dreamPoints} pts", Icons.eco_rounded),
-          _detailRow("Wallet Balance", "GHS ${user.referralCredit.toStringAsFixed(2)}", Icons.account_balance_wallet_rounded),
-          const SizedBox(height: 40),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.charcoal, minimumSize: const Size(double.infinity, 56)),
-            child: const Text("Close Inspector"),
+          const SizedBox(height: 24),
+
+          // User Card Banner
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: context.cardAltColor,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: context.borderColor),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 32,
+                  backgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.15),
+                  child: Text(
+                    currentUser.name.isNotEmpty ? currentUser.name[0].toUpperCase() : '?',
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              currentUser.name,
+                              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (isSelf) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(color: AppTheme.lightGreenBg, borderRadius: BorderRadius.circular(6)),
+                              child: const Text("YOU", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen)),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      InkWell(
+                        onTap: () => copyText("Email", currentUser.email),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                currentUser.email,
+                                style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 13),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.copy_rounded, size: 12, color: AppTheme.mutedGrey),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          _RoleBadge(role: currentUser.role),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: currentUser.isSuspended ? AppTheme.errorRed.withValues(alpha: 0.1) : AppTheme.primaryGreen.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 6, height: 6,
+                                  decoration: BoxDecoration(shape: BoxShape.circle, color: currentUser.isSuspended ? AppTheme.errorRed : AppTheme.primaryGreen),
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  currentUser.isSuspended ? "Suspended" : "Active",
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: currentUser.isSuspended ? AppTheme.errorRed : AppTheme.primaryGreen,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Suspension Toggle Row
+          if (!isSelf)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: currentUser.isSuspended ? AppTheme.errorRed.withValues(alpha: 0.06) : AppTheme.primaryGreen.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: currentUser.isSuspended ? AppTheme.errorRed.withValues(alpha: 0.2) : AppTheme.primaryGreen.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    currentUser.isSuspended ? Icons.block_rounded : Icons.check_circle_outline_rounded,
+                    color: currentUser.isSuspended ? AppTheme.errorRed : AppTheme.primaryGreen,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          currentUser.isSuspended ? "Account is Suspended" : "Account is Active",
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: currentUser.isSuspended ? AppTheme.errorRed : AppTheme.primaryGreen,
+                          ),
+                        ),
+                        Text(
+                          currentUser.isSuspended ? "Tap toggle to unblock this user" : "User can place orders and log in",
+                          style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Switch(
+                    value: !currentUser.isSuspended,
+                    activeThumbColor: AppTheme.primaryGreen,
+                    onChanged: (v) => ref.read(appStateProvider.notifier).toggleUserSuspension(currentUser.id),
+                  ),
+                ],
+              ),
+            ),
+
+          // Details List
+          _detailRow(context, "User ID", currentUser.id, Icons.fingerprint_rounded, onCopy: () => copyText("User ID", currentUser.id)),
+          _detailRow(context, "Phone Number", currentUser.phone ?? "Not Provided", Icons.phone_rounded, onCopy: currentUser.phone != null ? () => copyText("Phone", currentUser.phone!) : null),
+          _detailRow(context, "Date Joined", DateFormat('MMM d, yyyy').format(currentUser.createdAt), Icons.calendar_today_rounded),
+          _detailRow(context, "Referral Code", currentUser.referralCode, Icons.qr_code_rounded, onCopy: () => copyText("Referral Code", currentUser.referralCode)),
+          _detailRow(context, "DreamPoints", "${currentUser.dreamPoints} pts", Icons.eco_rounded),
+          _detailRow(context, "Wallet Balance", "GH₵ ${currentUser.referralCredit.toStringAsFixed(2)}", Icons.account_balance_wallet_rounded),
+
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.charcoal,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              child: const Text("Done", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _detailRow(String label, String value, IconData icon) {
+  Widget _detailRow(BuildContext context, String label, String value, IconData icon, {VoidCallback? onCopy}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: AppTheme.mutedGrey),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.mutedGrey, letterSpacing: 0.5)),
-              Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.charcoal)),
-            ],
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: context.cardAltColor, borderRadius: BorderRadius.circular(10)),
+            child: Icon(icon, size: 16, color: context.textSecondary),
           ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppTheme.mutedGrey, letterSpacing: 0.5)),
+                Text(value, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: context.textPrimary)),
+              ],
+            ),
+          ),
+          if (onCopy != null)
+            IconButton(
+              icon: const Icon(Icons.copy_rounded, size: 15, color: AppTheme.mutedGrey),
+              onPressed: onCopy,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
         ],
       ),
     );
@@ -1016,17 +1327,36 @@ class _RoleBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Color color;
+    String label;
     switch (role) {
-      case 'super_admin': color = AppTheme.errorRed; break;
-      case 'admin': color = AppTheme.charcoal; break;
-      case 'merchant': color = AppTheme.goldAccent; break;
-      default: color = AppTheme.primaryGreen;
+      case 'super_admin':
+        color = const Color(0xFFDC2626);
+        label = '👑 Super Admin';
+        break;
+      case 'admin':
+        color = const Color(0xFF0F172A);
+        label = '🛡️ Staff Admin';
+        break;
+      case 'merchant':
+        color = const Color(0xFFD97706);
+        label = '🏪 Merchant';
+        break;
+      default:
+        color = const Color(0xFF059669);
+        label = '🛍️ Customer';
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-      child: Text(role.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: color, letterSpacing: 0.5)),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: color, letterSpacing: 0.2),
+      ),
     );
   }
 }

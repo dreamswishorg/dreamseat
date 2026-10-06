@@ -204,64 +204,144 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Colors.white,
         child: Container(
-          width: 700,
-          padding: const EdgeInsets.all(32),
+          width: 850,
+          constraints: const BoxConstraints(maxHeight: 720),
+          padding: const EdgeInsets.all(28),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
                     children: [
-                      const Text("KYC Compliance Vault", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
-                      Text("Verification documents for ${b.name}", style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 13)),
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryGreen.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.verified_user_rounded, color: AppTheme.primaryGreen, size: 24),
+                      ),
+                      const SizedBox(width: 14),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("KYC Compliance Vault", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
+                          Text("Verification documents for ${b.name} (${b.category})", style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 13)),
+                        ],
+                      ),
                     ],
                   ),
-                  IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close_rounded)),
-                ],
-              ),
-              const SizedBox(height: 24),
-              const Divider(),
-              const SizedBox(height: 24),
-              Wrap(
-                spacing: 16,
-                runSpacing: 16,
-                children: [
-                  _CompactKycCard(
-                    title: "Business Registration",
-                    sub: getDocSub("business", "Verified GH-2024-882"),
-                    icon: Icons.business_center_rounded,
-                    onTap: () => _viewDocument(context, "Business Registration", bizUrl, b),
-                  ),
-                  _CompactKycCard(
-                    title: "Health & Safety Certificate",
-                    sub: getDocSub("health", "Valid: Oct 2025"),
-                    icon: Icons.health_and_safety_rounded,
-                    onTap: () => _viewDocument(context, "Health & Safety Certificate", healthUrl, b),
-                  ),
-                  _CompactKycCard(
-                    title: "VAT Registration",
-                    sub: getDocSub("vat", "GRA Compliant"),
-                    icon: Icons.account_balance_wallet_rounded,
-                    onTap: () => _viewDocument(context, "VAT Registration", taxUrl, b),
+                  IconButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    icon: const Icon(Icons.close_rounded),
+                    style: IconButton.styleFrom(backgroundColor: const Color(0xFFF1F5F9)),
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.charcoal,
-                    minimumSize: const Size(0, 48),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text("Close Vault"),
+              const SizedBox(height: 16),
+
+              // Status Summary Strip
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.location_on_outlined, size: 16, color: AppTheme.mutedGrey),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        b.location,
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.charcoal),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: b.isApproved ? AppTheme.primaryGreen.withValues(alpha: 0.1) : Colors.amber.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        b.isApproved ? "✅ VERIFIED & APPROVED" : "⌛ PENDING APPROVAL",
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w900,
+                          color: b.isApproved ? AppTheme.primaryGreen : const Color(0xFFB45309),
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Document Cards Grid
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Center(
+                    child: Wrap(
+                      spacing: 16,
+                      runSpacing: 16,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        _KycDocVaultCard(
+                          title: "Business Registration",
+                          sub: getDocSub("business", "Verified GH-2024-882"),
+                          fileUrl: bizUrl,
+                          business: b,
+                          icon: Icons.business_center_rounded,
+                          onInspect: () => _viewDocument(context, "Business Registration", bizUrl, b),
+                        ),
+                        _KycDocVaultCard(
+                          title: "Health & Safety Permit",
+                          sub: getDocSub("health", "Valid: Oct 2025"),
+                          fileUrl: healthUrl,
+                          business: b,
+                          icon: Icons.health_and_safety_rounded,
+                          onInspect: () => _viewDocument(context, "Health & Safety Certificate", healthUrl, b),
+                        ),
+                        _KycDocVaultCard(
+                          title: "VAT / Tax Certificate",
+                          sub: getDocSub("vat", "GRA Compliant"),
+                          fileUrl: taxUrl,
+                          business: b,
+                          icon: Icons.account_balance_wallet_rounded,
+                          onInspect: () => _viewDocument(context, "VAT Registration", taxUrl, b),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Bottom Actions
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.charcoal,
+                      side: const BorderSide(color: Color(0xFFCBD5E1)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    ),
+                    child: const Text("Close Vault", style: TextStyle(fontWeight: FontWeight.w700)),
+                  ),
+                ],
               ),
             ],
           ),
@@ -277,7 +357,7 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         clipBehavior: Clip.antiAlias,
         child: Container(
-          width: 500,
+          width: 650,
           color: const Color(0xFF0F172A),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -298,7 +378,7 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            business.name,
+                            "${business.name} • Pinch to zoom & inspect",
                             style: const TextStyle(color: Colors.white70, fontSize: 12),
                           ),
                         ],
@@ -314,7 +394,7 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
               Padding(
                 padding: const EdgeInsets.all(24),
                 child: Container(
-                  height: 380,
+                  height: 450,
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -324,30 +404,34 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
                     ],
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: fileUrl != null && fileUrl.isNotEmpty
-                      ? Image.network(
-                          fileUrl,
-                          fit: BoxFit.contain,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return const Center(
-                              child: CircularProgressIndicator(color: AppTheme.primaryGreen),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.broken_image_rounded, color: AppTheme.errorRed, size: 48),
-                                  SizedBox(height: 12),
-                                  Text("Failed to load document image", style: TextStyle(color: AppTheme.mutedGrey, fontSize: 13)),
-                                ],
-                              ),
-                            );
-                          },
-                        )
-                      : _buildSimulatedCertificate(business, title),
+                  child: InteractiveViewer(
+                    minScale: 0.8,
+                    maxScale: 5.0,
+                    child: fileUrl != null && fileUrl.isNotEmpty
+                        ? Image.network(
+                            fileUrl,
+                            fit: BoxFit.contain,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return const Center(
+                                child: CircularProgressIndicator(color: AppTheme.primaryGreen),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.broken_image_rounded, color: AppTheme.errorRed, size: 48),
+                                    SizedBox(height: 12),
+                                    Text("Failed to load document image", style: TextStyle(color: AppTheme.mutedGrey, fontSize: 13)),
+                                  ],
+                                ),
+                              );
+                            },
+                          )
+                        : _buildSimulatedCertificate(business, title),
+                  ),
                 ),
               ),
               Container(
@@ -482,46 +566,187 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
   }
 }
 
-class _CompactKycCard extends StatelessWidget {
+class _KycDocVaultCard extends StatelessWidget {
   final String title;
   final String sub;
+  final String? fileUrl;
+  final BusinessProfile business;
   final IconData icon;
-  final VoidCallback onTap;
-  const _CompactKycCard({required this.title, required this.sub, required this.icon, required this.onTap});
+  final VoidCallback onInspect;
+
+  const _KycDocVaultCard({
+    required this.title,
+    required this.sub,
+    required this.fileUrl,
+    required this.business,
+    required this.icon,
+    required this.onInspect,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        width: 310,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: context.cardAltColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: context.borderColor),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: context.cardColor, borderRadius: BorderRadius.circular(12)),
-              child: Icon(icon, color: context.textPrimary, size: 20),
+    final hasUploadedImage = fileUrl != null && fileUrl!.isNotEmpty;
+
+    return Container(
+      width: 250,
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: context.borderColor),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: AppTheme.primaryGreen, size: 18),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 2),
+                      Text(sub, style: TextStyle(fontSize: 10.5, color: context.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+
+          // Uploaded Image Preview Area
+          GestureDetector(
+            onTap: onInspect,
+            child: Container(
+              height: 160,
+              margin: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: context.borderColor),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: context.textPrimary)),
-                  Text(sub, style: TextStyle(fontSize: 11, color: context.textSecondary)),
+                  if (hasUploadedImage)
+                    Image.network(
+                      fileUrl!,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return const Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryGreen));
+                      },
+                      errorBuilder: (context, error, stack) => Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.broken_image_rounded, color: AppTheme.mutedGrey, size: 32),
+                            const SizedBox(height: 6),
+                            Text("Image preview unavailable", style: TextStyle(fontSize: 10, color: context.textSecondary)),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    // Fallback Official Certificate Mockup Thumbnail
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      color: const Color(0xFFFCFBF7),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.workspace_premium_rounded, color: Color(0xFFD4AF37), size: 28),
+                          const SizedBox(height: 4),
+                          Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF1E293B)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 2),
+                          const Text("REPUBLIC OF GHANA", style: TextStyle(fontSize: 7.5, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey, letterSpacing: 1)),
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(color: AppTheme.primaryGreen.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
+                            child: const Text("VERIFIED SEAL", style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Overlay Hover/Tap Banner
+                  Positioned(
+                    bottom: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.75),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.zoom_in_rounded, size: 12, color: Colors.white),
+                          SizedBox(width: 4),
+                          Text("Tap to Zoom", style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w700)),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Badge top-left: Live Upload vs Verified Record
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: hasUploadedImage ? AppTheme.primaryGreen : Colors.blue.shade700,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        hasUploadedImage ? "LIVE UPLOAD" : "COMPLIANCE RECORD",
+                        style: const TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
-            const Icon(Icons.remove_red_eye_rounded, size: 16, color: AppTheme.primaryGreen),
-          ],
-        ),
+          ),
+
+          // Bottom Action
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: SizedBox(
+              height: 36,
+              child: OutlinedButton.icon(
+                onPressed: onInspect,
+                icon: const Icon(Icons.fullscreen_rounded, size: 15),
+                label: const Text("Inspect Document", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: context.textPrimary,
+                  side: BorderSide(color: context.borderColor),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

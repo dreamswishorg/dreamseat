@@ -539,12 +539,46 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Milestone Tier: Next Target ($targetGoal Rescued Meals)", style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white)),
-                    Text("${(progress * 100).toStringAsFixed(1)}% Completed", style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: AppTheme.goldAccent)),
-                  ],
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isNarrow = constraints.maxWidth < 340;
+                    if (isNarrow) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Next Target: $targetGoal Meals",
+                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "${(progress * 100).toStringAsFixed(1)}% Completed",
+                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: AppTheme.goldAccent),
+                          ),
+                        ],
+                      );
+                    }
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            "Next Target: $targetGoal Rescued Meals",
+                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          "${(progress * 100).toStringAsFixed(1)}% Completed",
+                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: AppTheme.goldAccent),
+                        ),
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 8),
                 ClipRRect(

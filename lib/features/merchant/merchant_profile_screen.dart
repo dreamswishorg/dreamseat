@@ -38,6 +38,9 @@ class _MerchantProfileScreenState
   String _bizRegStatus = "Verified GH-2024-882";
   String _healthStatus = "Valid: Oct 2025";
   String _taxStatus = "GRA Compliant";
+  String? _bizRegUrl;
+  String? _healthUrl;
+  String? _taxUrl;
 
   final List<String> _categories = [
     'Restaurant Meal',
@@ -62,6 +65,26 @@ class _MerchantProfileScreenState
         : _categories.first;
     _selectedLat = widget.business.latitude;
     _selectedLng = widget.business.longitude;
+
+    // Load any existing KYC uploads from audit trail
+    final auditLogs = ref.read(appStateProvider).auditLogs;
+    for (final log in auditLogs) {
+      if (log.action == 'KYC_UPLOAD' && log.entityId == widget.business.id) {
+        final docTitle = log.metadata['document_title']?.toString().toLowerCase() ?? '';
+        final fileUrl = log.metadata['file_url']?.toString();
+        final refNum = log.metadata['reference_number']?.toString();
+        if (docTitle.contains('business')) {
+          _bizRegUrl ??= fileUrl;
+          if (refNum != null && refNum.isNotEmpty) _bizRegStatus = "Uploaded ($refNum)";
+        } else if (docTitle.contains('health')) {
+          _healthUrl ??= fileUrl;
+          if (refNum != null && refNum.isNotEmpty) _healthStatus = "Uploaded ($refNum)";
+        } else if (docTitle.contains('tax') || docTitle.contains('vat')) {
+          _taxUrl ??= fileUrl;
+          if (refNum != null && refNum.isNotEmpty) _taxStatus = "Uploaded ($refNum)";
+        }
+      }
+    }
   }
 
   Future<void> _onSearchAddress(String query) async {
@@ -700,27 +723,33 @@ class _MerchantProfileScreenState
           title: "Business Registration Certificate",
           subtitle: "Certificate of Incorporation / Registrar General",
           status: _bizRegStatus,
+          fileUrl: _bizRegUrl,
           icon: Icons.business_center_rounded,
+          onPreview: () => _previewKycDocument("Business Registration Certificate", _bizRegUrl),
           onUpload: () => _showUploadDialog("Business Registration Certificate", _bizRegStatus, (val) {
             setState(() => _bizRegStatus = val);
           }),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         _buildKycDocTile(
           title: "Health & Safety Inspection Permit",
           subtitle: "Municipal Food Hygiene & Sanitation Certificate",
           status: _healthStatus,
+          fileUrl: _healthUrl,
           icon: Icons.health_and_safety_rounded,
+          onPreview: () => _previewKycDocument("Health & Safety Inspection Permit", _healthUrl),
           onUpload: () => _showUploadDialog("Health & Safety Inspection Permit", _healthStatus, (val) {
             setState(() => _healthStatus = val);
           }),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         _buildKycDocTile(
           title: "VAT / Tax Identification Number (TIN)",
           subtitle: "Ghana Revenue Authority (GRA) Tax Compliance",
           status: _taxStatus,
+          fileUrl: _taxUrl,
           icon: Icons.account_balance_wallet_rounded,
+          onPreview: () => _previewKycDocument("VAT / Tax Identification Number (TIN)", _taxUrl),
           onUpload: () => _showUploadDialog("VAT / Tax Identification Number (TIN)", _taxStatus, (val) {
             setState(() => _taxStatus = val);
           }),
@@ -729,76 +758,248 @@ class _MerchantProfileScreenState
     );
   }
 
+  void _previewKycDocument(String title, String? fileUrl) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          width: 550,
+          color: const Color(0xFF0F172A),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                color: Colors.black.withValues(alpha: 0.3),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                          const SizedBox(height: 2),
+                          const Text("KYC Document Preview • Pinch to zoom", style: TextStyle(color: Colors.white70, fontSize: 11)),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Container(
+                  height: 380,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: InteractiveViewer(
+                    minScale: 0.8,
+                    maxScale: 4.0,
+                    child: fileUrl != null && fileUrl.isNotEmpty
+                        ? Image.network(
+                            fileUrl,
+                            fit: BoxFit.contain,
+                            loadingBuilder: (c, child, p) => p == null ? child : const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen)),
+                            errorBuilder: (c, e, s) => const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.broken_image_rounded, color: AppTheme.errorRed, size: 40),
+                                  SizedBox(height: 8),
+                                  Text("Failed to load document image", style: TextStyle(color: AppTheme.mutedGrey, fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                          )
+                        : Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.file_present_rounded, size: 48, color: AppTheme.mutedGrey),
+                                const SizedBox(height: 12),
+                                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                const SizedBox(height: 4),
+                                const Text("Official verified record on file", style: TextStyle(color: AppTheme.mutedGrey, fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                color: Colors.black.withValues(alpha: 0.2),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryGreen,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text("Done"),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildKycDocTile({
     required String title,
     required String subtitle,
     required String status,
+    required String? fileUrl,
     required IconData icon,
+    required VoidCallback onPreview,
     required VoidCallback onUpload,
   }) {
+    final hasImage = fileUrl != null && fileUrl.isNotEmpty;
     final isVerified = status.toLowerCase().contains('verified') || status.toLowerCase().contains('valid') || status.toLowerCase().contains('compliant') || status.toLowerCase().contains('uploaded');
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 8, offset: const Offset(0, 4)),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isVerified ? AppTheme.primaryGreen.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: isVerified ? AppTheme.primaryGreen : Colors.orange.shade800, size: 24),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.charcoal)),
-                const SizedBox(height: 2),
-                Text(subtitle, style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey)),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Icon(
-                      isVerified ? Icons.check_circle_rounded : Icons.pending_actions_rounded,
-                      size: 14,
-                      color: isVerified ? AppTheme.primaryGreen : Colors.orange.shade800,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      status,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: isVerified ? AppTheme.primaryGreen : Colors.orange.shade800,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Image Thumbnail / Icon Area
+              GestureDetector(
+                onTap: onPreview,
+                child: Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: hasImage ? const Color(0xFF0F172A) : (isVerified ? AppTheme.primaryGreen.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1)),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFCBD5E1)),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (hasImage)
+                        Image.network(
+                          fileUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (c, e, s) => Center(child: Icon(icon, color: AppTheme.primaryGreen, size: 28)),
+                        )
+                      else
+                        Center(child: Icon(icon, color: isVerified ? AppTheme.primaryGreen : Colors.orange.shade800, size: 28)),
+                      Positioned(
+                        bottom: 3,
+                        right: 3,
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.7),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.zoom_in_rounded, size: 10, color: Colors.white),
+                        ),
                       ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+
+              // Title and Status
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: AppTheme.charcoal)),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey)),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(
+                          isVerified ? Icons.check_circle_rounded : Icons.pending_actions_rounded,
+                          size: 14,
+                          color: isVerified ? AppTheme.primaryGreen : Colors.orange.shade800,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            status,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: isVerified ? AppTheme.primaryGreen : Colors.orange.shade800,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          ElevatedButton.icon(
-            onPressed: onUpload,
-            icon: const Icon(Icons.upload_file_rounded, size: 16),
-            label: const Text("Upload", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.charcoal,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              minimumSize: const Size(0, 36),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              elevation: 0,
-            ),
+          const SizedBox(height: 12),
+
+          // Action Buttons Bar
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onPreview,
+                  icon: const Icon(Icons.remove_red_eye_rounded, size: 14),
+                  label: const Text("View Image", style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.charcoal,
+                    side: const BorderSide(color: Color(0xFFCBD5E1)),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: onUpload,
+                  icon: const Icon(Icons.upload_file_rounded, size: 14),
+                  label: Text(hasImage ? "Replace" : "Upload", style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.charcoal,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -956,6 +1157,15 @@ class _MerchantProfileScreenState
                       },
                     );
 
+                    setState(() {
+                      if (docTitle.toLowerCase().contains('business')) {
+                        _bizRegUrl = fileUrl;
+                      } else if (docTitle.toLowerCase().contains('health')) {
+                        _healthUrl = fileUrl;
+                      } else {
+                        _taxUrl = fileUrl;
+                      }
+                    });
                     onSave(newVal);
                     navigator.pop();
 

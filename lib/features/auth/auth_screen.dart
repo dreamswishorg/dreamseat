@@ -130,7 +130,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
 
     final creds = await BiometricService.getSavedCredentials();
     if (creds == null) {
-      _showSnackBar("No saved credentials found. Please sign in with password first.", isError: true);
+      _showSnackBar("No saved account found. Please sign in with your password first.", isError: true);
       return;
     }
 

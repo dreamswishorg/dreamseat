@@ -147,7 +147,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  "Sign in with your staff credentials",
+                  "Sign in to manage DreamEats",
                   style: TextStyle(color: AppTheme.mutedGrey, fontSize: 14),
                 ),
                 const SizedBox(height: 48),

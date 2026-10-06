@@ -658,7 +658,7 @@ void showModernLogoutConfirmDialog(BuildContext context, VoidCallback onConfirm)
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  "Sign Out?",
+                  "Log out",
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
@@ -668,10 +668,10 @@ void showModernLogoutConfirmDialog(BuildContext context, VoidCallback onConfirm)
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  "Are you sure you want to sign out of your DreamEats account? You will need to log in again to rescue meals and claim rewards.",
+                  "Are you sure you want to log out of your DreamEats account?",
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 13.5,
+                    fontSize: 14,
                     color: subtextColor,
                     height: 1.4,
                   ),
@@ -707,7 +707,7 @@ void showModernLogoutConfirmDialog(BuildContext context, VoidCallback onConfirm)
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
                         child: const Text(
-                          "Sign Out",
+                          "Log out",
                           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white),
                         ),
                       ),

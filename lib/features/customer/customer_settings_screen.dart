@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../core/ui_utils.dart';
 import '../../providers/app_state.dart';
+import '../../services/location_service.dart';
 import 'customer_home.dart';
 import '../admin/admin_dashboard.dart';
 
@@ -22,6 +23,50 @@ class _CustomerSettingsScreenState
 
   bool _isSavingProfile = false;
   bool _isSavingAddress = false;
+  bool _isSearchingAddress = false;
+  bool _isGettingGps = false;
+  List<PredictedAddress> _predictions = [];
+
+  Future<void> _onSearchAddress(String query) async {
+    if (query.trim().length < 3) {
+      if (mounted) setState(() => _predictions.clear());
+      return;
+    }
+    setState(() => _isSearchingAddress = true);
+    final results = await LocationService().searchPredictiveAddresses(query);
+    if (mounted) {
+      setState(() {
+        _predictions = results;
+        _isSearchingAddress = false;
+      });
+    }
+  }
+
+  Future<void> _useCurrentGpsLocation() async {
+    setState(() => _isGettingGps = true);
+    final pos = await LocationService().getCurrentPosition();
+    if (pos != null) {
+      final addr = await LocationService().getAddressFromLatLng(pos);
+      if (mounted) {
+        setState(() {
+          if (addr != null && addr.isNotEmpty) {
+            _addressController.text = addr;
+          }
+          _predictions.clear();
+          _isGettingGps = false;
+        });
+        ref.read(userLocationProvider.notifier).setAddress(
+              addr ?? _addressController.text,
+            );
+        _showSnackBar('Updated location to current GPS');
+      }
+    } else {
+      if (mounted) {
+        setState(() => _isGettingGps = false);
+        _showSnackBar('Could not retrieve GPS location', isError: true);
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -355,14 +400,33 @@ class _CustomerSettingsScreenState
               const SizedBox(height: 28),
 
               // Section: Delivery Address
-              Text(
-                'Default Delivery Address',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  color: primaryTextColor,
-                  letterSpacing: -0.3,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Default Delivery Address',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: primaryTextColor,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: _isGettingGps ? null : _useCurrentGpsLocation,
+                    icon: _isGettingGps
+                        ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryGreen))
+                        : const Icon(Icons.my_location_rounded, size: 15, color: AppTheme.primaryGreen),
+                    label: Text(
+                      _isGettingGps ? 'Locating...' : 'Use GPS',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      minimumSize: Size.zero,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               Container(
@@ -382,22 +446,115 @@ class _CustomerSettingsScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildInputField(
-                      controller: _addressController,
-                      label: 'Street Address or Landmark',
-                      icon: Icons.location_on_outlined,
-                      hint: 'e.g. Osu, Oxford Street, Accra',
-                      maxLines: 2,
-                      primaryTextColor: primaryTextColor,
-                      secondaryTextColor: secondaryTextColor,
-                      inputBg: inputBg,
-                      borderColor: borderColor,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Street Address or Landmark',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: primaryTextColor,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: _addressController,
+                          maxLines: 2,
+                          onChanged: _onSearchAddress,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: primaryTextColor,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Type landmark or street (e.g. Osu, Oxford St, East Legon)...',
+                            hintStyle: TextStyle(fontSize: 13, color: secondaryTextColor),
+                            filled: true,
+                            fillColor: inputBg,
+                            prefixIcon: const Padding(
+                              padding: EdgeInsets.only(bottom: 24),
+                              child: Icon(Icons.location_on_outlined, size: 20, color: AppTheme.primaryGreen),
+                            ),
+                            suffixIcon: _isSearchingAddress
+                                ? const Padding(
+                                    padding: EdgeInsets.all(12),
+                                    child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryGreen)),
+                                  )
+                                : (_addressController.text.isNotEmpty
+                                    ? IconButton(
+                                        icon: const Icon(Icons.clear_rounded, size: 16),
+                                        onPressed: () => setState(() {
+                                          _addressController.clear();
+                                          _predictions.clear();
+                                        }),
+                                      )
+                                    : null),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(color: borderColor),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 10),
+
+                    // Typeahead Predictive Suggestions Dropdown
+                    if (_predictions.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.3)),
+                        ),
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _predictions.length,
+                          separatorBuilder: (context, index) => Divider(height: 1, color: borderColor),
+                          itemBuilder: (context, i) {
+                            final pred = _predictions[i];
+                            return ListTile(
+                              dense: true,
+                              leading: const Icon(Icons.place_rounded, color: AppTheme.primaryGreen, size: 18),
+                              title: Text(
+                                pred.displayName,
+                                style: TextStyle(
+                                   fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: primaryTextColor,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              trailing: const Icon(Icons.north_west_rounded, size: 14, color: AppTheme.mutedGrey),
+                              onTap: () {
+                                setState(() {
+                                  _addressController.text = pred.displayName;
+                                  _predictions.clear();
+                                });
+                                ref.read(userLocationProvider.notifier).setAddress(
+                                      pred.displayName,
+                                    );
+                                _showSnackBar("Address selected: ${pred.displayName}");
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 12),
                     Text(
-                      'This address is saved as your primary location for food rescue deliveries.',
+                      'This address is saved as your primary location for food rescue deliveries. Predictive search helps pinpoint exact Ghana landmarks.',
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: 12,
                         color: secondaryTextColor,
                         height: 1.4,
                       ),
@@ -416,9 +573,9 @@ class _CustomerSettingsScreenState
                         ),
                         icon: _isSavingAddress
                             ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                            : const Icon(Icons.my_location_rounded, size: 20),
+                            : const Icon(Icons.check_circle_outline_rounded, size: 20),
                         label: Text(
-                          _isSavingAddress ? 'UPDATING...' : 'UPDATE ADDRESS',
+                          _isSavingAddress ? 'SAVING...' : 'SAVE DELIVERY ADDRESS',
                           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 0.5),
                         ),
                       ),

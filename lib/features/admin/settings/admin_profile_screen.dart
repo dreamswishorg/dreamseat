@@ -564,10 +564,10 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
           ),
           const SizedBox(height: 16),
           _buildActionTile(
-            title: "Deactivate Session",
-            subtitle: "Sign out and revoke staff credentials",
+            title: "Log out",
+            subtitle: "Sign out of your account",
             icon: Icons.logout_rounded,
-            onTap: _onDeactivateAccess,
+            onTap: _onLogout,
             color: AppTheme.errorRed,
           ),
         ],
@@ -734,19 +734,19 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SessionHistoryScreen()));
   }
 
-  void _onDeactivateAccess() async {
+  void _onLogout() async {
     final navigator = Navigator.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Sign Out / Deactivate Session', style: TextStyle(fontWeight: FontWeight.w900)),
-        content: const Text('Are you sure you want to sign out and end your active staff session?'),
+        title: const Text('Log out', style: TextStyle(fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
+        content: const Text('Are you sure you want to log out?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel', style: TextStyle(color: AppTheme.mutedGrey)),
+            child: const Text('Cancel', style: TextStyle(color: AppTheme.mutedGrey, fontWeight: FontWeight.w600)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -754,8 +754,9 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
               backgroundColor: AppTheme.errorRed,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
             ),
-            child: const Text('Sign Out'),
+            child: const Text('Log out', style: TextStyle(fontWeight: FontWeight.w800)),
           ),
         ],
       ),
