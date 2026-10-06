@@ -33,15 +33,17 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
     final state = ref.watch(appStateProvider);
     final broadcasts = state.broadcasts;
 
+    final isMobile = MediaQuery.of(context).size.width < 900;
+
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(32, 12, 32, 32),
+        padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 12, 32, 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // ── Hero Banner ─────────────────────────────────────────────
-            _buildHeroHeader(state),
+            _buildHeroHeader(state, isMobile),
             const SizedBox(height: 24),
 
             // ── Responsive Layout ───────────────────────────────────────
@@ -90,12 +92,12 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
     );
   }
 
-  Widget _buildHeroHeader(AppState state) {
+  Widget _buildHeroHeader(AppState state, bool isMobile) {
     final activeCustomers = state.users.where((u) => u.role == 'customer').length;
     final totalReach = activeCustomers + state.businesses.length;
 
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(isMobile ? 18 : 32),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
@@ -114,73 +116,123 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryGreen.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.3)),
+          if (isMobile) ...[
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.3)),
+                  ),
+                  child: const Icon(Icons.campaign_rounded, color: AppTheme.primaryGreen, size: 24),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Broadcast Engine",
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: -0.5,
+                        ),
                       ),
-                      child: const Icon(Icons.campaign_rounded, color: AppTheme.primaryGreen, size: 28),
-                    ),
-                    const SizedBox(width: 18),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Enterprise Broadcast Engine",
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: -0.5,
+                      const SizedBox(height: 2),
+                      Text(
+                        "Real-time notifications & alerts",
+                        style: TextStyle(fontSize: 11.5, color: Colors.white.withValues(alpha: 0.7)),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.3)),
+                  ),
+                  child: const Text(
+                    "LIVE",
+                    style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.w900, fontSize: 10),
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryGreen.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.3)),
+                        ),
+                        child: const Icon(Icons.campaign_rounded, color: AppTheme.primaryGreen, size: 28),
+                      ),
+                      const SizedBox(width: 18),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Enterprise Broadcast Engine",
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: -0.5,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "Dispatch real-time push notifications and email alerts across your global ecosystem.",
-                            style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.7), height: 1.35),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            Text(
+                              "Dispatch real-time push notifications and email alerts across your global ecosystem.",
+                              style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.7), height: 1.35),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.3)),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.check_circle_rounded, color: AppTheme.primaryGreen, size: 14),
-                    SizedBox(width: 6),
-                    Text(
-                      "ENGINE ONLINE",
-                      style: TextStyle(
-                        color: AppTheme.primaryGreen,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 10.5,
-                        letterSpacing: 0.8,
+                const SizedBox(width: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.3)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.check_circle_rounded, color: AppTheme.primaryGreen, size: 14),
+                      SizedBox(width: 6),
+                      Text(
+                        "ENGINE ONLINE",
+                        style: TextStyle(
+                          color: AppTheme.primaryGreen,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 10.5,
+                          letterSpacing: 0.8,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
           const SizedBox(height: 24),
           Divider(color: Colors.white.withValues(alpha: 0.08)),
           const SizedBox(height: 20),

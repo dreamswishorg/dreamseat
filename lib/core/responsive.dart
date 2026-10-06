@@ -52,15 +52,14 @@ class ResponsiveAppWrapper extends StatelessWidget {
     if (child == null) return const SizedBox.shrink();
 
     final mediaQuery = MediaQuery.of(context);
-    // Comfortably boost text scaling by ~12% across the whole app for all users
-    // (Customers, Store Owners, Admins) for crisp, effortless readability.
-    final baseScale = mediaQuery.textScaler.scale(1.0);
-    final boostedTextScaler = TextScaler.linear(
-      (baseScale * 1.12).clamp(1.10, 1.45),
+    // Maintain clean, balanced text scaling without causing card or table overflow on mobile
+    final clampedTextScaler = mediaQuery.textScaler.clamp(
+      minScaleFactor: 0.90,
+      maxScaleFactor: 1.15,
     );
 
     return MediaQuery(
-      data: mediaQuery.copyWith(textScaler: boostedTextScaler),
+      data: mediaQuery.copyWith(textScaler: clampedTextScaler),
       child: LayoutBuilder(
         builder: (context, constraints) {
           return child!;

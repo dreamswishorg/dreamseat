@@ -34,8 +34,11 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
 
     final list = allList.skip(_currentPage * _itemsPerPage).take(_itemsPerPage).toList();
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 800;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 12, 32, 32),
+      padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 12, 32, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

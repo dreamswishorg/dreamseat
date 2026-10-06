@@ -132,7 +132,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             )
           : null,
       appBar: AppBar(
-        toolbarHeight: 76,
+        toolbarHeight: isWide ? 76 : 60,
         backgroundColor: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF0F172A)
             : Colors.white,
@@ -146,176 +146,182 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             height: 1,
           ),
         ),
-        title: Row(
-          children: [
-            if (isWide) ...[
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppTheme.primaryGreen, AppTheme.secondaryGreen],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryGreen.withValues(alpha: 0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: Image.asset('assets/images/logo.jpg', height: 22, width: 22, fit: BoxFit.cover),
-                ),
-              ),
-              const SizedBox(width: 14),
-            ],
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                      decoration: BoxDecoration(
-                        color: isSuperAdmin
-                            ? AppTheme.errorRed.withValues(alpha: 0.08)
-                            : AppTheme.primaryGreen.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(4),
+        title: isWide
+            ? Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppTheme.primaryGreen, AppTheme.secondaryGreen],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                      child: Text(
-                        isSuperAdmin ? "SUPERADMIN" : "OPERATIONS",
-                        style: TextStyle(
-                          fontSize: 8,
-                          fontWeight: FontWeight.w900,
-                          color: isSuperAdmin ? AppTheme.errorRed : AppTheme.primaryGreen,
-                          letterSpacing: 0.5,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primaryGreen.withValues(alpha: 0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(width: 6),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      size: 12,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white.withValues(alpha: 0.3)
-                          : AppTheme.mutedGrey,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: Image.asset('assets/images/logo.jpg', height: 22, width: 22, fit: BoxFit.cover),
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      (_tabTitles[_currentTab] ?? "Overview").toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 8,
-                        fontWeight: FontWeight.w800,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white.withValues(alpha: 0.4)
-                            : AppTheme.mutedGrey,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  "DreamEats HQ",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.charcoal,
-                    fontSize: 18,
-                    letterSpacing: -0.5,
                   ),
-                ),
-              ],
-            ),
-
-            const Spacer(),
-
-            if (isWide) ...[
-              Container(
-                width: 280,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? const Color(0xFF1E293B)
-                      : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : const Color(0xFFE2E8F0),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const SizedBox(width: 10),
-                    Icon(
-                      Icons.search_rounded,
-                      size: 16,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white.withValues(alpha: 0.4)
-                          : AppTheme.mutedGrey,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        onSubmitted: _handleSearch,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.charcoal,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: "Search records...",
-                          hintStyle: TextStyle(
-                            fontSize: 11,
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? Colors.white.withValues(alpha: 0.4)
-                                : AppTheme.mutedGrey,
-                            fontWeight: FontWeight.w500,
+                  const SizedBox(width: 14),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                            decoration: BoxDecoration(
+                              color: isSuperAdmin
+                                  ? AppTheme.errorRed.withValues(alpha: 0.08)
+                                  : AppTheme.primaryGreen.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              isSuperAdmin ? "SUPERADMIN" : "OPERATIONS",
+                              style: TextStyle(
+                                fontSize: 8,
+                                fontWeight: FontWeight.w900,
+                                color: isSuperAdmin ? AppTheme.errorRed : AppTheme.primaryGreen,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
                           ),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                          const SizedBox(width: 6),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            size: 12,
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white.withValues(alpha: 0.3)
+                                : AppTheme.mutedGrey,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            (_tabTitles[_currentTab] ?? "Overview").toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.w800,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white.withValues(alpha: 0.4)
+                                  : AppTheme.mutedGrey,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        "DreamEats HQ",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.charcoal,
+                          fontSize: 18,
+                          letterSpacing: -0.5,
                         ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Container(
+                    width: 280,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF1E293B)
+                          : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : const Color(0xFFE2E8F0),
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                      margin: const EdgeInsets.only(right: 6),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(5),
-                        border: Border.all(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white.withValues(alpha: 0.05)
-                              : const Color(0xFFE2E8F0),
-                        ),
-                      ),
-                      child: Text(
-                        "⌘K",
-                        style: TextStyle(
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.bold,
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 10),
+                        Icon(
+                          Icons.search_rounded,
+                          size: 16,
                           color: Theme.of(context).brightness == Brightness.dark
                               ? Colors.white.withValues(alpha: 0.4)
                               : AppTheme.mutedGrey,
                         ),
-                      ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            onSubmitted: _handleSearch,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.charcoal,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: "Search records...",
+                              hintStyle: TextStyle(
+                                fontSize: 11,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white.withValues(alpha: 0.4)
+                                    : AppTheme.mutedGrey,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                          margin: const EdgeInsets.only(right: 6),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(5),
+                            border: Border.all(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white.withValues(alpha: 0.05)
+                                  : const Color(0xFFE2E8F0),
+                            ),
+                          ),
+                          child: Text(
+                            "⌘K",
+                            style: TextStyle(
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white.withValues(alpha: 0.4)
+                                  : AppTheme.mutedGrey,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
+                  const SizedBox(width: 16),
+                ],
+              )
+            : Text(
+                _tabTitles[_currentTab] ?? "DreamEats HQ",
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.charcoal,
+                  fontSize: 16.5,
+                  letterSpacing: -0.3,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(width: 16),
-            ],
-          ],
-        ),
         actions: [
           if (isWide) ...[
             _HeaderAction(
@@ -350,26 +356,41 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   ? Colors.white.withValues(alpha: 0.08)
                   : const Color(0xFFE2E8F0),
             ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CustomerNavigation()),
+                );
+              },
+              icon: const Icon(Icons.storefront_rounded, size: 16),
+              label: const Text("Customer App"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryGreen,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                elevation: 0,
+              ),
+            ),
+            const SizedBox(width: 12),
           ],
 
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CustomerNavigation()),
-              );
-            },
-            icon: const Icon(Icons.storefront_rounded, size: 16),
-            label: Text(isWide ? "Customer App" : "App"),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryGreen,
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: isWide ? 14 : 10, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              elevation: 0,
+          if (!isWide) ...[
+            IconButton(
+              icon: Icon(
+                state.themeMode == ThemeMode.light ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+                size: 20,
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : AppTheme.charcoal,
+              ),
+              onPressed: () {
+                ref.read(appStateProvider.notifier).setThemeMode(
+                  state.themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light,
+                );
+              },
+              tooltip: "Toggle Theme",
             ),
-          ),
-          const SizedBox(width: 12),
+          ],
 
           PopupMenuButton<int>(
             offset: const Offset(0, 60),
@@ -507,37 +528,90 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               const PopupMenuItem(value: 2, child: PopupItem(icon: Icons.logout_rounded, label: "Terminate Session", color: AppTheme.errorRed)),
             ],
             child: Padding(
-              padding: const EdgeInsets.only(right: 24),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.white.withValues(alpha: 0.04)
-                      : Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : const Color(0xFFE2E8F0),
-                  ),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 2)),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Stack(
+              padding: EdgeInsets.only(right: isWide ? 24 : 14),
+              child: isWide
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white.withValues(alpha: 0.04)
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : const Color(0xFFE2E8F0),
+                        ),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 2)),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Stack(
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: isSuperAdmin ? AppTheme.errorRed : AppTheme.primaryGreen,
+                                radius: 14,
+                                child: Text(
+                                  state.currentUser?.name[0].toUpperCase() ?? 'A',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                right: 0,
+                                bottom: 0,
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primaryGreen,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 1.5),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Text(
+                              state.currentUser?.name ?? 'Admin',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.95) : AppTheme.charcoal,
+                                letterSpacing: -0.2,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 16,
+                            color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.5) : AppTheme.mutedGrey,
+                          ),
+                        ],
+                      ),
+                    )
+                  : Stack(
                       children: [
                         CircleAvatar(
                           backgroundColor: isSuperAdmin ? AppTheme.errorRed : AppTheme.primaryGreen,
-                          radius: 14,
+                          radius: 17,
                           child: Text(
                             state.currentUser?.name[0].toUpperCase() ?? 'A',
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
-                              fontSize: 11,
+                              fontSize: 13,
                             ),
                           ),
                         ),
@@ -545,40 +619,22 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                           right: 0,
                           bottom: 0,
                           child: Container(
-                            width: 8,
-                            height: 8,
+                            width: 10,
+                            height: 10,
                             decoration: BoxDecoration(
                               color: AppTheme.primaryGreen,
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 1.5),
+                              border: Border.all(
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF0F172A)
+                                    : Colors.white,
+                                width: 2,
+                              ),
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(width: 10),
-                    Flexible(
-                      child: Text(
-                        state.currentUser?.name ?? 'Admin',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.95) : AppTheme.charcoal,
-                          letterSpacing: -0.2,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      size: 16,
-                      color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.5) : AppTheme.mutedGrey,
-                    ),
-                  ],
-                ),
-              ),
             ),
           ),
         ],

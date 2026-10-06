@@ -33,26 +33,36 @@ class _TabSupportState extends ConsumerState<TabSupport> {
         ? tickets.firstWhere((t) => t.id == _selectedTicket!.id, orElse: () => _selectedTicket!)
         : null;
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 850;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 12, 32, 32),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Ticket Queue
-          Expanded(
-            flex: 4,
-            child: _buildQueue(tickets),
-          ),
-          const SizedBox(width: 32),
-          // Chat / Detail
-          Expanded(
-            flex: 6,
-            child: activeTicket == null
-                ? _buildEmptyDetail()
-                : _buildTicketDetail(activeTicket),
-          ),
-        ],
-      ),
+      padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 12, 32, 32),
+      child: isMobile
+          ? (activeTicket == null
+              ? _buildQueue(tickets)
+              : _buildTicketDetail(
+                  activeTicket,
+                  onBack: () => setState(() => _selectedTicket = null),
+                ))
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Ticket Queue
+                Expanded(
+                  flex: 4,
+                  child: _buildQueue(tickets),
+                ),
+                const SizedBox(width: 32),
+                // Chat / Detail
+                Expanded(
+                  flex: 6,
+                  child: activeTicket == null
+                      ? _buildEmptyDetail()
+                      : _buildTicketDetail(activeTicket),
+                ),
+              ],
+            ),
     );
   }
 
@@ -67,7 +77,7 @@ class _TabSupportState extends ConsumerState<TabSupport> {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(20),
             decoration: const BoxDecoration(color: Color(0xFFF8FAFC), border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9)))),
             child: const Row(
               children: [
@@ -95,9 +105,9 @@ class _TabSupportState extends ConsumerState<TabSupport> {
                           });
                         },
                         tileColor: isSel ? AppTheme.lightGreenBg.withValues(alpha: 0.5) : null,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        title: Text(t.subject, style: TextStyle(fontWeight: isSel ? FontWeight.w900 : FontWeight.w700, fontSize: 14)),
-                        subtitle: Text("${t.userName} • ${DateFormat('MMM d').format(t.createdAt)}", style: const TextStyle(fontSize: 12)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        title: Text(t.subject, style: TextStyle(fontWeight: isSel ? FontWeight.w900 : FontWeight.w700, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        subtitle: Text("${t.userName} • ${DateFormat('MMM d').format(t.createdAt)}", style: const TextStyle(fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
                         trailing: _StatusBadge(status: t.status),
                       );
                     },
@@ -128,7 +138,7 @@ class _TabSupportState extends ConsumerState<TabSupport> {
     );
   }
 
-  Widget _buildTicketDetail(SupportTicket t) {
+  Widget _buildTicketDetail(SupportTicket t, {VoidCallback? onBack}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -147,44 +157,55 @@ class _TabSupportState extends ConsumerState<TabSupport> {
         children: [
           // Detail Header
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(16),
             decoration: const BoxDecoration(
               color: Colors.white,
               border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
             ),
             child: Row(
               children: [
+                if (onBack != null) ...[
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: onBack,
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 CircleAvatar(
+                  radius: 18,
                   backgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.1),
                   foregroundColor: AppTheme.primaryGreen,
                   child: Text(t.userName.isNotEmpty ? t.userName[0].toUpperCase() : 'C'),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(t.subject, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppTheme.charcoal)),
-                      const SizedBox(height: 4),
-                      Text("Customer: ${t.userName} (ID: ${t.userId.substring(0, 8)})", style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 12)),
+                      Text(t.subject, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppTheme.charcoal), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 2),
+                      Text("Customer: ${t.userName}", style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
                     ],
                   ),
                 ),
                 const SizedBox(width: 8),
                 _StatusBadge(status: t.status),
-                const SizedBox(width: 12),
-                if (t.status != 'resolved')
+                if (t.status != 'resolved') ...[
+                  const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () => ref.read(appStateProvider.notifier).resolveTicket(t.id),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryGreen,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
-                    child: const Text("Resolve", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    child: const Text("Resolve", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                   ),
+                ],
               ],
             ),
           ),

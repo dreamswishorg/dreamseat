@@ -27,8 +27,46 @@ class _TabMapState extends ConsumerState<TabMap> {
     final state = ref.watch(appStateProvider);
     final markers = _buildMarkers(state);
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 850;
+
+    final mapWidget = Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(isMobile ? 20 : 32),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 2),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 10))
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: FlutterMap(
+        mapController: _mapController,
+        options: MapOptions(
+          initialCenter: _kAccra,
+          initialZoom: 13.0,
+          maxZoom: 18,
+          minZoom: 10,
+        ),
+        children: [
+          // OpenStreetMap Tiles (CartoDB Positron - Clean/Silver style)
+          TileLayer(
+            urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+            userAgentPackageName: 'com.dreameats.app',
+            subdomains: const ['a', 'b', 'c', 'd'],
+            retinaMode: RetinaMode.isHighDensity(context),
+            tileProvider: CancellableNetworkTileProvider(),
+          ),
+
+          // Markers Layer (Hubs)
+          MarkerLayer(
+            markers: markers,
+          ),
+        ],
+      ),
+    );
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 12, 32, 32),
+      padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 12, 32, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -41,61 +79,42 @@ class _TabMapState extends ConsumerState<TabMap> {
           const SizedBox(height: 16),
 
           Expanded(
-            child: Row(
-              children: [
-                // Interactive OpenStreetMap (Free Forever)
-                Expanded(
-                  flex: 3,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(32),
-                      border: Border.all(color: const Color(0xFFE2E8F0), width: 2),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 10))
-                      ],
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: FlutterMap(
-                      mapController: _mapController,
-                      options: MapOptions(
-                        initialCenter: _kAccra,
-                        initialZoom: 13.0,
-                        maxZoom: 18,
-                        minZoom: 10,
-                      ),
+            child: isMobile
+                ? SingleChildScrollView(
+                    child: Column(
                       children: [
-                        // OpenStreetMap Tiles (CartoDB Positron - Clean/Silver style)
-                        TileLayer(
-                          urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-                          userAgentPackageName: 'com.dreameats.app',
-                          subdomains: const ['a', 'b', 'c', 'd'],
-                          retinaMode: RetinaMode.isHighDensity(context),
-                          tileProvider: CancellableNetworkTileProvider(),
-                        ),
-
-                        // Markers Layer (Hubs)
-                        MarkerLayer(
-                          markers: markers,
-                        ),
+                        SizedBox(height: 280, child: mapWidget),
+                        const SizedBox(height: 16),
+                        _buildTelemetryPanel(state),
+                        if (_selectedBusinessId != null) ...[
+                          const SizedBox(height: 16),
+                          _buildInspectorPanel(state),
+                        ],
                       ],
                     ),
-                  ),
-                ),
-                const SizedBox(width: 32),
-
-                // Analytics Sidebar
-                Expanded(
-                  flex: 2,
-                  child: Column(
+                  )
+                : Row(
                     children: [
-                      _buildTelemetryPanel(state),
-                      const SizedBox(height: 24),
-                      Expanded(child: _buildInspectorPanel(state)),
+                      // Interactive OpenStreetMap (Free Forever)
+                      Expanded(
+                        flex: 3,
+                        child: mapWidget,
+                      ),
+                      const SizedBox(width: 32),
+
+                      // Analytics Sidebar
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          children: [
+                            _buildTelemetryPanel(state),
+                            const SizedBox(height: 24),
+                            Expanded(child: _buildInspectorPanel(state)),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
-                ),
-              ],
-            ),
           ),
         ],
       ),

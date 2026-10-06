@@ -19,8 +19,9 @@ class _TabVouchersState extends ConsumerState<TabVouchers> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(appStateProvider);
+    final isMobile = MediaQuery.of(context).size.width < 700;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 12, 32, 32),
+      padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 12, 32, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -49,11 +50,12 @@ class _TabVouchersState extends ConsumerState<TabVouchers> {
                 ? const NoDataState(msg: "No active vouchers found.")
                 : LayoutBuilder(
                     builder: (context, constraints) {
+                      final isCompact = constraints.maxWidth < 600;
                       final crossAxisCount = constraints.maxWidth > 1400 ? 4 : (constraints.maxWidth > 900 ? 3 : (constraints.maxWidth > 600 ? 2 : 1));
                       return GridView.builder(
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: crossAxisCount,
-                          childAspectRatio: 3.0,
+                          childAspectRatio: isCompact ? 2.2 : 2.8,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
                         ),

@@ -63,28 +63,63 @@ class AdminSidebar extends ConsumerWidget {
       color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white,
       child: Column(
         children: [
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const CustomerNavigation()),
-                );
-              },
-              icon: const Icon(Icons.storefront_rounded, size: 18),
-              label: const Text("Use Customer App", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryGreen,
-                foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(44),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 0,
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.asset('assets/images/logo.jpg', height: 32, width: 32, fit: BoxFit.cover),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "DreamEats HQ",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 15.5,
+                            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.charcoal,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          user?.role == 'super_admin' ? "Super Admin" : "Operations",
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: user?.role == 'super_admin' ? AppTheme.errorRed : AppTheme.primaryGreen,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.storefront_outlined, size: 20),
+                    tooltip: "Customer App",
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const CustomerNavigation()),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          Divider(
+            height: 1,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white.withValues(alpha: 0.06)
+                : const Color(0xFFF1F5F9),
+          ),
+          const SizedBox(height: 8),
           Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),

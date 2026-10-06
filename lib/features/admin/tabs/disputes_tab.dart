@@ -11,8 +11,9 @@ class TabDisputes extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final disputes = ref.watch(appStateProvider.select((s) => s.disputes));
+    final isMobile = MediaQuery.of(context).size.width < 800;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 12, 32, 32),
+      padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 12, 32, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -205,7 +205,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
           // ── KPI Metrics Grid ─────────────────────────────────────────
           GridView.extent(
             maxCrossAxisExtent: 360,
-            mainAxisExtent: 155,
+            mainAxisExtent: isMobile ? 172 : 155,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: 16,
@@ -465,23 +465,28 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                    child: const Icon(Icons.public_rounded, color: Colors.white, size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Planetary Impact Telemetry", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
-                      Text("Quantified environmental resources preserved via DreamEats rescues", style: TextStyle(color: Colors.white70, fontSize: 11)),
-                    ],
-                  ),
-                ],
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+                      child: const Icon(Icons.public_rounded, color: Colors.white, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Planetary Impact Telemetry", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          Text("Quantified environmental resources preserved via DreamEats rescues", style: TextStyle(color: Colors.white70, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
@@ -631,12 +636,14 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
                 child: const Icon(Icons.access_time_filled_rounded, color: Colors.teal, size: 20),
               ),
               const SizedBox(width: 12),
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Rescue Velocity & Peak Pickup Windows", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.charcoal)),
-                  Text("Traffic distribution analysis of customer collection hours.", style: TextStyle(fontSize: 11, color: AppTheme.mutedGrey)),
-                ],
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Rescue Velocity & Peak Pickup Windows", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.charcoal), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text("Traffic distribution analysis of customer collection hours.", style: TextStyle(fontSize: 11, color: AppTheme.mutedGrey), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ],
+                ),
               ),
             ],
           ),
@@ -661,14 +668,19 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Icon(icon, size: 14, color: color),
-                const SizedBox(width: 6),
-                Text(label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.charcoal)),
-              ],
+            Expanded(
+              child: Row(
+                children: [
+                  Icon(icon, size: 14, color: color),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.charcoal), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ),
+                ],
+              ),
             ),
-            Text("$count rescues (${(percent * 100).toStringAsFixed(1)}%)", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: color)),
+            const SizedBox(width: 8),
+            Text("$count (${(percent * 100).toStringAsFixed(1)}%)", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: color)),
           ],
         ),
         const SizedBox(height: 6),

@@ -30,8 +30,10 @@ class _TabConfigState extends ConsumerState<TabConfig> {
     final state = ref.watch(appStateProvider);
     final settings = state.platformSettings;
 
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(32, 12, 32, 48),
+      padding: isMobile ? const EdgeInsets.fromLTRB(16, 12, 16, 32) : const EdgeInsets.fromLTRB(32, 12, 32, 48),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -44,6 +46,7 @@ class _TabConfigState extends ConsumerState<TabConfig> {
               _buildConfigSection(
                 title: "Platform Governance",
                 description: "Master switches for ecosystem availability and operational state.",
+                isMobile: isMobile,
                 children: [
                   _buildToggleTile(
                     title: "Maintenance Mode",
@@ -61,6 +64,7 @@ class _TabConfigState extends ConsumerState<TabConfig> {
               _buildConfigSection(
                 title: "Financial Engine",
                 description: "Configure system-wide take rates and billing parameters.",
+                isMobile: isMobile,
                 children: [
                   _buildSliderTile(
                     title: "System Commission Rate",
@@ -77,6 +81,7 @@ class _TabConfigState extends ConsumerState<TabConfig> {
               _buildConfigSection(
                 title: "Client Compliance",
                 description: "Enforce application integrity and mandatory software updates.",
+                isMobile: isMobile,
                 children: [
                   _buildInputTile(
                     title: "Minimum Software Version",
@@ -84,6 +89,7 @@ class _TabConfigState extends ConsumerState<TabConfig> {
                     controller: _versionController,
                     icon: Icons.system_update_rounded,
                     buttonLabel: "Apply Force",
+                    isMobile: isMobile,
                     onPressed: () => _handleUpdateVersion(_versionController.text),
                   ),
                 ],
@@ -93,6 +99,7 @@ class _TabConfigState extends ConsumerState<TabConfig> {
               _buildConfigSection(
                 title: "Infrastructure Health",
                 description: "Real-time status of underlying technical service nodes.",
+                isMobile: isMobile,
                 children: [
                   _buildStatusTile("Supabase Data Cluster", true),
                   const Divider(height: 1),
@@ -108,9 +115,9 @@ class _TabConfigState extends ConsumerState<TabConfig> {
     );
   }
 
-  Widget _buildConfigSection({required String title, required String description, required List<Widget> children}) {
+  Widget _buildConfigSection({required String title, required String description, required List<Widget> children, required bool isMobile}) {
     return Container(
-      width: 500, // Fixed width for clean multi-column wrapping
+      width: isMobile ? double.infinity : 500, // Responsive width for clean multi-column wrapping
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -236,6 +243,7 @@ class _TabConfigState extends ConsumerState<TabConfig> {
     required TextEditingController controller,
     required IconData icon,
     required String buttonLabel,
+    required bool isMobile,
     required VoidCallback onPressed,
   }) {
     return Column(
@@ -260,34 +268,61 @@ class _TabConfigState extends ConsumerState<TabConfig> {
             ),
           ],
         ),
-        const SizedBox(height: 24),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: controller,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-                decoration: InputDecoration(
-                  hintText: "e.g. 1.0.4",
-                  filled: true,
-                  fillColor: const Color(0xFFF8FAFC),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                ),
-              ),
+        const SizedBox(height: 20),
+        if (isMobile) ...[
+          TextField(
+            controller: controller,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+            decoration: InputDecoration(
+              hintText: "e.g. 1.0.4",
+              filled: true,
+              fillColor: const Color(0xFFF8FAFC),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
-            const SizedBox(width: 16),
-            ElevatedButton(
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
               onPressed: onPressed,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.charcoal,
-                minimumSize: const Size(140, 52),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text("Apply Update"),
+              child: Text(buttonLabel),
             ),
-          ],
-        ),
+          ),
+        ] else ...[
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  decoration: InputDecoration(
+                    hintText: "e.g. 1.0.4",
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFC),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              ElevatedButton(
+                onPressed: onPressed,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.charcoal,
+                  minimumSize: const Size(140, 52),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text(buttonLabel),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }

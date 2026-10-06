@@ -40,8 +40,11 @@ class _TabAuditState extends ConsumerState<TabAudit> {
       return matchesSearch && matchesActor && matchesAction;
     }).toList();
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 900;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 12, 32, 32),
+      padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 12, 32, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -49,20 +52,23 @@ class _TabAuditState extends ConsumerState<TabAudit> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "System Audit Trail",
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.5),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "Monitor staff settings changes, security updates, and administrative overrides.",
-                    style: TextStyle(fontSize: 13, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "System Audit Trail",
+                      style: TextStyle(fontSize: isMobile ? 18 : 22, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.5),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      "Monitor staff settings changes, security updates, and administrative overrides.",
+                      style: TextStyle(fontSize: 12, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 12),
               IconButton.filledTonal(
                 onPressed: _isRefreshing
                     ? null

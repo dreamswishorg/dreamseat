@@ -13,8 +13,9 @@ class TabPulse extends ConsumerWidget {
     // source: audit_logs filtered for important events
     final logs = ref.watch(appStateProvider.select((s) => s.auditLogs));
 
+    final isMobile = MediaQuery.of(context).size.width < 800;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 12, 32, 32),
+      padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 12, 32, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
