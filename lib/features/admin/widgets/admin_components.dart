@@ -87,13 +87,13 @@ class MetricCard extends StatelessWidget {
                             children: [
                               const Icon(Icons.trending_up_rounded, size: 12, color: AppTheme.primaryGreen),
                               const SizedBox(width: 4),
-                              Flexible(
+                                Flexible(
                                 child: Text(
                                   trend!,
                                   style: const TextStyle(
                                     color: AppTheme.primaryGreen,
                                     fontWeight: FontWeight.w900,
-                                    fontSize: 10,
+                                    fontSize: 11.5,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -110,7 +110,7 @@ class MetricCard extends StatelessWidget {
                   child: Text(
                     value,
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: 22,
                       fontWeight: FontWeight.w900,
                       color: AppTheme.charcoal,
                       letterSpacing: -0.5,
@@ -121,7 +121,7 @@ class MetricCard extends StatelessWidget {
                 Text(
                   label,
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.mutedGrey,
                   ),
@@ -139,7 +139,7 @@ class MetricCard extends StatelessWidget {
                     child: Text(
                       subtitle!,
                       style: TextStyle(
-                        fontSize: 9.5,
+                        fontSize: 11,
                         fontWeight: FontWeight.bold,
                         color: color,
                       ),
