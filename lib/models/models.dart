@@ -726,16 +726,18 @@ class AuditLog {
   });
 
   factory AuditLog.fromJson(Map<String, dynamic> json) => AuditLog(
-        id: json['id'],
-        actorId: json['actor_id'],
-        actorName: json['actor_name'] ?? 'System',
-        actorRole: json['actor_role'] ?? 'unknown',
-        action: json['action'],
-        entityType: json['entity_type'],
-        entityId: json['entity_id'] ?? '',
-        description: json['description'],
-        metadata: json['metadata'] ?? {},
-        createdAt: DateTime.parse(json['created_at']),
+        id: json['id']?.toString() ?? '',
+        actorId: json['actor_id']?.toString() ?? '',
+        actorName: json['actor_name']?.toString() ?? 'System',
+        actorRole: json['actor_role']?.toString() ?? 'unknown',
+        action: json['action']?.toString() ?? 'ACTION',
+        entityType: json['entity_type']?.toString() ?? 'platform',
+        entityId: json['entity_id']?.toString() ?? '',
+        description: json['description']?.toString() ?? '',
+        metadata: json['metadata'] is Map<String, dynamic> ? json['metadata'] as Map<String, dynamic> : {},
+        createdAt: json['created_at'] != null
+            ? (DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now())
+            : DateTime.now(),
       );
 }
 

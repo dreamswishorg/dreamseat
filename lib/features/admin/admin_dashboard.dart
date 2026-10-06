@@ -367,16 +367,12 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             offset: const Offset(0, 60),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
-              side: BorderSide(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : const Color(0xFFE2E8F0),
-              ),
+              side: const BorderSide(color: Color(0xFFE2E8F0)),
             ),
-            color: Theme.of(context).cardColor,
+            color: Colors.white,
             surfaceTintColor: Colors.transparent,
-            elevation: 20,
-            shadowColor: Colors.black.withValues(alpha: 0.15),
+            elevation: 16,
+            shadowColor: Colors.black.withValues(alpha: 0.12),
             onSelected: (v) {
               if (v == 0) Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminProfileScreen()));
               if (v == 1) Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
@@ -388,22 +384,16 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 enabled: false,
                 padding: const EdgeInsets.all(12),
                 child: Container(
-                  width: 240,
+                  width: 250,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: Theme.of(context).brightness == Brightness.dark
-                          ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
-                          : [const Color(0xFFF8FAFC), const Color(0xFFF1F5F9)],
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFF8FAFC), Color(0xFFF1F5F9)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white.withValues(alpha: 0.08)
-                          : const Color(0xFFE2E8F0),
-                    ),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
                   child: Row(
                     children: [
@@ -413,7 +403,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                             backgroundColor: isSuperAdmin ? AppTheme.errorRed : AppTheme.primaryGreen,
                             radius: 20,
                             child: Text(
-                              state.currentUser?.name[0].toUpperCase() ?? 'A',
+                              state.currentUser?.name.isNotEmpty == true ? state.currentUser!.name[0].toUpperCase() : 'A',
                               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16),
                             ),
                           ),
@@ -440,10 +430,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                           children: [
                             Text(
                               state.currentUser?.name ?? 'Admin Profile',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontWeight: FontWeight.w900,
                                 fontSize: 14,
-                                color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.charcoal,
+                                color: AppTheme.charcoal,
                                 letterSpacing: -0.3,
                               ),
                               maxLines: 1,
@@ -492,11 +482,39 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 ),
               ),
               const PopupMenuDivider(),
-              const PopupMenuItem(value: 0, child: PopupItem(icon: Icons.person_outline_rounded, label: "Profile Settings", color: Colors.blue)),
-              const PopupMenuItem(value: 3, child: PopupItem(icon: Icons.storefront_rounded, label: "Switch to Customer App", color: AppTheme.primaryGreen)),
-              const PopupMenuItem(value: 1, child: PopupItem(icon: Icons.help_outline_rounded, label: "Technical Support", color: AppTheme.warningOrange)),
+              const PopupMenuItem(
+                value: 0,
+                child: PopupItem(
+                  icon: Icons.settings_outlined,
+                  label: "Settings",
+                  color: Color(0xFF2563EB),
+                ),
+              ),
+              const PopupMenuItem(
+                value: 3,
+                child: PopupItem(
+                  icon: Icons.storefront_rounded,
+                  label: "Customer App",
+                  color: AppTheme.primaryGreen,
+                ),
+              ),
+              const PopupMenuItem(
+                value: 1,
+                child: PopupItem(
+                  icon: Icons.headset_mic_outlined,
+                  label: "Support",
+                  color: AppTheme.warningOrange,
+                ),
+              ),
               const PopupMenuDivider(),
-              const PopupMenuItem(value: 2, child: PopupItem(icon: Icons.logout_rounded, label: "Terminate Session", color: AppTheme.errorRed)),
+              const PopupMenuItem(
+                value: 2,
+                child: PopupItem(
+                  icon: Icons.logout_rounded,
+                  label: "Logout",
+                  color: AppTheme.errorRed,
+                ),
+              ),
             ],
             child: Padding(
               padding: EdgeInsets.only(right: isWide ? 24 : 14),

@@ -25,7 +25,7 @@ class _TabAuditState extends ConsumerState<TabAudit> {
     final state = ref.watch(appStateProvider);
     final logs = state.auditLogs;
 
-    // Filter logs
+    // Filter logs across all actors (Admin, Merchant, Customer, System)
     final filteredLogs = logs.where((l) {
       final matchesQuery = _query.isEmpty ||
           l.description.toLowerCase().contains(_query.toLowerCase()) ||
@@ -33,8 +33,15 @@ class _TabAuditState extends ConsumerState<TabAudit> {
           l.action.toLowerCase().contains(_query.toLowerCase()) ||
           l.entityId.toLowerCase().contains(_query.toLowerCase());
 
-      final matchesActor = _actorFilter == 'All' || l.actorRole.toLowerCase() == _actorFilter.toLowerCase();
-      final matchesAction = _actionFilter == 'All' || l.action.toLowerCase().contains(_actionFilter.toLowerCase());
+      final actorRole = l.actorRole.toLowerCase();
+      final matchesActor = _actorFilter == 'All' ||
+          (_actorFilter == 'Admin' && (actorRole.contains('admin') || actorRole == 'super_admin')) ||
+          (_actorFilter == 'Merchant' && actorRole.contains('merchant')) ||
+          (_actorFilter == 'Customer' && actorRole.contains('customer')) ||
+          (_actorFilter == 'System' && actorRole.contains('system'));
+
+      final action = l.action.toUpperCase();
+      final matchesAction = _actionFilter == 'All' || action.contains(_actionFilter.toUpperCase());
 
       return matchesQuery && matchesActor && matchesAction;
     }).toList();
@@ -124,14 +131,14 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                         AdminDropdown<String>(
                           label: "Actor Role",
                           value: _actorFilter,
-                          items: const ['All', 'Super_Admin', 'Admin', 'System'],
+                          items: const ['All', 'Admin', 'Merchant', 'Customer', 'System'],
                           onChanged: (val) => setState(() => _actorFilter = val ?? 'All'),
                         ),
                         const SizedBox(width: 14),
                         AdminDropdown<String>(
                           label: "Category",
                           value: _actionFilter,
-                          items: const ['All', 'USER', 'PAYOUT', 'CONFIG', 'BROADCAST', 'SYSTEM'],
+                          items: const ['All', 'ORDER', 'DEAL', 'MERCHANT', 'USER', 'PAYOUT', 'SYSTEM'],
                           onChanged: (val) => setState(() => _actionFilter = val ?? 'All'),
                         ),
                       ]
@@ -145,7 +152,7 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                           child: AdminDropdown<String>(
                             label: "Role",
                             value: _actorFilter,
-                            items: const ['All', 'Super_Admin', 'Admin', 'System'],
+                            items: const ['All', 'Admin', 'Merchant', 'Customer', 'System'],
                             onChanged: (val) => setState(() => _actorFilter = val ?? 'All'),
                           ),
                         ),
@@ -154,7 +161,7 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                           child: AdminDropdown<String>(
                             label: "Category",
                             value: _actionFilter,
-                            items: const ['All', 'USER', 'PAYOUT', 'CONFIG', 'BROADCAST', 'SYSTEM'],
+                            items: const ['All', 'ORDER', 'DEAL', 'MERCHANT', 'USER', 'PAYOUT', 'SYSTEM'],
                             onChanged: (val) => setState(() => _actionFilter = val ?? 'All'),
                           ),
                         ),
@@ -267,18 +274,53 @@ class _TabAuditState extends ConsumerState<TabAudit> {
 
     Color actionColor = AppTheme.primaryGreen;
     IconData actionIcon = Icons.info_outline_rounded;
-    if (log.action.contains('SUSPEND') || log.action.contains('DELETE') || log.action.contains('BAN')) {
+    final act = log.action.toUpperCase();
+
+    if (act.contains('ORDER')) {
+      actionColor = AppTheme.primaryGreen;
+      actionIcon = Icons.shopping_bag_outlined;
+    } else if (act.contains('DEAL')) {
+      actionColor = AppTheme.warningOrange;
+      actionIcon = Icons.local_offer_outlined;
+    } else if (act.contains('MERCHANT')) {
+      actionColor = Colors.purple;
+      actionIcon = Icons.storefront_outlined;
+    } else if (act.contains('USER') || act.contains('PROFILE')) {
+      actionColor = const Color(0xFF2563EB);
+      actionIcon = Icons.person_outline_rounded;
+    } else if (act.contains('SUSPEND') || act.contains('DELETE') || act.contains('BAN') || act.contains('CANCEL')) {
       actionColor = AppTheme.errorRed;
       actionIcon = Icons.gavel_rounded;
-    } else if (log.action.contains('PAYOUT') || log.action.contains('LEDGER')) {
+    } else if (act.contains('PAYOUT') || act.contains('LEDGER')) {
       actionColor = AppTheme.primaryGreen;
       actionIcon = Icons.account_balance_wallet_rounded;
-    } else if (log.action.contains('BROADCAST')) {
-      actionColor = Colors.purple;
+    } else if (act.contains('BROADCAST')) {
+      actionColor = Colors.indigo;
       actionIcon = Icons.campaign_rounded;
-    } else if (log.action.contains('CONFIG') || log.action.contains('SYSTEM')) {
-      actionColor = Colors.blue;
-      actionIcon = Icons.settings_rounded;
+    } else if (act.contains('CONFIG') || act.contains('SYSTEM')) {
+      actionColor = const Color(0xFF0D9488);
+      actionIcon = Icons.settings_suggest_rounded;
+    }
+
+    // Role colors and badge labels
+    Color roleColor = AppTheme.mutedGrey;
+    String roleLabel = log.actorRole.toUpperCase();
+    final role = log.actorRole.toLowerCase();
+    if (role.contains('super')) {
+      roleColor = AppTheme.errorRed;
+      roleLabel = "👑 SUPER ADMIN";
+    } else if (role.contains('admin')) {
+      roleColor = const Color(0xFF2563EB);
+      roleLabel = "🛡️ ADMIN";
+    } else if (role.contains('merchant')) {
+      roleColor = Colors.purple;
+      roleLabel = "🏪 MERCHANT";
+    } else if (role.contains('customer')) {
+      roleColor = AppTheme.warningOrange;
+      roleLabel = "🛍️ CUSTOMER";
+    } else if (role.contains('system')) {
+      roleColor = const Color(0xFF64748B);
+      roleLabel = "⚙️ SYSTEM";
     }
 
     return InkWell(
@@ -295,15 +337,30 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                 style: TextStyle(fontSize: 12.5, color: context.textSecondary, fontWeight: FontWeight.w500),
               ),
             ),
-            // Actor Name + Role
+            // Actor Name + Role Badge
             Expanded(
               flex: 3,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(log.actorName, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: context.textPrimary)),
-                  const SizedBox(height: 2),
-                  Text(log.actorRole.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: context.textSecondary, letterSpacing: 0.5)),
+                  Text(
+                    log.actorName,
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: context.textPrimary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: roleColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      roleLabel,
+                      style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w900, color: roleColor, letterSpacing: 0.4),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -317,7 +374,10 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                   Flexible(
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(color: actionColor.withValues(alpha: context.isDark ? 0.2 : 0.08), borderRadius: BorderRadius.circular(6)),
+                      decoration: BoxDecoration(
+                        color: actionColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
                       child: Text(
                         log.action,
                         style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: actionColor),
@@ -330,7 +390,7 @@ class _TabAuditState extends ConsumerState<TabAudit> {
             ),
             // Target Entity
             Expanded(
-              flex: 3,
+              flex: 2,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -355,7 +415,7 @@ class _TabAuditState extends ConsumerState<TabAudit> {
             ),
             // Details Action
             Expanded(
-              flex: 2,
+              flex: 1,
               child: Align(
                 alignment: Alignment.centerRight,
                 child: IconButton(
@@ -372,6 +432,41 @@ class _TabAuditState extends ConsumerState<TabAudit> {
 
   Widget _buildCompactCard(AuditLog log) {
     final timeStr = DateFormat('MMM d, yyyy • h:mm a').format(log.createdAt);
+
+    Color actionColor = AppTheme.primaryGreen;
+    final act = log.action.toUpperCase();
+    if (act.contains('ORDER')) {
+      actionColor = AppTheme.primaryGreen;
+    } else if (act.contains('DEAL')) {
+      actionColor = AppTheme.warningOrange;
+    } else if (act.contains('MERCHANT')) {
+      actionColor = Colors.purple;
+    } else if (act.contains('USER')) {
+      actionColor = const Color(0xFF2563EB);
+    } else if (act.contains('CANCEL') || act.contains('SUSPEND') || act.contains('BAN')) {
+      actionColor = AppTheme.errorRed;
+    }
+
+    Color roleColor = AppTheme.mutedGrey;
+    String roleLabel = log.actorRole.toUpperCase();
+    final role = log.actorRole.toLowerCase();
+    if (role.contains('super')) {
+      roleColor = AppTheme.errorRed;
+      roleLabel = "SUPER ADMIN";
+    } else if (role.contains('admin')) {
+      roleColor = const Color(0xFF2563EB);
+      roleLabel = "ADMIN";
+    } else if (role.contains('merchant')) {
+      roleColor = Colors.purple;
+      roleLabel = "MERCHANT";
+    } else if (role.contains('customer')) {
+      roleColor = AppTheme.warningOrange;
+      roleLabel = "CUSTOMER";
+    } else if (role.contains('system')) {
+      roleColor = const Color(0xFF64748B);
+      roleLabel = "SYSTEM";
+    }
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -383,22 +478,46 @@ class _TabAuditState extends ConsumerState<TabAudit> {
               Text(timeStr, style: TextStyle(fontSize: 11, color: context.textSecondary, fontWeight: FontWeight.bold)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(color: context.cardSubtleColor, borderRadius: BorderRadius.circular(6)),
-                child: Text(log.action, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: context.textPrimary)),
+                decoration: BoxDecoration(
+                  color: actionColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  log.action,
+                  style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w900, color: actionColor),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(log.description, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: context.textPrimary)),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Actor: ${log.actorName} (${log.actorRole})", style: TextStyle(fontSize: 11.5, color: context.textSecondary, fontWeight: FontWeight.w500)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: roleColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  roleLabel,
+                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: roleColor),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  log.actorName,
+                  style: TextStyle(fontSize: 11.5, color: context.textSecondary, fontWeight: FontWeight.w600),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
               TextButton(
                 onPressed: () => _showAuditDetails(log),
                 style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
-                child: const Text("Details", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
+                child: const Text("Details", style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
               ),
             ],
           ),
