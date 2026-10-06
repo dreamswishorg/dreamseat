@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 48" width="140" height="48">
+  <rect width="140" height="48" rx="10" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+  <!-- Interlocking AT Circles/Wave -->
+  <circle cx="30" cy="24" r="14" fill="#E4002B" fill-opacity="0.9"/>
+  <circle cx="42" cy="24" r="14" fill="#005BAA" fill-opacity="0.9"/>
+  <path d="M 36 14 A 14 14 0 0 1 36 34 A 14 14 0 0 1 36 14 Z" fill="#7C2A86"/>
+  <!-- Text -->
+  <text x="92" y="26" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="900" fill="#0F172A" text-anchor="middle">AT Money</text>
+  <text x="92" y="38" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="700" fill="#64748B" text-anchor="middle" letter-spacing="0.5">AIRTELTIGO</text>
+</svg>

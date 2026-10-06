@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 48" width="140" height="48">
+  <rect width="140" height="48" rx="10" fill="#0F172A" stroke="#334155" stroke-width="1.5"/>
+  <!-- VISA Logo -->
+  <text x="42" y="31" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-style="italic" font-weight="900" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">VISA</text>
+  <path d="M 26 18 L 30 18 L 28 31 L 24 31 Z" fill="#F7B600"/>
+  <!-- Divider -->
+  <line x1="72" y1="12" x2="72" y2="36" stroke="#334155" stroke-width="1.5"/>
+  <!-- Mastercard Logo -->
+  <circle cx="96" cy="24" r="12" fill="#EB001B"/>
+  <circle cx="110" cy="24" r="12" fill="#F79E1B" fill-opacity="0.85"/>
+  <path d="M 103 14 A 12 12 0 0 1 103 34 A 12 12 0 0 1 103 14 Z" fill="#FF5F00"/>
+</svg>

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "194348582720",
+    "project_id": "dreamseat-75ed1",
+    "storage_bucket": "dreamseat-75ed1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:194348582720:android:d3222df5965f6a7c7adca5",
+        "android_client_info": {
+          "package_name": "com.dreameats.dreameats"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAeF9FN6BCXGQvRMSHU8cHwehz1mwzKWHY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

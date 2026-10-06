@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 48" width="140" height="48">
+  <!-- Yellow Pill Background -->
+  <rect width="140" height="48" rx="10" fill="#FFCC00" stroke="#E6B800" stroke-width="1.5"/>
+  <!-- MTN Blue Oval -->
+  <ellipse cx="38" cy="24" rx="26" ry="16" fill="#004F9F"/>
+  <path d="M 18 24 C 18 14, 58 14, 58 24 C 58 34, 18 34, 18 24 Z" fill="none" stroke="#FFCC00" stroke-width="1.5"/>
+  <text x="38" y="28" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="900" fill="#FFFFFF" text-anchor="middle" letter-spacing="0.5">MTN</text>
+  <!-- MoMo Typography -->
+  <text x="96" y="30" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="900" fill="#004F9F" text-anchor="middle" letter-spacing="0.5">MoMo</text>
+</svg>
