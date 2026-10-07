@@ -14,6 +14,8 @@ class BiometricSwitchTile extends ConsumerStatefulWidget {
 class _BiometricSwitchTileState extends ConsumerState<BiometricSwitchTile> {
   bool _isEnabled = false;
   bool _isSupported = false;
+  String _biometricLabel = "Biometric Sign-In";
+  IconData _biometricIcon = Icons.fingerprint_rounded;
 
   @override
   void initState() {
@@ -24,10 +26,16 @@ class _BiometricSwitchTileState extends ConsumerState<BiometricSwitchTile> {
   Future<void> _checkSupport() async {
     final supported = await BiometricService.isBiometricAvailable();
     final enabled = await BiometricService.isBiometricEnabled();
-    setState(() {
-      _isSupported = supported;
-      _isEnabled = enabled;
-    });
+    final label = await BiometricService.getBiometricLabel();
+    final icon = await BiometricService.getBiometricIcon();
+    if (mounted) {
+      setState(() {
+        _isSupported = supported;
+        _isEnabled = enabled;
+        _biometricLabel = label;
+        _biometricIcon = icon;
+      });
+    }
   }
 
   Future<void> _toggleBiometrics(bool value) async {
@@ -43,107 +51,43 @@ class _BiometricSwitchTileState extends ConsumerState<BiometricSwitchTile> {
       if (!mounted) return;
       setState(() => _isEnabled = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Biometric login disabled successfully.")),
+        SnackBar(content: Text("$_biometricLabel sign-in disabled.")),
       );
       return;
     }
 
-    final passwordCtrl = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-    bool isVerifying = false;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) {
-          return AlertDialog(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Row(
-              children: [
-                Icon(Icons.fingerprint_rounded, color: AppTheme.primaryGreen),
-                SizedBox(width: 12),
-                Text("Enable Biometrics", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.charcoal)),
-              ],
-            ),
-            content: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Please enter your password to turn on fingerprint or face login on this device.",
-                    style: TextStyle(fontSize: 13, color: AppTheme.mutedGrey),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: passwordCtrl,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      labelText: "Account Password",
-                      prefixIcon: const Icon(Icons.lock_rounded, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    validator: (val) => val == null || val.isEmpty ? "Password is required" : null,
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: isVerifying ? null : () => Navigator.pop(ctx),
-                child: const Text("Cancel", style: TextStyle(color: AppTheme.mutedGrey)),
-              ),
-              ElevatedButton(
-                onPressed: isVerifying
-                    ? null
-                    : () async {
-                        if (!formKey.currentState!.validate()) return;
-                        final user = ref.read(appStateProvider).currentUser;
-                        if (user == null) return;
-                        
-                        final messenger = ScaffoldMessenger.of(context);
-                        final navigator = Navigator.of(ctx);
-
-                        setModalState(() => isVerifying = true);
-                        final error = await ref.read(appStateProvider.notifier).validateCurrentPassword(
-                          email: user.email,
-                          password: passwordCtrl.text,
-                        );
-                        
-                        if (context.mounted && ctx.mounted) {
-                          setModalState(() => isVerifying = false);
-                          if (error == null) {
-                            await BiometricService.setBiometricEnabled(true);
-                            await BiometricService.saveCredentials(user.email, passwordCtrl.text);
-                            setState(() => _isEnabled = true);
-                            navigator.pop();
-                            messenger.showSnackBar(
-                              const SnackBar(content: Text("✅ Biometric login enabled successfully!"), backgroundColor: AppTheme.primaryGreen),
-                            );
-                          } else {
-                            messenger.showSnackBar(
-                              SnackBar(content: Text("Incorrect password: $error"), backgroundColor: AppTheme.errorRed),
-                            );
-                          }
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.charcoal,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: isVerifying
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text("Confirm"),
-              ),
-            ],
-          );
-        }
-      ),
+    // Direct native biometric authentication scan (No password modal needed)
+    final messenger = ScaffoldMessenger.of(context);
+    final authenticated = await BiometricService.authenticate(
+      reason: "Scan your $_biometricLabel to enable instant sign-in on this device",
     );
+
+    if (!mounted) return;
+
+    if (authenticated) {
+      await BiometricService.setBiometricEnabled(true);
+      final user = ref.read(appStateProvider).currentUser;
+      if (user != null) {
+        final existingCreds = await BiometricService.getSavedCredentials();
+        if (existingCreds == null || existingCreds['email'] != user.email) {
+          await BiometricService.saveCredentials(user.email, '');
+        }
+      }
+      setState(() => _isEnabled = true);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text("✅ $_biometricLabel enabled successfully!"),
+          backgroundColor: AppTheme.primaryGreen,
+        ),
+      );
+    } else {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text("Authentication cancelled or not recognized."),
+          backgroundColor: AppTheme.errorRed,
+        ),
+      );
+    }
   }
 
   @override
@@ -158,15 +102,16 @@ class _BiometricSwitchTileState extends ConsumerState<BiometricSwitchTile> {
       activeThumbColor: AppTheme.primaryGreen,
       activeTrackColor: AppTheme.primaryGreen.withValues(alpha: 0.5),
       contentPadding: EdgeInsets.zero,
-      title: const Text(
-        "Biometric Sign-In",
-        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppTheme.charcoal),
+      title: Text(
+        "$_biometricLabel Sign-In",
+        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppTheme.charcoal),
       ),
-      subtitle: const Text(
-        "Use Face ID or Touch ID to unlock and sign in instantly",
-        style: TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
+      subtitle: Text(
+        "Use $_biometricLabel to unlock and sign in instantly without typing your password",
+        style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
       ),
-      secondary: const Icon(Icons.fingerprint_rounded, color: AppTheme.primaryGreen, size: 28),
+      secondary: Icon(_biometricIcon, color: AppTheme.primaryGreen, size: 28),
     );
   }
 }
+

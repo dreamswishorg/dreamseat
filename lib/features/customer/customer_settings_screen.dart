@@ -7,6 +7,7 @@ import '../../providers/app_state.dart';
 import '../../services/location_service.dart';
 import 'customer_home.dart';
 import '../admin/admin_dashboard.dart';
+import '../../widgets/biometric_switch_tile.dart';
 
 class CustomerSettingsScreen extends ConsumerStatefulWidget {
   const CustomerSettingsScreen({super.key});
@@ -585,6 +586,35 @@ class _CustomerSettingsScreenState
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(height: 28),
+
+              // Section: Security & Biometrics
+              Text(
+                'Security & Biometrics',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: primaryTextColor,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                decoration: BoxDecoration(
+                  color: cardColor,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: borderColor),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0x06000000),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: const BiometricSwitchTile(),
               ),
               const SizedBox(height: 28),
 

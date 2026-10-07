@@ -50,6 +50,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
 
   bool _isBiometricsAvailable = false;
   bool _isBiometricsEnabled = false;
+  String _biometricLabel = "Biometrics";
+  IconData _biometricIcon = Icons.fingerprint_rounded;
 
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -98,17 +100,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   Future<void> _initBiometrics() async {
     final available = await BiometricService.isBiometricAvailable();
     final enabled = await BiometricService.isBiometricEnabled();
+    final label = await BiometricService.getBiometricLabel();
+    final icon = await BiometricService.getBiometricIcon();
     if (mounted) {
       setState(() {
         _isBiometricsAvailable = available;
         _isBiometricsEnabled = enabled;
+        _biometricLabel = label;
+        _biometricIcon = icon;
       });
     }
 
     if (enabled && available) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _performBiometricLogin();
-      });
+      final creds = await BiometricService.getSavedCredentials();
+      if (creds != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _performBiometricLogin();
+        });
+      }
     }
   }
 
@@ -119,20 +128,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       return;
     }
 
-    final isEnabled = await BiometricService.isBiometricEnabled();
-    if (!isEnabled) {
-      _showSnackBar("Biometric login is not enabled. Please sign in with password first.", isError: true);
-      return;
-    }
-
-    final authenticated = await BiometricService.authenticate();
-    if (!authenticated) return;
-
     final creds = await BiometricService.getSavedCredentials();
     if (creds == null) {
-      _showSnackBar("No saved account found. Please sign in with your password first.", isError: true);
+      _showSnackBar("Please sign in with your email & password once to link $_biometricLabel.", isError: true);
       return;
     }
+
+    final authenticated = await BiometricService.authenticate(
+      reason: 'Scan your $_biometricLabel to sign in to DreamEats',
+    );
+    if (!authenticated) return;
 
     setState(() => _isLoading = true);
     final error = await ref.read(appStateProvider.notifier).signIn(
@@ -186,6 +191,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       _showSnackBar(error.replaceAll('AuthException: ', '').trim(),
           isError: true);
       return;
+    }
+
+    // Save credentials to secure storage for seamless biometric sign-in
+    await BiometricService.saveCredentials(_emailController.text.trim(), _passwordController.text);
+    if (_isBiometricsAvailable) {
+      await BiometricService.setBiometricEnabled(true);
     }
 
     final user = ref.read(appStateProvider).currentUser;
@@ -689,23 +700,31 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                   onPressed: _isLoading ? null : _signIn,
                 ),
               ),
-              if (_isBiometricsAvailable && _isBiometricsEnabled) ...[
+              if (_isBiometricsAvailable) ...[
                 const SizedBox(width: 12),
-                InkWell(
-                  onTap: _isLoading ? null : _performBiometricLogin,
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    height: 54,
-                    width: 54,
-                    decoration: BoxDecoration(
-                      color: AppTheme.lightGreenBg,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.2)),
-                    ),
-                    child: const Icon(
-                      Icons.fingerprint_rounded,
-                      color: AppTheme.primaryGreen,
-                      size: 28,
+                Tooltip(
+                  message: "Sign in with $_biometricLabel",
+                  child: InkWell(
+                    onTap: _isLoading ? null : _performBiometricLogin,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      height: 54,
+                      width: 54,
+                      decoration: BoxDecoration(
+                        color: AppTheme.lightGreenBg,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                        color: _isBiometricsEnabled
+                            ? AppTheme.primaryGreen
+                            : AppTheme.primaryGreen.withValues(alpha: 0.3),
+                        width: _isBiometricsEnabled ? 1.5 : 1.0,
+                      ),
+                      ),
+                      child: Icon(
+                        _biometricIcon,
+                        color: AppTheme.primaryGreen,
+                        size: 28,
+                      ),
                     ),
                   ),
                 ),
