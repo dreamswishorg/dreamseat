@@ -91,33 +91,73 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF064E3B), Color(0xFF0F172A)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               business.name,
-              style: const TextStyle(color: AppTheme.charcoal, fontWeight: FontWeight.bold, fontSize: 18),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+                letterSpacing: -0.3,
+              ),
             ),
+            const SizedBox(height: 3),
             Row(
               children: [
                 Container(
-                  width: 6,
-                  height: 6,
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
-                    color: business.isApproved ? AppTheme.primaryGreen : AppTheme.warningOrange,
-                    shape: BoxShape.circle,
+                    color: business.isApproved
+                        ? const Color(0xFF10B981).withValues(alpha: 0.22)
+                        : Colors.amber.withValues(alpha: 0.22),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: business.isApproved
+                          ? const Color(0xFF34D399)
+                          : Colors.amber.shade300,
+                      width: 0.8,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  business.isApproved ? "Approved Merchant" : "Pending Verification",
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: business.isApproved ? AppTheme.primaryGreen : AppTheme.warningOrange,
-                    fontWeight: FontWeight.w600,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 5,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: business.isApproved
+                              ? const Color(0xFF34D399)
+                              : Colors.amber,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        business.isApproved ? "Verified Merchant Portal" : "Pending Verification",
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: business.isApproved
+                              ? const Color(0xFFECFDF5)
+                              : Colors.amber.shade100,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -125,7 +165,7 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
           ],
         ),
         actions: [
-          buildNotificationMenuAnchor(context, ref),
+          buildNotificationMenuAnchor(context, ref, iconColor: Colors.white),
           MenuAnchor(
             alignmentOffset: const Offset(-185, 8),
             style: MenuStyle(
@@ -150,25 +190,26 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                          color: AppTheme.primaryGreen.withValues(alpha: 0.15),
-                          width: 1.5),
+                        color: Colors.white.withValues(alpha: 0.35),
+                        width: 1.5,
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.primaryGreen.withValues(alpha: 0.05),
-                          blurRadius: 4,
+                          color: Colors.black.withValues(alpha: 0.15),
+                          blurRadius: 6,
                           spreadRadius: 1,
                         )
                       ],
                     ),
                     child: CircleAvatar(
-                      backgroundColor: AppTheme.lightGreenBg,
-                      radius: 18,
+                      backgroundColor: Colors.white,
+                      radius: 17,
                       child: Text(
                         initials,
                         style: const TextStyle(
                           color: AppTheme.primaryGreen,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13,
                         ),
                       ),
                     ),

@@ -276,7 +276,7 @@ AppBar buildCustomerAppBar({
   );
 }
 
-Widget buildNotificationMenuAnchor(BuildContext context, WidgetRef ref) {
+Widget buildNotificationMenuAnchor(BuildContext context, WidgetRef ref, {Color? iconColor}) {
   final state = ref.watch(appStateProvider);
   final isDark = Theme.of(context).brightness == Brightness.dark;
   final menuBg = isDark ? const Color(0xFF1E293B) : Colors.white;
@@ -302,15 +302,16 @@ Widget buildNotificationMenuAnchor(BuildContext context, WidgetRef ref) {
     ),
     builder: (BuildContext context, MenuController controller, Widget? child) {
       final unreadCount = state.unreadNotificationCount;
+      final effectiveIconColor = iconColor ?? textColor;
       return IconButton(
         icon: unreadCount > 0
             ? Badge(
                 backgroundColor: AppTheme.errorRed,
                 textColor: Colors.white,
                 label: Text("$unreadCount", style: const TextStyle(fontSize: 9)),
-                child: Icon(Icons.notifications_none_rounded, color: textColor, size: 26),
+                child: Icon(Icons.notifications_none_rounded, color: effectiveIconColor, size: 26),
               )
-            : Icon(Icons.notifications_none_rounded, color: textColor, size: 26),
+            : Icon(Icons.notifications_none_rounded, color: effectiveIconColor, size: 26),
         onPressed: () {
           if (controller.isOpen) {
             controller.close();
