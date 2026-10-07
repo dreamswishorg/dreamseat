@@ -145,7 +145,12 @@ class _MerchantProfileScreenState
 
   Future<void> _pickLogo() async {
     final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    final image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 75,
+      maxWidth: 1024,
+      maxHeight: 1024,
+    );
 
     if (image != null) {
       setState(() => _isUploading = true);
@@ -180,7 +185,12 @@ class _MerchantProfileScreenState
 
   Future<void> _pickCover() async {
     final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    final image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 75,
+      maxWidth: 1600,
+      maxHeight: 1200,
+    );
 
     if (image != null) {
       setState(() => _isUploading = true);
@@ -1061,7 +1071,12 @@ class _MerchantProfileScreenState
                       final messenger = ScaffoldMessenger.of(context);
                       try {
                         final picker = ImagePicker();
-                        final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+                        final image = await picker.pickImage(
+                          source: ImageSource.gallery,
+                          imageQuality: 75,
+                          maxWidth: 1600,
+                          maxHeight: 1600,
+                        );
                         if (image != null) {
                           final bytes = await image.readAsBytes();
                           setDialogState(() {
@@ -1105,10 +1120,28 @@ class _MerchantProfileScreenState
                               color: selectedFileName != null ? AppTheme.primaryGreen : AppTheme.charcoal,
                             ),
                           ),
+                          if (selectedFileBytes != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              "Compressed size: ${(selectedFileBytes!.lengthInBytes / 1024).toStringAsFixed(0)} KB (Fast Upload)",
+                              style: const TextStyle(fontSize: 10, color: AppTheme.mutedGrey),
+                            ),
+                          ],
                         ],
                       ),
                     ),
                   ),
+                  if (isSaving) ...[
+                    const SizedBox(height: 16),
+                    const LinearProgressIndicator(color: AppTheme.primaryGreen, backgroundColor: Color(0xFFE2E8F0)),
+                    const SizedBox(height: 6),
+                    const Center(
+                      child: Text(
+                        "Encrypting & uploading document to KYC Vault...",
+                        style: TextStyle(fontSize: 11, color: AppTheme.primaryGreen, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
