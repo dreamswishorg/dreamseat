@@ -412,40 +412,32 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // Top brand header
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                                      ),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Image.asset('assets/images/logo.jpg', fit: BoxFit.cover),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Text(
-                                      'DREAMEATS',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w900,
-                                        color: AppTheme.charcoal,
-                                        letterSpacing: -0.5,
-                                      ),
-                                    ),
-                                  ],
+                                Text(
+                                  _activeTab == 0 ? 'Welcome Back' : 'Create Account',
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppTheme.charcoal,
+                                    letterSpacing: -0.6,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _activeTab == 0
+                                      ? 'Sign in to access your surplus meals and saved spots.'
+                                      : 'Join DreamEats to rescue meals and enjoy up to 70% off.',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: AppTheme.mutedGrey,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 20),
 
                             // Tab selector
                             _SlidingTabSelector(

@@ -51,20 +51,47 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
         ),
       ),
       body: ResponsiveCenter(
-        maxWidth: 850,
+        maxWidth: 1080,
         child: allMyOrders.isEmpty
             ? _buildEmptyState()
             : Column(
                 children: [
                   Expanded(
-                    child: ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                      itemCount: paginatedOrders.length,
-                      itemBuilder: (context, index) {
-                        final order = paginatedOrders[index];
-                        return _HoverLift(
-                          child: _buildOrderCard(context, ref, order),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isWide = constraints.maxWidth >= 720;
+                        if (isWide) {
+                          const gap = 16.0;
+                          final cardWidth = (constraints.maxWidth - 40 - gap) / 2;
+                          return ListView(
+                            physics: const BouncingScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                            children: [
+                              Wrap(
+                                spacing: gap,
+                                runSpacing: gap,
+                                children: paginatedOrders.map((order) {
+                                  return SizedBox(
+                                    width: cardWidth,
+                                    child: _HoverLift(
+                                      child: _buildOrderCard(context, ref, order, isWide: true),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          );
+                        }
+                        return ListView.builder(
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                          itemCount: paginatedOrders.length,
+                          itemBuilder: (context, index) {
+                            final order = paginatedOrders[index];
+                            return _HoverLift(
+                              child: _buildOrderCard(context, ref, order),
+                            );
+                          },
                         );
                       },
                     ),
@@ -103,7 +130,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     );
   }
 
-  Widget _buildOrderCard(BuildContext context, WidgetRef ref, Order order) {
+  Widget _buildOrderCard(BuildContext context, WidgetRef ref, Order order, {bool isWide = false}) {
     final dateStr = DateFormat('EEE, MMM dd, yyyy • hh:mm a').format(order.timestamp);
     
     Color statusColor;
@@ -138,7 +165,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     final canRate = isCollected && !order.isRated;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 24),
+      margin: EdgeInsets.only(bottom: isWide ? 0 : 24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(32),

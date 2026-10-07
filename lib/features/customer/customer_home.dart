@@ -108,6 +108,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     final homeBg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF7F8FA);
     final primaryText = isDark ? Colors.white : AppTheme.charcoal;
     final secondaryText = isDark ? const Color(0xFF94A3B8) : AppTheme.mutedGrey;
+    final wide = useSideNav(context);
 
     if (isLoading && deals.isEmpty) {
       return Scaffold(
@@ -218,46 +219,87 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Welcome Greeting & Location row
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "${_getGreeting()},",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: secondaryText,
-                              fontWeight: FontWeight.w600,
+              if (wide)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 14.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "${_getGreeting()}, ${customerName?.split(' ').first ?? 'Friend'} 👋",
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                color: primaryText,
+                                letterSpacing: -0.6,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            customerName?.split(' ').first ?? 'Friend 👋',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900,
-                              color: primaryText,
-                              letterSpacing: -0.6,
+                            const SizedBox(height: 3),
+                            Text(
+                              "Find and rescue surplus food packages from top local kitchens",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: secondaryText,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: _LocationBadge(userLocation: userLocation, onTap: _showAddressSelectionBottomSheet),
-                    ),
-                  ],
+                      const SizedBox(width: 20),
+                      const SizedBox(
+                        width: 320,
+                        child: _SearchTrigger(isCompact: true),
+                      ),
+                    ],
+                  ),
+                )
+              else ...[
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "${_getGreeting()},",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: secondaryText,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              customerName?.split(' ').first ?? 'Friend 👋',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                color: primaryText,
+                                letterSpacing: -0.6,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: _LocationBadge(userLocation: userLocation, onTap: _showAddressSelectionBottomSheet),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-
-              const _SearchTrigger(),
+                const _SearchTrigger(),
+              ],
 
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 4),
@@ -272,13 +314,27 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
               _CategoriesRow(
                 selectedCategory: _selectedCategory,
                 onSelected: (cat) => setState(() => _selectedCategory = cat),
+                isWide: wide,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
 
-              const _PromoBanner(),
-              const SizedBox(height: 14),
-
-              _ImpactCard(stats: customerStats),
+              if (wide)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Expanded(child: _PromoBanner(isWide: true)),
+                      const SizedBox(width: 16),
+                      Expanded(child: _ImpactCard(stats: customerStats, isWide: true)),
+                    ],
+                  ),
+                )
+              else ...[
+                const _PromoBanner(),
+                const SizedBox(height: 14),
+                _ImpactCard(stats: customerStats),
+              ],
               const SizedBox(height: 20),
 
               if (businesses.isNotEmpty) ...[
@@ -704,13 +760,14 @@ class _LocationBadge extends StatelessWidget {
 }
 
 class _SearchTrigger extends StatelessWidget {
-  const _SearchTrigger();
+  final bool isCompact;
+  const _SearchTrigger({this.isCompact = false});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20.0, 0, 20.0, 16.0),
+      padding: isCompact ? EdgeInsets.zero : const EdgeInsets.fromLTRB(20.0, 0, 20.0, 16.0),
       child: GestureDetector(
         onTap: () => Navigator.push(
             context,
@@ -760,7 +817,8 @@ class _SearchTrigger extends StatelessWidget {
 class _CategoriesRow extends StatelessWidget {
   final String selectedCategory;
   final Function(String) onSelected;
-  const _CategoriesRow({required this.selectedCategory, required this.onSelected});
+  final bool isWide;
+  const _CategoriesRow({required this.selectedCategory, required this.onSelected, this.isWide = false});
 
   static const List<Map<String, dynamic>> _categories = [
     {'name': 'All', 'icon': Icons.grid_view_rounded},
@@ -774,6 +832,74 @@ class _CategoriesRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    if (isWide) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: _categories.map((cat) {
+            final name = cat['name'] as String;
+            final icon = cat['icon'] as IconData;
+            final isSelected = selectedCategory == name;
+
+            String displayLabel = name;
+            if (name.contains('Meal')) displayLabel = 'Meals';
+            if (name.contains('Pack')) displayLabel = 'Bakery';
+            if (name.contains('Bundle')) displayLabel = 'Grocery';
+            if (name.contains('Vegetable')) displayLabel = 'Fruits';
+            if (name.contains('Buffet')) displayLabel = 'Buffets';
+            if (name.contains('Drinks')) displayLabel = 'Drinks';
+
+            return InkWell(
+              onTap: () => onSelected(name),
+              borderRadius: BorderRadius.circular(20),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppTheme.primaryGreen
+                      : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected
+                        ? AppTheme.primaryGreen
+                        : (isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0)),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isSelected
+                          ? AppTheme.primaryGreen.withValues(alpha: 0.18)
+                          : Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, size: 16, color: isSelected ? Colors.white : AppTheme.primaryGreen),
+                    const SizedBox(width: 7),
+                    Text(
+                      displayLabel,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                        color: isSelected ? Colors.white : (isDark ? Colors.white : AppTheme.charcoal),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      );
+    }
     return SizedBox(
       height: 94,
       child: ListView.builder(
@@ -855,12 +981,13 @@ class _CategoriesRow extends StatelessWidget {
 }
 
 class _PromoBanner extends StatelessWidget {
-  const _PromoBanner();
+  final bool isWide;
+  const _PromoBanner({this.isWide = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+      margin: isWide ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 20),
       height: 140,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
@@ -960,12 +1087,13 @@ class _PromoBanner extends StatelessWidget {
 
 class _ImpactCard extends StatelessWidget {
   final SustainabilityStats stats;
-  const _ImpactCard({required this.stats});
+  final bool isWide;
+  const _ImpactCard({required this.stats, this.isWide = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+      margin: isWide ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1100,7 +1228,7 @@ class _FeaturedPartners extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final featured = businesses.take(6).toList();
+    final featured = businesses.take(12).toList();
     return SizedBox(
       height: 120,
       child: ListView.builder(

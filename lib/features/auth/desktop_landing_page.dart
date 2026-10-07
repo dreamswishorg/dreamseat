@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/config.dart';
@@ -44,9 +45,182 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
     }
   }
 
-  Future<void> _contactSupport() async {
-    final uri = Uri(scheme: 'mailto', path: AppConfig.supportEmail, query: 'subject=DreamEats%20Enquiry');
-    await launchUrl(uri);
+  void _contactSupport() {
+    _showContactDialog(context);
+  }
+
+  void _showContactDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Colors.white,
+        contentPadding: const EdgeInsets.all(28),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.lightGreenBg,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(Icons.headset_mic_rounded, color: AppTheme.primaryGreen, size: 26),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Contact DreamEats Team',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF0D3B22),
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'We are available 7 days a week to help you.',
+                          style: TextStyle(fontSize: 12.5, color: AppTheme.mutedGrey),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 20),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              // Email card
+              _buildContactOption(
+                icon: Icons.mail_outline_rounded,
+                title: 'Official Support Email',
+                detail: AppConfig.supportEmail,
+                buttonLabel: 'Email Team',
+                onAction: () async {
+                  final uri = Uri(scheme: 'mailto', path: AppConfig.supportEmail, query: 'subject=DreamEats%20Enquiry');
+                  await launchUrl(uri);
+                },
+                onCopy: () {
+                  Clipboard.setData(ClipboardData(text: AppConfig.supportEmail));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Support email copied to clipboard!'), backgroundColor: AppTheme.primaryGreen),
+                  );
+                },
+              ),
+              const SizedBox(height: 14),
+              // Phone & WhatsApp card
+              _buildContactOption(
+                icon: Icons.phone_android_rounded,
+                title: 'Customer Line & WhatsApp',
+                detail: '+233 24 567 8901',
+                buttonLabel: 'Call Now',
+                onAction: () async {
+                  final uri = Uri(scheme: 'tel', path: '+233245678901');
+                  await launchUrl(uri);
+                },
+                onCopy: () {
+                  Clipboard.setData(const ClipboardData(text: '+233 24 567 8901'));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Phone number copied to clipboard!'), backgroundColor: AppTheme.primaryGreen),
+                  );
+                },
+              ),
+              const SizedBox(height: 18),
+              // Operating hours note
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.schedule_rounded, size: 16, color: AppTheme.primaryGreen),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Monday – Sunday: 8:00 AM – 9:00 PM GMT\nPrompt response for customer orders and merchant partnerships.',
+                        style: TextStyle(fontSize: 11.5, color: Color(0xFF4B5563), height: 1.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContactOption({
+    required IconData icon,
+    required String title,
+    required String detail,
+    required String buttonLabel,
+    required VoidCallback onAction,
+    required VoidCallback onCopy,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F8F4),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, size: 20, color: AppTheme.primaryGreen),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppTheme.mutedGrey)),
+                const SizedBox(height: 2),
+                Text(detail, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: Color(0xFF0D3B22))),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.copy_rounded, size: 17, color: AppTheme.mutedGrey),
+            tooltip: 'Copy',
+            onPressed: onCopy,
+          ),
+          const SizedBox(width: 4),
+          ElevatedButton(
+            onPressed: onAction,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryGreen,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              minimumSize: const Size(0, 36),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text(buttonLabel, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -529,7 +703,9 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
         ('Partner sign in', () => _openAuth(tab: 0)),
       ]),
       column('Support', [
-        ('Contact us', _contactSupport),
+        ('Contact Support', () => _showContactDialog(context)),
+        ('Email: ${AppConfig.supportEmail}', () => _showContactDialog(context)),
+        ('Phone: +233 24 567 8901', () => _showContactDialog(context)),
         ('Terms of Service', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsOfServiceScreen()))),
         ('Privacy Policy', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()))),
       ]),
