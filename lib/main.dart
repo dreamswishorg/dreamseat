@@ -109,7 +109,13 @@ class _DreamEatsAppState extends ConsumerState<DreamEatsApp> {
           );
         } else if (data.event == AuthChangeEvent.signedIn) {
           clearUrlParams();
-          // Hydrate profile and navigate if user is signed in
+          // If currentUser is already set in appState, in-app sign-in / registration
+          // has already navigated directly. Skip redundant navigation to prevent screen flash.
+          if (ref.read(appStateProvider).currentUser != null) {
+            return;
+          }
+
+          // Hydrate profile and navigate if user is signed in via external OAuth / deep link
           final profile = await ref.read(appStateProvider.notifier).handleOAuthSignedIn();
           if (!mounted || profile == null || navigatorKey.currentState == null) return;
 
