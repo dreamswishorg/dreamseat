@@ -46,15 +46,7 @@ class BiometricService {
 
   /// Returns appropriate icon for current platform biometric type
   static Future<IconData> getBiometricIcon() async {
-    try {
-      final biometrics = await _auth.getAvailableBiometrics();
-      if (biometrics.contains(BiometricType.face)) {
-        return Icons.face_rounded;
-      }
-      return Icons.fingerprint_rounded;
-    } catch (_) {
-      return Icons.fingerprint_rounded;
-    }
+    return Icons.fingerprint_rounded;
   }
 
   /// Check if the user has enabled biometric login

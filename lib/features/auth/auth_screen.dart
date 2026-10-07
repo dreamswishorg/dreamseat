@@ -10,6 +10,7 @@ import '../admin/admin_dashboard.dart';
 import 'forgot_password_screen.dart';
 import '../common/legal_screens.dart';
 import '../../services/biometric_service.dart';
+import '../../widgets/face_id_icon.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   final int initialTab;
@@ -51,7 +52,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   bool _isBiometricsAvailable = false;
   bool _isBiometricsEnabled = false;
   String _biometricLabel = "Biometrics";
-  IconData _biometricIcon = Icons.fingerprint_rounded;
 
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -101,13 +101,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     final available = await BiometricService.isBiometricAvailable();
     final enabled = await BiometricService.isBiometricEnabled();
     final label = await BiometricService.getBiometricLabel();
-    final icon = await BiometricService.getBiometricIcon();
     if (mounted) {
       setState(() {
         _isBiometricsAvailable = available;
         _isBiometricsEnabled = enabled;
         _biometricLabel = label;
-        _biometricIcon = icon;
       });
     }
 
@@ -720,10 +718,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                         width: _isBiometricsEnabled ? 1.5 : 1.0,
                       ),
                       ),
-                      child: Icon(
-                        _biometricIcon,
-                        color: AppTheme.primaryGreen,
-                        size: 28,
+                      child: Center(
+                        child: DynamicBiometricIcon(
+                          size: 26,
+                          color: AppTheme.primaryGreen,
+                          biometricLabel: _biometricLabel,
+                        ),
                       ),
                     ),
                   ),

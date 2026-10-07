@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme.dart';
 import '../providers/app_state.dart';
 import '../services/biometric_service.dart';
+import 'face_id_icon.dart';
 
 class BiometricSwitchTile extends ConsumerStatefulWidget {
   const BiometricSwitchTile({super.key});
@@ -15,7 +16,6 @@ class _BiometricSwitchTileState extends ConsumerState<BiometricSwitchTile> {
   bool _isEnabled = false;
   bool _isSupported = false;
   String _biometricLabel = "Biometric Sign-In";
-  IconData _biometricIcon = Icons.fingerprint_rounded;
 
   @override
   void initState() {
@@ -27,13 +27,11 @@ class _BiometricSwitchTileState extends ConsumerState<BiometricSwitchTile> {
     final supported = await BiometricService.isBiometricAvailable();
     final enabled = await BiometricService.isBiometricEnabled();
     final label = await BiometricService.getBiometricLabel();
-    final icon = await BiometricService.getBiometricIcon();
     if (mounted) {
       setState(() {
         _isSupported = supported;
         _isEnabled = enabled;
         _biometricLabel = label;
-        _biometricIcon = icon;
       });
     }
   }
@@ -110,7 +108,11 @@ class _BiometricSwitchTileState extends ConsumerState<BiometricSwitchTile> {
         "Use $_biometricLabel to unlock and sign in instantly without typing your password",
         style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
       ),
-      secondary: Icon(_biometricIcon, color: AppTheme.primaryGreen, size: 28),
+      secondary: DynamicBiometricIcon(
+        size: 26,
+        color: AppTheme.primaryGreen,
+        biometricLabel: _biometricLabel,
+      ),
     );
   }
 }
