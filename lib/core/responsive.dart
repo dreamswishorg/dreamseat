@@ -142,8 +142,8 @@ class SideNavItem {
   });
 }
 
-/// Left sidebar navigation used on laptop/desktop widths in place of the
-/// phone bottom navigation bar.
+/// Left sidebar navigation used on tablet/desktop widths.
+/// Supports smooth animated collapsible rail mode (72px) and full mode (240px).
 class DesktopSideNav extends StatelessWidget {
   final List<SideNavItem> items;
   final int selectedIndex;
@@ -151,6 +151,8 @@ class DesktopSideNav extends StatelessWidget {
   final Widget? header;
   final Widget? footer;
   final Color accentColor;
+  final bool isCollapsed;
+  final VoidCallback? onToggleCollapse;
 
   const DesktopSideNav({
     super.key,
@@ -160,47 +162,143 @@ class DesktopSideNav extends StatelessWidget {
     required this.accentColor,
     this.header,
     this.footer,
+    this.isCollapsed = false,
+    this.onToggleCollapse,
   });
 
   @override
   Widget build(BuildContext context) {
-    const textColor = Color(0xFF1E293B);
-    const mutedColor = Color(0xFF64748B);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF0F172A) : Colors.white;
+    final borderColor = isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0x14000000);
+    final textColor = isDark ? Colors.white : const Color(0xFF1E293B);
+    final mutedColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
-    return Container(
-      width: 240,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(right: BorderSide(color: Color(0x14000000))),
+    final width = isCollapsed ? 74.0 : 240.0;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeInOutCubic,
+      width: width,
+      decoration: BoxDecoration(
+        color: bgColor,
+        border: Border(right: BorderSide(color: borderColor)),
       ),
       child: SafeArea(
         right: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (header != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-                child: header!,
+            // Header with toggle
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                isCollapsed ? 8 : 16,
+                16,
+                isCollapsed ? 8 : 12,
+                12,
               ),
-            const SizedBox(height: 8),
+              child: Row(
+                mainAxisAlignment: isCollapsed
+                    ? MainAxisAlignment.center
+                    : MainAxisAlignment.spaceBetween,
+                children: [
+                  if (!isCollapsed && header != null)
+                    Expanded(child: header!),
+                  if (onToggleCollapse != null)
+                    IconButton(
+                      icon: Icon(
+                        isCollapsed ? Icons.menu_rounded : Icons.menu_open_rounded,
+                        color: mutedColor,
+                        size: 22,
+                      ),
+                      tooltip: isCollapsed ? "Expand Sidebar" : "Collapse Sidebar",
+                      onPressed: onToggleCollapse,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 4),
+
+            // Navigation Items List
             Expanded(
               child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: EdgeInsets.symmetric(horizontal: isCollapsed ? 8 : 12),
                 itemCount: items.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 4),
+                separatorBuilder: (context, index) => const SizedBox(height: 6),
                 itemBuilder: (context, i) {
                   final item = items[i];
                   final selected = i == selectedIndex;
+
+                  if (isCollapsed) {
+                    return Tooltip(
+                      message: item.label,
+                      preferBelow: false,
+                      child: Material(
+                        color: selected
+                            ? accentColor.withValues(alpha: 0.12)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(14),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(14),
+                          hoverColor: accentColor.withValues(alpha: 0.08),
+                          onTap: () => onSelect(i),
+                          child: Container(
+                            height: 48,
+                            alignment: Alignment.center,
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Icon(
+                                  selected ? item.activeIcon : item.icon,
+                                  size: 24,
+                                  color: selected ? accentColor : mutedColor,
+                                ),
+                                if (item.badgeCount > 0)
+                                  Positioned(
+                                    top: -4,
+                                    right: -8,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFEF4444),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      constraints: const BoxConstraints(
+                                        minWidth: 16,
+                                        minHeight: 16,
+                                      ),
+                                      child: Text(
+                                        '${item.badgeCount}',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
                   return Material(
-                    color: selected ? accentColor.withValues(alpha: 0.10) : Colors.transparent,
+                    color: selected
+                        ? accentColor.withValues(alpha: 0.10)
+                        : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
                       hoverColor: accentColor.withValues(alpha: 0.06),
                       onTap: () => onSelect(i),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 12),
                         child: Row(
                           children: [
                             Icon(
@@ -216,14 +314,17 @@ class DesktopSideNav extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontSize: 14,
-                                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                                  fontWeight: selected
+                                      ? FontWeight.w800
+                                      : FontWeight.w600,
                                   color: selected ? textColor : mutedColor,
                                 ),
                               ),
                             ),
                             if (item.badgeCount > 0)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: accentColor,
                                   borderRadius: BorderRadius.circular(20),
@@ -245,9 +346,10 @@ class DesktopSideNav extends StatelessWidget {
                 },
               ),
             ),
+
             if (footer != null)
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(isCollapsed ? 8 : 16),
                 child: footer!,
               ),
           ],

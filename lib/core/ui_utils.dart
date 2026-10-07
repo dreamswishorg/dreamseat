@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme.dart';
 import '../providers/app_state.dart';
 import '../features/customer/customer_profile.dart';
-import '../features/customer/order_history_screen.dart';
-import '../features/customer/loyalty_referral_screen.dart';
+import '../features/customer/customer_settings_screen.dart';
 import '../features/common/notification_screen.dart';
 import '../features/common/help_support_screen.dart';
 
@@ -222,7 +221,7 @@ AppBar buildCustomerAppBar({
                 _buildMenuItem(
                   context,
                   icon: Icons.person_outline_rounded,
-                  label: "My Profile",
+                  label: "Profile",
                   onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -230,26 +229,17 @@ AppBar buildCustomerAppBar({
                 ),
                 _buildMenuItem(
                   context,
-                  icon: Icons.history_rounded,
-                  label: "Order History",
+                  icon: Icons.tune_rounded,
+                  label: "Settings",
                   onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) => const OrderHistoryScreen())),
+                          builder: (_) => const CustomerSettingsScreen())),
                 ),
                 _buildMenuItem(
                   context,
-                  icon: Icons.card_giftcard_rounded,
-                  label: "Rewards & Impact",
-                  onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const LoyaltyReferralScreen())),
-                ),
-                _buildMenuItem(
-                  context,
-                  icon: Icons.help_outline_rounded,
-                  label: "Help & Support",
+                  icon: Icons.headset_mic_outlined,
+                  label: "Support",
                   onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(

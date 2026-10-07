@@ -23,6 +23,7 @@ class MerchantDashboardScreen extends ConsumerStatefulWidget {
 
 class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScreen> {
   int _currentTab = 0;
+  bool _isSideNavCollapsed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -325,7 +326,16 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
                 DesktopSideNav(
                   accentColor: AppTheme.primaryGreen,
                   selectedIndex: _currentTab,
-                  onSelect: (idx) => setState(() => _currentTab = idx),
+                  isCollapsed: _isSideNavCollapsed,
+                  onToggleCollapse: () => setState(() => _isSideNavCollapsed = !_isSideNavCollapsed),
+                  onSelect: (idx) {
+                    setState(() {
+                      _currentTab = idx;
+                      if (MediaQuery.of(context).size.width < 1150) {
+                        _isSideNavCollapsed = true;
+                      }
+                    });
+                  },
                   header: _buildMerchantSideNavBrand(business),
                   items: const [
                     SideNavItem(

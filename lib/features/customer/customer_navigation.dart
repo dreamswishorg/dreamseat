@@ -21,6 +21,8 @@ class CustomerNavigation extends ConsumerStatefulWidget {
 }
 
 class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
+  bool _isSideNavCollapsed = false;
+
   final List<Widget> _screens = [
     const CustomerHomeScreen(),
     const FavoritesScreen(),
@@ -38,6 +40,7 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
     final basketCount = state.basketItemCount;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
     final wide = useSideNav(context);
 
     final tabs = IndexedStack(
@@ -54,7 +57,17 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
                 DesktopSideNav(
                   accentColor: AppTheme.primaryGreen,
                   selectedIndex: currentIndex,
-                  onSelect: (i) => ref.read(customerTabProvider.notifier).state = i,
+                  isCollapsed: _isSideNavCollapsed,
+                  onToggleCollapse: () {
+                    setState(() => _isSideNavCollapsed = !_isSideNavCollapsed);
+                  },
+                  onSelect: (i) {
+                    ref.read(customerTabProvider.notifier).state = i;
+                    // Auto-collapse in tablet mode (width < 1150) to maximize view canvas
+                    if (screenWidth < 1150) {
+                      setState(() => _isSideNavCollapsed = true);
+                    }
+                  },
                   header: _buildSideNavBrand(),
                   items: const [
                     SideNavItem(icon: Icons.explore_outlined, activeIcon: Icons.explore, label: 'Explore'),
@@ -64,24 +77,39 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
                     SideNavItem(icon: Icons.receipt_long_outlined, activeIcon: Icons.receipt_long, label: 'Orders'),
                   ],
                   footer: basketCount > 0
-                      ? SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryGreen,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            icon: const Icon(Icons.shopping_basket, size: 18),
-                            label: Text('Basket ($basketCount)',
-                                style: const TextStyle(fontWeight: FontWeight.bold)),
-                            onPressed: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const BasketScreen()),
-                            ),
-                          ),
-                        )
+                      ? (_isSideNavCollapsed
+                          ? Tooltip(
+                              message: "Basket ($basketCount)",
+                              child: IconButton(
+                                style: IconButton.styleFrom(
+                                  backgroundColor: AppTheme.primaryGreen,
+                                  foregroundColor: Colors.white,
+                                ),
+                                icon: const Icon(Icons.shopping_basket, size: 20),
+                                onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const BasketScreen()),
+                                ),
+                              ),
+                            )
+                          : SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primaryGreen,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                icon: const Icon(Icons.shopping_basket, size: 18),
+                                label: Text('Basket ($basketCount)',
+                                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                                onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const BasketScreen()),
+                                ),
+                              ),
+                            ))
                       : null,
                 ),
                 Expanded(child: tabs),
@@ -90,9 +118,11 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
           else
             tabs,
           if (isAdmin)
-            Positioned(
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeInOutCubic,
               top: MediaQuery.of(context).padding.top + 8,
-              left: wide ? 256 : 16,
+              left: wide ? (_isSideNavCollapsed ? 90 : 256) : 16,
               right: 16,
               child: SafeArea(
                 bottom: false,
