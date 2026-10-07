@@ -857,7 +857,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ],
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.charcoal, letterSpacing: 1),
           decoration: InputDecoration(
-            hintText: '024 123 4567',
+            hintText: '0245678901',
             hintStyle: TextStyle(color: AppTheme.mutedGrey.withValues(alpha: 0.5), fontWeight: FontWeight.normal, letterSpacing: 0),
             prefixIcon: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),

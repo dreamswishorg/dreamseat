@@ -369,7 +369,7 @@ class _CustomerSettingsScreenState
                       controller: _phoneController,
                       label: 'MoMo Number',
                       icon: Icons.phone_android_rounded,
-                      hint: 'e.g. 0241234567',
+                      hint: 'e.g. 0245678901',
                       keyboardType: TextInputType.phone,
                       prefix: '+233  ',
                       primaryTextColor: primaryTextColor,

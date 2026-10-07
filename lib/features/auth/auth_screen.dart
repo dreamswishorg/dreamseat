@@ -219,6 +219,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
 
   void _register() async {
     if (!_signUpKey.currentState!.validate()) return;
+    if (_suPasswordController.text != _suConfirmPasswordController.text) {
+      _showSnackBar('Passwords do not match.', isError: true);
+      return;
+    }
     if (!_agreeToTerms) {
       _showSnackBar('Please check the box to agree to our Terms of Service & Privacy Policy.', isError: true);
       return;
@@ -913,7 +917,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                   child: _buildInputField(
                     controller: _suPhoneController,
                     label: 'Phone Number',
-                    hint: '0550 402 859',
+                    hint: '0245678901',
                     icon: Icons.phone_outlined,
                     keyboardType: TextInputType.phone,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1018,23 +1022,23 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
               children: [
                 Expanded(
                   child: _buildInputField(
-                    controller: _suPhoneController,
-                    label: 'Store Phone',
-                    hint: '0550 402 859',
-                    icon: Icons.phone_outlined,
-                    keyboardType: TextInputType.phone,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Phone required' : null,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildInputField(
                     controller: _suBizNameController,
                     label: 'Business Name',
                     hint: 'Restaurant / Bakery name',
                     icon: Icons.storefront_outlined,
                     validator: (v) => (v == null || v.trim().isEmpty) ? 'Store name required' : null,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildInputField(
+                    controller: _suPhoneController,
+                    label: 'Store Phone',
+                    hint: '0245678901',
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Phone required' : null,
                   ),
                 ),
               ],
@@ -1066,6 +1070,20 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildInputField(
+                    controller: _suBizDescController,
+                    label: 'Store Description',
+                    hint: 'e.g. Artisanal pastries & daily surplus packs',
+                    icon: Icons.description_outlined,
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Description required' : null,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildInputField(
                     controller: _suPasswordController,
                     label: 'Password',
                     hint: 'Min. 6 characters',
@@ -1082,16 +1100,30 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                     validator: (v) => (v == null || v.length < 6) ? 'Min 6 characters' : null,
                   ),
                 ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildInputField(
+                    controller: _suConfirmPasswordController,
+                    label: 'Confirm Password',
+                    hint: 'Re-enter password',
+                    icon: Icons.lock_outline_rounded,
+                    obscureText: _obscureConfirm,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        color: AppTheme.mutedGrey,
+                        size: 18,
+                      ),
+                      onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                    ),
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Confirm password';
+                      if (v != _suPasswordController.text) return 'Passwords do not match';
+                      return null;
+                    },
+                  ),
+                ),
               ],
-            ),
-            const SizedBox(height: 12),
-            _buildInputField(
-              controller: _suBizDescController,
-              label: 'Short Store Description',
-              hint: 'e.g. Artisanal pastries, grilled favorites & daily surplus packs',
-              icon: Icons.description_outlined,
-              maxLines: 2,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Description required' : null,
             ),
           ],
           const SizedBox(height: 14),
@@ -1247,7 +1279,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
           _buildInputField(
             controller: _emailController,
             label: 'Email or Phone Number',
-            hint: 'you@example.com or 024xxxxxxx',
+            hint: 'you@example.com or 0245678901',
             icon: Icons.person_outline_rounded,
             keyboardType: TextInputType.emailAddress,
             validator: (v) {
@@ -1676,7 +1708,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
             _buildInputField(
               controller: _suPhoneController,
               label: 'Phone Number (Optional)',
-              hint: '0550 402 859',
+              hint: '0245678901',
               icon: Icons.phone_android_rounded,
               keyboardType: TextInputType.phone,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1793,7 +1825,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
             _buildInputField(
               controller: _suPhoneController,
               label: 'Store Phone Number',
-              hint: '0550 402 859',
+              hint: '0245678901',
               icon: Icons.phone_android_rounded,
               keyboardType: TextInputType.phone,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1820,6 +1852,33 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
               ),
               validator: (v) =>
                   (v == null || v.length < 6) ? 'At least 6 characters' : null,
+              autofillHints: const [],
+            ),
+            const SizedBox(height: 14),
+            _buildInputField(
+              controller: _suConfirmPasswordController,
+              label: 'Confirm Password',
+              hint: 'Re-enter your password',
+              icon: Icons.lock_outline_rounded,
+              obscureText: _obscureConfirm,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureConfirm
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: AppTheme.mutedGrey,
+                  size: 20,
+                ),
+                onPressed: () =>
+                    setState(() => _obscureConfirm = !_obscureConfirm),
+              ),
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Please confirm your password';
+                if (v != _suPasswordController.text) {
+                  return 'Passwords do not match';
+                }
+                return null;
+              },
               autofillHints: const [],
             ),
           ],
