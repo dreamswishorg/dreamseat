@@ -653,9 +653,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color(0xFF032213),
-            Color(0xFF064E3B),
-            Color(0xFF0F172A),
+            Color(0xFF1B5E20), // Deep Forest Green
+            AppTheme.primaryGreen, // Exact Primary Green (0xFF2E7D32) matching button
+            Color(0xFF1E6F2B), // Rich Emerald Green
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -674,7 +674,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppTheme.primaryGreen.withValues(alpha: 0.22),
+                    Colors.white.withValues(alpha: 0.12),
                     Colors.transparent,
                   ],
                 ),
@@ -691,7 +691,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF00C853).withValues(alpha: 0.12),
+                    const Color(0xFF81C784).withValues(alpha: 0.18),
                     Colors.transparent,
                   ],
                 ),
@@ -755,7 +755,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.eco_outlined, color: AppTheme.primaryGreen, size: 14),
+                          Icon(Icons.eco_outlined, color: Color(0xFFA7F3D0), size: 15),
                           SizedBox(width: 6),
                           Text(
                             'ACCRA SURPLUS FOOD RESCUE',
@@ -808,18 +808,18 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.06),
+                    color: Colors.white.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
                   ),
                   child: const Row(
                     children: [
-                      Icon(Icons.verified_outlined, color: AppTheme.primaryGreen, size: 20),
+                      Icon(Icons.verified_outlined, color: Color(0xFFA7F3D0), size: 20),
                       SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           '100% Verified Fresh Food • Safe & Instant QR-code Pickups in Accra',
-                          style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
+                          style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
                         ),
                       ),
                     ],
