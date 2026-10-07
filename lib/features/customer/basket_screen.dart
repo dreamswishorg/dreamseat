@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
+import '../../core/responsive.dart';
 import '../../core/ui_utils.dart';
 import '../../core/branded_empty_state.dart';
 import '../../models/models.dart';
@@ -102,9 +103,12 @@ class _BasketScreenState extends ConsumerState<BasketScreen> {
           ),
         ),
       ),
-      body: basket.isEmpty
-          ? _buildEmptyState(context)
-          : _buildBasketContent(context, basket, notifier, total),
+      body: ResponsiveCenter(
+        maxWidth: 760,
+        child: basket.isEmpty
+            ? _buildEmptyState(context)
+            : _buildBasketContent(context, basket, notifier, total),
+      ),
     );
   }
 

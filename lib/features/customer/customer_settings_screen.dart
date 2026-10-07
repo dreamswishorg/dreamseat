@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
+import '../../core/responsive.dart';
 import '../../core/ui_utils.dart';
 import '../../providers/app_state.dart';
 import '../../services/location_service.dart';
@@ -179,9 +180,11 @@ class _CustomerSettingsScreenState
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+          child: ResponsiveCenter(
+            maxWidth: 760,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               if (user?.role == 'admin' || user?.role == 'super_admin') ...[
                 Container(
                   margin: const EdgeInsets.only(bottom: 20),
@@ -657,6 +660,7 @@ class _CustomerSettingsScreenState
               ),
               const SizedBox(height: 36),
             ],
+          ),
           ),
         ),
       ),

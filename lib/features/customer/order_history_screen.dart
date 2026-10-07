@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/theme.dart';
+import '../../core/responsive.dart';
 import '../../core/ui_utils.dart';
 import '../../core/branded_empty_state.dart';
 import '../../models/models.dart';
@@ -49,26 +50,29 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
           ),
         ),
       ),
-      body: allMyOrders.isEmpty
-          ? _buildEmptyState()
-          : Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                    itemCount: paginatedOrders.length,
-                    itemBuilder: (context, index) {
-                      final order = paginatedOrders[index];
-                      return _HoverLift(
-                        child: _buildOrderCard(context, ref, order),
-                      );
-                    },
+      body: ResponsiveCenter(
+        maxWidth: 850,
+        child: allMyOrders.isEmpty
+            ? _buildEmptyState()
+            : Column(
+                children: [
+                  Expanded(
+                    child: ListView.builder(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      itemCount: paginatedOrders.length,
+                      itemBuilder: (context, index) {
+                        final order = paginatedOrders[index];
+                        return _HoverLift(
+                          child: _buildOrderCard(context, ref, order),
+                        );
+                      },
+                    ),
                   ),
-                ),
-                if (totalPages > 1) _buildPagination(totalPages),
-              ],
-            ),
+                  if (totalPages > 1) _buildPagination(totalPages),
+                ],
+              ),
+      ),
     );
   }
 

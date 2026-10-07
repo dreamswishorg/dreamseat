@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
+import '../../core/responsive.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
 import 'merchant_storefront.dart';
@@ -65,137 +66,162 @@ class _PartnersDirectoryScreenState extends ConsumerState<PartnersDirectoryScree
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Header Bar
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Our Partners",
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.charcoal,
-                      letterSpacing: -0.6,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    "Discover restaurants, bakeries & supermarkets rescuing food across Ghana.",
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.mutedGrey,
-                      height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Search Bar
-                  TextField(
-                    onChanged: (val) => setState(() => _searchQuery = val),
-                    decoration: InputDecoration(
-                      hintText: "Search partner name, category, location...",
-                      hintStyle: const TextStyle(fontSize: 13.5, color: AppTheme.mutedGrey),
-                      prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.primaryGreen, size: 22),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear_rounded, size: 18),
-                              onPressed: () => setState(() => _searchQuery = ''),
-                            )
-                          : null,
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.08)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.08)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+        child: ResponsiveCenter(
+          maxWidth: 1100,
+          child: Column(
+            children: [
+              // Header Bar
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Our Partners",
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.charcoal,
+                        letterSpacing: -0.6,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 14),
-                  // Category Filter Chips
-                  SizedBox(
-                    height: 38,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: _categories.length,
-                      itemBuilder: (context, idx) {
-                        final cat = _categories[idx];
-                        final isSelected = cat == _selectedCategory;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: FilterChip(
-                            label: Text(cat),
-                            selected: isSelected,
-                            onSelected: (_) => setState(() => _selectedCategory = cat),
-                            labelStyle: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                              color: isSelected ? Colors.white : AppTheme.charcoal,
-                            ),
-                            backgroundColor: Colors.white,
-                            selectedColor: AppTheme.primaryGreen,
-                            checkmarkColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                              side: BorderSide(
-                                color: isSelected ? AppTheme.primaryGreen : AppTheme.charcoal.withValues(alpha: 0.1),
+                    const SizedBox(height: 4),
+                    const Text(
+                      "Discover restaurants, bakeries & supermarkets rescuing food across Ghana.",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.mutedGrey,
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Search Bar
+                    TextField(
+                      onChanged: (val) => setState(() => _searchQuery = val),
+                      decoration: InputDecoration(
+                        hintText: "Search partner name, category, location...",
+                        hintStyle: const TextStyle(fontSize: 13.5, color: AppTheme.mutedGrey),
+                        prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.primaryGreen, size: 22),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear_rounded, size: 18),
+                                onPressed: () => setState(() => _searchQuery = ''),
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.08)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.08)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    // Category Filter Chips
+                    SizedBox(
+                      height: 38,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: _categories.length,
+                        itemBuilder: (context, idx) {
+                          final cat = _categories[idx];
+                          final isSelected = cat == _selectedCategory;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: FilterChip(
+                              label: Text(cat),
+                              selected: isSelected,
+                              onSelected: (_) => setState(() => _selectedCategory = cat),
+                              labelStyle: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                color: isSelected ? Colors.white : AppTheme.charcoal,
+                              ),
+                              backgroundColor: Colors.white,
+                              selectedColor: AppTheme.primaryGreen,
+                              checkmarkColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                side: BorderSide(
+                                  color: isSelected ? AppTheme.primaryGreen : AppTheme.charcoal.withValues(alpha: 0.1),
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1, color: Color(0xFFE2E8F0)),
-
-            // Partners List
-            Expanded(
-              child: filtered.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.storefront_outlined, size: 64, color: AppTheme.mutedGrey.withValues(alpha: 0.4)),
-                          const SizedBox(height: 16),
-                          const Text(
-                            "No partners found",
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.charcoal),
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            "Try searching with a different keyword or category.",
-                            style: TextStyle(fontSize: 13, color: AppTheme.mutedGrey),
-                          ),
-                        ],
+                          );
+                        },
                       ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.all(20),
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 16),
-                      itemBuilder: (context, index) {
-                        final partner = filtered[index];
-                        return _PartnerCard(partner: partner);
-                      },
                     ),
-            ),
-          ],
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+              // Partners List
+              Expanded(
+                child: filtered.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.storefront_outlined, size: 64, color: AppTheme.mutedGrey.withValues(alpha: 0.4)),
+                            const SizedBox(height: 16),
+                            const Text(
+                              "No partners found",
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.charcoal),
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              "Try searching with a different keyword or category.",
+                              style: TextStyle(fontSize: 13, color: AppTheme.mutedGrey),
+                            ),
+                          ],
+                        ),
+                      )
+                    : LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isWide = constraints.maxWidth >= 640;
+                          if (isWide) {
+                            final cols = constraints.maxWidth >= 960 ? 3 : 2;
+                            return GridView.builder(
+                              padding: const EdgeInsets.all(20),
+                              physics: const BouncingScrollPhysics(),
+                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: cols,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                                mainAxisExtent: 150,
+                              ),
+                              itemCount: filtered.length,
+                              itemBuilder: (context, index) {
+                                return _PartnerCard(partner: filtered[index]);
+                              },
+                            );
+                          }
+                          return ListView.separated(
+                            padding: const EdgeInsets.all(20),
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: filtered.length,
+                            separatorBuilder: (_, _) => const SizedBox(height: 16),
+                            itemBuilder: (context, index) {
+                              final partner = filtered[index];
+                              return _PartnerCard(partner: partner);
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );

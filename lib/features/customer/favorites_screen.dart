@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
+import '../../core/responsive.dart';
 import '../../core/ui_utils.dart';
 import '../../core/branded_empty_state.dart';
 import '../../models/models.dart';
@@ -554,85 +555,88 @@ class FavoritesScreen extends ConsumerWidget {
       ),
       body: favBusinesses.isEmpty
           ? _buildEmptyState(context)
-          : CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                // Summary Bar
-                SliverToBoxAdapter(
-                  child: Container(
-                    color: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${favBusinesses.length} saved spot${favBusinesses.length == 1 ? '' : 's'}',
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.charcoal,
+          : ResponsiveCenter(
+              maxWidth: 1200,
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  // Summary Bar
+                  SliverToBoxAdapter(
+                    child: Container(
+                      color: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${favBusinesses.length} saved spot${favBusinesses.length == 1 ? '' : 's'}',
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.charcoal,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 2),
-                              const Text(
-                                'Tap any card to browse active deals',
-                                style: TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: AppTheme.lightGreenBg,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.eco_rounded, size: 14, color: AppTheme.primaryGreen),
-                              const SizedBox(width: 5),
-                              Text(
-                                '${deals.where((d) => favBusinesses.any((b) => b.id == d.businessId) && d.quantityRemaining > 0).length} active',
-                                style: const TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.primaryGreen,
+                                const SizedBox(height: 2),
+                                const Text(
+                                  'Tap any card to browse active deals',
+                                  style: TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppTheme.lightGreenBg,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.eco_rounded, size: 14, color: AppTheme.primaryGreen),
+                                const SizedBox(width: 5),
+                                Text(
+                                  '${deals.where((d) => favBusinesses.any((b) => b.id == d.businessId) && d.quantityRemaining > 0).length} active',
+                                  style: const TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryGreen,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
 
-                // Grid
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 32),
-                  sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 0.76,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final biz = favBusinesses[index];
-                        final bizDeals = deals
-                            .where((d) => d.businessId == biz.id && d.quantityRemaining > 0)
-                            .toList();
-                        return _buildBusinessCard(context, ref, biz, bizDeals);
-                      },
-                      childCount: favBusinesses.length,
+                  // Grid
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(14, 14, 14, 32),
+                    sliver: SliverGrid(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: Responsive.gridCount(context, mobile: 2, tablet: 3, desktop: 4),
+                        crossAxisSpacing: 14,
+                        mainAxisSpacing: 14,
+                        childAspectRatio: 0.78,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final biz = favBusinesses[index];
+                          final bizDeals = deals
+                              .where((d) => d.businessId == biz.id && d.quantityRemaining > 0)
+                              .toList();
+                          return _buildBusinessCard(context, ref, biz, bizDeals);
+                        },
+                        childCount: favBusinesses.length,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
     );
   }

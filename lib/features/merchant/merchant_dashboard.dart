@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme.dart';
+import '../../core/responsive.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
 import '../../services/supabase_service.dart';
@@ -83,6 +84,8 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
         ),
       );
     }
+
+    final wide = useSideNav(context);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -316,59 +319,163 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
           ),
         ],
       ),
-      body: IndexedStack(
-        index: _currentTab,
-        children: [
-          _MerchantAnalyticsTab(business: business),
-          _MerchantListingsTab(business: business),
-          _MerchantVerificationTab(business: business),
-          _MerchantOrdersTab(business: business),
-          MerchantProfileScreen(business: business),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -2))],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentTab,
-          onTap: (idx) => setState(() => _currentTab = idx),
-          selectedItemColor: AppTheme.primaryGreen,
-          unselectedItemColor: AppTheme.mutedGrey,
-          backgroundColor: Colors.white,
-          elevation: 0,
-          type: BottomNavigationBarType.fixed,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.analytics_outlined),
-              activeIcon: Icon(Icons.analytics_rounded),
-              label: 'Insights',
+      body: wide
+          ? Row(
+              children: [
+                DesktopSideNav(
+                  accentColor: AppTheme.primaryGreen,
+                  selectedIndex: _currentTab,
+                  onSelect: (idx) => setState(() => _currentTab = idx),
+                  header: _buildMerchantSideNavBrand(business),
+                  items: const [
+                    SideNavItem(
+                      icon: Icons.analytics_outlined,
+                      activeIcon: Icons.analytics_rounded,
+                      label: 'Insights',
+                    ),
+                    SideNavItem(
+                      icon: Icons.inventory_2_outlined,
+                      activeIcon: Icons.inventory_2_rounded,
+                      label: 'Inventory',
+                    ),
+                    SideNavItem(
+                      icon: Icons.qr_code_scanner_rounded,
+                      activeIcon: Icons.qr_code_scanner_rounded,
+                      label: 'Verify',
+                    ),
+                    SideNavItem(
+                      icon: Icons.receipt_long_outlined,
+                      activeIcon: Icons.receipt_long_rounded,
+                      label: 'Orders',
+                    ),
+                    SideNavItem(
+                      icon: Icons.storefront_outlined,
+                      activeIcon: Icons.storefront_rounded,
+                      label: 'Shop',
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: IndexedStack(
+                    index: _currentTab,
+                    children: [
+                      _MerchantAnalyticsTab(business: business),
+                      _MerchantListingsTab(business: business),
+                      _MerchantVerificationTab(business: business),
+                      _MerchantOrdersTab(business: business),
+                      MerchantProfileScreen(business: business),
+                    ],
+                  ),
+                ),
+              ],
+            )
+          : IndexedStack(
+              index: _currentTab,
+              children: [
+                _MerchantAnalyticsTab(business: business),
+                _MerchantListingsTab(business: business),
+                _MerchantVerificationTab(business: business),
+                _MerchantOrdersTab(business: business),
+                MerchantProfileScreen(business: business),
+              ],
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.inventory_2_outlined),
-              activeIcon: Icon(Icons.inventory_2_rounded),
-              label: 'Inventory',
+      bottomNavigationBar: wide
+          ? null
+          : Container(
+              decoration: BoxDecoration(
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -2))],
+              ),
+              child: BottomNavigationBar(
+                currentIndex: _currentTab,
+                onTap: (idx) => setState(() => _currentTab = idx),
+                selectedItemColor: AppTheme.primaryGreen,
+                unselectedItemColor: AppTheme.mutedGrey,
+                backgroundColor: Colors.white,
+                elevation: 0,
+                type: BottomNavigationBarType.fixed,
+                selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.analytics_outlined),
+                    activeIcon: Icon(Icons.analytics_rounded),
+                    label: 'Insights',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.inventory_2_outlined),
+                    activeIcon: Icon(Icons.inventory_2_rounded),
+                    label: 'Inventory',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.qr_code_scanner_rounded),
+                    activeIcon: Icon(Icons.qr_code_scanner_rounded),
+                    label: 'Verify',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.receipt_long_outlined),
+                    activeIcon: Icon(Icons.receipt_long_rounded),
+                    label: 'Orders',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.storefront_outlined),
+                    activeIcon: Icon(Icons.storefront_rounded),
+                    label: 'Shop',
+                  ),
+                ],
+              ),
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.qr_code_scanner_rounded),
-              activeIcon: Icon(Icons.qr_code_scanner_rounded),
-              label: 'Verify',
+    );
+  }
+
+  Widget _buildMerchantSideNavBrand(BusinessProfile business) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset('assets/images/logo.jpg', height: 28, width: 28, fit: BoxFit.cover),
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long_outlined),
-              activeIcon: Icon(Icons.receipt_long_rounded),
-              label: 'Orders',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.storefront_outlined),
-              activeIcon: Icon(Icons.storefront_rounded),
-              label: 'Shop',
+            const SizedBox(width: 8),
+            RichText(
+              text: const TextSpan(
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                children: [
+                  TextSpan(text: 'DREAM', style: TextStyle(color: AppTheme.primaryGreen)),
+                  TextSpan(text: 'EATS', style: TextStyle(color: Color(0xFFFFB300))),
+                ],
+              ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppTheme.lightGreenBg,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.storefront_rounded, size: 13, color: AppTheme.primaryGreen),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  business.name,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.primaryGreen,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -408,9 +515,11 @@ class _MerchantAnalyticsTabState extends ConsumerState<_MerchantAnalyticsTab> {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: ResponsiveCenter(
+        maxWidth: 1200,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           _buildHeroSection(revenueGenerated, pendingPayout, settledPayout),
           const SizedBox(height: 24),
 
@@ -460,8 +569,9 @@ class _MerchantAnalyticsTabState extends ConsumerState<_MerchantAnalyticsTab> {
           const SizedBox(height: 40),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSalesChart(List<Order> collectedOrders) {
     List<BarChartGroupData> chartGroups;
@@ -1026,74 +1136,77 @@ class _MerchantVerificationTabState extends ConsumerState<_MerchantVerificationT
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        children: [
-          const Text("Verify Rescue Code", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
-          const Text("Enter the code or scan the customer's QR", style: TextStyle(color: AppTheme.mutedGrey, fontSize: 13)),
-          const SizedBox(height: 32),
+    return ResponsiveCenter(
+      maxWidth: 480,
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            const Text("Verify Rescue Code", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
+            const Text("Enter the code or scan the customer's QR", style: TextStyle(color: AppTheme.mutedGrey, fontSize: 13)),
+            const SizedBox(height: 32),
 
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: _showScanner,
-              icon: const Icon(Icons.qr_code_scanner_rounded, color: AppTheme.primaryGreen),
-              label: const Text("SCAN QR CODE", style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
-              style: TextButton.styleFrom(
-                backgroundColor: AppTheme.lightGreenBg,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: _showScanner,
+                icon: const Icon(Icons.qr_code_scanner_rounded, color: AppTheme.primaryGreen),
+                label: const Text("SCAN QR CODE", style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
+                style: TextButton.styleFrom(
+                  backgroundColor: AppTheme.lightGreenBg,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          // Code Display
-          Container(
-            height: 80,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _error != null ? AppTheme.errorRed : const Color(0xFFE2E8F0), width: 2),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              _codeController.text.isEmpty ? "----" : _codeController.text,
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 4,
-                color: _error != null ? AppTheme.errorRed : AppTheme.charcoal,
+            // Code Display
+            Container(
+              height: 80,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: _error != null ? AppTheme.errorRed : const Color(0xFFE2E8F0), width: 2),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                _codeController.text.isEmpty ? "----" : _codeController.text,
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 4,
+                  color: _error != null ? AppTheme.errorRed : AppTheme.charcoal,
+                ),
               ),
             ),
-          ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(_error!, style: const TextStyle(color: AppTheme.errorRed, fontSize: 12, fontWeight: FontWeight.bold)),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(_error!, style: const TextStyle(color: AppTheme.errorRed, fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+
+            const Spacer(),
+
+            // Industrial Keypad
+            _buildKeypad(),
+
+            const SizedBox(height: 32),
+
+            ElevatedButton(
+              onPressed: _isValidating || _codeController.text.isEmpty ? null : _handleVerify,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryGreen,
+                minimumSize: const Size(double.infinity, 64),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+              child: _isValidating
+                ? const CircularProgressIndicator(color: Colors.white)
+                : const Text("VERIFY COLLECTION", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             ),
-
-          const Spacer(),
-
-          // Industrial Keypad
-          _buildKeypad(),
-
-          const SizedBox(height: 32),
-
-          ElevatedButton(
-            onPressed: _isValidating || _codeController.text.isEmpty ? null : _handleVerify,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryGreen,
-              minimumSize: const Size(double.infinity, 64),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            ),
-            child: _isValidating
-              ? const CircularProgressIndicator(color: Colors.white)
-              : const Text("VERIFY COLLECTION", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1433,61 +1546,64 @@ class _MerchantListingsTabState extends ConsumerState<_MerchantListingsTab> {
     final myDeals = state.deals.where((d) => d.businessId == widget.business.id).toList();
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(backgroundColor: AppTheme.primaryGreen, foregroundColor: Colors.white, onPressed: _openAddListingSheet, label: const Text("Add Surplus"), icon: const Icon(Icons.add)),
-      body: myDeals.isEmpty
-          ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.inventory_2_outlined, size: 64, color: AppTheme.mutedGrey.withValues(alpha: 0.5)), const SizedBox(height: 12), const Text("No active listings", style: TextStyle(fontWeight: FontWeight.bold)), const SizedBox(height: 6), const Text("Tap 'Add Surplus' to create your first listing.", style: TextStyle(color: AppTheme.mutedGrey, fontSize: 13))]))
-          : ListView.builder(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              itemCount: myDeals.length,
-              itemBuilder: (context, index) {
-                final deal = myDeals[index];
-                return _HoverLift(
-                  child: Opacity(
-                    opacity: deal.isActive ? 1.0 : 0.6,
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: deal.isActive ? const Color(0xFFF1F5F9) : AppTheme.errorRed.withValues(alpha: 0.1))),
-                      child: Row(
-                        children: [
-                          Container(width: 64, height: 64, decoration: BoxDecoration(color: AppTheme.lightGrey, borderRadius: BorderRadius.circular(12)), child: Icon(!deal.isActive ? Icons.pause_circle_filled_rounded : (deal.quantityRemaining == 0 ? Icons.block_flipped : Icons.inventory_2_rounded), color: !deal.isActive ? AppTheme.mutedGrey : (deal.quantityRemaining == 0 ? AppTheme.errorRed : AppTheme.primaryGreen))),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(children: [Text(deal.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.charcoal)), if (!deal.isActive) ...[const SizedBox(width: 8), Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: AppTheme.lightGrey, borderRadius: BorderRadius.circular(4)), child: const Text("PAUSED", style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: AppTheme.mutedGrey)))]]),
-                                const SizedBox(height: 4),
-                                Row(children: [Text("GHS ${deal.originalPrice.toStringAsFixed(0)}", style: const TextStyle(decoration: TextDecoration.lineThrough, color: AppTheme.mutedGrey, fontSize: 11)), const SizedBox(width: 6), Text("GHS ${deal.discountedPrice.toStringAsFixed(0)}", style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.w900, fontSize: 15))]),
-                                const SizedBox(height: 8),
-                                Row(children: [Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: deal.quantityRemaining <= 2 ? AppTheme.errorRed.withValues(alpha: 0.1) : AppTheme.lightGreenBg, borderRadius: BorderRadius.circular(8)), child: Text("${deal.quantityRemaining} of ${deal.quantityTotal} left", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: deal.quantityRemaining <= 2 ? AppTheme.errorRed : AppTheme.primaryGreen))), if (deal.quantityRemaining > 0) ...[const SizedBox(width: 8), GestureDetector(onTap: () => _boostDeal(context, deal), child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: AppTheme.secondaryGreen.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: AppTheme.secondaryGreen.withValues(alpha: 0.3))), child: const Row(children: [Icon(Icons.bolt_rounded, size: 10, color: AppTheme.secondaryGreen), SizedBox(width: 4), Text("BOOST", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.secondaryGreen))])))]]),
+      body: ResponsiveCenter(
+        maxWidth: 1100,
+        child: myDeals.isEmpty
+            ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.inventory_2_outlined, size: 64, color: AppTheme.mutedGrey.withValues(alpha: 0.5)), const SizedBox(height: 12), const Text("No active listings", style: TextStyle(fontWeight: FontWeight.bold)), const SizedBox(height: 6), const Text("Tap 'Add Surplus' to create your first listing.", style: TextStyle(color: AppTheme.mutedGrey, fontSize: 13))]))
+            : ListView.builder(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                itemCount: myDeals.length,
+                itemBuilder: (context, index) {
+                  final deal = myDeals[index];
+                  return _HoverLift(
+                    child: Opacity(
+                      opacity: deal.isActive ? 1.0 : 0.6,
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: deal.isActive ? const Color(0xFFF1F5F9) : AppTheme.errorRed.withValues(alpha: 0.1))),
+                        child: Row(
+                          children: [
+                            Container(width: 64, height: 64, decoration: BoxDecoration(color: AppTheme.lightGrey, borderRadius: BorderRadius.circular(12)), child: Icon(!deal.isActive ? Icons.pause_circle_filled_rounded : (deal.quantityRemaining == 0 ? Icons.block_flipped : Icons.inventory_2_rounded), color: !deal.isActive ? AppTheme.mutedGrey : (deal.quantityRemaining == 0 ? AppTheme.errorRed : AppTheme.primaryGreen))),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(children: [Text(deal.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.charcoal)), if (!deal.isActive) ...[const SizedBox(width: 8), Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: AppTheme.lightGrey, borderRadius: BorderRadius.circular(4)), child: const Text("PAUSED", style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: AppTheme.mutedGrey)))]]),
+                                  const SizedBox(height: 4),
+                                  Row(children: [Text("GHS ${deal.originalPrice.toStringAsFixed(0)}", style: const TextStyle(decoration: TextDecoration.lineThrough, color: AppTheme.mutedGrey, fontSize: 11)), const SizedBox(width: 6), Text("GHS ${deal.discountedPrice.toStringAsFixed(0)}", style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.w900, fontSize: 15))]),
+                                  const SizedBox(height: 8),
+                                  Row(children: [Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: deal.quantityRemaining <= 2 ? AppTheme.errorRed.withValues(alpha: 0.1) : AppTheme.lightGreenBg, borderRadius: BorderRadius.circular(8)), child: Text("${deal.quantityRemaining} of ${deal.quantityTotal} left", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: deal.quantityRemaining <= 2 ? AppTheme.errorRed : AppTheme.primaryGreen))), if (deal.quantityRemaining > 0) ...[const SizedBox(width: 8), GestureDetector(onTap: () => _boostDeal(context, deal), child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: AppTheme.secondaryGreen.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: AppTheme.secondaryGreen.withValues(alpha: 0.3))), child: const Row(children: [Icon(Icons.bolt_rounded, size: 10, color: AppTheme.secondaryGreen), SizedBox(width: 4), Text("BOOST", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.secondaryGreen))])))]]),
+                                ],
+                              ),
+                            ),
+                            PopupMenuButton<String>(
+                              icon: const Icon(Icons.more_vert, color: AppTheme.mutedGrey),
+                              onSelected: (val) {
+                                if (val == 'toggle') {
+                                  ref.read(appStateProvider.notifier).toggleDealStatus(deal.id, !deal.isActive);
+                                } else if (val == 'edit') {
+                                  _showEditModal(context, deal);
+                                } else if (val == 'delete') {
+                                  _confirmDelete(context, deal);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                PopupMenuItem(value: 'toggle', child: Row(children: [Icon(deal.isActive ? Icons.pause_circle_outline_rounded : Icons.play_circle_outline_rounded, size: 18), const SizedBox(width: 8), Text(deal.isActive ? "Pause Listing" : "Resume Listing")])),
+                                const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit_rounded, size: 18), SizedBox(width: 8), Text("Edit Listing")])),
+                                const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete_rounded, size: 18, color: AppTheme.errorRed), SizedBox(width: 8), Text("Remove", style: TextStyle(color: AppTheme.errorRed))])),
                               ],
                             ),
-                          ),
-                          PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert, color: AppTheme.mutedGrey),
-                            onSelected: (val) {
-                              if (val == 'toggle') {
-                                ref.read(appStateProvider.notifier).toggleDealStatus(deal.id, !deal.isActive);
-                              } else if (val == 'edit') {
-                                _showEditModal(context, deal);
-                              } else if (val == 'delete') {
-                                _confirmDelete(context, deal);
-                              }
-                            },
-                            itemBuilder: (context) => [
-                              PopupMenuItem(value: 'toggle', child: Row(children: [Icon(deal.isActive ? Icons.pause_circle_outline_rounded : Icons.play_circle_outline_rounded, size: 18), const SizedBox(width: 8), Text(deal.isActive ? "Pause Listing" : "Resume Listing")])),
-                              const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit_rounded, size: 18), SizedBox(width: 8), Text("Edit Listing")])),
-                              const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete_rounded, size: 18, color: AppTheme.errorRed), SizedBox(width: 8), Text("Remove", style: TextStyle(color: AppTheme.errorRed))])),
-                            ],
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
+      ),
     );
   }
 
@@ -1682,17 +1798,20 @@ class _MerchantOrdersTab extends ConsumerWidget {
     final state = ref.watch(appStateProvider);
     final myOrders = state.orders.where((o) => o.businessId == business.id).toList();
 
-    return myOrders.isEmpty
-        ? _buildEmptyState()
-        : ListView.builder(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            itemCount: myOrders.length,
-            itemBuilder: (context, index) {
-              final order = myOrders[index];
-              return _buildMerchantOrderCard(context, ref, order);
-            },
-          );
+    return ResponsiveCenter(
+      maxWidth: 1100,
+      child: myOrders.isEmpty
+          ? _buildEmptyState()
+          : ListView.builder(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              itemCount: myOrders.length,
+              itemBuilder: (context, index) {
+                final order = myOrders[index];
+                return _buildMerchantOrderCard(context, ref, order);
+              },
+            ),
+    );
   }
 
   Widget _buildMerchantOrderCard(BuildContext context, WidgetRef ref, Order order) {

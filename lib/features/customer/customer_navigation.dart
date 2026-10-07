@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
+import '../../core/responsive.dart';
 import '../../providers/app_state.dart';
 import 'customer_home.dart';
 import 'partners_directory_screen.dart';
@@ -37,18 +38,61 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
     final basketCount = state.basketItemCount;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final wide = useSideNav(context);
+
+    final tabs = IndexedStack(
+      index: currentIndex,
+      children: _screens,
+    );
 
     return Scaffold(
       body: Stack(
         children: [
-          IndexedStack(
-            index: currentIndex,
-            children: _screens,
-          ),
+          if (wide)
+            Row(
+              children: [
+                DesktopSideNav(
+                  accentColor: AppTheme.primaryGreen,
+                  selectedIndex: currentIndex,
+                  onSelect: (i) => ref.read(customerTabProvider.notifier).state = i,
+                  header: _buildSideNavBrand(),
+                  items: const [
+                    SideNavItem(icon: Icons.explore_outlined, activeIcon: Icons.explore, label: 'Explore'),
+                    SideNavItem(icon: Icons.favorite_border, activeIcon: Icons.favorite, label: 'Favorites'),
+                    SideNavItem(icon: Icons.storefront_outlined, activeIcon: Icons.storefront, label: 'Partners'),
+                    SideNavItem(icon: Icons.stars_outlined, activeIcon: Icons.stars, label: 'Rewards'),
+                    SideNavItem(icon: Icons.receipt_long_outlined, activeIcon: Icons.receipt_long, label: 'Orders'),
+                  ],
+                  footer: basketCount > 0
+                      ? SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryGreen,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            icon: const Icon(Icons.shopping_basket, size: 18),
+                            label: Text('Basket ($basketCount)',
+                                style: const TextStyle(fontWeight: FontWeight.bold)),
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const BasketScreen()),
+                            ),
+                          ),
+                        )
+                      : null,
+                ),
+                Expanded(child: tabs),
+              ],
+            )
+          else
+            tabs,
           if (isAdmin)
             Positioned(
               top: MediaQuery.of(context).padding.top + 8,
-              left: 16,
+              left: wide ? 256 : 16,
               right: 16,
               child: SafeArea(
                 bottom: false,
@@ -121,7 +165,7 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
         ],
       ),
       // Floating basket button (visible on home & favorites tabs only)
-      floatingActionButton: currentIndex <= 1 && basketCount > 0
+      floatingActionButton: !wide && currentIndex <= 1 && basketCount > 0
           ? FloatingActionButton.extended(
               heroTag: 'basket_fab',
               backgroundColor: AppTheme.primaryGreen,
@@ -139,7 +183,7 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
               ),
             )
           : null,
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: wide ? null : BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: (index) => ref.read(customerTabProvider.notifier).state = index,
         type: BottomNavigationBarType.fixed,
@@ -177,6 +221,27 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSideNavBrand() {
+    return Row(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.asset('assets/images/logo.jpg', height: 32, width: 32, fit: BoxFit.cover),
+        ),
+        const SizedBox(width: 10),
+        RichText(
+          text: const TextSpan(
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+            children: [
+              TextSpan(text: 'DREAM', style: TextStyle(color: AppTheme.primaryGreen)),
+              TextSpan(text: 'EATS', style: TextStyle(color: Color(0xFFFFB300))),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme.dart';
+import '../../core/responsive.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
 import '../../services/location_service.dart';
@@ -44,9 +45,11 @@ class DealDetailScreen extends ConsumerWidget {
       ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        child: ResponsiveCenter(
+          maxWidth: 800,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Container(
               height: 300,
               width: double.infinity,
@@ -414,11 +417,14 @@ class DealDetailScreen extends ConsumerWidget {
             ),
           ],
         ),
+        ),
       ),
       bottomSheet: Container(
         color: Colors.transparent,
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-        child: Container(
+        child: ResponsiveCenter(
+          maxWidth: 800,
+          child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.95),
@@ -490,6 +496,7 @@ class DealDetailScreen extends ConsumerWidget {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

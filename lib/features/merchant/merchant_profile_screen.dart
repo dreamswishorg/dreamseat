@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/theme.dart';
+import '../../core/responsive.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
 import '../../services/location_service.dart';
@@ -243,9 +244,11 @@ class _MerchantProfileScreenState
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+        child: ResponsiveCenter(
+          maxWidth: 850,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             // ── Visual Branding ───────────────────────────────────
             _buildBrandingSection(),
             const SizedBox(height: 32),
@@ -307,6 +310,7 @@ class _MerchantProfileScreenState
 
             const SizedBox(height: 40),
           ],
+        ),
         ),
       ),
     );

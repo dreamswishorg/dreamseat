@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
+import '../../core/responsive.dart';
 import '../../models/models.dart';
 
 class OrderConfirmationScreen extends StatefulWidget {
@@ -136,8 +137,10 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
+          child: ResponsiveCenter(
+            maxWidth: 680,
+            child: Column(
+              children: [
               const SizedBox(height: 40),
 
               // ── Animated Success Circle ──────────────────────────────────
@@ -462,6 +465,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
 
               const SizedBox(height: 32),
             ],
+          ),
           ),
         ),
       ),

@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/theme.dart';
+import '../../core/responsive.dart';
 import '../../core/ui_utils.dart';
 import '../../providers/app_state.dart';
 import '../../services/supabase_service.dart';
@@ -208,9 +209,11 @@ class _CustomerProfileScreenState
       body: SingleChildScrollView(
         padding:
             const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+        child: ResponsiveCenter(
+          maxWidth: 760,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             // ── Avatar + Account Info ────────────────────────────────────────
             Container(
               padding: const EdgeInsets.all(20),
@@ -542,6 +545,7 @@ class _CustomerProfileScreenState
             ),
             const SizedBox(height: 32),
           ],
+        ),
         ),
       ),
     );

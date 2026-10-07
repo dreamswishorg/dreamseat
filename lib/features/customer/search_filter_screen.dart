@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
+import '../../core/responsive.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
 import 'deal_detail_screen.dart';
@@ -902,34 +903,70 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
           ),
         ),
       ),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(child: _buildFiltersSection()),
-          _buildResultsHeader(filteredDeals.length),
-          if (filteredDeals.isEmpty)
-            _buildEmptyState()
-          else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final deal = filteredDeals[index];
-                    double distance = 1.5;
-                    try {
-                      distance = state.businesses
-                          .firstWhere((b) => b.id == deal.businessId)
-                          .distance;
-                    } catch (_) {}
-                    final isFav = state.favoriteBusinessIds.contains(deal.businessId);
-                    return _buildDealCard(context, deal, isFav, distance);
-                  },
-                  childCount: filteredDeals.length,
-                ),
-              ),
-            ),
-        ],
+      body: ResponsiveCenter(
+        maxWidth: 1100,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 640;
+            final cols = constraints.maxWidth >= 960 ? 3 : 2;
+
+            return CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(child: _buildFiltersSection()),
+                _buildResultsHeader(filteredDeals.length),
+                if (filteredDeals.isEmpty)
+                  _buildEmptyState()
+                else if (isWide)
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                    sliver: SliverGrid(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: cols,
+                        crossAxisSpacing: 14,
+                        mainAxisSpacing: 14,
+                        mainAxisExtent: 310,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final deal = filteredDeals[index];
+                          double distance = 1.5;
+                          try {
+                            distance = state.businesses
+                                .firstWhere((b) => b.id == deal.businessId)
+                                .distance;
+                          } catch (_) {}
+                          final isFav = state.favoriteBusinessIds.contains(deal.businessId);
+                          return _buildDealCard(context, deal, isFav, distance);
+                        },
+                        childCount: filteredDeals.length,
+                      ),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final deal = filteredDeals[index];
+                          double distance = 1.5;
+                          try {
+                            distance = state.businesses
+                                .firstWhere((b) => b.id == deal.businessId)
+                                .distance;
+                          } catch (_) {}
+                          final isFav = state.favoriteBusinessIds.contains(deal.businessId);
+                          return _buildDealCard(context, deal, isFav, distance);
+                        },
+                        childCount: filteredDeals.length,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
+import '../../core/responsive.dart';
 import '../../core/ui_utils.dart';
 import '../../providers/app_state.dart';
 
@@ -158,8 +159,10 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.5),
         ),
       ),
-      body: Column(
-        children: [
+      body: ResponsiveCenter(
+        maxWidth: 850,
+        child: Column(
+          children: [
           // ── Custom Segmented Controller ──────────────────────────
           Container(
             margin: const EdgeInsets.fromLTRB(20, 16, 20, 8),
@@ -220,6 +223,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
             ),
           ),
         ],
+        ),
       ),
     );
   }

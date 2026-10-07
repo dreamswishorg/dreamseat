@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../core/theme.dart';
+import '../../core/responsive.dart';
 import '../../providers/app_state.dart';
 import '../common/legal_screens.dart';
 import '../../widgets/biometric_switch_tile.dart';
@@ -150,9 +151,11 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+          child: ResponsiveCenter(
+            maxWidth: 760,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               // ── Section: Device Permissions ─────────────────────────
               const Text(
                 "Device Permissions",
@@ -343,6 +346,7 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
               ),
               const SizedBox(height: 36),
             ],
+          ),
           ),
         ),
       ),

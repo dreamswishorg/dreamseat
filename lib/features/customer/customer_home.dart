@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../core/theme.dart';
+import '../../core/responsive.dart';
 import '../../core/ui_utils.dart';
 import '../../core/branded_empty_state.dart';
 import '../../models/models.dart';
@@ -174,7 +175,9 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         color: AppTheme.primaryGreen,
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          child: Column(
+          child: ResponsiveCenter(
+            maxWidth: 1200,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Welcome Greeting & Location row
@@ -281,39 +284,57 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
               if (filteredDeals.isEmpty)
                 const _EmptyDeals()
               else
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
+                Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: filteredDeals.length,
-                  itemBuilder: (context, index) {
-                    final deal = filteredDeals[index];
-                    final isFav = favoriteIds.contains(deal.businessId);
-                    double distance = 1.5;
-                    try {
-                      final biz =
-                          businesses.firstWhere((b) => b.id == deal.businessId);
-                      if (userLocation.position != null) {
-                        distance = Geolocator.distanceBetween(
-                              userLocation.position!.latitude,
-                              userLocation.position!.longitude,
-                              biz.latitude,
-                              biz.longitude,
-                            ) /
-                            1000;
-                      } else {
-                        distance = biz.distance;
-                      }
-                    } catch (_) {}
-                    return _DealCard(deal: deal, isFavorite: isFav, distance: distance);
-                  },
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      const gap = 16.0;
+                      final w = constraints.maxWidth;
+                      final columns = w >= 1000 ? 3 : (w >= 640 ? 2 : 1);
+                      final itemWidth = (w - gap * (columns - 1)) / columns;
+                      return Wrap(
+                        spacing: gap,
+                        children: [
+                          for (final deal in filteredDeals)
+                            SizedBox(
+                              width: itemWidth,
+                              child: _DealCard(
+                                deal: deal,
+                                isFavorite: favoriteIds.contains(deal.businessId),
+                                distance: _distanceTo(deal, businesses, userLocation),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
               const SizedBox(height: 32),
             ],
           ),
+          ),
         ),
       ),
     );
+  }
+
+  double _distanceTo(FoodDeal deal, List<BusinessProfile> businesses, UserLocation userLocation) {
+    double distance = 1.5;
+    try {
+      final biz = businesses.firstWhere((b) => b.id == deal.businessId);
+      if (userLocation.position != null) {
+        distance = Geolocator.distanceBetween(
+              userLocation.position!.latitude,
+              userLocation.position!.longitude,
+              biz.latitude,
+              biz.longitude,
+            ) /
+            1000;
+      } else {
+        distance = biz.distance;
+      }
+    } catch (_) {}
+    return distance;
   }
 
   void _showAddressSelectionBottomSheet() {

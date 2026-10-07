@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
+import '../../core/responsive.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
 import 'deal_detail_screen.dart';
@@ -18,36 +19,65 @@ class MerchantStorefrontScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          _buildAppBar(context),
-          SliverToBoxAdapter(child: _buildMerchantInfo()),
-          const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
-              child: Text(
-                "Active Deals",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.charcoal),
-              ),
-            ),
-          ),
-          deals.isEmpty
-              ? _buildEmptyDeals()
-              : SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final deal = deals[index];
-                        return _buildDealCard(context, ref, deal, isFavorite);
-                      },
-                      childCount: deals.length,
+      body: ResponsiveCenter(
+        maxWidth: 1000,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 640;
+            final cols = constraints.maxWidth >= 900 ? 3 : 2;
+
+            return CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                _buildAppBar(context),
+                SliverToBoxAdapter(child: _buildMerchantInfo()),
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
+                    child: Text(
+                      "Active Deals",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.charcoal),
                     ),
                   ),
                 ),
-          const SliverPadding(padding: EdgeInsets.only(bottom: 40)),
-        ],
+                deals.isEmpty
+                    ? _buildEmptyDeals()
+                    : isWide
+                        ? SliverPadding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            sliver: SliverGrid(
+                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: cols,
+                                crossAxisSpacing: 14,
+                                mainAxisSpacing: 14,
+                                mainAxisExtent: 280,
+                              ),
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final deal = deals[index];
+                                  return _buildDealCard(context, ref, deal, isFavorite);
+                                },
+                                childCount: deals.length,
+                              ),
+                            ),
+                          )
+                        : SliverPadding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final deal = deals[index];
+                                  return _buildDealCard(context, ref, deal, isFavorite);
+                                },
+                                childCount: deals.length,
+                              ),
+                            ),
+                          ),
+                const SliverPadding(padding: EdgeInsets.only(bottom: 40)),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

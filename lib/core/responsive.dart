@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 /// Comprehensive responsive utilities and wrappers for DreamEats.
@@ -64,6 +65,193 @@ class ResponsiveAppWrapper extends StatelessWidget {
         builder: (context, constraints) {
           return child!;
         },
+      ),
+    );
+  }
+}
+
+/// Width at which we switch from phone layout (bottom tabs) to
+/// laptop layout (left sidebar).
+const double kSideNavBreakpoint = 900;
+
+bool useSideNav(BuildContext context) =>
+    MediaQuery.of(context).size.width >= kSideNavBreakpoint;
+
+/// Centers [child] and limits it to [maxWidth] on wide screens (laptops),
+/// so pages don't stretch edge-to-edge.
+///
+/// Mouse-wheel / trackpad scrolling over the empty side margins is forwarded
+/// to the centered content, so the page still scrolls wherever the pointer is.
+class ResponsiveCenter extends StatelessWidget {
+  final Widget child;
+  final double maxWidth;
+
+  const ResponsiveCenter({
+    super.key,
+    required this.child,
+    this.maxWidth = 1100,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final available = constraints.maxWidth;
+        if (!available.isFinite || available <= maxWidth) return child;
+
+        final side = (available - maxWidth) / 2;
+        return Listener(
+          behavior: HitTestBehavior.translucent,
+          onPointerSignal: (event) {
+            if (event is! PointerScrollEvent) return;
+            final dx = event.localPosition.dx;
+            if (dx >= side && dx <= side + maxWidth) return; // content handles it
+            // Claim the event so it is handled exactly once, then re-dispatch
+            // it at the horizontal centre so the page content scrolls.
+            GestureBinding.instance.pointerSignalResolver.register(event, (resolved) {
+              final shifted = resolved.copyWith(
+                position: resolved.position + Offset(available / 2 - dx, 0),
+              );
+              Future.microtask(() => GestureBinding.instance.handlePointerEvent(shifted));
+            });
+          },
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: child,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class SideNavItem {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final int badgeCount;
+
+  const SideNavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    this.badgeCount = 0,
+  });
+}
+
+/// Left sidebar navigation used on laptop/desktop widths in place of the
+/// phone bottom navigation bar.
+class DesktopSideNav extends StatelessWidget {
+  final List<SideNavItem> items;
+  final int selectedIndex;
+  final ValueChanged<int> onSelect;
+  final Widget? header;
+  final Widget? footer;
+  final Color accentColor;
+
+  const DesktopSideNav({
+    super.key,
+    required this.items,
+    required this.selectedIndex,
+    required this.onSelect,
+    required this.accentColor,
+    this.header,
+    this.footer,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const textColor = Color(0xFF1E293B);
+    const mutedColor = Color(0xFF64748B);
+
+    return Container(
+      width: 240,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(right: BorderSide(color: Color(0x14000000))),
+      ),
+      child: SafeArea(
+        right: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (header != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                child: header!,
+              ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                itemCount: items.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 4),
+                itemBuilder: (context, i) {
+                  final item = items[i];
+                  final selected = i == selectedIndex;
+                  return Material(
+                    color: selected ? accentColor.withValues(alpha: 0.10) : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      hoverColor: accentColor.withValues(alpha: 0.06),
+                      onTap: () => onSelect(i),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        child: Row(
+                          children: [
+                            Icon(
+                              selected ? item.activeIcon : item.icon,
+                              size: 21,
+                              color: selected ? accentColor : mutedColor,
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Text(
+                                item.label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                                  color: selected ? textColor : mutedColor,
+                                ),
+                              ),
+                            ),
+                            if (item.badgeCount > 0)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: accentColor,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  '${item.badgeCount}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            if (footer != null)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: footer!,
+              ),
+          ],
+        ),
       ),
     );
   }

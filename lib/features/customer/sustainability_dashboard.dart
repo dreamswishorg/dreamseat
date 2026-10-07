@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
+import '../../core/responsive.dart';
 import '../../core/ui_utils.dart';
 import '../../providers/app_state.dart';
 
@@ -34,9 +35,11 @@ class SustainabilityDashboardScreen extends ConsumerWidget {
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        child: ResponsiveCenter(
+          maxWidth: 900,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // Hero card showing eco score (Mesh gradient + Glowing border + Metallic badge)
             Container(
               width: double.infinity,
@@ -326,6 +329,7 @@ class SustainabilityDashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 32),
           ],
+        ),
         ),
       ),
     );

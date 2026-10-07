@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_paystack_plus/flutter_paystack_plus.dart';
 import '../../core/theme.dart';
+import '../../core/responsive.dart';
 import '../../core/ui_utils.dart';
 import '../../core/config.dart';
 import '../../models/models.dart';
@@ -410,13 +411,15 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 120), // Bottom padding for sticky bar
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // ── Hero Order Card ──────────────────────────────────────
-                  _buildHeroSummaryCard(),
+            child: ResponsiveCenter(
+              maxWidth: 760,
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // ── Hero Order Card ──────────────────────────────────────
+                    _buildHeroSummaryCard(),
                   const SizedBox(height: 28),
 
                   // ── Payment Method Header ────────────────────────────────
@@ -514,6 +517,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               ),
             ),
           ),
+        ),
 
           // ── Sticky Bottom Pay Bar ────────────────────────────────────────
           Positioned(
@@ -1000,7 +1004,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         ),
       ),
       child: SafeArea(
-        child: _isProcessing
+        child: ResponsiveCenter(
+          maxWidth: 760,
+          child: _isProcessing
             ? Container(
                 padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                 decoration: BoxDecoration(
@@ -1076,6 +1082,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   ),
                 ],
               ),
+        ),
       ),
     );
   }
