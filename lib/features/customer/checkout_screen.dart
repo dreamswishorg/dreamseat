@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_paystack_plus/flutter_paystack_plus.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/theme.dart';
 import '../../core/ui_utils.dart';
 import '../../core/config.dart';
@@ -32,7 +31,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       'subtitle': 'Instant USSD Prompt',
       'color': const Color(0xFFFFCC00),
       'icon': Icons.phone_android_rounded,
-      'svg_asset': 'assets/icons/mtn_momo.svg',
+      'logo_asset': 'assets/icons/mtn_momo.png',
       'bg_tint': const Color(0xFFFFFBEB),
       'border_color': const Color(0xFFF59E0B),
     },
@@ -41,7 +40,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       'subtitle': 'Vodafone Cash Prompt',
       'color': const Color(0xFFDC2626),
       'icon': Icons.phone_iphone_rounded,
-      'svg_asset': 'assets/icons/telecel_cash.svg',
+      'logo_asset': 'assets/icons/telecel_cash.png',
       'bg_tint': const Color(0xFFFEF2F2),
       'border_color': const Color(0xFFEF4444),
     },
@@ -50,7 +49,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       'subtitle': 'AT Money Prompt',
       'color': const Color(0xFF1D4ED8),
       'icon': Icons.smartphone_rounded,
-      'svg_asset': 'assets/icons/airteltigo_money.svg',
+      'logo_asset': 'assets/icons/airteltigo_money.png',
       'bg_tint': const Color(0xFFEFF6FF),
       'border_color': const Color(0xFF3B82F6),
     },
@@ -59,7 +58,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       'subtitle': 'Secured Card Gateway',
       'color': const Color(0xFF0F172A),
       'icon': Icons.credit_card_rounded,
-      'svg_asset': 'assets/icons/visa_mastercard.svg',
+      'logo_asset': 'assets/icons/visa_mastercard.jpg',
       'bg_tint': const Color(0xFFF8FAFC),
       'border_color': const Color(0xFF334155),
     },
@@ -737,19 +736,27 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               ),
               child: Row(
                 children: [
-                  if (p.containsKey('svg_asset'))
+                  if (p.containsKey('logo_asset'))
                     Container(
+                      width: 64,
+                      height: 44,
+                      padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.08)),
                         boxShadow: isSelected
                             ? [BoxShadow(color: color.withValues(alpha: 0.2), blurRadius: 6, offset: const Offset(0, 2))]
                             : null,
                       ),
-                      child: SvgPicture.asset(
-                        p['svg_asset'] as String,
-                        height: 28,
-                        width: 75,
-                        fit: BoxFit.contain,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: Image.asset(
+                          p['logo_asset'] as String,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stack) =>
+                              Icon(p['icon'] as IconData, color: color, size: 22),
+                        ),
                       ),
                     )
                   else
