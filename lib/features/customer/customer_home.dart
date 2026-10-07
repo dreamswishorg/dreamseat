@@ -136,39 +136,76 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
       appBar: buildCustomerAppBar(
         context: context,
         ref: ref,
-        title: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                'assets/images/logo.jpg',
-                height: 28,
-                width: 28,
-                fit: BoxFit.cover,
-              ),
-            ),
-            const SizedBox(width: 8),
-            RichText(
-              text: const TextSpan(
-                style: TextStyle(
-                  fontSize: 21,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5,
-                ),
+        title: useSideNav(context)
+            ? Row(
                 children: [
-                  TextSpan(
-                    text: 'DREAM',
-                    style: TextStyle(color: AppTheme.primaryGreen),
+                  Text(
+                    'Explore Deals',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: primaryText,
+                      letterSpacing: -0.4,
+                    ),
                   ),
-                  TextSpan(
-                    text: 'EATS',
-                    style: TextStyle(color: Color(0xFFFFB300)),
+                  const SizedBox(width: 14),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.lightGreenBg,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.location_on_rounded, size: 14, color: AppTheme.primaryGreen),
+                        const SizedBox(width: 4),
+                        Text(
+                          userLocation.address,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryGreen,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              )
+            : Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.asset(
+                      'assets/images/logo.jpg',
+                      height: 28,
+                      width: 28,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  RichText(
+                    text: const TextSpan(
+                      style: TextStyle(
+                        fontSize: 21,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: 'DREAM',
+                          style: TextStyle(color: AppTheme.primaryGreen),
+                        ),
+                        TextSpan(
+                          text: 'EATS',
+                          style: TextStyle(color: Color(0xFFFFB300)),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.read(appStateProvider.notifier).refreshOrders(),
@@ -290,7 +327,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                     builder: (context, constraints) {
                       const gap = 16.0;
                       final w = constraints.maxWidth;
-                      final columns = w >= 1000 ? 3 : (w >= 640 ? 2 : 1);
+                      final columns = w >= 1100 ? 4 : (w >= 780 ? 3 : (w >= 500 ? 2 : 1));
                       final itemWidth = (w - gap * (columns - 1)) / columns;
                       return Wrap(
                         spacing: gap,

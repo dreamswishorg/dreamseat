@@ -439,20 +439,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                                     ),
                                   ],
                                 ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.lightGreenBg,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: const Text(
-                                    'Accra, Ghana',
-                                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
-                                  ),
-                                ),
                               ],
                             ),
-                            const SizedBox(height: 28),
+                            const SizedBox(height: 24),
 
                             // Tab selector
                             _SlidingTabSelector(
@@ -758,7 +747,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                           Icon(Icons.eco_outlined, color: Color(0xFFA7F3D0), size: 15),
                           SizedBox(width: 6),
                           Text(
-                            'ACCRA SURPLUS FOOD RESCUE',
+                            'SURPLUS FOOD RESCUE PLATFORM',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 10.5,
@@ -782,7 +771,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                     ),
                     const SizedBox(height: 14),
                     const Text(
-                      'Connect directly with top restaurants, bakeries, and grocers across Accra to buy fresh surplus food at a fraction of the original price.',
+                      'Connect directly with top restaurants, bakeries, and grocers to buy fresh surplus food at a fraction of the original price.',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.white70,
@@ -818,7 +807,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                       SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          '100% Verified Fresh Food • Safe & Instant QR-code Pickups in Accra',
+                          '100% Verified Fresh Food • Safe & Instant QR-code Pickups',
                           style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
                         ),
                       ),
@@ -1891,7 +1880,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                   _buildInputField(
                     controller: _suBizAddressController,
                     label: 'Physical Address / Landmark',
-                    hint: 'e.g., Osu Oxford Street, Accra',
+                    hint: 'e.g., 12 Main Street',
                     icon: Icons.location_on_outlined,
                     validator: (v) => (v == null || v.trim().isEmpty)
                         ? 'Address is required'

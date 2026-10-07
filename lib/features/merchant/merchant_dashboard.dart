@@ -87,29 +87,36 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
     }
 
     final wide = useSideNav(context);
+    const tabTitles = ['Dashboard', 'Inventory', 'Order Verification', 'Orders', 'Shop Profile'];
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    final appBar = AppBar(
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: false,
-        systemOverlayStyle: SystemUiOverlayStyle.light,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF064E3B), Color(0xFF0F172A)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
+        automaticallyImplyLeading: false,
+        backgroundColor: wide ? Colors.white : null,
+        shape: wide
+            ? Border(bottom: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.08)))
+            : null,
+        systemOverlayStyle: wide ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light,
+        flexibleSpace: wide
+            ? null
+            : Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF064E3B), Color(0xFF0F172A)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+              ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              business.name,
-              style: const TextStyle(
-                color: Colors.white,
+              wide ? tabTitles[_currentTab] : business.name,
+              style: TextStyle(
+                color: wide ? AppTheme.charcoal : Colors.white,
                 fontWeight: FontWeight.w900,
                 fontSize: 18,
                 letterSpacing: -0.3,
@@ -150,9 +157,11 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
                         business.isApproved ? "Verified Merchant Portal" : "Pending Verification",
                         style: TextStyle(
                           fontSize: 10,
-                          color: business.isApproved
-                              ? const Color(0xFFECFDF5)
-                              : Colors.amber.shade100,
+                          color: wide
+                              ? (business.isApproved ? const Color(0xFF047857) : Colors.amber.shade900)
+                              : (business.isApproved
+                                  ? const Color(0xFFECFDF5)
+                                  : Colors.amber.shade100),
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.2,
                         ),
@@ -165,7 +174,7 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
           ],
         ),
         actions: [
-          buildNotificationMenuAnchor(context, ref, iconColor: Colors.white),
+          buildNotificationMenuAnchor(context, ref, iconColor: wide ? AppTheme.charcoal : Colors.white),
           MenuAnchor(
             alignmentOffset: const Offset(-185, 8),
             style: MenuStyle(
@@ -202,7 +211,7 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
                       ],
                     ),
                     child: CircleAvatar(
-                      backgroundColor: Colors.white,
+                      backgroundColor: wide ? AppTheme.lightGreenBg : Colors.white,
                       radius: 17,
                       child: Text(
                         initials,
@@ -360,7 +369,11 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
             ],
           ),
         ],
-      ),
+      );
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: wide ? null : appBar,
       body: wide
           ? Row(
               children: [
@@ -407,14 +420,21 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
                   ],
                 ),
                 Expanded(
-                  child: IndexedStack(
-                    index: _currentTab,
+                  child: Column(
                     children: [
-                      _MerchantAnalyticsTab(business: business),
-                      _MerchantListingsTab(business: business),
-                      _MerchantVerificationTab(business: business),
-                      _MerchantOrdersTab(business: business),
-                      MerchantProfileScreen(business: business),
+                      SizedBox(height: kToolbarHeight + 8, child: appBar),
+                      Expanded(
+                        child: IndexedStack(
+                          index: _currentTab,
+                          children: [
+                            _MerchantAnalyticsTab(business: business),
+                            _MerchantListingsTab(business: business),
+                            _MerchantVerificationTab(business: business),
+                            _MerchantOrdersTab(business: business),
+                            MerchantProfileScreen(business: business),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -690,21 +710,36 @@ class _MerchantAnalyticsTabState extends ConsumerState<_MerchantAnalyticsTab> {
             const SizedBox(height: 18),
 
             // ── Quick Operations Metrics (4-stat grid) ──────────────────────
-            Row(
-              children: [
-                _buildMetricCard("Meals Rescued", "$mealsSaved", Icons.restaurant_rounded, AppTheme.primaryGreen),
-                const SizedBox(width: 10),
-                _buildMetricCard("Orders Fulfilled", "${collectedOrders.length}", Icons.receipt_long_outlined, Colors.blueAccent),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                _buildMetricCard("Waste Diverted", "${wasteReducedKg.toStringAsFixed(1)} kg", Icons.eco_rounded, Colors.teal),
-                const SizedBox(width: 10),
-                _buildMetricCard("Store Rating", widget.business.rating > 0 ? "${widget.business.rating.toStringAsFixed(1)} ★" : "5.0 ★", Icons.star_rounded, AppTheme.goldAccent),
-              ],
-            ),
+            if (MediaQuery.of(context).size.width >= 700)
+              Row(
+                children: [
+                  _buildMetricCard("Meals Rescued", "$mealsSaved", Icons.restaurant_rounded, AppTheme.primaryGreen),
+                  const SizedBox(width: 12),
+                  _buildMetricCard("Orders Fulfilled", "${collectedOrders.length}", Icons.receipt_long_outlined, Colors.blueAccent),
+                  const SizedBox(width: 12),
+                  _buildMetricCard("Waste Diverted", "${wasteReducedKg.toStringAsFixed(1)} kg", Icons.eco_rounded, Colors.teal),
+                  const SizedBox(width: 12),
+                  _buildMetricCard("Store Rating", widget.business.rating > 0 ? "${widget.business.rating.toStringAsFixed(1)} ★" : "5.0 ★", Icons.star_rounded, AppTheme.goldAccent),
+                ],
+              )
+            else ...[
+              Row(
+                children: [
+                  _buildMetricCard("Meals Rescued", "$mealsSaved", Icons.restaurant_rounded, AppTheme.primaryGreen),
+                  const SizedBox(width: 10),
+                  _buildMetricCard("Orders Fulfilled", "${collectedOrders.length}", Icons.receipt_long_outlined, Colors.blueAccent),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  _buildMetricCard("Waste Diverted", "${wasteReducedKg.toStringAsFixed(1)} kg", Icons.eco_rounded, Colors.teal),
+                  const SizedBox(width: 10),
+                  _buildMetricCard("Store Rating", widget.business.rating > 0 ? "${widget.business.rating.toStringAsFixed(1)} ★" : "5.0 ★", Icons.star_rounded, AppTheme.goldAccent),
+                ],
+              ),
+            ],
+            const SizedBox(height: 18),
             // ── Real-Time Order Fulfillment Pipeline ───────────────────────
             _buildOrderFulfillmentPipeline(allMerchantOrders),
             const SizedBox(height: 20),

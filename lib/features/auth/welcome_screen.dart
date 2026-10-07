@@ -291,7 +291,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                     Icon(Icons.eco_outlined, color: AppTheme.primaryGreen, size: 15),
                                     SizedBox(width: 6),
                                     Text(
-                                      'ACCRA SURPLUS FOOD RESCUE PLATFORM',
+                                      'SURPLUS FOOD RESCUE PLATFORM',
                                       style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w800,
@@ -322,7 +322,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               ConstrainedBox(
                                 constraints: const BoxConstraints(maxWidth: 620),
                                 child: const Text(
-                                  'DreamEats bridges Accra’s top restaurants, bakeries, and grocers with eco-conscious foodies to enjoy premium meals at up to 70% off.',
+                                  'DreamEats bridges top local restaurants, bakeries, and grocers with eco-conscious foodies to enjoy premium meals at up to 70% off.',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 15,
