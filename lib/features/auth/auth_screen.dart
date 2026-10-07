@@ -379,8 +379,130 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
 
   @override
   Widget build(BuildContext context) {
+    final screenW = MediaQuery.of(context).size.width;
+    final isWide = screenW >= 850;
+
+    if (isWide) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF0F172A),
+        body: Row(
+          children: [
+            // Left Hero Showcase Section
+            Expanded(
+              flex: 5,
+              child: _buildDesktopHeroSection(),
+            ),
+            // Right Authentication Form Section
+            Expanded(
+              flex: 5,
+              child: Container(
+                height: double.infinity,
+                color: Colors.white,
+                child: SafeArea(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 32),
+                      child: Container(
+                        constraints: const BoxConstraints(maxWidth: 520),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Top brand header
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Image.asset('assets/images/logo.jpg', fit: BoxFit.cover),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'DREAMEATS',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppTheme.charcoal,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.lightGreenBg,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Text(
+                                    'Accra, Ghana',
+                                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 28),
+
+                            // Tab selector
+                            _SlidingTabSelector(
+                              activeIndex: _activeTab,
+                              tabs: const ['Sign In', 'Create Account'],
+                              onChanged: (index) => setState(() {
+                                _activeTab = index;
+                                _suStep = 0;
+                              }),
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Form content
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 250),
+                              child: KeyedSubtree(
+                                key: ValueKey<int>(_activeTab),
+                                child: _activeTab == 0
+                                    ? _buildSignInForm()
+                                    : _buildWideRegisterForm(),
+                              ),
+                            ),
+
+                            const SizedBox(height: 24),
+                            Center(
+                              child: Text(
+                                'By continuing, you agree to our Terms of Service & Privacy Policy',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppTheme.mutedGrey.withValues(alpha: 0.7),
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: Stack(
         children: [
           // ── Gradient background accents ──
@@ -418,25 +540,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
               ),
             ),
           ),
-          Positioned(
-            top: MediaQuery.of(context).size.height * 0.4,
-            left: -40,
-            child: Container(
-              width: 180,
-              height: 180,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    const Color(0xFFA5D6A7).withValues(alpha: 0.08),
-                    const Color(0xFFA5D6A7).withValues(alpha: 0.0),
-                  ],
-                ),
-              ),
-            ),
-          ),
 
-          // ── Main content ──
+          // ── Main mobile content ──
           SafeArea(
             child: Center(
               child: FadeTransition(
@@ -540,6 +645,542 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // DESKTOP / TABLET HERO SHOWCASE (50% SPLIT SCREEN)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildDesktopHeroSection() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color(0xFF032213),
+            Color(0xFF064E3B),
+            Color(0xFF0F172A),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Background ambient radial glow
+          Positioned(
+            top: -100,
+            left: -100,
+            child: Container(
+              width: 420,
+              height: 420,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppTheme.primaryGreen.withValues(alpha: 0.22),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -120,
+            right: -120,
+            child: Container(
+              width: 500,
+              height: 500,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF00C853).withValues(alpha: 0.12),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Main Hero Showcase
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 56, vertical: 48),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Top Brand Mark
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.primaryGreen.withValues(alpha: 0.3),
+                            blurRadius: 14,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Image.asset('assets/images/logo.jpg', fit: BoxFit.cover),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    const Text(
+                      'DREAMEATS',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: 2.0,
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Center Value Proposition
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.eco_outlined, color: AppTheme.primaryGreen, size: 14),
+                          SizedBox(width: 6),
+                          Text(
+                            'ACCRA SURPLUS FOOD RESCUE',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Rescue quality meals.\nSave up to 70% every day.',
+                      style: TextStyle(
+                        fontSize: 34,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: -1.0,
+                        height: 1.15,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      'Connect directly with top restaurants, bakeries, and grocers across Accra to buy fresh surplus food at a fraction of the original price.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white70,
+                        height: 1.6,
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+
+                    // 3 Uber-style Stat Cards
+                    Row(
+                      children: [
+                        _buildHeroStat('10,000+', 'Meals Rescued'),
+                        const SizedBox(width: 12),
+                        _buildHeroStat('Up to 70%', 'Surplus Discount'),
+                        const SizedBox(width: 12),
+                        _buildHeroStat('250+', 'Partner Stores'),
+                      ],
+                    ),
+                  ],
+                ),
+
+                // Bottom feature badges
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.verified_outlined, color: AppTheme.primaryGreen, size: 20),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          '100% Verified Fresh Food • Safe & Instant QR-code Pickups in Accra',
+                          style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroStat(String value, String label) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.4,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white60,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // WIDE SCREEN REGISTRATION FORM (FITS SCREEN WITHOUT EXCESS SCROLLING)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildWideRegisterForm() {
+    return Form(
+      key: _signUpKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Role Selection Pills (Clean Uber-style)
+          Row(
+            children: [
+              Expanded(
+                child: _buildWideRoleSelector(
+                  role: 'customer',
+                  label: 'Customer Account',
+                  subtitle: 'Order surplus food at up to 70% off',
+                  icon: Icons.person_outline_rounded,
+                  isSelected: _suRole == 'customer',
+                  onTap: () => setState(() => _suRole = 'customer'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildWideRoleSelector(
+                  role: 'merchant',
+                  label: 'Merchant Partner',
+                  subtitle: 'Sell surplus food & earn new revenue',
+                  icon: Icons.storefront_outlined,
+                  isSelected: _suRole == 'merchant',
+                  onTap: () => setState(() => _suRole = 'merchant'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          if (_suRole == 'customer') ...[
+            Row(
+              children: [
+                Expanded(
+                  child: _buildInputField(
+                    controller: _suNameController,
+                    label: 'Full Name',
+                    hint: 'Your full name',
+                    icon: Icons.person_outline_rounded,
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildInputField(
+                    controller: _suPhoneController,
+                    label: 'Phone Number',
+                    hint: '0550 402 859',
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildInputField(
+              controller: _suEmailController,
+              label: 'Email Address',
+              hint: 'you@example.com',
+              icon: Icons.mail_outline_rounded,
+              keyboardType: TextInputType.emailAddress,
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return 'Email is required';
+                if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(v.trim())) {
+                  return 'Enter a valid email address';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildInputField(
+                    controller: _suPasswordController,
+                    label: 'Password',
+                    hint: 'Min. 6 characters',
+                    icon: Icons.lock_outline_rounded,
+                    obscureText: _obscureSignUp,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureSignUp ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        color: AppTheme.mutedGrey,
+                        size: 18,
+                      ),
+                      onPressed: () => setState(() => _obscureSignUp = !_obscureSignUp),
+                    ),
+                    validator: (v) => (v == null || v.length < 6) ? 'At least 6 characters' : null,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildInputField(
+                    controller: _suConfirmPasswordController,
+                    label: 'Confirm Password',
+                    hint: 'Re-enter password',
+                    icon: Icons.lock_outline_rounded,
+                    obscureText: _obscureConfirm,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        color: AppTheme.mutedGrey,
+                        size: 18,
+                      ),
+                      onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                    ),
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Confirm password';
+                      if (v != _suPasswordController.text) return 'Passwords do not match';
+                      return null;
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            Row(
+              children: [
+                Expanded(
+                  child: _buildInputField(
+                    controller: _suNameController,
+                    label: 'Manager Full Name',
+                    hint: 'Your full name',
+                    icon: Icons.person_outline_rounded,
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Name required' : null,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildInputField(
+                    controller: _suEmailController,
+                    label: 'Business Email',
+                    hint: 'store@example.com',
+                    icon: Icons.mail_outline_rounded,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return 'Email required';
+                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(v.trim())) {
+                        return 'Enter a valid email';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildInputField(
+                    controller: _suPhoneController,
+                    label: 'Store Phone',
+                    hint: '0550 402 859',
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Phone required' : null,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildInputField(
+                    controller: _suBizNameController,
+                    label: 'Business Name',
+                    hint: 'Restaurant / Bakery name',
+                    icon: Icons.storefront_outlined,
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Store name required' : null,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Category', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.charcoal)),
+                      const SizedBox(height: 6),
+                      DropdownButtonFormField<String>(
+                        initialValue: _suBizCategory,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: const Color(0xFFF7F8FA),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.08))),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.08))),
+                        ),
+                        items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 13)))).toList(),
+                        onChanged: (v) => setState(() => _suBizCategory = v!),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildInputField(
+                    controller: _suPasswordController,
+                    label: 'Password',
+                    hint: 'Min. 6 characters',
+                    icon: Icons.lock_outline_rounded,
+                    obscureText: _obscureSignUp,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureSignUp ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        color: AppTheme.mutedGrey,
+                        size: 18,
+                      ),
+                      onPressed: () => setState(() => _obscureSignUp = !_obscureSignUp),
+                    ),
+                    validator: (v) => (v == null || v.length < 6) ? 'Min 6 characters' : null,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildInputField(
+              controller: _suBizDescController,
+              label: 'Short Store Description',
+              hint: 'e.g. Artisanal pastries, grilled favorites & daily surplus packs',
+              icon: Icons.description_outlined,
+              maxLines: 2,
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Description required' : null,
+            ),
+          ],
+          const SizedBox(height: 14),
+          _buildTermsCheckbox(),
+          const SizedBox(height: 16),
+          _buildPrimaryButton(
+            label: _suRole == 'customer' ? 'Create Customer Account' : 'Register Merchant Account',
+            onPressed: _isLoading ? null : _register,
+          ),
+          const SizedBox(height: 14),
+          _orDivider(),
+          const SizedBox(height: 12),
+          _socialButtons(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWideRoleSelector({
+    required String role,
+    required String label,
+    required String subtitle,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.lightGreenBg : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? AppTheme.primaryGreen : const Color(0xFFE2E8F0),
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isSelected ? AppTheme.primaryGreen : const Color(0xFFE2E8F0),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: isSelected ? Colors.white : const Color(0xFF475569), size: 16),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? AppTheme.primaryGreen : AppTheme.charcoal,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // BRAND HEADER
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -547,7 +1188,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     return Center(
       child: Column(
         children: [
-          // Logo
           Container(
             width: 50,
             height: 50,
@@ -595,9 +1235,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Welcome back text
           const Text(
-            'Welcome back 👋',
+            'Welcome back',
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
@@ -742,7 +1381,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // REGISTRATION FORM
+  // MOBILE REGISTRATION FORM
   // ═══════════════════════════════════════════════════════════════════════════
 
   void _nextStep() {
@@ -774,7 +1413,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Professional Role Selection Banner
           Text(
             'Select Account Type',
             style: TextStyle(
@@ -787,9 +1425,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
           const SizedBox(height: 10),
           _buildRoleTile(
             role: 'customer',
-            title: 'Customer Account 🍔',
+            title: 'Customer Account',
             subtitle: 'Order surplus food up to 70% off',
-            icon: Icons.fastfood_rounded,
+            icon: Icons.person_outline_rounded,
             isSelected: _suRole == 'customer',
             onTap: () => setState(() {
               _suRole = 'customer';
@@ -799,9 +1437,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
           const SizedBox(height: 12),
           _buildRoleTile(
             role: 'merchant',
-            title: 'Merchant Partner 🏪',
+            title: 'Merchant Partner',
             subtitle: 'Sell surplus food & earn new revenue',
-            icon: Icons.storefront_rounded,
+            icon: Icons.storefront_outlined,
             isSelected: _suRole == 'merchant',
             onTap: () => setState(() {
               _suRole = 'merchant';
