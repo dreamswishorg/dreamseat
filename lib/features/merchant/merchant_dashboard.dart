@@ -700,7 +700,7 @@ class _MerchantAnalyticsTabState extends ConsumerState<_MerchantAnalyticsTab> {
             const SizedBox(height: 20),
 
             // ── Customer Retention & Sentiment ─────────────────────────────
-            _buildCustomerRetentionCard(),
+            _buildCustomerRetentionCard(allMerchantOrders),
             const SizedBox(height: 20),
 
             // ── Store Growth & Operational Insights ────────────────────────
@@ -902,14 +902,38 @@ class _MerchantAnalyticsTabState extends ConsumerState<_MerchantAnalyticsTab> {
   }
 
   Widget _buildPeakPickupHoursCard(List<Order> orders) {
-    // Simulated / real peak collection hour distribution
+    final total = orders.length;
+    final morning = orders.where((o) => o.timestamp.hour >= 8 && o.timestamp.hour < 12).length;
+    final lunch = orders.where((o) => o.timestamp.hour >= 12 && o.timestamp.hour < 15).length;
+    final afternoon = orders.where((o) => o.timestamp.hour >= 15 && o.timestamp.hour < 18).length;
+    final dinner = orders.where((o) => o.timestamp.hour >= 18 && o.timestamp.hour < 21).length;
+    final lateEvening = orders.where((o) => o.timestamp.hour >= 21 || o.timestamp.hour < 8).length;
+
+    int morningPct = total > 0 ? ((morning / total) * 100).round() : 0;
+    int lunchPct = total > 0 ? ((lunch / total) * 100).round() : 0;
+    int afternoonPct = total > 0 ? ((afternoon / total) * 100).round() : 0;
+    int dinnerPct = total > 0 ? ((dinner / total) * 100).round() : 0;
+    int lateEveningPct = total > 0 ? ((lateEvening / total) * 100).round() : 0;
+
     final buckets = [
-      {"label": "Morning (8a-12p)", "percent": 15, "count": "15%"},
-      {"label": "Lunch Peak (12p-3p)", "percent": 35, "count": "35%"},
-      {"label": "Afternoon (3p-6p)", "percent": 20, "count": "20%"},
-      {"label": "Dinner Rush (6p-9p)", "percent": 75, "count": "75% (Peak)"},
-      {"label": "Late Evening (9p-11p)", "percent": 25, "count": "25%"},
+      {"label": "Morning (8a-12p)", "percent": morningPct, "count": "$morning orders ($morningPct%)"},
+      {"label": "Lunch Peak (12p-3p)", "percent": lunchPct, "count": "$lunch orders ($lunchPct%)"},
+      {"label": "Afternoon (3p-6p)", "percent": afternoonPct, "count": "$afternoon orders ($afternoonPct%)"},
+      {"label": "Dinner Rush (6p-9p)", "percent": dinnerPct, "count": "$dinner orders ($dinnerPct%)"},
+      {"label": "Late Evening (9p-11p)", "percent": lateEveningPct, "count": "$lateEvening orders ($lateEveningPct%)"},
     ];
+
+    // Find highest count bucket
+    String peakTitle = "No pickups recorded yet";
+    if (total > 0) {
+      if (dinner >= lunch && dinner >= morning && dinner >= afternoon) {
+        peakTitle = "6:00 PM – 9:00 PM Peak ($dinner orders)";
+      } else if (lunch >= morning && lunch >= afternoon) {
+        peakTitle = "12:00 PM – 3:00 PM Peak ($lunch orders)";
+      } else {
+        peakTitle = "Morning / Afternoon Peak";
+      }
+    }
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -941,14 +965,14 @@ class _MerchantAnalyticsTabState extends ConsumerState<_MerchantAnalyticsTab> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(color: AppTheme.lightGreenBg, borderRadius: BorderRadius.circular(6)),
-                child: const Text("6:00 PM – 9:00 PM Peak", style: TextStyle(fontSize: 10, color: AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
+                child: Text(peakTitle, style: const TextStyle(fontSize: 10, color: AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
           const SizedBox(height: 14),
           ...buckets.map((b) {
             final labelStr = b["label"] as String;
-            final isPeak = labelStr.contains("Dinner");
+            final isPeak = labelStr.contains("Dinner") || (b["percent"] as int) >= 40;
             final pct = (b["percent"] as int) / 100.0;
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
@@ -966,7 +990,7 @@ class _MerchantAnalyticsTabState extends ConsumerState<_MerchantAnalyticsTab> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
-                      value: pct,
+                      value: pct > 0 ? pct : 0.02,
                       minHeight: 6,
                       backgroundColor: const Color(0xFFF1F5F9),
                       color: isPeak ? AppTheme.primaryGreen : Colors.indigo.shade300,
@@ -982,6 +1006,50 @@ class _MerchantAnalyticsTabState extends ConsumerState<_MerchantAnalyticsTab> {
   }
 
   Widget _buildCategoryPerformanceCard(List<FoodDeal> deals) {
+    // Group merchant's active deals by category and calculate real sold inventory
+    final Map<String, List<FoodDeal>> byCategory = {};
+    for (final d in deals) {
+      final cat = d.category.isNotEmpty ? d.category : 'Restaurant Meal';
+      byCategory.putIfAbsent(cat, () => []).add(d);
+    }
+
+    final List<Widget> categoryRows = [];
+    final colors = [AppTheme.primaryGreen, Colors.blueAccent, Colors.teal, Colors.orange, Colors.purple];
+    int colorIdx = 0;
+
+    if (byCategory.isEmpty) {
+      categoryRows.add(
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            "No active listings yet. Add surplus packs to track category performance.",
+            style: TextStyle(color: AppTheme.mutedGrey, fontSize: 12, fontStyle: FontStyle.italic),
+          ),
+        ),
+      );
+    } else {
+      byCategory.forEach((categoryName, dealsList) {
+        final totalStock = dealsList.fold(0, (sum, d) => sum + d.quantityTotal);
+        final remaining = dealsList.fold(0, (sum, d) => sum + d.quantityRemaining);
+        final sold = (totalStock - remaining).clamp(0, totalStock);
+        final rate = totalStock > 0 ? ((sold / totalStock) * 100).round() : 0;
+        final color = colors[colorIdx % colors.length];
+        colorIdx++;
+
+        categoryRows.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: _buildCategoryVelocityRow(
+              categoryName,
+              rate,
+              "$sold of $totalStock packs rescued",
+              color,
+            ),
+          ),
+        );
+      });
+    }
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -1007,11 +1075,7 @@ class _MerchantAnalyticsTabState extends ConsumerState<_MerchantAnalyticsTab> {
             ],
           ),
           const SizedBox(height: 14),
-          _buildCategoryVelocityRow("Bakery & Pastry Packs", 96, "Avg 22 mins to sell out", AppTheme.primaryGreen),
-          const SizedBox(height: 10),
-          _buildCategoryVelocityRow("Restaurant Meals & Dinner Boxes", 88, "Avg 34 mins to sell out", Colors.blueAccent),
-          const SizedBox(height: 10),
-          _buildCategoryVelocityRow("Groceries & Fresh Produce", 82, "Avg 48 mins to sell out", Colors.teal),
+          ...categoryRows,
         ],
       ),
     );
@@ -1119,7 +1183,19 @@ class _MerchantAnalyticsTabState extends ConsumerState<_MerchantAnalyticsTab> {
     );
   }
 
-  Widget _buildCustomerRetentionCard() {
+  Widget _buildCustomerRetentionCard(List<Order> allMerchantOrders) {
+    // Calculate real repeat customer rate from database orders
+    final customerOrderCounts = <String, int>{};
+    for (final o in allMerchantOrders) {
+      if (o.customerName.isNotEmpty) {
+        customerOrderCounts[o.customerName] = (customerOrderCounts[o.customerName] ?? 0) + 1;
+      }
+    }
+
+    final totalCustomers = customerOrderCounts.length;
+    final repeatCustomers = customerOrderCounts.values.where((c) => c > 1).length;
+    final repeatPercent = totalCustomers > 0 ? ((repeatCustomers / totalCustomers) * 100).round() : 0;
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -1141,7 +1217,7 @@ class _MerchantAnalyticsTabState extends ConsumerState<_MerchantAnalyticsTab> {
                 child: const Icon(Icons.repeat_rounded, color: Colors.purple, size: 16),
               ),
               const SizedBox(width: 8),
-              const Text("Customer Loyalty & Sentiment", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.charcoal)),
+              const Text("Customer Loyalty & Retention", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.charcoal)),
             ],
           ),
           const SizedBox(height: 14),
@@ -1152,11 +1228,16 @@ class _MerchantAnalyticsTabState extends ConsumerState<_MerchantAnalyticsTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("74%", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen)),
+                    Text(
+                      totalCustomers > 0 ? "$repeatPercent%" : "0%",
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen),
+                    ),
                     const Text("Repeat Buyer Rate", style: TextStyle(fontSize: 11, color: AppTheme.mutedGrey, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 6),
                     Text(
-                      "7 out of 10 customers return to order surprise bags again within 14 days.",
+                      totalCustomers > 0
+                          ? "$repeatCustomers of $totalCustomers unique customers have ordered multiple surprise bags."
+                          : "Customer retention metrics will populate as orders are completed.",
                       style: TextStyle(fontSize: 11, color: AppTheme.charcoal.withValues(alpha: 0.8), height: 1.3),
                     ),
                   ],
