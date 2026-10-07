@@ -380,9 +380,9 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
                   header: _buildMerchantSideNavBrand(business),
                   items: const [
                     SideNavItem(
-                      icon: Icons.analytics_outlined,
-                      activeIcon: Icons.analytics_rounded,
-                      label: 'Insights',
+                      icon: Icons.space_dashboard_outlined,
+                      activeIcon: Icons.space_dashboard_rounded,
+                      label: 'Dashboard',
                     ),
                     SideNavItem(
                       icon: Icons.inventory_2_outlined,
@@ -448,9 +448,9 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
                 unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
                 items: const [
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.analytics_outlined),
-                    activeIcon: Icon(Icons.analytics_rounded),
-                    label: 'Insights',
+                    icon: Icon(Icons.space_dashboard_outlined),
+                    activeIcon: Icon(Icons.space_dashboard_rounded),
+                    label: 'Dashboard',
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(Icons.inventory_2_outlined),
@@ -705,10 +705,15 @@ class _MerchantAnalyticsTabState extends ConsumerState<_MerchantAnalyticsTab> {
                 _buildMetricCard("Store Rating", widget.business.rating > 0 ? "${widget.business.rating.toStringAsFixed(1)} ★" : "5.0 ★", Icons.star_rounded, AppTheme.goldAccent),
               ],
             ),
+            // ── Real-Time Order Fulfillment Pipeline ───────────────────────
+            _buildOrderFulfillmentPipeline(allMerchantOrders),
             const SizedBox(height: 20),
 
-            // ── Peak Customer Pickup Hours Heatmap ─────────────────────────
-            _buildPeakPickupHoursCard(collectedOrders),
+            // ── Top Performing Surplus Items Ranking ────────────────────────
+            _buildTopDealsRankingCard(
+              state.deals.where((d) => d.businessId == widget.business.id).toList(),
+              collectedOrders,
+            ),
             const SizedBox(height: 20),
 
             // ── Sales Trends Bar Chart ──────────────────────────────────────
@@ -942,39 +947,12 @@ class _MerchantAnalyticsTabState extends ConsumerState<_MerchantAnalyticsTab> {
     );
   }
 
-  Widget _buildPeakPickupHoursCard(List<Order> orders) {
+  Widget _buildOrderFulfillmentPipeline(List<Order> orders) {
     final total = orders.length;
-    final morning = orders.where((o) => o.timestamp.hour >= 8 && o.timestamp.hour < 12).length;
-    final lunch = orders.where((o) => o.timestamp.hour >= 12 && o.timestamp.hour < 15).length;
-    final afternoon = orders.where((o) => o.timestamp.hour >= 15 && o.timestamp.hour < 18).length;
-    final dinner = orders.where((o) => o.timestamp.hour >= 18 && o.timestamp.hour < 21).length;
-    final lateEvening = orders.where((o) => o.timestamp.hour >= 21 || o.timestamp.hour < 8).length;
-
-    int morningPct = total > 0 ? ((morning / total) * 100).round() : 0;
-    int lunchPct = total > 0 ? ((lunch / total) * 100).round() : 0;
-    int afternoonPct = total > 0 ? ((afternoon / total) * 100).round() : 0;
-    int dinnerPct = total > 0 ? ((dinner / total) * 100).round() : 0;
-    int lateEveningPct = total > 0 ? ((lateEvening / total) * 100).round() : 0;
-
-    final buckets = [
-      {"label": "Morning (8a-12p)", "percent": morningPct, "count": "$morning orders ($morningPct%)"},
-      {"label": "Lunch Peak (12p-3p)", "percent": lunchPct, "count": "$lunch orders ($lunchPct%)"},
-      {"label": "Afternoon (3p-6p)", "percent": afternoonPct, "count": "$afternoon orders ($afternoonPct%)"},
-      {"label": "Dinner Rush (6p-9p)", "percent": dinnerPct, "count": "$dinner orders ($dinnerPct%)"},
-      {"label": "Late Evening (9p-11p)", "percent": lateEveningPct, "count": "$lateEvening orders ($lateEveningPct%)"},
-    ];
-
-    // Find highest count bucket
-    String peakTitle = "No pickups recorded yet";
-    if (total > 0) {
-      if (dinner >= lunch && dinner >= morning && dinner >= afternoon) {
-        peakTitle = "6:00 PM – 9:00 PM Peak ($dinner orders)";
-      } else if (lunch >= morning && lunch >= afternoon) {
-        peakTitle = "12:00 PM – 3:00 PM Peak ($lunch orders)";
-      } else {
-        peakTitle = "Morning / Afternoon Peak";
-      }
-    }
+    final ready = orders.where((o) => o.status == 'ready').length;
+    final inPrep = orders.where((o) => o.status == 'pending' || o.status == 'confirmed').length;
+    final completed = orders.where((o) => o.status == 'collected').length;
+    final cancelled = orders.where((o) => o.status == 'cancelled').length;
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -997,45 +975,222 @@ class _MerchantAnalyticsTabState extends ConsumerState<_MerchantAnalyticsTab> {
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(color: Colors.indigo.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                    child: const Icon(Icons.schedule_rounded, color: Colors.indigo, size: 16),
+                    child: const Icon(Icons.sync_alt_rounded, color: Colors.indigo, size: 16),
                   ),
                   const SizedBox(width: 8),
-                  const Text("Peak Customer Pickup Hours", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.charcoal)),
+                  const Text("Order Fulfillment Pipeline", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.charcoal)),
                 ],
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(color: AppTheme.lightGreenBg, borderRadius: BorderRadius.circular(6)),
-                child: Text(peakTitle, style: const TextStyle(fontSize: 10, color: AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
+                child: Text("$total Total Orders", style: const TextStyle(fontSize: 10, color: AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          ...buckets.map((b) {
-            final labelStr = b["label"] as String;
-            final isPeak = labelStr.contains("Dinner") || (b["percent"] as int) >= 40;
-            final pct = (b["percent"] as int) / 100.0;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              _buildPipelineStatusBox("Ready for Pickup", ready, total, AppTheme.primaryGreen, Icons.shopping_bag_outlined),
+              const SizedBox(width: 8),
+              _buildPipelineStatusBox("In Preparation", inPrep, total, Colors.blueAccent, Icons.hourglass_top_rounded),
+              const SizedBox(width: 8),
+              _buildPipelineStatusBox("Completed", completed, total, Colors.teal, Icons.task_alt_rounded),
+              const SizedBox(width: 8),
+              _buildPipelineStatusBox("Cancelled", cancelled, total, AppTheme.mutedGrey, Icons.cancel_outlined),
+            ],
+          ),
+          if (total > 0) ...[
+            const SizedBox(height: 14),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: SizedBox(
+                height: 8,
+                child: Row(
+                  children: [
+                    if (ready > 0) Expanded(flex: ready, child: Container(color: AppTheme.primaryGreen)),
+                    if (inPrep > 0) Expanded(flex: inPrep, child: Container(color: Colors.blueAccent)),
+                    if (completed > 0) Expanded(flex: completed, child: Container(color: Colors.teal)),
+                    if (cancelled > 0) Expanded(flex: cancelled, child: Container(color: const Color(0xFFCBD5E1))),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPipelineStatusBox(String label, int count, int total, Color color, IconData icon) {
+    final pct = total > 0 ? ((count / total) * 100).round() : 0;
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 16),
+            const SizedBox(height: 4),
+            Text(
+              "$count",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: color),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: AppTheme.charcoal),
+            ),
+            Text(
+              "$pct%",
+              style: TextStyle(fontSize: 9, color: AppTheme.mutedGrey, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopDealsRankingCard(List<FoodDeal> deals, List<Order> collectedOrders) {
+    if (deals.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.06)),
+        ),
+        child: const Center(
+          child: Text(
+            "No listings available. Create surplus packs to see item performance.",
+            style: TextStyle(color: AppTheme.mutedGrey, fontSize: 12, fontStyle: FontStyle.italic),
+          ),
+        ),
+      );
+    }
+
+    // Rank deals by units sold
+    final sortedDeals = List<FoodDeal>.from(deals);
+    sortedDeals.sort((a, b) {
+      final soldA = a.quantityTotal - a.quantityRemaining;
+      final soldB = b.quantityTotal - b.quantityRemaining;
+      return soldB.compareTo(soldA);
+    });
+
+    final topDeals = sortedDeals.take(4).toList();
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.06)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(labelStr, style: TextStyle(fontSize: 11.5, fontWeight: isPeak ? FontWeight.bold : FontWeight.w500, color: isPeak ? AppTheme.charcoal : AppTheme.mutedGrey)),
-                      Text(b["count"] as String, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: isPeak ? AppTheme.primaryGreen : AppTheme.charcoal)),
-                    ],
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(color: Colors.amber.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
+                    child: const Icon(Icons.leaderboard_rounded, color: Colors.amber, size: 16),
                   ),
-                  const SizedBox(height: 5),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: pct > 0 ? pct : 0.02,
-                      minHeight: 6,
-                      backgroundColor: const Color(0xFFF1F5F9),
-                      color: isPeak ? AppTheme.primaryGreen : Colors.indigo.shade300,
+                  const SizedBox(width: 8),
+                  const Text("Top-Performing Surplus Items", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.charcoal)),
+                ],
+              ),
+              const Text("Ranked by Velocity", style: TextStyle(fontSize: 10.5, color: AppTheme.mutedGrey, fontWeight: FontWeight.w600)),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ...topDeals.asMap().entries.map((entry) {
+            final idx = entry.key;
+            final deal = entry.value;
+            final sold = (deal.quantityTotal - deal.quantityRemaining).clamp(0, deal.quantityTotal);
+            final revenue = sold * deal.discountedPrice;
+            final selloutPct = deal.quantityTotal > 0 ? ((sold / deal.quantityTotal) * 100).round() : 0;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: idx == 0 ? AppTheme.goldAccent.withValues(alpha: 0.2) : const Color(0xFFF1F5F9),
+                      shape: BoxShape.circle,
                     ),
+                    child: Center(
+                      child: Text(
+                        "${idx + 1}",
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: idx == 0 ? const Color(0xFFB45309) : AppTheme.charcoal,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: deal.imageUrl.isNotEmpty
+                        ? Image.network(deal.imageUrl, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.fastfood_rounded, size: 18, color: AppTheme.primaryGreen))
+                        : const Icon(Icons.fastfood_rounded, size: 18, color: AppTheme.primaryGreen),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          deal.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.charcoal),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          "$sold of ${deal.quantityTotal} sold ($selloutPct%) • GHS ${deal.discountedPrice.toStringAsFixed(0)} each",
+                          style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        "GHS ${revenue.toStringAsFixed(0)}",
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppTheme.primaryGreen),
+                      ),
+                      const Text(
+                        "Earned",
+                        style: TextStyle(fontSize: 9.5, color: AppTheme.mutedGrey),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -2173,7 +2328,72 @@ class _MerchantListingsTabState extends ConsumerState<_MerchantListingsTab> {
                         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: deal.isActive ? const Color(0xFFF1F5F9) : AppTheme.errorRed.withValues(alpha: 0.1))),
                         child: Row(
                           children: [
-                            Container(width: 64, height: 64, decoration: BoxDecoration(color: AppTheme.lightGrey, borderRadius: BorderRadius.circular(12)), child: Icon(!deal.isActive ? Icons.pause_circle_filled_rounded : (deal.quantityRemaining == 0 ? Icons.block_flipped : Icons.inventory_2_rounded), color: !deal.isActive ? AppTheme.mutedGrey : (deal.quantityRemaining == 0 ? AppTheme.errorRed : AppTheme.primaryGreen))),
+                            Container(
+                              width: 68,
+                              height: 68,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  if (deal.imageUrl.isNotEmpty)
+                                    Image.network(
+                                      deal.imageUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (c, e, s) => Center(
+                                        child: Icon(
+                                          Icons.fastfood_rounded,
+                                          color: AppTheme.primaryGreen.withValues(alpha: 0.6),
+                                          size: 26,
+                                        ),
+                                      ),
+                                      loadingBuilder: (c, child, p) => p == null
+                                          ? child
+                                          : const Center(
+                                              child: SizedBox(
+                                                width: 18,
+                                                height: 18,
+                                                child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryGreen),
+                                              ),
+                                            ),
+                                    )
+                                  else
+                                    Center(
+                                      child: Icon(
+                                        Icons.fastfood_rounded,
+                                        color: AppTheme.primaryGreen.withValues(alpha: 0.6),
+                                        size: 26,
+                                      ),
+                                    ),
+                                  if (!deal.isActive)
+                                    Container(
+                                      color: Colors.black.withValues(alpha: 0.5),
+                                      child: const Center(
+                                        child: Icon(Icons.pause_rounded, color: Colors.white, size: 22),
+                                      ),
+                                    )
+                                  else if (deal.quantityRemaining == 0)
+                                    Container(
+                                      color: Colors.black.withValues(alpha: 0.55),
+                                      child: const Center(
+                                        child: Text(
+                                          "SOLD OUT",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 8.5,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
                             const SizedBox(width: 16),
                             Expanded(
                               child: Column(

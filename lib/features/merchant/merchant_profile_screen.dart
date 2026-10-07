@@ -6,6 +6,7 @@ import '../../core/theme.dart';
 import '../../core/responsive.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/location_service.dart';
 import '../../services/supabase_service.dart';
 import '../../widgets/biometric_switch_tile.dart';
@@ -67,25 +68,40 @@ class _MerchantProfileScreenState
     _selectedLat = widget.business.latitude;
     _selectedLng = widget.business.longitude;
 
-    // Load any existing KYC uploads from audit trail
-    final auditLogs = ref.read(appStateProvider).auditLogs;
-    for (final log in auditLogs) {
-      if (log.action == 'KYC_UPLOAD' && log.entityId == widget.business.id) {
-        final docTitle = log.metadata['document_title']?.toString().toLowerCase() ?? '';
-        final fileUrl = log.metadata['file_url']?.toString();
-        final refNum = log.metadata['reference_number']?.toString();
-        if (docTitle.contains('business')) {
-          _bizRegUrl ??= fileUrl;
-          if (refNum != null && refNum.isNotEmpty) _bizRegStatus = "Uploaded ($refNum)";
-        } else if (docTitle.contains('health')) {
-          _healthUrl ??= fileUrl;
-          if (refNum != null && refNum.isNotEmpty) _healthStatus = "Uploaded ($refNum)";
-        } else if (docTitle.contains('tax') || docTitle.contains('vat')) {
-          _taxUrl ??= fileUrl;
-          if (refNum != null && refNum.isNotEmpty) _taxStatus = "Uploaded ($refNum)";
+    _loadKycDocuments();
+  }
+
+  Future<void> _loadKycDocuments() async {
+    try {
+      final rows = await Supabase.instance.client
+          .from('audit_logs')
+          .select()
+          .eq('entity_id', widget.business.id)
+          .eq('action', 'KYC_UPLOAD')
+          .order('created_at', ascending: true);
+
+      if (!mounted) return;
+      setState(() {
+        for (final row in rows) {
+          final meta = (row['metadata'] as Map<String, dynamic>?) ?? {};
+          final docTitle = (meta['document_title'] ?? '').toString().toLowerCase();
+          final fileUrl = meta['file_url']?.toString();
+          final refNum = meta['reference_number']?.toString();
+          if (fileUrl != null && fileUrl.isNotEmpty) {
+            if (docTitle.contains('business')) {
+              _bizRegUrl = fileUrl;
+              if (refNum != null && refNum.isNotEmpty) _bizRegStatus = "Uploaded ($refNum)";
+            } else if (docTitle.contains('health')) {
+              _healthUrl = fileUrl;
+              if (refNum != null && refNum.isNotEmpty) _healthStatus = "Uploaded ($refNum)";
+            } else if (docTitle.contains('tax') || docTitle.contains('vat')) {
+              _taxUrl = fileUrl;
+              if (refNum != null && refNum.isNotEmpty) _taxStatus = "Uploaded ($refNum)";
+            }
+          }
         }
-      }
-    }
+      });
+    } catch (_) {}
   }
 
   Future<void> _onSearchAddress(String query) async {
