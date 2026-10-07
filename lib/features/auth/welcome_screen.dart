@@ -197,268 +197,300 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 28),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1100),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Top Navigation Bar
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
+        child: LayoutBuilder(
+          builder: (context, viewportConstraints) {
+            return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: viewportConstraints.maxHeight,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1100),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: AppTheme.primaryGreen, width: 1.5),
-                            ),
-                            child: ClipOval(
-                              child: Image.asset(
-                                'assets/images/logo.jpg',
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => const Icon(Icons.restaurant, size: 20, color: AppTheme.primaryGreen),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Top Navigation Bar
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: AppTheme.primaryGreen, width: 1.5),
+                                        ),
+                                        child: ClipOval(
+                                          child: Image.asset(
+                                            'assets/images/logo.jpg',
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, _, _) => const Icon(Icons.restaurant, size: 20, color: AppTheme.primaryGreen),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      const Text(
+                                        'DREAMEATS',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 18,
+                                          color: Color(0xFF0D3B22),
+                                          letterSpacing: 1.5,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () => _goToAuth(context),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.white,
+                                      foregroundColor: AppTheme.primaryGreen,
+                                      elevation: 0,
+                                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'Sign In',
+                                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
+                                        ),
+                                        SizedBox(width: 6),
+                                        Icon(Icons.arrow_forward_rounded, size: 16),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
+
+                              const SizedBox(height: 32),
+
+                              // Hero Header
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryGreen.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.15)),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.eco_outlined, color: AppTheme.primaryGreen, size: 15),
+                                    SizedBox(width: 6),
+                                    Text(
+                                      'ACCRA SURPLUS FOOD RESCUE PLATFORM',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppTheme.primaryGreen,
+                                        letterSpacing: 0.8,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              const Text(
+                                'Rescue Great Food.\nSave Money. Protect the Planet.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 34,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF0D3B22),
+                                  height: 1.15,
+                                  letterSpacing: -0.8,
+                                ),
+                              ),
+
+                              const SizedBox(height: 12),
+
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 620),
+                                child: const Text(
+                                  'DreamEats bridges Accra’s top restaurants, bakeries, and grocers with eco-conscious foodies to enjoy premium meals at up to 70% off.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: AppTheme.mutedGrey,
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 36),
+
+                              // 3 Merged Feature Cards Side-by-Side (or Stack on narrow tablet)
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final isWide = constraints.maxWidth >= 720;
+                                  if (isWide) {
+                                    return Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: _buildOverviewCard(
+                                            icon: Icons.restaurant_menu_rounded,
+                                            badgeText: 'TOP RESTAURANTS & HOTELS',
+                                            badgeBg: const Color(0xFFF1F8F4),
+                                            badgeTextColor: const Color(0xFF0D3B22),
+                                            title: 'Rescue Gourmet Surplus',
+                                            description:
+                                                'Enjoy delicious, high-quality surplus meals from premier culinary spots across Ghana before they go to waste.',
+                                          ),
+                                        ),
+                                        const SizedBox(width: 20),
+                                        Expanded(
+                                          child: _buildOverviewCard(
+                                            icon: Icons.savings_outlined,
+                                            badgeText: 'SAVE UP TO 70% DAILY',
+                                            badgeBg: AppTheme.primaryGreen,
+                                            badgeTextColor: Colors.white,
+                                            title: 'Unbeatable Everyday Prices',
+                                            description:
+                                                'Access premium surplus packages at up to 70% off standard menu prices. Great for your wallet and instant pickup.',
+                                          ),
+                                        ),
+                                        const SizedBox(width: 20),
+                                        Expanded(
+                                          child: _buildOverviewCard(
+                                            icon: Icons.public_rounded,
+                                            badgeText: "PROTECT GHANA'S FUTURE",
+                                            badgeBg: const Color(0xFFF1F8F4),
+                                            badgeTextColor: const Color(0xFF0D3B22),
+                                            title: 'Empower Local Community',
+                                            description:
+                                                'Every meal rescued directly cuts greenhouse emissions and supports Ghanaian food artisans and chefs.',
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  } else {
+                                    return Column(
+                                      children: [
+                                        _buildOverviewCard(
+                                          icon: Icons.restaurant_menu_rounded,
+                                          badgeText: 'TOP RESTAURANTS & HOTELS',
+                                          badgeBg: const Color(0xFFF1F8F4),
+                                          badgeTextColor: const Color(0xFF0D3B22),
+                                          title: 'Rescue Gourmet Surplus',
+                                          description:
+                                              'Enjoy delicious, high-quality surplus meals from premier culinary spots across Ghana before they go to waste.',
+                                        ),
+                                        const SizedBox(height: 16),
+                                        _buildOverviewCard(
+                                          icon: Icons.savings_outlined,
+                                          badgeText: 'SAVE UP TO 70% DAILY',
+                                          badgeBg: AppTheme.primaryGreen,
+                                          badgeTextColor: Colors.white,
+                                          title: 'Unbeatable Everyday Prices',
+                                          description:
+                                              'Access premium surplus packages at up to 70% off standard menu prices. Great for your wallet and instant pickup.',
+                                        ),
+                                        const SizedBox(height: 16),
+                                        _buildOverviewCard(
+                                          icon: Icons.public_rounded,
+                                          badgeText: "PROTECT GHANA'S FUTURE",
+                                          badgeBg: const Color(0xFFF1F8F4),
+                                          badgeTextColor: const Color(0xFF0D3B22),
+                                          title: 'Empower Local Community',
+                                          description:
+                                              'Every meal rescued directly cuts greenhouse emissions and supports Ghanaian food artisans and chefs.',
+                                        ),
+                                      ],
+                                    );
+                                  }
+                                },
+                              ),
+
+                              const SizedBox(height: 36),
+
+                              // Action CTA
+                              ElevatedButton(
+                                onPressed: () => _goToAuth(context),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primaryGreen,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 18),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  shadowColor: AppTheme.primaryGreen.withValues(alpha: 0.3),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'GET STARTED NOW',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 15,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                    SizedBox(width: 10),
+                                    Icon(Icons.arrow_forward_rounded, size: 20),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 12),
-                          const Text(
-                            'DREAMEATS',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 18,
-                              color: Color(0xFF0D3B22),
-                              letterSpacing: 1.5,
+
+                          // Bottom Trust & Verification Footer (bottom of page)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 32, bottom: 8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(30),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.03),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.verified_outlined, size: 16, color: AppTheme.primaryGreen),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    '100% Safe & Verified Pickups • Instant QR Verification • Direct Merchant Support',
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      color: Color(0xFF0D3B22),
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      ElevatedButton(
-                        onPressed: () => _goToAuth(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: AppTheme.primaryGreen,
-                          elevation: 0,
-                          side: const BorderSide(color: Color(0xFFE2E8F0)),
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Sign In',
-                              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
-                            ),
-                            SizedBox(width: 6),
-                            Icon(Icons.arrow_forward_rounded, size: 16),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 36),
-
-                  // Hero Header
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryGreen.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.15)),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.eco_outlined, color: AppTheme.primaryGreen, size: 15),
-                        SizedBox(width: 6),
-                        Text(
-                          'ACCRA SURPLUS FOOD RESCUE PLATFORM',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.primaryGreen,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                      ],
                     ),
                   ),
-
-                  const SizedBox(height: 16),
-
-                  const Text(
-                    'Rescue Great Food.\nSave Money. Protect the Planet.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 34,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF0D3B22),
-                      height: 1.15,
-                      letterSpacing: -0.8,
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 620),
-                    child: const Text(
-                      'DreamEats bridges Accra’s top restaurants, bakeries, and grocers with eco-conscious foodies to enjoy premium meals at up to 70% off.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: AppTheme.mutedGrey,
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 36),
-
-                  // 3 Merged Feature Cards Side-by-Side (or Wrap on smaller tablet)
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final isWide = constraints.maxWidth >= 720;
-                      if (isWide) {
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: _buildOverviewCard(
-                                icon: Icons.restaurant_menu_rounded,
-                                badgeText: 'TOP RESTAURANTS & HOTELS',
-                                badgeBg: const Color(0xFFF1F8F4),
-                                badgeTextColor: const Color(0xFF0D3B22),
-                                title: 'Rescue Gourmet Surplus',
-                                description:
-                                    'Enjoy delicious, high-quality surplus meals from premier culinary spots across Ghana before they go to waste.',
-                              ),
-                            ),
-                            const SizedBox(width: 20),
-                            Expanded(
-                              child: _buildOverviewCard(
-                                icon: Icons.savings_outlined,
-                                badgeText: 'SAVE UP TO 70% DAILY',
-                                badgeBg: AppTheme.primaryGreen,
-                                badgeTextColor: Colors.white,
-                                title: 'Unbeatable Everyday Prices',
-                                description:
-                                    'Access premium surplus packages at up to 70% off standard menu prices. Great for your wallet and instant pickup.',
-                              ),
-                            ),
-                            const SizedBox(width: 20),
-                            Expanded(
-                              child: _buildOverviewCard(
-                                icon: Icons.public_rounded,
-                                badgeText: "PROTECT GHANA'S FUTURE",
-                                badgeBg: const Color(0xFFF1F8F4),
-                                badgeTextColor: const Color(0xFF0D3B22),
-                                title: 'Empower Local Community',
-                                description:
-                                    'Every meal rescued directly cuts greenhouse emissions and supports Ghanaian food artisans and chefs.',
-                              ),
-                            ),
-                          ],
-                        );
-                      } else {
-                        return Column(
-                          children: [
-                            _buildOverviewCard(
-                              icon: Icons.restaurant_menu_rounded,
-                              badgeText: 'TOP RESTAURANTS & HOTELS',
-                              badgeBg: const Color(0xFFF1F8F4),
-                              badgeTextColor: const Color(0xFF0D3B22),
-                              title: 'Rescue Gourmet Surplus',
-                              description:
-                                  'Enjoy delicious, high-quality surplus meals from premier culinary spots across Ghana before they go to waste.',
-                            ),
-                            const SizedBox(height: 16),
-                            _buildOverviewCard(
-                              icon: Icons.savings_outlined,
-                              badgeText: 'SAVE UP TO 70% DAILY',
-                              badgeBg: AppTheme.primaryGreen,
-                              badgeTextColor: Colors.white,
-                              title: 'Unbeatable Everyday Prices',
-                              description:
-                                  'Access premium surplus packages at up to 70% off standard menu prices. Great for your wallet and instant pickup.',
-                            ),
-                            const SizedBox(height: 16),
-                            _buildOverviewCard(
-                              icon: Icons.public_rounded,
-                              badgeText: "PROTECT GHANA'S FUTURE",
-                              badgeBg: const Color(0xFFF1F8F4),
-                              badgeTextColor: const Color(0xFF0D3B22),
-                              title: 'Empower Local Community',
-                              description:
-                                  'Every meal rescued directly cuts greenhouse emissions and supports Ghanaian food artisans and chefs.',
-                            ),
-                          ],
-                        );
-                      }
-                    },
-                  ),
-
-                  const SizedBox(height: 40),
-
-                  // Bottom Action CTA
-                  ElevatedButton(
-                    onPressed: () => _goToAuth(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryGreen,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 18),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      shadowColor: AppTheme.primaryGreen.withValues(alpha: 0.3),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'GET STARTED NOW',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        SizedBox(width: 10),
-                        Icon(Icons.arrow_forward_rounded, size: 20),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Trust & Verification Note
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.verified_outlined, size: 16, color: AppTheme.mutedGrey.withValues(alpha: 0.8)),
-                      const SizedBox(width: 6),
-                      Text(
-                        '100% Safe & Verified Pickups • Instant QR Verification • Direct Merchant Support',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.mutedGrey.withValues(alpha: 0.8),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
