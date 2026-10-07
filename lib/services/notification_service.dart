@@ -125,35 +125,47 @@ class NotificationService {
   }
 
   Future<void> _requestPermission() async {
-    final messaging = FirebaseMessaging.instance;
-    final settings = await messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-      provisional: false,
-    );
+    try {
+      final messaging = FirebaseMessaging.instance;
+      final settings = await messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
+      );
 
-    if (settings.authorizationStatus == AuthorizationStatus.denied) {
-      debugPrint('NotificationService: Permission denied by user');
+      if (settings.authorizationStatus == AuthorizationStatus.denied) {
+        debugPrint('NotificationService: Notifications not permitted in browser/device settings.');
+        return;
+      }
+
+      // Required for iOS foreground notifications
+      if (!kIsWeb) {
+        await messaging.setForegroundNotificationPresentationOptions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+      }
+    } catch (e) {
+      debugPrint('NotificationService: requestPermission ignored: $e');
     }
-
-    // Required for iOS foreground notifications
-    await messaging.setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
   }
 
   Future<void> _refreshToken() async {
     try {
+      final settings = await FirebaseMessaging.instance.getNotificationSettings();
+      if (settings.authorizationStatus == AuthorizationStatus.denied) {
+        // Suppress token request if user/browser has blocked notifications
+        return;
+      }
       _fcmToken = await FirebaseMessaging.instance.getToken();
       if (_fcmToken != null) {
         await _saveTokenToSupabase(_fcmToken!);
         debugPrint('NotificationService: FCM token obtained');
       }
     } catch (e) {
-      debugPrint('NotificationService: Failed to get FCM token: $e');
+      debugPrint('NotificationService: Push notifications skipped ($e)');
     }
   }
 
