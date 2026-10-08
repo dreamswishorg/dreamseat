@@ -221,6 +221,40 @@ class NotificationService {
     );
   }
 
+  /// Displays an instant heads-up device notification banner with sound and badge.
+  Future<void> showLocalNotification({
+    required String title,
+    required String body,
+    Map<String, dynamic>? data,
+  }) async {
+    try {
+      await _localNotifications.show(
+        DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        title,
+        body,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            _defaultChannelId,
+            _defaultChannelName,
+            channelDescription: _defaultChannelDesc,
+            importance: Importance.high,
+            priority: Priority.high,
+            color: Color(0xFF2E7D32),
+            icon: '@mipmap/ic_launcher',
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        payload: data != null ? jsonEncode(data) : null,
+      );
+    } catch (e) {
+      debugPrint('NotificationService: local notification error: $e');
+    }
+  }
+
   /// Routes the user to the correct screen based on notification data.
   void _handleNotificationTap(
     Map<String, dynamic> data,

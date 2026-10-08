@@ -806,7 +806,18 @@ class AppStateManager extends Notifier<AppState> {
   Future<void> _sendPurchaseNotifications(Order order, FoodDeal deal) async {
     final notif = NotificationService();
 
-    // 1. Notify Customer
+    // 1. In-app and device push for customer
+    if (state.currentUser != null) {
+      await dispatchNotification(
+        userId: state.currentUser!.id,
+        title: 'Order Confirmed! 🛍️',
+        body: "Your reservation for '${deal.title}' at ${deal.businessName} is confirmed. Collection code: ${order.collectionCode}",
+        type: 'order',
+        data: {'screen': 'track_order', 'orderId': order.id},
+      );
+    }
+
+    // 2. Notify Customer via Email
     await notif.notifyCustomerOrderConfirmed(
       customerEmail: state.currentUser?.email ?? '',
       customerName: state.currentUser?.name ?? 'Hero',
@@ -819,9 +830,19 @@ class AppStateManager extends Notifier<AppState> {
       pickupWindow: deal.pickupWindow,
     );
 
-    // 2. Notify Merchant
+    // 3. Notify Merchant
     try {
       final merchantBusiness = state.businesses.firstWhere((b) => b.id == deal.businessId);
+
+      if (merchantBusiness.ownerId.isNotEmpty) {
+        await dispatchNotification(
+          userId: merchantBusiness.ownerId,
+          title: 'New Order Received! 🔔',
+          body: "A new order for '${deal.title}' was placed. Total: GHS ${order.price.toStringAsFixed(2)}",
+          type: 'order',
+          data: {'screen': 'merchant_orders', 'orderId': order.id},
+        );
+      }
 
       // Try to find the merchant's email from the users list
       String merchantEmail = '';
@@ -829,12 +850,11 @@ class AppStateManager extends Notifier<AppState> {
         final merchantUser = state.users.firstWhere((u) => u.id == merchantBusiness.ownerId);
         merchantEmail = merchantUser.email;
       } catch (_) {
-        // If not found in local state, maybe we should fetch it?
-        // For now, use a fallback or placeholder.
+        // If not found in local state, fallback
       }
 
       await notif.notifyMerchantNewOrder(
-        merchantFcmToken: '', // Backend should ideally handle this via business_id
+        merchantFcmToken: '', // Backend handles via business_id
         merchantEmail: merchantEmail,
         merchantName: merchantBusiness.name,
         customerName: state.currentUser?.name ?? 'A Customer',
@@ -991,15 +1011,24 @@ class AppStateManager extends Notifier<AppState> {
     state = state.copyWith(deals: deals);
     CacheManager().saveDeals(state.deals);
 
-    // Notify customers nearby (Topic-based broadcast)
+    // Notify customers nearby
     try {
-      await NotificationService().sendNotification({
-        'topic': 'all_customers',
-        'title': 'New Surplus Meal Nearby! 🌿',
-        'body': '${biz.name} just listed $title for GHS ${discountedPrice.toStringAsFixed(0)}. Rescue it now!',
-        'screen': 'deal_detail',
-        'dealId': deals.firstWhere((d) => d.title == title).id, // Get the new ID
-      });
+      final newDeal = deals.firstWhere((d) => d.title == title);
+      final discountPct = originalPrice > 0 ? (((originalPrice - discountedPrice) / originalPrice) * 100).round() : 0;
+      await NotificationService().showLocalNotification(
+        title: 'New Discount Product! 🏷️',
+        body: '${biz.name} listed "$title" ($discountPct% off) for GHS ${discountedPrice.toStringAsFixed(2)}!',
+        data: {'screen': 'deal_detail', 'dealId': newDeal.id},
+      );
+      if (state.currentUser != null) {
+        await dispatchNotification(
+          userId: state.currentUser!.id,
+          title: 'Deal Listed Successfully! 🎉',
+          body: '"$title" is now live and discoverable by food rescuers nearby.',
+          type: 'deal',
+          data: {'screen': 'deal_detail', 'dealId': newDeal.id},
+        );
+      }
     } catch (_) {}
   }
 
@@ -1090,13 +1119,16 @@ class AppStateManager extends Notifier<AppState> {
       final shortId = order.id.length > 8 ? order.id.substring(0, 8) : order.id;
       final notifBody = 'Order #$shortId is now ${status.replaceAll('_', ' ')}.';
 
-      await NotificationService().sendNotification({
-        'userId': order.customerId,
-        'title': notifTitle,
-        'body': notifBody,
-        'screen': 'track_order',
-        'orderId': order.id,
-      });
+      await dispatchNotification(
+        userId: order.customerId,
+        title: notifTitle,
+        body: notifBody,
+        type: 'order',
+        data: {
+          'screen': 'track_order',
+          'orderId': order.id,
+        },
+      );
     } catch (_) {}
   }
 
@@ -1163,6 +1195,20 @@ class AppStateManager extends Notifier<AppState> {
       if (audience == 'merchants') topic = 'all_merchants';
 
       if (sendPush) {
+        await notif.showLocalNotification(
+          title: '📢 $title',
+          body: message,
+          data: {'screen': 'home'},
+        );
+        if (state.currentUser != null) {
+          await dispatchNotification(
+            userId: state.currentUser!.id,
+            title: '📢 $title',
+            body: message,
+            type: 'broadcast',
+            data: {'screen': 'home'},
+          );
+        }
         await notif.sendNotification({
           'topic': topic,
           'title': title,
@@ -1200,6 +1246,57 @@ class AppStateManager extends Notifier<AppState> {
   }
 
   // ─── Notification Actions ──────────────────
+
+  Future<void> dispatchNotification({
+    required String userId,
+    required String title,
+    required String body,
+    String type = 'general',
+    Map<String, dynamic>? data,
+  }) async {
+    // 1. Show immediate heads-up banner on device if this user is current user
+    if (state.currentUser?.id == userId) {
+      await NotificationService().showLocalNotification(
+        title: title,
+        body: body,
+        data: data,
+      );
+    }
+
+    // 2. Persist to Supabase notifications table
+    final screen = data?['screen'] as String?;
+    final dataId = (data?['orderId'] ?? data?['dealId']) as String?;
+
+    AppNotification? createdNotif;
+    try {
+      createdNotif = await _supa.createNotification(
+        userId: userId,
+        title: title,
+        body: body,
+        screen: screen,
+        dataId: dataId,
+      );
+    } catch (_) {}
+
+    // 3. Fallback to local in-memory notification if offline/errored
+    createdNotif ??= AppNotification(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      userId: userId,
+      title: title,
+      body: body,
+      screen: screen,
+      dataId: dataId,
+      isRead: false,
+      createdAt: DateTime.now(),
+    );
+
+    // 4. Update in-memory state & cache immediately for current user
+    if (state.currentUser?.id == userId) {
+      final updatedList = [createdNotif, ...state.notifications];
+      state = state.copyWith(notifications: updatedList);
+      CacheManager().saveNotifications(updatedList);
+    }
+  }
 
   Future<void> markNotificationAsRead(String id) async {
     await _supa.markNotificationAsRead(id);

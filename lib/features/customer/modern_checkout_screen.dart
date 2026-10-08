@@ -119,28 +119,35 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                 ctx,
                 name: 'MTN Mobile Money',
                 subtitle: 'Instant USSD Prompt',
-                svgAsset: 'assets/icons/mtn_momo.svg',
+                assetPath: 'assets/icons/mtn.png',
                 onTap: () => _completePayment(ctx, 'MTN MoMo', finalTotal, items),
               ),
               _buildPaymentOption(
                 ctx,
                 name: 'Telecel Cash',
                 subtitle: 'Vodafone Cash Direct Prompt',
-                svgAsset: 'assets/icons/telecel_cash.svg',
+                assetPath: 'assets/icons/telecel.png',
                 onTap: () => _completePayment(ctx, 'Telecel Cash', finalTotal, items),
+              ),
+              _buildPaymentOption(
+                ctx,
+                name: 'AirtelTigo Money',
+                subtitle: 'AT Money Prompt',
+                assetPath: 'assets/icons/at-logo-sm.png',
+                onTap: () => _completePayment(ctx, 'AirtelTigo Money', finalTotal, items),
               ),
               _buildPaymentOption(
                 ctx,
                 name: 'Visa / Mastercard',
                 subtitle: 'Secured Card Gateway',
-                svgAsset: 'assets/icons/visa_mastercard.svg',
+                assetPath: 'assets/icons/master.jpg',
                 onTap: () => _completePayment(ctx, 'Visa/Card', finalTotal, items),
               ),
               _buildPaymentOption(
                 ctx,
                 name: 'Cash on Pickup',
                 subtitle: 'Pay directly at restaurant counter',
-                svgAsset: 'assets/icons/cash_pickup.svg',
+                assetPath: 'assets/icons/cash_pickup.svg',
                 onTap: () => _completePayment(ctx, 'Cash on Pickup', finalTotal, items),
               ),
             ],
@@ -154,7 +161,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
     BuildContext context, {
     required String name,
     required String subtitle,
-    required String svgAsset,
+    required String assetPath,
     required VoidCallback onTap,
   }) {
     return Container(
@@ -183,10 +190,15 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(6),
-            child: SvgPicture.asset(
-              svgAsset,
-              fit: BoxFit.contain,
-            ),
+            child: assetPath.endsWith('.svg')
+                ? SvgPicture.asset(
+                    assetPath,
+                    fit: BoxFit.contain,
+                  )
+                : Image.asset(
+                    assetPath,
+                    fit: BoxFit.contain,
+                  ),
           ),
         ),
         title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),

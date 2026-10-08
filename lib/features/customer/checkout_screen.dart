@@ -34,7 +34,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       'subtitle': 'Instant USSD Prompt',
       'color': const Color(0xFFFFCC00),
       'icon': Icons.phone_android_rounded,
-      'logo_asset': 'assets/icons/mtn_momo.svg',
+      'logo_asset': 'assets/icons/mtn.png',
       'bg_tint': const Color(0xFFFFFBEB),
       'border_color': const Color(0xFFF59E0B),
     },
@@ -43,7 +43,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       'subtitle': 'Vodafone Cash Prompt',
       'color': const Color(0xFFDC2626),
       'icon': Icons.phone_iphone_rounded,
-      'logo_asset': 'assets/icons/telecel_cash.svg',
+      'logo_asset': 'assets/icons/telecel.png',
       'bg_tint': const Color(0xFFFEF2F2),
       'border_color': const Color(0xFFEF4444),
     },
@@ -52,7 +52,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       'subtitle': 'AT Money Prompt',
       'color': const Color(0xFF1D4ED8),
       'icon': Icons.smartphone_rounded,
-      'logo_asset': 'assets/icons/airteltigo_money.svg',
+      'logo_asset': 'assets/icons/at-logo-sm.png',
       'bg_tint': const Color(0xFFEFF6FF),
       'border_color': const Color(0xFF3B82F6),
     },
@@ -61,7 +61,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       'subtitle': 'Secured Card Gateway',
       'color': const Color(0xFF0F172A),
       'icon': Icons.credit_card_rounded,
-      'logo_asset': 'assets/icons/visa_mastercard.svg',
+      'logo_asset': 'assets/icons/master.jpg',
       'bg_tint': const Color(0xFFF8FAFC),
       'border_color': const Color(0xFF334155),
     },
@@ -75,6 +75,19 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       'border_color': AppTheme.primaryGreen,
     },
   ];
+
+  Widget _buildProviderLogo(String assetPath) {
+    if (assetPath.endsWith('.svg')) {
+      return SvgPicture.asset(
+        assetPath,
+        fit: BoxFit.contain,
+      );
+    }
+    return Image.asset(
+      assetPath,
+      fit: BoxFit.contain,
+    );
+  }
 
   @override
   void initState() {
@@ -807,10 +820,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(5),
-                  child: SvgPicture.asset(
-                    p['logo_asset'] as String,
-                    fit: BoxFit.contain,
-                  ),
+                  child: _buildProviderLogo(p['logo_asset'] as String),
                 ),
               )
             else
@@ -943,10 +953,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(6),
-                        child: SvgPicture.asset(
-                          p['logo_asset'] as String,
-                          fit: BoxFit.contain,
-                        ),
+                        child: _buildProviderLogo(p['logo_asset'] as String),
                       ),
                     )
                   else

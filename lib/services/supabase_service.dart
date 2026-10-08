@@ -612,8 +612,18 @@ class SupabaseService {
         ownerId: (row['owner_id'] as String?) ?? '',
         name: (row['name'] as String?) ?? '',
         description: (row['description'] as String?) ?? '',
-        logoUrl: (row['logo_url'] as String?) ?? '',
-        coverUrl: (row['cover_url'] as String?) ?? '',
+        logoUrl: (row['logo_url'] as String?) ??
+            (row['logoUrl'] as String?) ??
+            (row['avatar_url'] as String?) ??
+            '',
+        coverUrl: (row['cover_url'] as String?) ??
+            (row['coverUrl'] as String?) ??
+            (row['image_url'] as String?) ??
+            (row['banner_url'] as String?) ??
+            (row['photo_url'] as String?) ??
+            (row['store_image_url'] as String?) ??
+            (row['logo_url'] as String?) ??
+            '',
         category: (row['category'] as String?) ?? 'Restaurant Meal',
         location: (row['location'] as String?) ?? 'Accra, Ghana',
         latitude: (row['lat'] as num?)?.toDouble() ?? 5.6037,
@@ -2033,6 +2043,30 @@ class SupabaseService {
           .eq('user_id', userId);
     } catch (e) {
       throw Exception('Failed to mark all notifications as read: $e');
+    }
+  }
+
+  Future<AppNotification?> createNotification({
+    required String userId,
+    required String title,
+    required String body,
+    String? screen,
+    String? dataId,
+  }) async {
+    try {
+      final res = await _db.from('notifications').insert({
+        'user_id': userId,
+        'title': title,
+        'body': body,
+        'screen': screen,
+        'data_id': dataId,
+        'is_read': false,
+        'created_at': DateTime.now().toIso8601String(),
+      }).select().single();
+      return AppNotification.fromJson(res);
+    } catch (e) {
+      debugPrint('Failed to create notification: $e');
+      return null;
     }
   }
 

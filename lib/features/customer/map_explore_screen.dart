@@ -100,8 +100,9 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'org.dreamswish.dreamseat',
+                urlTemplate: 'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+                subdomains: const ['0', '1', '2', '3'],
+                userAgentPackageName: 'com.dreameats.dreameats',
                 tileProvider: CancellableNetworkTileProvider(),
               ),
 
@@ -392,14 +393,7 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
                                   child: SizedBox(
                                     width: 96,
                                     height: 104,
-                                    child: biz.coverUrl.isNotEmpty
-                                        ? CachedNetworkImage(
-                                            imageUrl: biz.coverUrl,
-                                            fit: BoxFit.cover,
-                                            placeholder: (context, url) => Container(color: const Color(0xFFF1F5F9)),
-                                            errorWidget: (context, url, error) => _buildFallbackCover(),
-                                          )
-                                        : _buildFallbackCover(),
+                                    child: _buildStoreThumbnail(biz),
                                   ),
                                 ),
                                 const SizedBox(width: 14),
@@ -481,6 +475,67 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildStoreThumbnail(BusinessProfile biz) {
+    // 1. Check if biz has coverUrl or logoUrl
+    String candidateUrl = biz.coverUrl.trim();
+    if (candidateUrl.isEmpty) {
+      candidateUrl = biz.logoUrl.trim();
+    }
+
+    // 2. Fallback to any food deal image belonging to this business
+    if (candidateUrl.isEmpty) {
+      final allDeals = ref.watch(appStateProvider).deals;
+      for (final d in allDeals) {
+        if (d.businessId == biz.id && d.imageUrl.trim().isNotEmpty) {
+          candidateUrl = d.imageUrl.trim();
+          break;
+        }
+      }
+    }
+
+    // 3. Fallback to appetizing photography matching business category and name
+    if (candidateUrl.isEmpty) {
+      candidateUrl = _getCategoryDefaultImage(biz.category, biz.name);
+    }
+
+    return CachedNetworkImage(
+      imageUrl: candidateUrl,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => Container(
+        color: const Color(0xFFF1F5F9),
+        child: const Center(
+          child: SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryGreen),
+          ),
+        ),
+      ),
+      errorWidget: (context, url, error) => CachedNetworkImage(
+        imageUrl: _getCategoryDefaultImage(biz.category, biz.name),
+        fit: BoxFit.cover,
+        errorWidget: (context, url, err) => _buildFallbackCover(),
+      ),
+    );
+  }
+
+  String _getCategoryDefaultImage(String category, String name) {
+    final combined = '$category $name'.toLowerCase();
+    if (combined.contains('bakery') || combined.contains('pastry') || combined.contains('bread') || combined.contains('cake')) {
+      return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80';
+    } else if (combined.contains('cafe') || combined.contains('coffee')) {
+      return 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=600&q=80';
+    } else if (combined.contains('grocery') || combined.contains('market') || combined.contains('supermarket')) {
+      return 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80';
+    } else if (combined.contains('burger') || combined.contains('fast') || combined.contains('pizza')) {
+      return 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80';
+    } else if (combined.contains('jollof') || combined.contains('ghana') || combined.contains('local') || combined.contains('african')) {
+      return 'https://images.unsplash.com/photo-1604382355076-af4b0eb60143?auto=format&fit=crop&w=600&q=80';
+    }
+    // High-end restaurant dining & gourmet food (e.g. Chez Ami)
+    return 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80';
   }
 
   Widget _buildFallbackCover() {

@@ -683,8 +683,9 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'org.dreamswish.dreamseat',
+                urlTemplate: 'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+                subdomains: const ['0', '1', '2', '3'],
+                userAgentPackageName: 'com.dreameats.dreameats',
                 tileProvider: CancellableNetworkTileProvider(),
               ),
 
