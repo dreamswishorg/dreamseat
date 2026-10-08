@@ -106,8 +106,6 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         ref.watch(appStateProvider.select((s) => s.favoriteBusinessIds));
     final customerName =
         ref.watch(appStateProvider.select((s) => s.currentUser?.name));
-    final customerStats =
-        ref.watch(appStateProvider.select((s) => s.customerStats));
     final basketCount =
         ref.watch(appStateProvider.select((s) => s.basketItemCount));
     final orders =
@@ -324,22 +322,9 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                     isWide: wide,
                   ),
                   const SizedBox(height: 18),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Expanded(child: _PromoBanner(isWide: true)),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _ImpactCard(
-                            stats: customerStats,
-                            isWide: true,
-                            onTap: () => ref.read(customerTabProvider.notifier).state = 2,
-                          ),
-                        ),
-                      ],
-                    ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.0),
+                    child: _PromoBanner(isWide: true),
                   ),
                   const SizedBox(height: 20),
                   if (businesses.isNotEmpty) ...[
@@ -416,16 +401,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                     ),
                   ),
 
-                const SizedBox(height: 24),
-                if (!wide) ...[
-                  _ImpactCard(
-                    stats: customerStats,
-                    onTap: () => ref.read(customerTabProvider.notifier).state = 2,
-                  ),
-                  const SizedBox(height: 32),
-                ] else ...[
-                  const SizedBox(height: 32),
-                ],
+                const SizedBox(height: 32),
               ],
             ),
           ),
@@ -1732,157 +1708,6 @@ class _PromoBanner extends StatelessWidget {
   }
 }
 
-class _ImpactCard extends StatelessWidget {
-  final SustainabilityStats stats;
-  final bool isWide;
-  final VoidCallback? onTap;
-  const _ImpactCard({required this.stats, this.isWide = false, this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
-      child: Container(
-        margin: isWide ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 20),
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.15)),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x08000000),
-              blurRadius: 16,
-              offset: Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(color: AppTheme.lightGreenBg, shape: BoxShape.circle),
-                  child: const Icon(Icons.eco_rounded, color: AppTheme.primaryGreen, size: 18),
-                ),
-                const SizedBox(width: 10),
-                const Expanded(
-                  child: Text(
-                    "Your Food Rescue Impact",
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.3),
-                  ),
-                ),
-                Text(
-                  "View Full →",
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryGreen,
-                  ),
-                ),
-              ],
-            ),
-          // 2 Grid Cards: Money Saved & Money Spent
-          Row(
-            children: [
-              Expanded(
-                child: _ImpactTileCard(
-                  title: "Money Saved",
-                  value: "GHS ${stats.moneySaved.toStringAsFixed(2)}",
-                  icon: Icons.account_balance_wallet_rounded,
-                  iconColor: AppTheme.primaryGreen,
-                  bgColor: AppTheme.lightGreenBg,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _ImpactTileCard(
-                  title: "Money Spent",
-                  value: "GHS ${stats.moneySpent.toStringAsFixed(2)}",
-                  icon: Icons.shopping_bag_rounded,
-                  iconColor: Colors.orange[800]!,
-                  bgColor: const Color(0xFFFFF7ED),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // 2 Grid Cards: Meals Rescued & CO2 Saved
-          Row(
-            children: [
-              Expanded(
-                child: _ImpactTileCard(
-                  title: "Meals Rescued",
-                  value: "${stats.mealsRescued}",
-                  icon: Icons.restaurant_rounded,
-                  iconColor: AppTheme.primaryGreen,
-                  bgColor: AppTheme.lightGreenBg,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _ImpactTileCard(
-                  title: "CO₂ Saved",
-                  value: "${stats.co2Saved.toStringAsFixed(1)} kg",
-                  icon: Icons.cloud_done_rounded,
-                  iconColor: const Color(0xFF3B82F6),
-                  bgColor: const Color(0xFFEFF6FF),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ),
-  );
-  }
-}
-
-class _ImpactTileCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-  final Color iconColor;
-  final Color bgColor;
-  const _ImpactTileCard({required this.title, required this.value, required this.icon, required this.iconColor, required this.bgColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: iconColor, size: 18),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(title, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: iconColor), maxLines: 1, overflow: TextOverflow.ellipsis),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.4),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _FeaturedPartners extends StatelessWidget {
   final List<BusinessProfile> businesses;
