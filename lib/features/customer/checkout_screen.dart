@@ -423,32 +423,36 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   const SizedBox(height: 28),
 
                   // ── Payment Method Header ────────────────────────────────
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Select Payment Method',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              color: AppTheme.charcoal,
-                              letterSpacing: -0.5,
-                            ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Select Payment Method',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppTheme.charcoal,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Choose your preferred instant payment gateway',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppTheme.mutedGrey,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Choose your preferred instant payment gateway',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: AppTheme.mutedGrey,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
