@@ -4,10 +4,10 @@ import '../../core/theme.dart';
 import '../../core/responsive.dart';
 import '../../providers/app_state.dart';
 import 'customer_home.dart';
-import 'partners_directory_screen.dart';
+import 'map_explore_screen.dart';
+import 'friends_feed_screen.dart';
 import 'loyalty_referral_screen.dart';
 import 'order_history_screen.dart';
-import 'favorites_screen.dart';
 import 'basket_screen.dart';
 
 import '../admin/admin_dashboard.dart';
@@ -25,10 +25,10 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
 
   final List<Widget> _screens = [
     const CustomerHomeScreen(),
-    const FavoritesScreen(),
-    const PartnersDirectoryScreen(),
-    const LoyaltyReferralScreen(),
+    const MapExploreScreen(),
+    const FriendsFeedScreen(),
     const OrderHistoryScreen(),
+    const LoyaltyReferralScreen(),
   ];
 
   @override
@@ -71,10 +71,10 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
                   header: _buildSideNavBrand(),
                   items: const [
                     SideNavItem(icon: Icons.explore_outlined, activeIcon: Icons.explore, label: 'Explore'),
-                    SideNavItem(icon: Icons.favorite_border, activeIcon: Icons.favorite, label: 'Favorites'),
-                    SideNavItem(icon: Icons.storefront_outlined, activeIcon: Icons.storefront, label: 'Partners'),
-                    SideNavItem(icon: Icons.stars_outlined, activeIcon: Icons.stars, label: 'Rewards'),
+                    SideNavItem(icon: Icons.map_outlined, activeIcon: Icons.map_rounded, label: 'Map Explore'),
+                    SideNavItem(icon: Icons.people_outline_rounded, activeIcon: Icons.people_rounded, label: 'Friends'),
                     SideNavItem(icon: Icons.receipt_long_outlined, activeIcon: Icons.receipt_long, label: 'Orders'),
+                    SideNavItem(icon: Icons.stars_outlined, activeIcon: Icons.stars, label: 'Rewards'),
                   ],
                   footer: basketCount > 0
                       ? (_isSideNavCollapsed
@@ -195,61 +195,88 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
         ],
       ),
       // Floating basket button (visible on home & favorites tabs only)
-      floatingActionButton: !wide && currentIndex <= 1 && basketCount > 0
-          ? FloatingActionButton.extended(
-              heroTag: 'basket_fab',
-              backgroundColor: AppTheme.primaryGreen,
-              icon: const Icon(Icons.shopping_basket, color: Colors.white),
-              label: Text(
-                'Basket ($basketCount)',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+      floatingActionButton: null,
+      bottomNavigationBar: wide ? null : _buildFloatingPillNavBar(context, currentIndex, isDark, basketCount),
+    );
+  }
+
+  Widget _buildFloatingPillNavBar(BuildContext context, int currentIndex, bool isDark, int basketCount) {
+    final items = const [
+      _PillNavItem(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Home'),
+      _PillNavItem(icon: Icons.search_rounded, activeIcon: Icons.search_rounded, label: 'Map'),
+      _PillNavItem(icon: Icons.menu_book_outlined, activeIcon: Icons.menu_book_rounded, label: 'Friends'),
+      _PillNavItem(icon: Icons.shopping_bag_outlined, activeIcon: Icons.shopping_bag_rounded, label: 'Orders'),
+      _PillNavItem(icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Profile'),
+    ];
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+        child: Container(
+          height: 64,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: BorderRadius.circular(36),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.10),
+                blurRadius: 24,
+                offset: const Offset(0, 6),
               ),
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const BasketScreen()),
-              ),
-            )
-          : null,
-      bottomNavigationBar: wide ? null : BottomNavigationBar(
-        currentIndex: currentIndex,
-        onTap: (index) => ref.read(customerTabProvider.notifier).state = index,
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-        selectedItemColor: AppTheme.primaryGreen,
-        unselectedItemColor: isDark ? const Color(0xFF64748B) : AppTheme.mutedGrey,
-        selectedLabelStyle:
-            const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-        unselectedLabelStyle: const TextStyle(fontSize: 11),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.explore_outlined),
-            activeIcon: Icon(Icons.explore),
-            label: 'Explore',
+            ],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_border),
-            activeIcon: Icon(Icons.favorite),
-            label: 'Favorites',
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(items.length, (idx) {
+              final item = items[idx];
+              final isSelected = currentIndex == idx;
+
+              if (isSelected) {
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF22C55E),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(item.activeIcon, color: Colors.white, size: 18),
+                      const SizedBox(width: 6),
+                      Text(
+                        item.label,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              final iconWidget = Icon(
+                item.icon,
+                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                size: 22,
+              );
+
+              return IconButton(
+                icon: (idx == 3 && basketCount > 0)
+                    ? Badge(
+                        label: Text('$basketCount'),
+                        backgroundColor: const Color(0xFFEF4444),
+                        child: iconWidget,
+                      )
+                    : iconWidget,
+                onPressed: () => ref.read(customerTabProvider.notifier).state = idx,
+              );
+            }),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.storefront_outlined),
-            activeIcon: Icon(Icons.storefront),
-            label: 'Partners',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.stars_outlined),
-            activeIcon: Icon(Icons.stars),
-            label: 'Rewards',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long_outlined),
-            activeIcon: Icon(Icons.receipt_long),
-            label: 'Orders',
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -274,5 +301,12 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
       ],
     );
   }
+}
+
+class _PillNavItem {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  const _PillNavItem({required this.icon, required this.activeIcon, required this.label});
 }
 

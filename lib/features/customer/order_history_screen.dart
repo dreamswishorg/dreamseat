@@ -8,6 +8,7 @@ import '../../core/ui_utils.dart';
 import '../../core/branded_empty_state.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
+import 'order_track_screen.dart';
 
 class OrderHistoryScreen extends ConsumerStatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -392,6 +393,28 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 14),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF22C55E),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    icon: const Icon(Icons.navigation_rounded, size: 18),
+                    label: const Text('Track Courier (Rober Jr.) Live Route', style: TextStyle(fontWeight: FontWeight.bold)),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => OrderTrackScreen(order: order)),
+                      );
+                    },
                   ),
                 ),
               ),

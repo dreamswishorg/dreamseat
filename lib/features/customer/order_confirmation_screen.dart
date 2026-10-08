@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../core/responsive.dart';
 import '../../models/models.dart';
+import 'order_track_screen.dart';
 
 class OrderConfirmationScreen extends StatefulWidget {
   final Order order;
@@ -428,6 +429,27 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
                 opacity: _fadeAnim,
                 child: Column(
                   children: [
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => OrderTrackScreen(order: order),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.navigation_rounded, size: 18),
+                      label: const Text('Track Courier (Rober Jr.)'),
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 52),
+                        backgroundColor: const Color(0xFF22C55E),
+                        foregroundColor: AppTheme.pureWhite,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     OutlinedButton.icon(
                       onPressed: () {
                         Navigator.popUntil(context, (route) => route.isFirst);

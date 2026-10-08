@@ -7,7 +7,7 @@ import '../../core/ui_utils.dart';
 import '../../core/branded_empty_state.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
-import 'checkout_screen.dart';
+import 'modern_checkout_screen.dart';
 
 class BasketScreen extends ConsumerStatefulWidget {
   const BasketScreen({super.key});
@@ -287,12 +287,9 @@ class _BasketScreenState extends ConsumerState<BasketScreen> {
           // Proceed button
           ElevatedButton(
             onPressed: () {
-              // Pass the first deal as a representative; CheckoutScreen reads
-              // the full basket from state internally for basket-mode checkout.
-              final firstDeal = basket.first.deal;
               Navigator.push(
                 context,
-                _createCheckoutRoute(firstDeal),
+                MaterialPageRoute(builder: (_) => const ModernCheckoutScreen()),
               );
             },
             style: ElevatedButton.styleFrom(
@@ -369,29 +366,6 @@ class _BasketScreenState extends ConsumerState<BasketScreen> {
           ],
         ),
       ],
-    );
-  }
-
-  Route _createCheckoutRoute(FoodDeal deal) {
-    return PageRouteBuilder(
-      pageBuilder: (context, animation, secondaryAnimation) => CheckoutScreen(deal: deal),
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        const begin = 0.95;
-        const end = 1.0;
-        const curve = Curves.easeInOutCubic;
-
-        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-        var scaleAnimation = animation.drive(tween);
-        var fadeAnimation = animation.drive(Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: curve)));
-
-        return FadeTransition(
-          opacity: fadeAnimation,
-          child: ScaleTransition(
-            scale: scaleAnimation,
-            child: child,
-          ),
-        );
-      },
     );
   }
 }
