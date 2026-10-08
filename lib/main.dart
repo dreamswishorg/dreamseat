@@ -34,48 +34,41 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Lock to portrait
-  await SystemChrome.setPreferredOrientations([
+  // Lock to portrait non-blocking
+  unawaited(SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
-  ]);
+  ]));
 
-  // 1. Initialize Hive offline cache
-  await CacheManager().init();
-
-  // Clear URL redirect query parameters BEFORE initializing Supabase if there is
-  // already a valid session in local storage. This prevents gotrue client from
-  // performing stale PKCE exchanges and throwing AuthExceptions on page reloads.
   if (kIsWeb && hasSessionInLocalStorage()) {
     clearUrlParams();
   }
 
-  // 2. Initialize Supabase
-  await Supabase.initialize(
-    url: AppConfig.supabaseUrl,
-    publishableKey: AppConfig.supabaseAnonKey,
-    authOptions: const FlutterAuthClientOptions(
-      authFlowType: AuthFlowType.pkce,
-      autoRefreshToken: true,
+  // 1 & 2 & 3. Initialize Hive cache, Supabase, and Firebase in parallel
+  await Future.wait([
+    CacheManager().init(),
+    Supabase.initialize(
+      url: AppConfig.supabaseUrl,
+      publishableKey: AppConfig.supabaseAnonKey,
+      authOptions: const FlutterAuthClientOptions(
+        authFlowType: AuthFlowType.pkce,
+        autoRefreshToken: true,
+      ),
+      realtimeClientOptions: const RealtimeClientOptions(
+        eventsPerSecond: 2,
+      ),
     ),
-    realtimeClientOptions: const RealtimeClientOptions(
-      eventsPerSecond: 2,
+    Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
     ),
-  );
+  ]);
 
-  // Clear redirect query parameters (such as 'code') immediately after initialization
   clearUrlParams();
-
-  // 3. Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
 
   // 4. Register background message handler
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  // 5. Initialize push notifications (token registration, permission, channel)
-  // Non-blocking to prevent app hang on Web if FCM setup is slow
+  // 5. Initialize push notifications (non-blocking)
   NotificationService().initialize(navigatorKey).catchError((e) {
     debugPrint('Notification initialization failed: $e');
   });

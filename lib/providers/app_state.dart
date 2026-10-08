@@ -37,6 +37,7 @@ class AppState {
   final List<BroadcastMessage> broadcasts;
   final List<SupportTicket> supportTickets;
   final ThemeMode themeMode;
+  final List<CategoryItem> categories;
   final bool isLoading;
   final String? errorMessage;
 
@@ -56,6 +57,7 @@ class AppState {
     required this.globalStats,
     required this.customerStats,
     required this.platformSettings,
+    this.categories = const [],
     this.auditLogs = const [],
     this.vouchers = const [],
     this.broadcasts = const [],
@@ -65,6 +67,51 @@ class AppState {
     this.isLoading = false,
     this.errorMessage,
   });
+
+  static List<CategoryItem> defaultCategories() => [
+        CategoryItem(
+          id: 'all',
+          name: 'All',
+          imageUrl: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&auto=format&fit=crop',
+          iconName: 'grid_view_rounded',
+        ),
+        CategoryItem(
+          id: 'restaurant_meal',
+          name: 'Restaurant Meal',
+          imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop',
+          iconName: 'restaurant_rounded',
+        ),
+        CategoryItem(
+          id: 'bakery_pack',
+          name: 'Bakery Pack',
+          imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&auto=format&fit=crop',
+          iconName: 'bakery_dining_rounded',
+        ),
+        CategoryItem(
+          id: 'grocery_bundle',
+          name: 'Grocery Bundle',
+          imageUrl: 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=400&auto=format&fit=crop',
+          iconName: 'local_grocery_store_rounded',
+        ),
+        CategoryItem(
+          id: 'fruit_vegetable',
+          name: 'Fruit & Vegetable Pack',
+          imageUrl: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&auto=format&fit=crop',
+          iconName: 'eco_rounded',
+        ),
+        CategoryItem(
+          id: 'hotel_buffet',
+          name: 'Hotel Buffet',
+          imageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&auto=format&fit=crop',
+          iconName: 'room_service_rounded',
+        ),
+        CategoryItem(
+          id: 'snacks_drinks',
+          name: 'Snacks & Drinks',
+          imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&auto=format&fit=crop',
+          iconName: 'local_cafe_rounded',
+        ),
+      ];
 
   /// Factory for a fully empty/logged-out state.
   static AppState empty() => AppState(
@@ -83,6 +130,7 @@ class AppState {
         globalStats: SustainabilityStats.zero(),
         customerStats: SustainabilityStats.zero(),
         platformSettings: PlatformSettings.defaultSettings(),
+        categories: defaultCategories(),
         auditLogs: const [],
         vouchers: const [],
         broadcasts: const [],
@@ -111,6 +159,7 @@ class AppState {
     SustainabilityStats? customerStats,
     double? commissionRate,
     PlatformSettings? platformSettings,
+    List<CategoryItem>? categories,
     List<AuditLog>? auditLogs,
     List<Voucher>? vouchers,
     List<BroadcastMessage>? broadcasts,
@@ -138,6 +187,7 @@ class AppState {
       customerStats: customerStats ?? this.customerStats,
       commissionRate: commissionRate ?? this.commissionRate,
       platformSettings: platformSettings ?? this.platformSettings,
+      categories: categories ?? this.categories,
       auditLogs: auditLogs ?? this.auditLogs,
       vouchers: vouchers ?? this.vouchers,
       broadcasts: broadcasts ?? this.broadcasts,
@@ -192,6 +242,8 @@ class AppStateManager extends Notifier<AppState> {
     final cachedReferralCredit = cache.getReferralCredit();
     final cachedDisputes = cache.getDisputes();
     final cachedNotifications = cache.getNotifications();
+    final cachedCategories = cache.getCategories();
+    final categories = cachedCategories.isNotEmpty ? cachedCategories : AppState.defaultCategories();
     _basket = cache.getBasket();
     _commissionRate = 0.15;
 
@@ -206,6 +258,7 @@ class AppStateManager extends Notifier<AppState> {
       orders: cachedOrders,
       notifications: cachedNotifications,
       disputes: cachedDisputes,
+      categories: categories,
       basket: List.from(_basket),
       favoriteBusinessIds: cachedFavorites,
       customerDreamPoints: cachedDreamPoints,
@@ -985,13 +1038,113 @@ class AppStateManager extends Notifier<AppState> {
   }
 
   Future<void> confirmCollection(String orderId) async {
-    await _supa.updateOrderStatus(orderId, 'collected');
+    await updateMerchantOrderStatus(
+      orderId: orderId,
+      status: 'collected',
+    );
+  }
+
+  Future<void> updateMerchantOrderStatus({
+    required String orderId,
+    required String status,
+    String? fulfillmentType,
+    String? courierName,
+    String? courierPhone,
+    String? trackingNotes,
+  }) async {
+    await _supa.updateOrderStatus(
+      orderId,
+      status,
+      fulfillmentType: fulfillmentType,
+      courierName: courierName,
+      courierPhone: courierPhone,
+      trackingNotes: trackingNotes,
+    );
+
     final updated = state.orders.map((o) {
-      if (o.id == orderId) return o.copyWith(status: 'collected');
+      if (o.id == orderId) {
+        return o.copyWith(
+          status: status,
+          fulfillmentType: fulfillmentType ?? o.fulfillmentType,
+          courierName: courierName ?? o.courierName,
+          courierPhone: courierPhone ?? o.courierPhone,
+          trackingNotes: trackingNotes ?? o.trackingNotes,
+        );
+      }
       return o;
     }).toList();
+
     state = state.copyWith(orders: updated);
     CacheManager().saveOrders(state.orders);
+
+    // Notify customer
+    try {
+      final order = state.orders.firstWhere((o) => o.id == orderId);
+      final notifTitle = status == 'ready'
+          ? 'Your Food Rescue is Ready! 📦'
+          : (status == 'out_for_delivery'
+              ? 'Courier on the Way! 🛵'
+              : (status == 'preparing'
+                  ? 'Kitchen is Preparing Your Pack 🍳'
+                  : (status == 'collected' ? 'Order Collected! Enjoy Your Meal 🌿' : 'Order Status Update')));
+      final shortId = order.id.length > 8 ? order.id.substring(0, 8) : order.id;
+      final notifBody = 'Order #$shortId is now ${status.replaceAll('_', ' ')}.';
+
+      await NotificationService().sendNotification({
+        'userId': order.customerId,
+        'title': notifTitle,
+        'body': notifBody,
+        'screen': 'track_order',
+        'orderId': order.id,
+      });
+    } catch (_) {}
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // CATEGORY MANAGEMENT (ADMIN ACTIONS)
+  // ─────────────────────────────────────────────────────────────
+
+  Future<void> addCategory({
+    required String name,
+    required String imageUrl,
+    String? iconName,
+  }) async {
+    final newCat = CategoryItem(
+      id: 'cat_${DateTime.now().millisecondsSinceEpoch}',
+      name: name,
+      imageUrl: imageUrl,
+      iconName: iconName ?? 'restaurant_rounded',
+    );
+    final updated = [...state.categories, newCat];
+    state = state.copyWith(categories: updated);
+    await CacheManager().saveCategories(updated);
+  }
+
+  Future<void> updateCategory({
+    required String id,
+    required String name,
+    required String imageUrl,
+    String? iconName,
+  }) async {
+    final updated = state.categories.map((c) {
+      if (c.id == id) {
+        return CategoryItem(
+          id: id,
+          name: name,
+          imageUrl: imageUrl,
+          iconName: iconName ?? c.iconName,
+        );
+      }
+      return c;
+    }).toList();
+    state = state.copyWith(categories: updated);
+    await CacheManager().saveCategories(updated);
+  }
+
+  Future<void> deleteCategory(String id) async {
+    final updated = state.categories.where((c) => c.id != id).toList();
+    state = state.copyWith(categories: updated);
+    await CacheManager().saveCategories(updated);
   }
 
   Future<void> broadcastAnnouncement({

@@ -142,38 +142,38 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
             maxWidth: 680,
             child: Column(
               children: [
-              const SizedBox(height: 40),
+              const SizedBox(height: 12),
 
-              // ── Animated Success Circle ──────────────────────────────────
+              // ── Animated Success Circle (Compact) ─────────────────────────
               ScaleTransition(
                 scale: _scaleAnim,
                 child: Container(
-                  width: 110,
-                  height: 110,
+                  width: 56,
+                  height: 56,
                   decoration: BoxDecoration(
                     color: AppTheme.lightGreenBg,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppTheme.primaryGreen.withValues(alpha: 0.25),
-                      width: 6,
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.3),
+                      width: 3.5,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.primaryGreen.withValues(alpha: 0.18),
-                        blurRadius: 30,
-                        spreadRadius: 4,
+                        color: AppTheme.primaryGreen.withValues(alpha: 0.16),
+                        blurRadius: 16,
+                        spreadRadius: 2,
                       ),
                     ],
                   ),
                   child: const Icon(
                     Icons.check_rounded,
                     color: AppTheme.primaryGreen,
-                    size: 56,
+                    size: 32,
                   ),
                 ),
               ),
 
-              const SizedBox(height: 22),
+              const SizedBox(height: 10),
 
               // ── Title ────────────────────────────────────────────────────
               FadeTransition(
@@ -181,26 +181,26 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
                 child: AnimatedBuilder(
                   animation: _slideAnim,
                   builder: (context, child) => Transform.translate(
-                    offset: Offset(0, _slideAnim.value),
+                    offset: Offset(0, _slideAnim.value * 0.5),
                     child: child,
                   ),
-                  child: Column(
+                  child: const Column(
                     children: [
-                      const Text(
+                      Text(
                         'Order Placed!',
                         style: TextStyle(
                           color: AppTheme.primaryGreen,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.8,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5,
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Your rescue pack is reserved!',
+                      SizedBox(height: 2),
+                      Text(
+                        'Your rescue pack is reserved and confirmed!',
                         style: TextStyle(
                           color: AppTheme.mutedGrey,
-                          fontSize: 15,
+                          fontSize: 13,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -209,96 +209,108 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
                 ),
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 14),
 
-              // ── Pickup Code Box ──────────────────────────────────────────
+              // ── Pickup Code Box (Logo in Corner) ──────────────────────────
               FadeTransition(
                 opacity: _fadeAnim,
                 child: AnimatedBuilder(
                   animation: _slideAnim,
                   builder: (context, child) => Transform.translate(
-                    offset: Offset(0, _slideAnim.value * 1.3),
+                    offset: Offset(0, _slideAnim.value * 0.7),
                     child: child,
                   ),
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(32),
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 14,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
-                    child: Column(
+                    child: Stack(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.all(28),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'YOUR PICKUP CODE',
-                                      style: TextStyle(
-                                        color: AppTheme.mutedGrey,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 2,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      order.collectionCode,
-                                      style: const TextStyle(
-                                        color: AppTheme.primaryGreen,
-                                        fontSize: 48,
-                                        fontWeight: FontWeight.w900,
-                                        letterSpacing: 4,
-                                        height: 1,
-                                      ),
-                                    ),
-                                  ],
+                        // Logo in the top-right corner
+                        Positioned(
+                          top: 12,
+                          right: 12,
+                          child: Container(
+                            width: 34,
+                            height: 34,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(7),
+                              child: Image.asset(
+                                'assets/images/logo.jpg',
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => const Icon(
+                                  Icons.eco_rounded,
+                                  color: AppTheme.primaryGreen,
+                                  size: 18,
                                 ),
                               ),
-                              Image.asset(
-                                'assets/images/logo.jpg',
-                                width: 50,
-                                height: 50,
-                                fit: BoxFit.cover,
-                              ),
-                            ],
+                            ),
                           ),
                         ),
-                        _buildTicketSeparator(),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(28, 20, 28, 28),
-                          child: Column(
-                            children: [
-                              Row(
+                        Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
+                              child: Column(
                                 children: [
-                                  const Icon(Icons.qr_code_2_rounded, size: 24, color: AppTheme.charcoal),
-                                  const SizedBox(width: 12),
+                                  const Text(
+                                    'YOUR PICKUP CODE',
+                                    style: TextStyle(
+                                      color: AppTheme.mutedGrey,
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 1.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    order.collectionCode,
+                                    style: const TextStyle(
+                                      color: AppTheme.primaryGreen,
+                                      fontSize: 36,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 3,
+                                      height: 1,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            _buildTicketSeparator(),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.qr_code_2_rounded, size: 20, color: AppTheme.charcoal),
+                                  const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      'Show this code to the merchant staff to verify and collect your food.',
+                                      'Present this code at the counter to collect your food.',
                                       style: TextStyle(
-                                        color: AppTheme.charcoal.withValues(alpha: 0.7),
-                                        fontSize: 13,
+                                        color: AppTheme.charcoal.withValues(alpha: 0.75),
+                                        fontSize: 11.5,
                                         fontWeight: FontWeight.w500,
-                                        height: 1.4,
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -422,9 +434,9 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 14),
 
-              // ── Action Buttons ───────────────────────────────────────────
+              // ── Action Buttons (Squeezed to prevent scrolling) ────────────
               FadeTransition(
                 opacity: _fadeAnim,
                 child: Column(
@@ -439,53 +451,69 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
                         );
                       },
                       icon: const Icon(Icons.navigation_rounded, size: 18),
-                      label: const Text('Track Courier (Rober Jr.)'),
+                      label: Text(
+                        order.fulfillmentType == 'delivery'
+                            ? 'Track Delivery'
+                            : 'Track Order Status',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
                       style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 52),
+                        minimumSize: const Size(double.infinity, 46),
                         backgroundColor: AppTheme.primaryGreen,
                         foregroundColor: AppTheme.pureWhite,
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.popUntil(context, (route) => route.isFirst);
-                      },
-                      icon: const Icon(Icons.receipt_long_rounded, size: 18),
-                      label: const Text('View Order History'),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 52),
-                        side: const BorderSide(color: AppTheme.primaryGreen, width: 2),
-                        foregroundColor: AppTheme.primaryGreen,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.popUntil(context, (route) => route.isFirst);
+                            },
+                            icon: const Icon(Icons.receipt_long_rounded, size: 16),
+                            label: const Text('Orders', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(0, 42),
+                              side: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                              foregroundColor: AppTheme.primaryGreen,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.popUntil(context, (route) => route.isFirst);
-                      },
-                      icon: const Icon(Icons.explore_rounded, size: 18),
-                      label: const Text('Continue Shopping'),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 52),
-                        backgroundColor: AppTheme.primaryGreen,
-                        foregroundColor: AppTheme.pureWhite,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.popUntil(context, (route) => route.isFirst);
+                            },
+                            icon: const Icon(Icons.explore_rounded, size: 16),
+                            label: const Text('Continue', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(0, 42),
+                              backgroundColor: AppTheme.lightGrey,
+                              foregroundColor: AppTheme.charcoal,
+                              elevation: 0,
+                              side: BorderSide(color: AppTheme.primaryGreen.withValues(alpha: 0.2)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
             ],
           ),
           ),

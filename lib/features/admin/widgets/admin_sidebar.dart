@@ -28,6 +28,9 @@ class AdminSidebar extends ConsumerWidget {
     if (user?.hasPrivilege('directory') ?? false) {
       coreItems.add(_SidebarNavItem(2, Icons.people_alt_rounded, "User Directory", currentTab == 2));
     }
+    if (user != null) {
+      coreItems.add(_SidebarNavItem(9, Icons.category_rounded, "Categories & Photos", currentTab == 9));
+    }
 
     final financialItems = <_SidebarNavItem>[];
     if (user?.hasPrivilege('ledger') ?? false) {

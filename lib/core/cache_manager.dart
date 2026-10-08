@@ -21,6 +21,7 @@ class CacheManager {
   static const String keyBasket = 'cached_basket';
   static const String keyDisputes = 'cached_disputes';
   static const String keyNotifications = 'cached_notifications';
+  static const String keyCategories = 'cached_categories';
 
   static final CacheManager _instance = CacheManager._internal();
   factory CacheManager() => _instance;
@@ -239,6 +240,23 @@ class CacheManager {
   Future<void> saveNotifications(List<AppNotification> notifications) async {
     final list = notifications.map((n) => n.toJson()).toList();
     await _box?.put(keyNotifications, jsonEncode(list));
+  }
+
+  // --- Categories Cache ---
+  List<CategoryItem> getCategories() {
+    final raw = _box?.get(keyCategories);
+    if (raw == null) return [];
+    try {
+      final list = jsonDecode(raw as String) as List;
+      return list.map((item) => CategoryItem.fromJson(item as Map<String, dynamic>)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> saveCategories(List<CategoryItem> categories) async {
+    final list = categories.map((c) => c.toJson()).toList();
+    await _box?.put(keyCategories, jsonEncode(list));
   }
 
   // --- Global Clear Cache ---

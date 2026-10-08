@@ -23,6 +23,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   final _phoneController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   String _selectedProvider = 'MTN MoMo';
+  bool _isPaymentCollapsed = true;
   bool _isProcessing = false;
   String _statusMessage = '';
 
@@ -266,50 +267,126 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   void _handleOtpRequirement(String reference, String message) {
     final otpController = TextEditingController();
+    String? otpError;
+    bool isSubmittingOtp = false;
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('OTP Required'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(message),
-            const SizedBox(height: 16),
-            TextField(
-              controller: otpController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(hintText: 'Enter OTP'),
+      builder: (dlgContext) => StatefulBuilder(
+        builder: (context, setDlgState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.lock_clock_rounded, color: AppTheme.primaryGreen),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Authorization Required',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                message.isNotEmpty
+                    ? message
+                    : 'Please enter the authorization code/OTP sent to your phone, or check your wallet prompt.',
+                style: const TextStyle(fontSize: 13, color: AppTheme.mutedGrey),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: otpController,
+                keyboardType: TextInputType.number,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'e.g. 123456',
+                  labelText: 'OTP / Security PIN',
+                  errorText: otpError,
+                  prefixIcon: const Icon(Icons.pin_rounded),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              if (_selectedProvider.contains('MTN')) ...[
+                const SizedBox(height: 10),
+                const Text(
+                  '💡 MTN MoMo: If no prompt popped up, check your wallet approvals at *170# > 6) My Wallet > 3) My Approvals.',
+                  style: TextStyle(fontSize: 11, color: AppTheme.charcoal, fontStyle: FontStyle.italic),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSubmittingOtp
+                  ? null
+                  : () {
+                      Navigator.pop(dlgContext);
+                      setState(() {
+                        _isProcessing = false;
+                        _statusMessage = '';
+                      });
+                    },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryGreen,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: isSubmittingOtp
+                  ? null
+                  : () async {
+                      final otp = otpController.text.trim();
+                      if (otp.isEmpty || otp.length < 4) {
+                        setDlgState(() {
+                          otpError = 'Please enter a valid OTP code (at least 4 digits)';
+                        });
+                        return;
+                      }
+
+                      setDlgState(() {
+                        isSubmittingOtp = true;
+                        otpError = null;
+                      });
+
+                      final res = await SupabaseService().submitPaystackOtp(reference: reference, otp: otp);
+                      final isSuccess = res['status'] == true ||
+                          (res['data'] is Map && res['data']['status'] == 'success') ||
+                          (res['data'] is Map && res['data']['status'] == 'pay_offline');
+
+                      if (!isSuccess && res['status'] == false) {
+                        setDlgState(() {
+                          isSubmittingOtp = false;
+                          otpError = res['message'] ?? 'Invalid authorization code. Please verify and try again.';
+                        });
+                        return;
+                      }
+
+                      if (dlgContext.mounted) {
+                        Navigator.pop(dlgContext);
+                      }
+                      if (mounted) {
+                        _waitForOrder(reference);
+                      }
+                    },
+              child: isSubmittingOtp
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Text('Submit OTP', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              setState(() => _isProcessing = false);
-            },
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final otp = otpController.text.trim();
-              Navigator.pop(context);
-              if (otp.isNotEmpty) {
-                setState(() => _statusMessage = 'Submitting authorization code...');
-                await SupabaseService().submitPaystackOtp(reference: reference, otp: otp);
-              }
-              _waitForOrder(reference);
-            },
-            child: const Text('Submit'),
-          ),
-        ],
       ),
     );
   }
 
   void _waitForOrder(String reference) async {
-    setState(() => _statusMessage = 'Finalizing reservation...');
+    setState(() => _statusMessage = 'Finalizing reservation with payment gateway...');
     Order? order;
     for (int i = 0; i < 8; i++) {
       await Future.delayed(const Duration(seconds: 2));
@@ -325,14 +402,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               _selectedProvider.isNotEmpty ? _selectedProvider : 'MoMo / Card',
               reference,
             );
-      } else {
-        try {
-          order = await ref.read(appStateProvider.notifier).purchase(
-                widget.deal,
-                _selectedProvider.isNotEmpty ? _selectedProvider : 'MoMo / Card',
-                reference,
-              );
-        } catch (_) {}
       }
     }
 
@@ -343,8 +412,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Payment processing. Your reservation will appear in My Orders shortly.'),
-            backgroundColor: AppTheme.primaryGreen,
+            content: Text('Payment not confirmed. Please ensure you approved the payment prompt with your correct PIN.'),
+            backgroundColor: AppTheme.errorRed,
           ),
         );
       }
@@ -697,6 +766,116 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   Widget _buildPaymentGrid() {
+    if (_isPaymentCollapsed) {
+      final p = _providers.firstWhere(
+        (prov) => prov['name'] == _selectedProvider,
+        orElse: () => _providers.first,
+      );
+      final color = p['color'] as Color;
+      final bgTint = p['bg_tint'] as Color;
+      final borderColor = p['border_color'] as Color;
+
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: bgTint,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.12),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            if (p.containsKey('logo_asset'))
+              Container(
+                width: 52,
+                height: 38,
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.08)),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(5),
+                  child: Image.asset(
+                    p['logo_asset'] as String,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stack) =>
+                        Icon(p['icon'] as IconData, color: color, size: 20),
+                  ),
+                ),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(p['icon'] as IconData, color: color, size: 20),
+              ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        p['name'] as String,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.charcoal,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Icon(Icons.check_circle_rounded, size: 14, color: AppTheme.primaryGreen),
+                    ],
+                  ),
+                  Text(
+                    p['subtitle'] as String,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.charcoal.withValues(alpha: 0.7),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() => _isPaymentCollapsed = false);
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  side: BorderSide(color: borderColor.withValues(alpha: 0.4)),
+                ),
+              ),
+              child: const Text(
+                'Change',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.charcoal,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -713,7 +892,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           child: GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
-              setState(() => _selectedProvider = p['name'] as String);
+              setState(() {
+                _selectedProvider = p['name'] as String;
+                _isPaymentCollapsed = true;
+              });
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
@@ -1076,7 +1258,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Text(
-                          'Confirm & Pay',
+                          'Pay',
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: -0.3),
                         ),
                         const SizedBox(width: 8),

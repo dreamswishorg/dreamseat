@@ -27,7 +27,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
   late Animation<Offset> _slideAnim;
   
   PlatformSettings? _fetchedSettings;
-  bool _isLoadingSettings = true;
 
   @override
   void initState() {
@@ -73,24 +72,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
       _fetchedSettings = s;
     }).catchError((_) {
       // ignore
-    }).whenComplete(() {
-      _isLoadingSettings = false;
     });
 
     final isCallback = kIsWeb &&
         (Uri.base.queryParameters.containsKey('code') || Uri.base.fragment.contains('access_token'));
 
-    // Drastically reduced delay for lightning fast entry:
-    final minDelayMs = isCallback ? 150 : (hasSession ? 400 : 800);
+    // Ultra fast, snappy entry
+    final minDelayMs = isCallback ? 80 : (hasSession ? 200 : 450);
     
     await Future.delayed(Duration(milliseconds: minDelayMs));
-
-    // Wait for settings to complete loading (up to 1.5 seconds maximum timeout)
-    int waitCount = 0;
-    while (_isLoadingSettings && waitCount < 15) {
-      await Future.delayed(const Duration(milliseconds: 100));
-      waitCount++;
-    }
 
     if (mounted) {
       _navigate();

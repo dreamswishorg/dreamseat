@@ -913,16 +913,27 @@ class SupabaseService {
 
   /// Updates the [status] field for an [Order] identified by [orderId].
   ///
-  /// Common statuses: `'reserved'`, `'collected'`, `'cancelled'`.
-  Future<void> updateOrderStatus(String orderId, String status) async {
+  /// Common statuses: `'reserved'`, `'preparing'`, `'ready'`, `'out_for_delivery'`, `'collected'`, `'cancelled'`.
+  Future<void> updateOrderStatus(
+    String orderId,
+    String status, {
+    String? fulfillmentType,
+    String? courierName,
+    String? courierPhone,
+    String? trackingNotes,
+  }) async {
     try {
-      final res = await _db
-          .from('orders')
-          .update({'status': status})
-          .eq('id', orderId)
-          .select();
-      if (res.isEmpty) {
-        throw Exception("Authorization update blocked. Verify merchant owner RLS permissions.");
+      final updates = <String, dynamic>{'status': status};
+      if (fulfillmentType != null) updates['fulfillment_type'] = fulfillmentType;
+      if (courierName != null) updates['courier_name'] = courierName;
+      if (courierPhone != null) updates['courier_phone'] = courierPhone;
+      if (trackingNotes != null) updates['tracking_notes'] = trackingNotes;
+
+      try {
+        await _db.from('orders').update(updates).eq('id', orderId);
+      } catch (_) {
+        // Fallback in case schema columns do not exist
+        await _db.from('orders').update({'status': status}).eq('id', orderId);
       }
     } on PostgrestException catch (e) {
       debugPrint('!!! SUPABASE UPDATE ORDER STATUS ERROR: ${e.message} (code: ${e.code}, details: ${e.details}) !!!');
@@ -952,6 +963,11 @@ class SupabaseService {
         collectionCode: (row['collection_code'] as String?) ?? '',
         isRated: (row['is_rated'] as bool?) ?? false,
         payoutStatus: (row['payout_status'] as String?) ?? 'pending',
+        fulfillmentType: (row['fulfillment_type'] as String?) ?? 'pickup',
+        courierName: row['courier_name'] as String?,
+        courierPhone: row['courier_phone'] as String?,
+        trackingNotes: row['tracking_notes'] as String?,
+        deliveryAddress: row['delivery_address'] as String?,
       );
 
   /// Updates the payout status for an order (admin only).

@@ -2687,8 +2687,20 @@ class _MerchantOrdersTab extends ConsumerWidget {
     String statusText;
     switch (order.status) {
       case 'reserved':
+        statusColor = Colors.orange;
+        statusText = 'Order Received';
+        break;
+      case 'preparing':
+        statusColor = const Color(0xFFD97706);
+        statusText = 'Preparing Food';
+        break;
+      case 'ready':
         statusColor = AppTheme.primaryGreen;
-        statusText = 'Reserved';
+        statusText = 'Ready for Pickup';
+        break;
+      case 'out_for_delivery':
+        statusColor = const Color(0xFF2563EB);
+        statusText = 'Out for Delivery';
         break;
       case 'collected':
         statusColor = AppTheme.mutedGrey;
@@ -2696,9 +2708,11 @@ class _MerchantOrdersTab extends ConsumerWidget {
         break;
       default:
         statusColor = AppTheme.errorRed;
-        statusText = 'Cancelled';
+        statusText = order.status.toUpperCase();
         break;
     }
+
+    final isCompleted = order.status == 'collected' || order.status == 'cancelled';
 
     return _HoverLift(
       child: Card(
@@ -2714,14 +2728,27 @@ class _MerchantOrdersTab extends ConsumerWidget {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: statusColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
+                          color: statusColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: statusColor.withValues(alpha: 0.3)),
                         ),
                         child: Text(
                           statusText.toUpperCase(),
                           style: TextStyle(color: statusColor, fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 0.5),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          order.fulfillmentType == 'delivery' ? '🛵 DELIVERY' : '🛍️ PICKUP',
+                          style: const TextStyle(color: AppTheme.charcoal, fontWeight: FontWeight.w800, fontSize: 9.5),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -2762,58 +2789,86 @@ class _MerchantOrdersTab extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
 
-              if (order.status == 'reserved') ...[
-                const Divider(height: 32),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("STATUS", style: TextStyle(fontSize: 10, color: AppTheme.mutedGrey, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-                          Row(
-                            children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(color: Colors.orange, shape: BoxShape.circle),
-                              ),
-                              const SizedBox(width: 6),
-                              const Text(
-                                "Awaiting Pickup",
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.charcoal),
-                              ),
-                            ],
-                          ),
-                        ],
+              // Tracking details display if assigned
+              if (order.courierName != null && order.courierName!.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.delivery_dining_rounded, size: 16, color: AppTheme.primaryGreen),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          "Courier: ${order.courierName} ${order.courierPhone != null ? '(${order.courierPhone})' : ''}",
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.charcoal),
+                        ),
                       ),
+                    ],
+                  ),
+                ),
+              ],
+
+              if (order.trackingNotes != null && order.trackingNotes!.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  "Notes: ${order.trackingNotes}",
+                  style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey, fontStyle: FontStyle.italic),
+                ),
+              ],
+
+              const SizedBox(height: 12),
+              const Divider(height: 16),
+
+              // Order Action Buttons (Update Status, Track, Verify)
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: isCompleted ? AppTheme.mutedGrey : AppTheme.primaryGreen),
+                        foregroundColor: isCompleted ? AppTheme.mutedGrey : AppTheme.primaryGreen,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                      onPressed: () => _showUpdateOrderStatusDialog(context, ref, order),
+                      icon: const Icon(Icons.edit_note_rounded, size: 18),
+                      label: const Text("Status & Tracking", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                     ),
+                  ),
+                  if (!isCompleted) ...[
+                    const SizedBox(width: 8),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryGreen,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         elevation: 0,
                       ),
                       onPressed: () => _showCollectionDialog(context, ref, order),
-                      icon: const Icon(Icons.qr_code_scanner_rounded, size: 18),
-                      label: const Text("Verify", style: TextStyle(fontWeight: FontWeight.bold)),
+                      icon: const Icon(Icons.qr_code_scanner_rounded, size: 16),
+                      label: const Text("Verify", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                     ),
                   ],
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
+                ],
+              ),
+              if (!isCompleted) ...[
+                const SizedBox(height: 6),
+                Center(
                   child: TextButton.icon(
                     onPressed: () => _sendPickupReminder(context, ref, order),
-                    icon: const Icon(Icons.notifications_active_outlined, size: 16),
-                    label: const Text("Send Pickup Reminder", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    icon: const Icon(Icons.notifications_active_outlined, size: 14),
+                    label: const Text("Send Customer Reminder", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                     style: TextButton.styleFrom(
                       foregroundColor: AppTheme.mutedGrey,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                     ),
                   ),
                 ),
@@ -2832,6 +2887,190 @@ class _MerchantOrdersTab extends ConsumerWidget {
         content: Text("Reminder sent to ${order.customerName}!"),
         backgroundColor: AppTheme.charcoal,
         behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showUpdateOrderStatusDialog(BuildContext context, WidgetRef ref, Order order) {
+    String currentStatus = order.status;
+    String currentFulfillment = order.fulfillmentType;
+    final courierCtrl = TextEditingController(text: order.courierName ?? '');
+    final phoneCtrl = TextEditingController(text: order.courierPhone ?? '');
+    final notesCtrl = TextEditingController(text: order.trackingNotes ?? '');
+    bool isSaving = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDlgState) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.lightGreenBg,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.edit_note_rounded, color: AppTheme.primaryGreen, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Update Order Status', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+                      Text('Code: #${order.collectionCode} • ${order.customerName}', style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('ORDER FULFILLMENT STATUS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey, letterSpacing: 0.8)),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: currentStatus,
+                        items: const [
+                          DropdownMenuItem(value: 'reserved', child: Text('⏳ Order Received (Pending)')),
+                          DropdownMenuItem(value: 'preparing', child: Text('🍳 Kitchen Preparing Food')),
+                          DropdownMenuItem(value: 'ready', child: Text('📦 Ready for Pickup')),
+                          DropdownMenuItem(value: 'out_for_delivery', child: Text('🛵 Out for Delivery / Dispatched')),
+                          DropdownMenuItem(value: 'collected', child: Text('✅ Collected & Completed')),
+                          DropdownMenuItem(value: 'cancelled', child: Text('❌ Cancelled')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) setDlgState(() => currentStatus = val);
+                        },
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+                  const Text('FULFILLMENT TYPE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey, letterSpacing: 0.8)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ChoiceChip(
+                          label: const Text('🛍️ Store Pickup'),
+                          selected: currentFulfillment == 'pickup',
+                          onSelected: (val) {
+                            if (val) setDlgState(() => currentFulfillment = 'pickup');
+                          },
+                          selectedColor: AppTheme.lightGreenBg,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ChoiceChip(
+                          label: const Text('🛵 Delivery'),
+                          selected: currentFulfillment == 'delivery',
+                          onSelected: (val) {
+                            if (val) setDlgState(() => currentFulfillment = 'delivery');
+                          },
+                          selectedColor: AppTheme.lightGreenBg,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+                  const Text('COURIER / RIDER DETAILS (OPTIONAL)', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey, letterSpacing: 0.8)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: courierCtrl,
+                    decoration: InputDecoration(
+                      labelText: 'Courier / Rider Name',
+                      hintText: 'e.g. Swift Rider / Samuel K.',
+                      prefixIcon: const Icon(Icons.person_outline_rounded, size: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: phoneCtrl,
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                      labelText: 'Courier Phone Number',
+                      hintText: 'e.g. +233 24 123 4567',
+                      prefixIcon: const Icon(Icons.phone_outlined, size: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+                  const Text('TRACKING / PICKUP INSTRUCTIONS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey, letterSpacing: 0.8)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: notesCtrl,
+                    maxLines: 2,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. Package #4 at front pickup shelf. Ask Kwame.',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: const EdgeInsets.all(12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSaving ? null : () => Navigator.pop(ctx),
+                child: const Text('Cancel', style: TextStyle(color: AppTheme.mutedGrey)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryGreen,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                ),
+                onPressed: isSaving
+                    ? null
+                    : () async {
+                        setDlgState(() => isSaving = true);
+                        await ref.read(appStateProvider.notifier).updateMerchantOrderStatus(
+                              orderId: order.id,
+                              status: currentStatus,
+                              fulfillmentType: currentFulfillment,
+                              courierName: courierCtrl.text.trim().isEmpty ? null : courierCtrl.text.trim(),
+                              courierPhone: phoneCtrl.text.trim().isEmpty ? null : phoneCtrl.text.trim(),
+                              trackingNotes: notesCtrl.text.trim().isEmpty ? null : notesCtrl.text.trim(),
+                            );
+                        if (ctx.mounted) {
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Order #${order.collectionCode} status updated to ${currentStatus.replaceAll('_', ' ')}!'),
+                              backgroundColor: AppTheme.primaryGreen,
+                            ),
+                          );
+                        }
+                      },
+                child: isSaving
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Save & Notify Customer', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

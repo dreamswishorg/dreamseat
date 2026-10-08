@@ -461,7 +461,7 @@ class DealDetailScreen extends ConsumerWidget {
                     );
                   },
                   icon: const Icon(Icons.shopping_basket_rounded, size: 18),
-                  label: const Text('Add to Basket', style: TextStyle(fontWeight: FontWeight.bold)),
+                  label: const Text('Add', style: TextStyle(fontWeight: FontWeight.bold)),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 52),
                     side: const BorderSide(color: AppTheme.primaryGreen, width: 2),

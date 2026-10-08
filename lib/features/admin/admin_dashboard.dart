@@ -20,6 +20,7 @@ import 'tabs/config_tab.dart';
 import 'tabs/audit_tab.dart';
 import 'tabs/pulse_tab.dart';
 import 'tabs/support_tab.dart';
+import 'tabs/categories_tab.dart';
 import 'widgets/admin_components.dart';
 import 'widgets/admin_sidebar.dart';
 
@@ -44,6 +45,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     6: "Operational Map",
     7: "Global Broadcasts",
     8: "Infrastructure Config",
+    9: "Category Management",
     10: "Security Audit Trail",
     11: "Real-time Activity",
     12: "Customer Support Desk",
@@ -94,6 +96,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     if (user?.hasPrivilege('map') ?? false) allowedTabs.add(6);
     if (user?.hasPrivilege('broadcasts') ?? false) allowedTabs.add(7);
     if (user?.hasPrivilege('config') ?? false) allowedTabs.add(8);
+    if (user != null) allowedTabs.add(9);
     if (user != null) allowedTabs.add(10);
     if (user?.hasPrivilege('pulse') ?? false) allowedTabs.add(11);
     if (user?.hasPrivilege('support') ?? false) allowedTabs.add(12);
@@ -722,6 +725,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         return const TabBroadcasts();
       case 8:
         return const TabConfig();
+      case 9:
+        return const TabCategories();
       case 10:
         return const TabAudit();
       case 11:

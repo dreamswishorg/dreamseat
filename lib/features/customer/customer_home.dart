@@ -58,6 +58,7 @@ class CustomerHomeScreen extends ConsumerStatefulWidget {
 class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   String _selectedCategory = 'All';
   String _selectedQuickFilter = '🚶 Pickup';
+  String _priceSort = 'none'; // 'none', 'asc', 'desc'
 
   @override
   void initState() {
@@ -171,8 +172,10 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
       return true;
     }).toList();
 
-    if (_selectedQuickFilter == 'Price: Low ▾' || _selectedQuickFilter == 'Price ▾') {
+    if (_priceSort == 'asc') {
       filteredDeals.sort((a, b) => a.discountedPrice.compareTo(b.discountedPrice));
+    } else if (_priceSort == 'desc') {
+      filteredDeals.sort((a, b) => b.discountedPrice.compareTo(a.discountedPrice));
     }
 
     return Scaffold(
@@ -328,7 +331,13 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                       children: [
                         const Expanded(child: _PromoBanner(isWide: true)),
                         const SizedBox(width: 16),
-                        Expanded(child: _ImpactCard(stats: customerStats, isWide: true)),
+                        Expanded(
+                          child: _ImpactCard(
+                            stats: customerStats,
+                            isWide: true,
+                            onTap: () => ref.read(customerTabProvider.notifier).state = 2,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -409,7 +418,10 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
 
                 const SizedBox(height: 24),
                 if (!wide) ...[
-                  _ImpactCard(stats: customerStats),
+                  _ImpactCard(
+                    stats: customerStats,
+                    onTap: () => ref.read(customerTabProvider.notifier).state = 2,
+                  ),
                   const SizedBox(height: 32),
                 ] else ...[
                   const SizedBox(height: 32),
@@ -747,15 +759,18 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   }
 
   Widget _buildStoryCategoriesRow() {
-    final categories = [
-      {'label': 'All', 'img': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&auto=format&fit=crop'},
-      {'label': 'Meals', 'img': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&auto=format&fit=crop'},
-      {'label': 'Bakery', 'img': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&auto=format&fit=crop'},
-      {'label': 'Grocery', 'img': 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=200&auto=format&fit=crop'},
-      {'label': 'Fast Food', 'img': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&auto=format&fit=crop'},
-      {'label': 'Desserts', 'img': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=200&auto=format&fit=crop'},
-      {'label': 'Buffets', 'img': 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&auto=format&fit=crop'},
-    ];
+    final stateCategories = ref.watch(appStateProvider).categories;
+    final categories = stateCategories.isNotEmpty
+        ? stateCategories.map((c) => {'label': c.name, 'img': c.imageUrl}).toList()
+        : [
+            {'label': 'All', 'img': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&auto=format&fit=crop'},
+            {'label': 'Meals', 'img': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&auto=format&fit=crop'},
+            {'label': 'Bakery', 'img': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&auto=format&fit=crop'},
+            {'label': 'Grocery', 'img': 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=200&auto=format&fit=crop'},
+            {'label': 'Fast Food', 'img': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&auto=format&fit=crop'},
+            {'label': 'Desserts', 'img': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=200&auto=format&fit=crop'},
+            {'label': 'Buffets', 'img': 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&auto=format&fit=crop'},
+          ];
 
     return SizedBox(
       height: 98,
@@ -842,13 +857,19 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   }
 
   Widget _buildQuickFilterPillsRow() {
+    final priceLabel = _priceSort == 'asc'
+        ? 'Price: Low ↗'
+        : _priceSort == 'desc'
+            ? 'Price: High ↘'
+            : 'Price ⇅';
+
     final pills = [
       '🚶 Pickup',
       '🛵 Delivery',
       'Under 30 min',
       '★ 4.5+ Rating',
       '🏷️ 50%+ Off',
-      'Price: Low ▾',
+      priceLabel,
     ];
 
     return SizedBox(
@@ -861,14 +882,28 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         separatorBuilder: (context, index) => const SizedBox(width: 8),
         itemBuilder: (context, idx) {
           final pill = pills[idx];
-          final isSelected = _selectedQuickFilter == pill;
+          final isPricePill = pill == priceLabel;
+          final isSelected = isPricePill
+              ? _priceSort != 'none'
+              : _selectedQuickFilter == pill;
+
           return GestureDetector(
             onTap: () {
               setState(() {
-                if (_selectedQuickFilter == pill) {
-                  _selectedQuickFilter = '🚶 Pickup';
+                if (isPricePill) {
+                  if (_priceSort == 'none') {
+                    _priceSort = 'asc';
+                  } else if (_priceSort == 'asc') {
+                    _priceSort = 'desc';
+                  } else {
+                    _priceSort = 'none';
+                  }
                 } else {
-                  _selectedQuickFilter = pill;
+                  if (_selectedQuickFilter == pill) {
+                    _selectedQuickFilter = '🚶 Pickup';
+                  } else {
+                    _selectedQuickFilter = pill;
+                  }
                 }
               });
             },
@@ -1700,42 +1735,56 @@ class _PromoBanner extends StatelessWidget {
 class _ImpactCard extends StatelessWidget {
   final SustainabilityStats stats;
   final bool isWide;
-  const _ImpactCard({required this.stats, this.isWide = false});
+  final VoidCallback? onTap;
+  const _ImpactCard({required this.stats, this.isWide = false, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: isWide ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.15)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 16,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(color: AppTheme.lightGreenBg, shape: BoxShape.circle),
-                child: const Icon(Icons.eco_rounded, color: AppTheme.primaryGreen, size: 18),
-              ),
-              const SizedBox(width: 10),
-              const Text(
-                "Your Food Rescue Impact",
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.3),
-              ),
-            ],
-          ),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        margin: isWide ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.15)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x08000000),
+              blurRadius: 16,
+              offset: Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(color: AppTheme.lightGreenBg, shape: BoxShape.circle),
+                  child: const Icon(Icons.eco_rounded, color: AppTheme.primaryGreen, size: 18),
+                ),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Text(
+                    "Your Food Rescue Impact",
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.3),
+                  ),
+                ),
+                Text(
+                  "View Full →",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryGreen,
+                  ),
+                ),
+              ],
+            ),
           // 2 Grid Cards: Money Saved & Money Spent
           Row(
             children: [
@@ -1787,7 +1836,8 @@ class _ImpactCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 }
 

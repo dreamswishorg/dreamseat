@@ -7,6 +7,7 @@ import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_ti
 import 'package:latlong2/latlong.dart';
 import '../../core/theme.dart';
 import '../../models/models.dart';
+import '../../providers/app_state.dart';
 
 class OrderTrackScreen extends ConsumerStatefulWidget {
   final Order? order;
@@ -521,9 +522,31 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
 
   @override
   Widget build(BuildContext context) {
-    final order = widget.order;
+    final orderList = ref.watch(appStateProvider).orders;
+    final order = widget.order != null
+        ? orderList.firstWhere((o) => o.id == widget.order!.id, orElse: () => widget.order!)
+        : null;
+
+    final businesses = ref.watch(appStateProvider).businesses;
+    final business = (order != null && order.businessId.isNotEmpty)
+        ? businesses.where((b) => b.id == order.businessId).firstOrNull
+        : null;
+
+    final bool isPickup = order == null || order.fulfillmentType == 'pickup';
     final dealTitle = order?.dealTitle ?? 'Surplus Meal Pack';
-    final businessName = order?.businessName ?? 'Local Partner Kitchen';
+    final businessName = order?.businessName ?? (business?.name ?? 'Local Partner Kitchen');
+    
+    final displayName = isPickup
+        ? businessName
+        : (order.courierName?.isNotEmpty == true ? order.courierName! : (widget.initialRiderName ?? 'Assigned Courier'));
+    final displayPhone = isPickup
+        ? (business?.location ?? 'Store Front')
+        : (order.courierPhone?.isNotEmpty == true ? order.courierPhone! : _riderPhone);
+
+    final status = order?.status ?? 'reserved';
+    final bool isPreparing = status == 'preparing' || status == 'ready' || status == 'collected';
+    final bool isReady = status == 'ready' || status == 'collected';
+    final bool isCollected = status == 'collected';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -585,7 +608,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                     ),
                   ),
 
-                  // Destination Waypoint (Matching the light green circle in picture)
+                  // Destination Waypoint
                   Marker(
                     point: _customerLoc,
                     width: 44,
@@ -603,30 +626,31 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                             color: AppTheme.primaryGreen,
                             shape: BoxShape.circle,
                           ),
-                          child: const Center(
-                            child: Icon(Icons.home_rounded, color: Colors.white, size: 12),
+                          child: Center(
+                            child: Icon(isPickup ? Icons.storefront_rounded : Icons.home_rounded, color: Colors.white, size: 12),
                           ),
                         ),
                       ),
                     ),
                   ),
 
-                  // Courier / Scooter Rider Marker (Matching the red scooter in Image 2 Right)
-                  Marker(
-                    point: _riderPosition,
-                    width: 48,
-                    height: 48,
-                    child: Transform.rotate(
-                      angle: _getRouteBearing(),
-                      child: _buildTopDownDeliveryScooter(),
+                  // Courier / Scooter Rider Marker (Only if delivery)
+                  if (!isPickup)
+                    Marker(
+                      point: _riderPosition,
+                      width: 48,
+                      height: 48,
+                      child: Transform.rotate(
+                        angle: _getRouteBearing(),
+                        child: _buildTopDownDeliveryScooter(),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ],
           ),
 
-          // ── FLOATING TOP BAR ("< Order Track") ──────────────────────────
+          // ── FLOATING TOP BAR ──────────────────────────────────────────
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -650,11 +674,11 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                       icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.charcoal),
                       onPressed: () => Navigator.pop(context),
                     ),
-                    const Expanded(
+                    Expanded(
                       child: Center(
                         child: Text(
-                          'Order Track',
-                          style: TextStyle(
+                          isPickup ? 'Store Pickup Tracker' : 'Delivery Tracker',
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: AppTheme.charcoal,
@@ -673,7 +697,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
           // ── RECENTER FLOATING BUTTON ────────────────────────────────────
           Positioned(
             right: 20,
-            bottom: 230,
+            bottom: isPickup ? 280 : 230,
             child: FloatingActionButton.small(
               heroTag: 'track_recenter',
               backgroundColor: Colors.white,
@@ -685,7 +709,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
             ),
           ),
 
-          // ── FLOATING BOTTOM RIDER CARD (Matching Right Phone in Picture) ─
+          // ── FLOATING BOTTOM ORDER CARD ──────────────────────────────────
           Positioned(
             left: 16,
             right: 16,
@@ -707,138 +731,210 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Rider Section Header
-                  const Text(
-                    'Rider',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.mutedGrey,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Rider Details Row
-                  Row(
-                    children: [
-                      // Avatar (Matching illustrated courier in Image 2 Right)
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFED7AA),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: const Color(0xFFF97316),
-                            width: 2,
+                  // Status Timeline Row for Pickup
+                  if (isPickup) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'PICKUP PROGRESS',
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppTheme.mutedGrey, letterSpacing: 0.8),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: isCollected
+                                ? const Color(0xFFDCFCE7)
+                                : (isReady ? const Color(0xFFFEF3C7) : AppTheme.lightGreenBg),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            status.replaceAll('_', ' ').toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w900,
+                              color: isCollected
+                                  ? const Color(0xFF16A34A)
+                                  : (isReady ? const Color(0xFFD97706) : AppTheme.primaryGreen),
+                            ),
                           ),
                         ),
-                        child: const Center(
-                          child: Text('🧔🏽', style: TextStyle(fontSize: 26)),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    // 4 Step Visual Track
+                    Row(
+                      children: [
+                        _buildStepIndicator(label: 'Placed', isDone: true),
+                        _buildStepDivider(isDone: isPreparing),
+                        _buildStepIndicator(label: 'Prep', isDone: isPreparing),
+                        _buildStepDivider(isDone: isReady),
+                        _buildStepIndicator(label: 'Ready', isDone: isReady),
+                        _buildStepDivider(isDone: isCollected),
+                        _buildStepIndicator(label: 'Rescued', isDone: isCollected),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
 
-                      // Name, Rating & ETA
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _riderName,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.charcoal,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Row(
+                    // Pickup Code Banner
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: AppTheme.lightGreenBg,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.2)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.qr_code_2_rounded, color: AppTheme.primaryGreen, size: 28),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.star_rounded, size: 14, color: Color(0xFFF59E0B)),
-                                const SizedBox(width: 2),
+                                const Text('COLLECTION CODE (SHOW CASHIER)', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
                                 Text(
-                                  _riderRating,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.charcoal,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFEF4444),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '$_etaMinutes mins',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.charcoal,
-                                  ),
+                                  order?.collectionCode != null ? '#${order!.collectionCode}' : 'READY',
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: 1),
                                 ),
                               ],
                             ),
-                          ],
-                        ),
+                          ),
+                          if (order?.trackingNotes != null && order!.trackingNotes!.isNotEmpty)
+                            Tooltip(
+                              message: order.trackingNotes ?? '',
+                              child: const Icon(Icons.notes_rounded, color: AppTheme.primaryGreen, size: 20),
+                            ),
+                        ],
                       ),
+                    ),
+                    const SizedBox(height: 12),
+                  ] else ...[
+                    // Delivery Section Header
+                    const Text(
+                      'Courier Status',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.mutedGrey,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
 
-                      // Green Chat Squircle Button (Image 2 Right)
-                      Material(
-                        color: AppTheme.lightGreenBg,
-                        borderRadius: BorderRadius.circular(16),
-                        child: InkWell(
-                          onTap: _showChatModal,
+                    // Courier Details Row
+                    Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFED7AA),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFFF97316),
+                              width: 2,
+                            ),
+                          ),
+                          child: const Center(
+                            child: Text('🛵', style: TextStyle(fontSize: 24)),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+
+                        // Name, Rating & ETA
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                displayName,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.charcoal,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Row(
+                                children: [
+                                  const Icon(Icons.star_rounded, size: 14, color: Color(0xFFF59E0B)),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    _riderRating,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.charcoal,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFEF4444),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    status == 'out_for_delivery' ? '$_etaMinutes mins' : status.replaceAll('_', ' '),
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.charcoal,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Chat Button
+                        Material(
+                          color: AppTheme.lightGreenBg,
                           borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: AppTheme.lightGreenBg,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: const Icon(
-                              Icons.chat_bubble_outline_rounded,
-                              color: AppTheme.primaryGreen,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-
-                      // Green Circular Call Button (Image 2 Right)
-                      Material(
-                        color: AppTheme.primaryGreen,
-                        shape: const CircleBorder(),
-                        elevation: 2,
-                        child: InkWell(
-                          onTap: _showCallDialog,
-                          customBorder: const CircleBorder(),
-                          child: const SizedBox(
-                            width: 44,
-                            height: 44,
-                            child: Icon(
-                              Icons.phone_rounded,
-                              color: Colors.white,
-                              size: 20,
+                          child: InkWell(
+                            onTap: _showChatModal,
+                            borderRadius: BorderRadius.circular(16),
+                            child: const SizedBox(
+                              width: 44,
+                              height: 44,
+                              child: Icon(
+                                Icons.chat_bubble_outline_rounded,
+                                color: AppTheme.primaryGreen,
+                                size: 20,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(width: 10),
 
-                  const SizedBox(height: 14),
-                  const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                  const SizedBox(height: 12),
+                        // Call Button
+                        Material(
+                          color: AppTheme.primaryGreen,
+                          shape: const CircleBorder(),
+                          elevation: 2,
+                          child: InkWell(
+                            onTap: _showCallDialog,
+                            customBorder: const CircleBorder(),
+                            child: const SizedBox(
+                              width: 44,
+                              height: 44,
+                              child: Icon(
+                                Icons.phone_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                  ],
 
                   // Order summary footnote
                   Row(
@@ -880,22 +976,27 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                           ],
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppTheme.lightGreenBg,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Text(
-                          'ON THE WAY',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                            color: AppTheme.primaryGreen,
-                            letterSpacing: 0.6,
+                      if (isPickup)
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('📞 Connecting with $businessName ($displayPhone)...'),
+                                backgroundColor: AppTheme.primaryGreen,
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.call_rounded, size: 14),
+                          label: const Text('Call Store', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryGreen,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            minimumSize: const Size(0, 36),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ],
@@ -903,6 +1004,47 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStepIndicator({required String label, required bool isDone}) {
+    return Column(
+      children: [
+        Container(
+          width: 18,
+          height: 18,
+          decoration: BoxDecoration(
+            color: isDone ? AppTheme.primaryGreen : const Color(0xFFE2E8F0),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Icon(
+              isDone ? Icons.check_rounded : Icons.circle,
+              color: Colors.white,
+              size: isDone ? 12 : 6,
+            ),
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 9,
+            fontWeight: isDone ? FontWeight.bold : FontWeight.w500,
+            color: isDone ? AppTheme.charcoal : AppTheme.mutedGrey,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStepDivider({required bool isDone}) {
+    return Expanded(
+      child: Container(
+        height: 2,
+        margin: const EdgeInsets.only(bottom: 14),
+        color: isDone ? AppTheme.primaryGreen : const Color(0xFFE2E8F0),
       ),
     );
   }

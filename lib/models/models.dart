@@ -312,6 +312,12 @@ class Order {
   final bool isRated;
   final String payoutStatus;
 
+  final String fulfillmentType; // 'pickup' | 'delivery'
+  final String? courierName;
+  final String? courierPhone;
+  final String? trackingNotes;
+  final String? deliveryAddress;
+
   Order({
     required this.id,
     required this.dealId,
@@ -330,6 +336,11 @@ class Order {
     required this.collectionCode,
     this.isRated = false,
     this.payoutStatus = 'pending',
+    this.fulfillmentType = 'pickup',
+    this.courierName,
+    this.courierPhone,
+    this.trackingNotes,
+    this.deliveryAddress,
   });
 
   Map<String, dynamic> toJson() => {
@@ -350,16 +361,21 @@ class Order {
         'collectionCode': collectionCode,
         'isRated': isRated,
         'payoutStatus': payoutStatus,
+        'fulfillmentType': fulfillmentType,
+        'courierName': courierName,
+        'courierPhone': courierPhone,
+        'trackingNotes': trackingNotes,
+        'deliveryAddress': deliveryAddress,
       };
 
   factory Order.fromJson(Map<String, dynamic> json) => Order(
         id: json['id'],
-        dealId: json['dealId'],
-        dealTitle: json['dealTitle'],
-        businessId: json['businessId'],
-        businessName: json['businessName'],
-        customerId: json['customerId'],
-        customerName: json['customerName'],
+        dealId: json['dealId'] ?? '',
+        dealTitle: json['dealTitle'] ?? '',
+        businessId: json['businessId'] ?? '',
+        businessName: json['businessName'] ?? '',
+        customerId: json['customerId'] ?? '',
+        customerName: json['customerName'] ?? '',
         price: (json['price'] as num).toDouble(),
         originalPrice: (json['originalPrice'] as num?)?.toDouble() ?? (json['price'] as num).toDouble(),
         category: json['category'] ?? 'Food Rescue',
@@ -370,6 +386,11 @@ class Order {
         collectionCode: json['collectionCode'],
         isRated: json['isRated'] ?? false,
         payoutStatus: json['payoutStatus'] ?? 'pending',
+        fulfillmentType: json['fulfillmentType'] ?? json['fulfillment_type'] ?? 'pickup',
+        courierName: json['courierName'] ?? json['courier_name'],
+        courierPhone: json['courierPhone'] ?? json['courier_phone'],
+        trackingNotes: json['trackingNotes'] ?? json['tracking_notes'],
+        deliveryAddress: json['deliveryAddress'] ?? json['delivery_address'],
       );
 
   Order copyWith({
@@ -390,6 +411,11 @@ class Order {
     String? collectionCode,
     bool? isRated,
     String? payoutStatus,
+    String? fulfillmentType,
+    String? courierName,
+    String? courierPhone,
+    String? trackingNotes,
+    String? deliveryAddress,
   }) {
     return Order(
       id: id ?? this.id,
@@ -409,8 +435,41 @@ class Order {
       collectionCode: collectionCode ?? this.collectionCode,
       isRated: isRated ?? this.isRated,
       payoutStatus: payoutStatus ?? this.payoutStatus,
+      fulfillmentType: fulfillmentType ?? this.fulfillmentType,
+      courierName: courierName ?? this.courierName,
+      courierPhone: courierPhone ?? this.courierPhone,
+      trackingNotes: trackingNotes ?? this.trackingNotes,
+      deliveryAddress: deliveryAddress ?? this.deliveryAddress,
     );
   }
+}
+
+class CategoryItem {
+  final String id;
+  final String name;
+  final String imageUrl;
+  final String? iconName;
+
+  CategoryItem({
+    required this.id,
+    required this.name,
+    required this.imageUrl,
+    this.iconName,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'imageUrl': imageUrl,
+        'iconName': iconName,
+      };
+
+  factory CategoryItem.fromJson(Map<String, dynamic> json) => CategoryItem(
+        id: json['id'] ?? '',
+        name: json['name'] ?? '',
+        imageUrl: json['imageUrl'] ?? '',
+        iconName: json['iconName'],
+      );
 }
 
 
