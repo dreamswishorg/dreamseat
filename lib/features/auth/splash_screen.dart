@@ -149,17 +149,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
 
     if (session == null) {
       if (mounted) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          Navigator.pushReplacement(
-            context,
-            PageRouteBuilder(
-              pageBuilder: (_, _, _) => const WelcomeScreen(),
-              transitionsBuilder: (_, anim, _, child) => FadeTransition(opacity: anim, child: child),
-              transitionDuration: const Duration(milliseconds: 450),
-            ),
-          );
-        });
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+        );
       }
       return;
     }
@@ -169,17 +162,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
 
     if (user == null) {
       if (mounted) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          Navigator.pushReplacement(
-            context,
-            PageRouteBuilder(
-              pageBuilder: (_, _, _) => const WelcomeScreen(),
-              transitionsBuilder: (_, anim, _, child) => FadeTransition(opacity: anim, child: child),
-              transitionDuration: const Duration(milliseconds: 450),
-            ),
-          );
-        });
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+        );
       }
       return;
     }
@@ -194,17 +180,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
     }
 
     if (mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (_, _, _) => targetScreen,
-            transitionsBuilder: (_, anim, _, child) => FadeTransition(opacity: anim, child: child),
-            transitionDuration: const Duration(milliseconds: 450),
-          ),
-        );
-      });
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => targetScreen),
+      );
     }
   }
 

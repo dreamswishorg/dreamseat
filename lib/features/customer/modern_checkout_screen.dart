@@ -47,7 +47,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('🎉 WELCOME20 applied: Saved GHS 20.00!'),
-          backgroundColor: Color(0xFF16A34A),
+          backgroundColor: AppTheme.primaryGreen,
         ),
       );
     } else if (cleanCode == 'RESCUE10') {
@@ -58,7 +58,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('🌱 RESCUE10 applied: Saved GHS 10.00!'),
-          backgroundColor: Color(0xFF16A34A),
+          backgroundColor: AppTheme.primaryGreen,
         ),
       );
     } else if (cleanCode == 'FREEDEL') {
@@ -69,7 +69,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('🛵 Free Delivery Voucher applied!'),
-          backgroundColor: Color(0xFF16A34A),
+          backgroundColor: AppTheme.primaryGreen,
         ),
       );
     } else {
@@ -140,7 +140,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                 ctx,
                 name: 'Cash on Pickup',
                 subtitle: 'Pay directly at restaurant counter',
-                color: const Color(0xFF16A34A),
+                color: AppTheme.primaryGreen,
                 icon: Icons.payments_rounded,
                 onTap: () => _completePayment(ctx, 'Cash on Pickup', finalTotal, items),
               ),
@@ -218,11 +218,11 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                 width: 64,
                 height: 64,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFDCFCE7),
+                  color: AppTheme.lightGreenBg,
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
-                  child: Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 40),
+                  child: Icon(Icons.check_circle_rounded, color: AppTheme.primaryGreen, size: 40),
                 ),
               ),
               const SizedBox(height: 12),
@@ -241,7 +241,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
           actions: [
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF22C55E),
+                backgroundColor: AppTheme.primaryGreen,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -330,7 +330,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(color: Color(0xFF22C55E)),
+                  CircularProgressIndicator(color: AppTheme.primaryGreen),
                   SizedBox(height: 16),
                   Text('Confirming rescue order with kitchen...'),
                 ],
@@ -509,7 +509,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                           ),
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF22C55E),
+                              backgroundColor: AppTheme.primaryGreen,
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -527,9 +527,9 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                       spacing: 8,
                       children: _suggestedVouchers.map((v) {
                         return ActionChip(
-                          avatar: const Icon(Icons.local_offer_rounded, size: 12, color: Color(0xFF16A34A)),
+                          avatar: const Icon(Icons.local_offer_rounded, size: 12, color: AppTheme.primaryGreen),
                           label: Text(v, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                          backgroundColor: const Color(0xFFDCFCE7),
+                          backgroundColor: AppTheme.lightGreenBg,
                           onPressed: () {
                             _promoController.text = v;
                             _applyPromo(v);
@@ -602,10 +602,10 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                       height: 56,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF22C55E),
+                          backgroundColor: AppTheme.primaryGreen,
                           foregroundColor: Colors.white,
                           elevation: 4,
-                          shadowColor: const Color(0xFF22C55E).withValues(alpha: 0.4),
+                          shadowColor: AppTheme.primaryGreen.withValues(alpha: 0.4),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(28),
                           ),
@@ -667,7 +667,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
             fontSize: 13.5,
             fontWeight: FontWeight.bold,
             color: isFree
-                ? const Color(0xFF16A34A)
+                ? AppTheme.primaryGreen
                 : isDiscount
                     ? const Color(0xFFEF4444)
                     : AppTheme.charcoal,
@@ -679,9 +679,9 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
 
   Widget _buildFallbackThumbnail() {
     return Container(
-      color: const Color(0xFFDCFCE7),
+      color: AppTheme.lightGreenBg,
       child: const Center(
-        child: Icon(Icons.fastfood_rounded, color: Color(0xFF16A34A), size: 28),
+        child: Icon(Icons.fastfood_rounded, color: AppTheme.primaryGreen, size: 28),
       ),
     );
   }

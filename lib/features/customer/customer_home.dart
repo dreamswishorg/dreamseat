@@ -109,6 +109,9 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         ref.watch(appStateProvider.select((s) => s.customerStats));
     final basketCount =
         ref.watch(appStateProvider.select((s) => s.basketItemCount));
+    final orders =
+        ref.watch(appStateProvider.select((s) => s.orders));
+    final activeOrders = orders.where((o) => o.status == 'confirmed' || o.status == 'ready' || o.status == 'pending').toList();
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final homeBg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF7F8FA);
@@ -119,32 +122,66 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     if (isLoading && deals.isEmpty) {
       return Scaffold(
         backgroundColor: homeBg,
-        appBar: buildCustomerAppBar(
-          context: context,
-          ref: ref,
-          title: Text('DREAMEATS',
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: primaryText)),
-        ),
+        appBar: wide
+            ? buildCustomerAppBar(
+                context: context,
+                ref: ref,
+                title: Text('DREAMEATS',
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: primaryText)),
+              )
+            : null,
         body: const HomeShimmer(),
       );
     }
 
     final filteredDeals = sortedDeals.where((deal) {
-      final matchesCategory =
-          _selectedCategory == 'All' || deal.category == _selectedCategory;
-      return matchesCategory && deal.quantityRemaining > 0 && deal.isActive;
+      if (deal.quantityRemaining <= 0 || !deal.isActive) return false;
+
+      // Category matching
+      if (_selectedCategory != 'All') {
+        final catQuery = _selectedCategory.toLowerCase();
+        final dealCat = deal.category.toLowerCase();
+        final dealTitle = deal.title.toLowerCase();
+        final dealDesc = deal.description.toLowerCase();
+        final matchCategory = dealCat.contains(catQuery) ||
+            dealTitle.contains(catQuery) ||
+            dealDesc.contains(catQuery) ||
+            (catQuery == 'meals' && (dealCat.contains('restaurant') || dealCat.contains('meal'))) ||
+            (catQuery == 'bakery' && (dealCat.contains('baker') || dealCat.contains('pastry') || dealCat.contains('cake') || dealTitle.contains('cake') || dealTitle.contains('pastry'))) ||
+            (catQuery == 'grocery' && (dealCat.contains('grocer') || dealCat.contains('fruit') || dealCat.contains('bundle'))) ||
+            (catQuery == 'fast food' && (dealTitle.contains('burger') || dealTitle.contains('pizza') || dealCat.contains('fast'))) ||
+            (catQuery == 'desserts' && (dealTitle.contains('cake') || dealCat.contains('dessert') || dealTitle.contains('sweet'))) ||
+            (catQuery == 'buffets' && dealCat.contains('buffet'));
+        if (!matchCategory) return false;
+      }
+
+      // Quick filter matching
+      if (_selectedQuickFilter == '★ 4.5+ Rating') {
+        return deal.originalPrice > 0;
+      } else if (_selectedQuickFilter == '🏷️ 50%+ Off' || _selectedQuickFilter == '🏷️ Offers') {
+        return deal.discountedPrice <= deal.originalPrice * 0.6;
+      } else if (_selectedQuickFilter == 'Under 30 min') {
+        final dist = _distanceTo(deal, businesses, userLocation);
+        return dist <= 3.5;
+      }
+
+      return true;
     }).toList();
+
+    if (_selectedQuickFilter == 'Price: Low ▾' || _selectedQuickFilter == 'Price ▾') {
+      filteredDeals.sort((a, b) => a.discountedPrice.compareTo(b.discountedPrice));
+    }
 
     return Scaffold(
       backgroundColor: homeBg,
-      appBar: buildCustomerAppBar(
-        context: context,
-        ref: ref,
-        title: useSideNav(context)
-            ? Row(
+      appBar: wide
+          ? buildCustomerAppBar(
+              context: context,
+              ref: ref,
+              title: Row(
                 children: [
                   Text(
                     'Explore Deals',
@@ -179,41 +216,9 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                     ),
                   ),
                 ],
-              )
-            : Row(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.asset(
-                      'assets/images/logo.jpg',
-                      height: 28,
-                      width: 28,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  RichText(
-                    text: const TextSpan(
-                      style: TextStyle(
-                        fontSize: 21,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.5,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: 'DREAM',
-                          style: TextStyle(color: AppTheme.primaryGreen),
-                        ),
-                        TextSpan(
-                          text: 'EATS',
-                          style: TextStyle(color: Color(0xFFFFB300)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
               ),
-      ),
+            )
+          : null,
       body: RefreshIndicator(
         onRefresh: () => ref.read(appStateProvider.notifier).refreshOrders(),
         color: AppTheme.primaryGreen,
@@ -222,173 +227,195 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
           child: ResponsiveCenter(
             maxWidth: 1200,
             child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Welcome Greeting & Location row
-              if (wide)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 14.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "${_getGreeting()}, ${customerName?.split(' ').first ?? 'Friend'} 👋",
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w900,
-                                color: primaryText,
-                                letterSpacing: -0.6,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              "Find and rescue surplus food packages from top local kitchens",
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: secondaryText,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (!wide) ...[
+                  SafeArea(
+                    bottom: false,
+                    child: _buildModernGreenHeader(context, userLocation, basketCount, customerName),
+                  ),
+                  if (activeOrders.isNotEmpty) ...[
+                    _buildActiveOrderCourierBanner(context, activeOrders.first),
+                    const SizedBox(height: 8),
+                  ],
+                  _buildStoryCategoriesRow(),
+                  const SizedBox(height: 12),
+                  _buildQuickFilterPillsRow(),
+                  const SizedBox(height: 16),
+                  const _PromoBanner(),
+                  const SizedBox(height: 18),
+                  _buildPopularNowSection(context, filteredDeals, businesses, favoriteIds, userLocation),
+                  const SizedBox(height: 18),
+                  if (businesses.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 4),
+                      child: Text(
+                        "Featured Kitchens & Bakeries",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: primaryText,
+                          letterSpacing: -0.3,
                         ),
                       ),
-                      const SizedBox(width: 20),
-                      const SizedBox(
-                        width: 320,
-                        child: _SearchTrigger(isCompact: true),
+                    ),
+                    const SizedBox(height: 10),
+                    _FeaturedPartners(businesses: businesses),
+                    const SizedBox(height: 18),
+                  ],
+                ],
+
+                if (wide) ...[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 14.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "${_getGreeting()}, ${customerName?.split(' ').first ?? 'Friend'} 👋",
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                  color: primaryText,
+                                  letterSpacing: -0.6,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                "Find and rescue surplus food packages from top local kitchens",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: secondaryText,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+                        const SizedBox(
+                          width: 320,
+                          child: _SearchTrigger(isCompact: true),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 4),
+                    child: Text("Categories",
+                        style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: primaryText,
+                            letterSpacing: -0.2)),
+                  ),
+                  const SizedBox(height: 10),
+                  _CategoriesRow(
+                    selectedCategory: _selectedCategory,
+                    onSelected: (cat) => setState(() => _selectedCategory = cat),
+                    isWide: wide,
+                  ),
+                  const SizedBox(height: 18),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Expanded(child: _PromoBanner(isWide: true)),
+                        const SizedBox(width: 16),
+                        Expanded(child: _ImpactCard(stats: customerStats, isWide: true)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  if (businesses.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 4),
+                      child: Text("Featured Partners",
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: primaryText,
+                              letterSpacing: -0.2)),
+                    ),
+                    const SizedBox(height: 10),
+                    _FeaturedPartners(businesses: businesses),
+                    const SizedBox(height: 20),
+                  ],
+                ],
+
+                // Deals list header
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _selectedCategory == 'All' ? "Active Surplus Packs" : "$_selectedCategory Packs",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 17,
+                          color: primaryText,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      Text(
+                        "${filteredDeals.length} packs",
+                        style: const TextStyle(
+                          color: AppTheme.primaryGreen,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12.5,
+                        ),
                       ),
                     ],
                   ),
-                )
-              else ...[
-                _buildModernGreenHeader(context, userLocation, basketCount, customerName),
-                _buildActiveOrderCourierBanner(context),
-                const SizedBox(height: 8),
-                _buildStoryCategoriesRow(),
-                const SizedBox(height: 12),
-                _buildPastelCategoryCardsRow(),
-                const SizedBox(height: 12),
-                _buildQuickFilterPillsRow(),
-                const SizedBox(height: 16),
-                _buildPopularNowSection(context, filteredDeals, businesses, favoriteIds, userLocation),
-                const SizedBox(height: 16),
-                _buildFriendsAreEatingSection(context, filteredDeals),
-                const SizedBox(height: 16),
-                _buildYourRegularsSection(context, filteredDeals),
-                const SizedBox(height: 16),
-              ],
-
-              if (wide) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 4),
-                  child: Text("Categories",
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: primaryText,
-                          letterSpacing: -0.2)),
                 ),
-                const SizedBox(height: 10),
-                _CategoriesRow(
-                  selectedCategory: _selectedCategory,
-                  onSelected: (cat) => setState(() => _selectedCategory = cat),
-                  isWide: wide,
-                ),
-                const SizedBox(height: 18),
-              ],
 
-              if (wide)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Expanded(child: _PromoBanner(isWide: true)),
-                      const SizedBox(width: 16),
-                      Expanded(child: _ImpactCard(stats: customerStats, isWide: true)),
-                    ],
-                  ),
-                )
-              else ...[
-                const _PromoBanner(),
-                const SizedBox(height: 14),
-                _ImpactCard(stats: customerStats),
-              ],
-              const SizedBox(height: 20),
-
-              if (businesses.isNotEmpty) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 4),
-                  child: Text("Featured Partners",
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: primaryText,
-                          letterSpacing: -0.2)),
-                ),
-                const SizedBox(height: 10),
-                _FeaturedPartners(businesses: businesses),
-                const SizedBox(height: 20),
-              ],
-
-              // Deals list
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Active Surplus Packs",
-                        style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 17,
-                            color: primaryText,
-                            letterSpacing: -0.3)),
-                    Text("${filteredDeals.length} packs",
-                        style: const TextStyle(
-                            color: AppTheme.primaryGreen,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12.5)),
-                  ],
-                ),
-              ),
-
-              if (filteredDeals.isEmpty)
-                const _EmptyDeals()
-              else
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      const gap = 16.0;
-                      final w = constraints.maxWidth;
-                      final columns = w >= 1100 ? 4 : (w >= 780 ? 3 : (w >= 500 ? 2 : 1));
-                      final itemWidth = (w - gap * (columns - 1)) / columns;
-                      return Wrap(
-                        spacing: gap,
-                        children: [
-                          for (final deal in filteredDeals)
-                            SizedBox(
-                              width: itemWidth,
-                              child: _DealCard(
-                                deal: deal,
-                                isFavorite: favoriteIds.contains(deal.businessId),
-                                distance: _distanceTo(deal, businesses, userLocation),
+                if (filteredDeals.isEmpty)
+                  const _EmptyDeals()
+                else
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Builder(
+                      builder: (context) {
+                        const gap = 16.0;
+                        final screenW = MediaQuery.sizeOf(context).width;
+                        final availableW = (screenW > 1200 ? 1200.0 : screenW) - 40;
+                        final columns = availableW >= 1100 ? 4 : (availableW >= 780 ? 3 : (availableW >= 500 ? 2 : 1));
+                        final itemWidth = (availableW - gap * (columns - 1)) / columns;
+                        return Wrap(
+                          spacing: gap,
+                          runSpacing: gap,
+                          children: [
+                            for (final deal in filteredDeals)
+                              SizedBox(
+                                width: itemWidth,
+                                child: _DealCard(
+                                  deal: deal,
+                                  isFavorite: favoriteIds.contains(deal.businessId),
+                                  distance: _distanceTo(deal, businesses, userLocation),
+                                ),
                               ),
-                            ),
-                        ],
-                      );
-                    },
+                          ],
+                        );
+                      },
+                    ),
                   ),
-                ),
-              const SizedBox(height: 32),
-            ],
-          ),
+
+                const SizedBox(height: 24),
+                if (!wide) ...[
+                  _ImpactCard(stats: customerStats),
+                  const SizedBox(height: 32),
+                ] else ...[
+                  const SizedBox(height: 32),
+                ],
+              ],
+            ),
           ),
         ),
       ),
@@ -411,18 +438,18 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCFCE7),
+                  color: AppTheme.lightGreenBg,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF22C55E).withValues(alpha: 0.3),
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.25),
                       blurRadius: 16,
                       spreadRadius: 4,
                     ),
                   ],
                 ),
                 child: const Center(
-                  child: Icon(Icons.mic_rounded, color: Color(0xFF16A34A), size: 36),
+                  child: Icon(Icons.mic_rounded, color: AppTheme.primaryGreen, size: 36),
                 ),
               ),
               const SizedBox(height: 16),
@@ -448,7 +475,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                   'Jollof Rice',
                 ].map((s) {
                   return ActionChip(
-                    avatar: const Icon(Icons.search_rounded, size: 14, color: Color(0xFF16A34A)),
+                    avatar: const Icon(Icons.search_rounded, size: 14, color: AppTheme.primaryGreen),
                     label: Text(s, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                     backgroundColor: const Color(0xFFF1F5F9),
                     onPressed: () {
@@ -476,11 +503,15 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF22C55E),
+        gradient: const LinearGradient(
+          colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF22C55E).withValues(alpha: 0.35),
+            color: AppTheme.primaryGreen.withValues(alpha: 0.30),
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),
@@ -527,7 +558,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
               ),
               Row(
                 children: [
-                  // Shopping Bag in White Circle with Red Badge (Image 2 Center)
+                  // Shopping Bag in White Circle with Red Badge
                   GestureDetector(
                     onTap: () => Navigator.push(
                       context,
@@ -573,7 +604,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  // User Avatar with Red/Coral Ring (Image 2 Center)
+                  // User Avatar with Red/Coral Ring
                   GestureDetector(
                     onTap: () => Navigator.push(
                       context,
@@ -600,7 +631,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          // Search Trigger with vertical divider (Image 2 Center)
+          // Search Trigger with vertical divider
           GestureDetector(
             onTap: () => Navigator.push(
               context,
@@ -643,7 +674,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                     borderRadius: BorderRadius.circular(20),
                     child: const Padding(
                       padding: EdgeInsets.all(4.0),
-                      child: Icon(Icons.mic_rounded, color: Color(0xFF16A34A), size: 20),
+                      child: Icon(Icons.mic_rounded, color: AppTheme.primaryGreen, size: 20),
                     ),
                   ),
                 ],
@@ -655,14 +686,14 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     );
   }
 
-  Widget _buildActiveOrderCourierBanner(BuildContext context) {
+  Widget _buildActiveOrderCourierBanner(BuildContext context, Order activeOrder) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFDCFCE7),
+        color: AppTheme.lightGreenBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF22C55E).withValues(alpha: 0.5)),
+        border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [
@@ -675,24 +706,30 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
             child: const Text('🛵', style: TextStyle(fontSize: 20)),
           ),
           const SizedBox(width: 10),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Rober Jr. is on the way! ETA 10 mins',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: Color(0xFF16A34A)),
+                  activeOrder.dealTitle.isNotEmpty
+                      ? '${activeOrder.dealTitle} is ${activeOrder.status == "ready" ? "ready for pickup" : "being prepared"}!'
+                      : 'Active Order #${activeOrder.id.substring(0, activeOrder.id.length > 5 ? 5 : activeOrder.id.length)} is on the way!',
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: AppTheme.primaryGreen),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  'Surplus meal pack picked up from kitchen',
-                  style: TextStyle(fontSize: 10.5, color: Color(0xFF15803D)),
+                  '${activeOrder.businessName} • Status: ${activeOrder.status.toUpperCase()}',
+                  style: const TextStyle(fontSize: 10.5, color: AppTheme.charcoal),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF22C55E),
+              backgroundColor: AppTheme.primaryGreen,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -710,94 +747,18 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   }
 
   Widget _buildStoryCategoriesRow() {
-    return SizedBox(
-      height: 90,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        children: [
-          _buildStoryCircle('Breakfast', 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=200&auto=format&fit=crop'),
-          _buildStoryCircle('Sea food', 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=200&auto=format&fit=crop'),
-          _buildStoryCircle('Fast Food', 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&auto=format&fit=crop'),
-          _buildStoryCircle('Cake', 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=200&auto=format&fit=crop'),
-          _buildStoryCircle('Desserts', 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=200&auto=format&fit=crop'),
-          _buildStoryCircle('Deals', 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&auto=format&fit=crop'),
-          _buildStoryCircle('Grocery', 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=200&auto=format&fit=crop'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStoryCircle(String label, String imageUrl) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 14),
-      child: Column(
-        children: [
-          Container(
-            width: 58,
-            height: 58,
-            padding: const EdgeInsets.all(2.5),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFF22C55E), width: 2),
-            ),
-            child: ClipOval(
-              child: CachedNetworkImage(
-                imageUrl: imageUrl,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(color: const Color(0xFFF1F5F9)),
-                errorWidget: (context, url, error) => Container(color: const Color(0xFFDCFCE7), child: const Icon(Icons.fastfood, color: Color(0xFF16A34A), size: 24)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.charcoal),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── PASTEL SQUIRCLE CATEGORIES ROW (Matching Image 1 Left) ─────────────
-  Widget _buildPastelCategoryCardsRow() {
     final categories = [
-      {
-        'label': 'Deals',
-        'icon': Icons.discount_rounded,
-        'bgColor': const Color(0xFFFEE2E2),
-        'iconColor': const Color(0xFFDC2626),
-      },
-      {
-        'label': 'Grocery',
-        'icon': Icons.local_grocery_store_rounded,
-        'bgColor': const Color(0xFFE0F2FE),
-        'iconColor': const Color(0xFF0284C7),
-      },
-      {
-        'label': 'Pizza',
-        'icon': Icons.local_pizza_rounded,
-        'bgColor': const Color(0xFFFFEDD5),
-        'iconColor': const Color(0xFFEA580C),
-      },
-      {
-        'label': 'Breakfast',
-        'icon': Icons.breakfast_dining_rounded,
-        'bgColor': const Color(0xFFFEF3C7),
-        'iconColor': const Color(0xFFD97706),
-      },
-      {
-        'label': 'Burger',
-        'icon': Icons.lunch_dining_rounded,
-        'bgColor': const Color(0xFFFFE4E6),
-        'iconColor': const Color(0xFFE11D48),
-      },
+      {'label': 'All', 'img': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&auto=format&fit=crop'},
+      {'label': 'Meals', 'img': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&auto=format&fit=crop'},
+      {'label': 'Bakery', 'img': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&auto=format&fit=crop'},
+      {'label': 'Grocery', 'img': 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=200&auto=format&fit=crop'},
+      {'label': 'Fast Food', 'img': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&auto=format&fit=crop'},
+      {'label': 'Desserts', 'img': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=200&auto=format&fit=crop'},
+      {'label': 'Buffets', 'img': 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&auto=format&fit=crop'},
     ];
 
     return SizedBox(
-      height: 90,
+      height: 98,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -806,103 +767,144 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         separatorBuilder: (context, index) => const SizedBox(width: 14),
         itemBuilder: (context, idx) {
           final cat = categories[idx];
-          return GestureDetector(
+          final label = cat['label'] as String;
+          final isSelected = _selectedCategory == label;
+          return _buildStoryCircle(
+            label: label,
+            imageUrl: cat['img'] as String,
+            isSelected: isSelected,
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SearchFilterScreen()),
-              );
+              setState(() {
+                _selectedCategory = label;
+              });
             },
-            child: Column(
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: cat['bgColor'] as Color,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Icon(
-                      cat['icon'] as IconData,
-                      color: cat['iconColor'] as Color,
-                      size: 28,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  cat['label'] as String,
-                  style: const TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.charcoal,
-                  ),
-                ),
-              ],
-            ),
           );
         },
       ),
     );
   }
 
+  Widget _buildStoryCircle({
+    required String label,
+    required String imageUrl,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 60,
+            height: 60,
+            padding: const EdgeInsets.all(2.5),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected ? AppTheme.primaryGreen : Colors.black.withValues(alpha: 0.12),
+                width: isSelected ? 2.8 : 1.5,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: AppTheme.primaryGreen.withValues(alpha: 0.35),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      )
+                    ]
+                  : null,
+            ),
+            child: ClipOval(
+              child: CachedNetworkImage(
+                imageUrl: imageUrl,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(color: const Color(0xFFF1F5F9)),
+                errorWidget: (context, url, error) => Container(
+                  color: AppTheme.lightGreenBg,
+                  child: const Icon(Icons.fastfood_rounded, color: AppTheme.primaryGreen, size: 24),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+              color: isSelected ? AppTheme.primaryGreen : AppTheme.charcoal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildQuickFilterPillsRow() {
+    final pills = [
+      '🚶 Pickup',
+      '🛵 Delivery',
+      'Under 30 min',
+      '★ 4.5+ Rating',
+      '🏷️ 50%+ Off',
+      'Price: Low ▾',
+    ];
+
     return SizedBox(
       height: 38,
-      child: ListView(
+      child: ListView.separated(
         scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        children: [
-          '🚶 Pickup',
-          '🛵 Delivery',
-          'Under 30 min',
-          '★ 4.5+ Rating',
-          '🏷️ Offers',
-          'Price ▾',
-        ].map((pill) {
+        itemCount: pills.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 8),
+        itemBuilder: (context, idx) {
+          final pill = pills[idx];
           final isSelected = _selectedQuickFilter == pill;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: GestureDetector(
-              onTap: () => setState(() => _selectedQuickFilter = pill),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF16A34A) : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected ? const Color(0xFF16A34A) : Colors.black.withValues(alpha: 0.08),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                if (_selectedQuickFilter == pill) {
+                  _selectedQuickFilter = '🚶 Pickup';
+                } else {
+                  _selectedQuickFilter = pill;
+                }
+              });
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                color: isSelected ? AppTheme.primaryGreen : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isSelected ? AppTheme.primaryGreen : Colors.black.withValues(alpha: 0.08),
+                  width: isSelected ? 1.5 : 1,
                 ),
-                child: Center(
-                  child: Text(
-                    pill,
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.bold,
-                      color: isSelected ? Colors.white : AppTheme.charcoal,
-                    ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isSelected
+                        ? AppTheme.primaryGreen.withValues(alpha: 0.22)
+                        : Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  pill,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                    color: isSelected ? Colors.white : AppTheme.charcoal,
                   ),
                 ),
               ),
             ),
           );
-        }).toList(),
+        },
       ),
     );
   }
@@ -931,7 +933,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
               ),
               TextButton(
                 onPressed: () {},
-                child: const Text('See All', style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold, fontSize: 13)),
+                child: const Text('See All', style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold, fontSize: 13)),
               ),
             ],
           ),
@@ -981,7 +983,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                                 imageUrl: deal.imageUrl,
                                 fit: BoxFit.cover,
                                 placeholder: (context, url) => Container(color: const Color(0xFFF1F5F9)),
-                                errorWidget: (context, url, error) => Container(color: const Color(0xFFDCFCE7), child: const Icon(Icons.fastfood, color: Color(0xFF16A34A), size: 36)),
+                                errorWidget: (context, url, error) => Container(color: AppTheme.lightGreenBg, child: const Icon(Icons.fastfood_rounded, color: AppTheme.primaryGreen, size: 36)),
                               ),
                             ),
                           ),
@@ -1024,7 +1026,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                               children: [
                                 Text(
                                   'GHS ${deal.discountedPrice.toStringAsFixed(0)}',
-                                  style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w900, fontSize: 14),
+                                  style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.w900, fontSize: 14),
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
@@ -1055,264 +1057,6 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFriendsAreEatingSection(BuildContext context, List<FoodDeal> deals) {
-    if (deals.isEmpty) return const SizedBox.shrink();
-    final friendDeals = deals.skip(2).take(4).toList();
-    final tags = ['#Sarah just ordered this', '#Alfikri just ordered this', '#Kofi rescued this', '#Ama rescued this'];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Friends are eating',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.4),
-              ),
-              IconButton(
-                icon: const Icon(Icons.arrow_forward_rounded, color: Color(0xFF16A34A), size: 18),
-                onPressed: () {
-                  ref.read(customerTabProvider.notifier).state = 2; // Jump to Friends tab
-                },
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 6),
-        SizedBox(
-          height: 230,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: friendDeals.length,
-            separatorBuilder: (context, index) => const SizedBox(width: 14),
-            itemBuilder: (context, idx) {
-              final deal = friendDeals[idx];
-              final tag = tags[idx % tags.length];
-
-              return GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => DealDetailScreen(deal: deal)),
-                ),
-                child: Container(
-                  width: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                            child: SizedBox(
-                              height: 115,
-                              width: double.infinity,
-                              child: CachedNetworkImage(
-                                imageUrl: deal.imageUrl,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(color: const Color(0xFFF1F5F9)),
-                                errorWidget: (context, url, error) => Container(color: const Color(0xFFDCFCE7), child: const Icon(Icons.fastfood, color: Color(0xFF16A34A), size: 30)),
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            top: 8,
-                            left: 8,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF16A34A).withValues(alpha: 0.92),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                tag,
-                                style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
-                          // Heart button top right (Image 1 Left)
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: Container(
-                              width: 28,
-                              height: 28,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.9),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Center(
-                                child: Icon(Icons.favorite_border_rounded, size: 16, color: AppTheme.charcoal),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              deal.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.charcoal),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              'Free delivery • Ordered 2h ago',
-                              style: const TextStyle(fontSize: 10, color: AppTheme.mutedGrey),
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                const Icon(Icons.star_rounded, size: 14, color: Color(0xFFF59E0B)),
-                                const SizedBox(width: 2),
-                                const Text('4.8 (124)', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold)),
-                                const Spacer(),
-                                Text(
-                                  'GHS ${deal.discountedPrice.toStringAsFixed(0)}',
-                                  style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w900, fontSize: 13),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildYourRegularsSection(BuildContext context, List<FoodDeal> deals) {
-    if (deals.isEmpty) return const SizedBox.shrink();
-    final regulars = deals.take(5).toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Your Regulars',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.4),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: const Text('See All', style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold, fontSize: 13)),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 6),
-        SizedBox(
-          height: 90,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: regulars.length,
-            separatorBuilder: (context, index) => const SizedBox(width: 12),
-            itemBuilder: (context, idx) {
-              final deal = regulars[idx];
-
-              return InkWell(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => DealDetailScreen(deal: deal)),
-                ),
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  width: 180,
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
-                  ),
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: SizedBox(
-                          width: 56,
-                          height: 56,
-                          child: CachedNetworkImage(
-                            imageUrl: deal.imageUrl,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(color: const Color(0xFFF1F5F9)),
-                            errorWidget: (context, url, error) => Container(color: const Color(0xFFDCFCE7), child: const Icon(Icons.fastfood, color: Color(0xFF16A34A), size: 20)),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              deal.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.charcoal),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              'GHS ${deal.discountedPrice.toStringAsFixed(0)}',
-                              style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold, fontSize: 11.5),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        padding: EdgeInsets.zero,
-                        icon: const Icon(Icons.add_circle_rounded, color: Color(0xFF22C55E), size: 24),
-                        onPressed: () {
-                          ref.read(appStateProvider.notifier).addToBasket(deal);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Added ${deal.title} to Basket 🛒'),
-                              backgroundColor: const Color(0xFF16A34A),
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                        },
                       ),
                     ],
                   ),
@@ -1860,7 +1604,7 @@ class _PromoBanner extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         gradient: const LinearGradient(
-          colors: [Color(0xFF0F5B3C), Color(0xFF003D27)],
+          colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -2000,8 +1744,8 @@ class _ImpactCard extends StatelessWidget {
                   title: "Money Saved",
                   value: "GHS ${stats.moneySaved.toStringAsFixed(2)}",
                   icon: Icons.account_balance_wallet_rounded,
-                  iconColor: const Color(0xFF10B981),
-                  bgColor: const Color(0xFFECFDF5),
+                  iconColor: AppTheme.primaryGreen,
+                  bgColor: AppTheme.lightGreenBg,
                 ),
               ),
               const SizedBox(width: 12),
@@ -2025,8 +1769,8 @@ class _ImpactCard extends StatelessWidget {
                   title: "Meals Rescued",
                   value: "${stats.mealsRescued}",
                   icon: Icons.restaurant_rounded,
-                  iconColor: const Color(0xFF059669),
-                  bgColor: const Color(0xFFD1FAE5),
+                  iconColor: AppTheme.primaryGreen,
+                  bgColor: AppTheme.lightGreenBg,
                 ),
               ),
               const SizedBox(width: 12),

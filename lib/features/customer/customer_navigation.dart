@@ -22,6 +22,17 @@ class CustomerNavigation extends ConsumerStatefulWidget {
 
 class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
   bool _isSideNavCollapsed = false;
+  final Set<int> _loadedTabs = {0};
+
+  void _onTabSelected(int idx, double screenWidth) {
+    if (!_loadedTabs.contains(idx)) {
+      setState(() => _loadedTabs.add(idx));
+    }
+    ref.read(customerTabProvider.notifier).state = idx;
+    if (screenWidth < 1150) {
+      setState(() => _isSideNavCollapsed = true);
+    }
+  }
 
   final List<Widget> _screens = [
     const CustomerHomeScreen(),
@@ -43,9 +54,18 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
     final screenWidth = MediaQuery.of(context).size.width;
     final wide = useSideNav(context);
 
+    if (!_loadedTabs.contains(currentIndex)) {
+      _loadedTabs.add(currentIndex);
+    }
+
     final tabs = IndexedStack(
       index: currentIndex,
-      children: _screens,
+      children: List.generate(_screens.length, (i) {
+        if (_loadedTabs.contains(i)) {
+          return _screens[i];
+        }
+        return const SizedBox.shrink();
+      }),
     );
 
     return Scaffold(
@@ -61,13 +81,7 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
                   onToggleCollapse: () {
                     setState(() => _isSideNavCollapsed = !_isSideNavCollapsed);
                   },
-                  onSelect: (i) {
-                    ref.read(customerTabProvider.notifier).state = i;
-                    // Auto-collapse in tablet mode (width < 1150) to maximize view canvas
-                    if (screenWidth < 1150) {
-                      setState(() => _isSideNavCollapsed = true);
-                    }
-                  },
+                  onSelect: (i) => _onTabSelected(i, screenWidth),
                   header: _buildSideNavBrand(),
                   items: const [
                     SideNavItem(icon: Icons.explore_outlined, activeIcon: Icons.explore, label: 'Explore'),
@@ -201,6 +215,7 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
   }
 
   Widget _buildFloatingPillNavBar(BuildContext context, int currentIndex, bool isDark, int basketCount) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
     final items = const [
       _PillNavItem(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Home'),
       _PillNavItem(icon: Icons.search_rounded, activeIcon: Icons.search_rounded, label: 'Map'),
@@ -237,7 +252,7 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
                   duration: const Duration(milliseconds: 220),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF22C55E),
+                    color: AppTheme.primaryGreen,
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: Row(
@@ -272,7 +287,7 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
                         child: iconWidget,
                       )
                     : iconWidget,
-                onPressed: () => ref.read(customerTabProvider.notifier).state = idx,
+                onPressed: () => _onTabSelected(idx, screenWidth),
               );
             }),
           ),

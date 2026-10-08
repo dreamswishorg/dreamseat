@@ -141,9 +141,9 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     
     switch (order.status) {
       case 'reserved':
-        statusColor = const Color(0xFF16A34A); // Premium Green
+        statusColor = AppTheme.primaryGreen; // Premium Green
         statusText = 'Ready for Pickup';
-        statusBg = const Color(0xFFDCFCE7);
+        statusBg = AppTheme.lightGreenBg;
         statusIcon = Icons.stars_rounded;
         break;
       case 'collected':
@@ -308,12 +308,12 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                           margin: const EdgeInsets.only(top: 2),
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFDCFCE7),
+                            color: AppTheme.lightGreenBg,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             "Saved ${(100 - (order.price / order.originalPrice * 100)).round()}%",
-                            style: const TextStyle(fontSize: 9, color: Color(0xFF16A34A), fontWeight: FontWeight.w900),
+                            style: const TextStyle(fontSize: 9, color: AppTheme.primaryGreen, fontWeight: FontWeight.w900),
                           ),
                         ),
                     ],
@@ -402,7 +402,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF22C55E),
+                      backgroundColor: AppTheme.primaryGreen,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       padding: const EdgeInsets.symmetric(vertical: 12),

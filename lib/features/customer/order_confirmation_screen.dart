@@ -442,7 +442,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen>
                       label: const Text('Track Courier (Rober Jr.)'),
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 52),
-                        backgroundColor: const Color(0xFF22C55E),
+                        backgroundColor: AppTheme.primaryGreen,
                         foregroundColor: AppTheme.pureWhite,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),

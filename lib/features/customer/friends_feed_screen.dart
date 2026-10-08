@@ -100,13 +100,13 @@ class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.share_rounded, color: Color(0xFF16A34A)),
+            icon: const Icon(Icons.share_rounded, color: AppTheme.primaryGreen),
             tooltip: 'Invite Friends',
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('🎁 Share link copied! Referral Code: $referralCode'),
-                  backgroundColor: const Color(0xFF16A34A),
+                  backgroundColor: AppTheme.primaryGreen,
                 ),
               );
             },
@@ -124,14 +124,14 @@ class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen> {
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF16A34A), Color(0xFF15803D)],
+                  colors: [AppTheme.primaryGreen, AppTheme.primaryGreen],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF16A34A).withValues(alpha: 0.25),
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.25),
                     blurRadius: 18,
                     offset: const Offset(0, 6),
                   ),
@@ -204,12 +204,12 @@ class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen> {
                       Text(
                         'See All',
                         style: TextStyle(
-                          color: Color(0xFF16A34A),
+                          color: AppTheme.primaryGreen,
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                         ),
                       ),
-                      Icon(Icons.arrow_forward_rounded, color: Color(0xFF16A34A), size: 14),
+                      Icon(Icons.arrow_forward_rounded, color: AppTheme.primaryGreen, size: 14),
                     ],
                   ),
                 ),
@@ -293,7 +293,7 @@ class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen> {
                                   TextSpan(
                                     text: act['dish'] as String,
                                     style: const TextStyle(
-                                      color: Color(0xFF16A34A),
+                                      color: AppTheme.primaryGreen,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -316,7 +316,7 @@ class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFDCFCE7),
+                                    color: AppTheme.lightGreenBg,
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
@@ -324,7 +324,7 @@ class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen> {
                                     style: const TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF16A34A),
+                                      color: AppTheme.primaryGreen,
                                     ),
                                   ),
                                 ),
@@ -379,9 +379,9 @@ class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen> {
                     fit: BoxFit.cover,
                     placeholder: (context, url) => Container(color: const Color(0xFFF1F5F9)),
                     errorWidget: (context, url, error) => Container(
-                      color: const Color(0xFFDCFCE7),
+                      color: AppTheme.lightGreenBg,
                       child: const Center(
-                        child: Icon(Icons.fastfood_rounded, color: Color(0xFF16A34A), size: 36),
+                        child: Icon(Icons.fastfood_rounded, color: AppTheme.primaryGreen, size: 36),
                       ),
                     ),
                   ),
@@ -395,7 +395,7 @@ class _FriendsFeedScreenState extends ConsumerState<FriendsFeedScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF16A34A).withValues(alpha: 0.92),
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.92),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(

@@ -39,7 +39,7 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
             children: [
               Row(
                 children: [
-                  const Icon(Icons.schedule_rounded, color: Color(0xFF16A34A)),
+                  const Icon(Icons.schedule_rounded, color: AppTheme.primaryGreen),
                   const SizedBox(width: 8),
                   const Text('Schedule Order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const Spacer(),
@@ -58,12 +58,12 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
                 final isCurrent = _scheduledTime == time || (_scheduledTime == null && time.startsWith('ASAP'));
                 return ListTile(
                   title: Text(time, style: TextStyle(fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal)),
-                  trailing: isCurrent ? const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A)) : null,
+                  trailing: isCurrent ? const Icon(Icons.check_circle_rounded, color: AppTheme.primaryGreen) : null,
                   onTap: () {
                     setState(() => _scheduledTime = time);
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Scheduled for: $time'), backgroundColor: const Color(0xFF16A34A)),
+                      SnackBar(content: Text('Scheduled for: $time'), backgroundColor: AppTheme.primaryGreen),
                     );
                   },
                 );
@@ -90,7 +90,7 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
             children: [
               Row(
                 children: [
-                  const Icon(Icons.group_rounded, color: Color(0xFF16A34A)),
+                  const Icon(Icons.group_rounded, color: AppTheme.primaryGreen),
                   const SizedBox(width: 8),
                   const Text('Group Order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const Spacer(),
@@ -106,7 +106,7 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCFCE7),
+                  color: AppTheme.lightGreenBg,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
@@ -115,15 +115,15 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('SHAREABLE ROOM CODE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF16A34A))),
+                          Text('SHAREABLE ROOM CODE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
                           SizedBox(height: 2),
-                          Text('EATS-7842', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF15803D))),
+                          Text('EATS-7842', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen)),
                         ],
                       ),
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF16A34A),
+                        backgroundColor: AppTheme.primaryGreen,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
@@ -131,7 +131,7 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
                       label: const Text('Invite'),
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('🔗 Group order invite link copied!'), backgroundColor: Color(0xFF16A34A)),
+                          const SnackBar(content: Text('🔗 Group order invite link copied!'), backgroundColor: AppTheme.primaryGreen),
                         );
                       },
                     ),
@@ -146,7 +146,7 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
                 children: _groupMembers.map((m) {
                   return Chip(
                     avatar: CircleAvatar(
-                      backgroundColor: const Color(0xFF16A34A),
+                      backgroundColor: AppTheme.primaryGreen,
                       child: Text(m[0], style: const TextStyle(fontSize: 11, color: Colors.white)),
                     ),
                     label: Text(m, style: const TextStyle(fontSize: 12)),
@@ -177,7 +177,7 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
             children: [
               Row(
                 children: [
-                  const Icon(Icons.note_alt_outlined, color: Color(0xFF16A34A)),
+                  const Icon(Icons.note_alt_outlined, color: AppTheme.primaryGreen),
                   const SizedBox(width: 8),
                   const Text('Kitchen & Delivery Note', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const Spacer(),
@@ -204,7 +204,7 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF22C55E),
+                    backgroundColor: AppTheme.primaryGreen,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
@@ -212,7 +212,7 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
                     setState(() => _kitchenNote = noteCtrl.text.trim());
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('✅ Note saved for this order'), backgroundColor: Color(0xFF16A34A)),
+                      const SnackBar(content: Text('✅ Note saved for this order'), backgroundColor: AppTheme.primaryGreen),
                     );
                   },
                   child: const Text('Save Note'),
@@ -260,7 +260,7 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
                           ),
                           TextButton(
                             onPressed: () {},
-                            child: const Icon(Icons.arrow_forward_rounded, color: Color(0xFF16A34A), size: 16),
+                            child: const Icon(Icons.arrow_forward_rounded, color: AppTheme.primaryGreen, size: 16),
                           ),
                         ],
                       ),
@@ -351,7 +351,7 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
     return SliverAppBar(
       expandedHeight: 220,
       pinned: true,
-      backgroundColor: const Color(0xFF16A34A),
+      backgroundColor: AppTheme.primaryGreen,
       leading: Container(
         margin: const EdgeInsets.only(left: 12, top: 6, bottom: 6),
         decoration: BoxDecoration(
@@ -403,7 +403,7 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
             icon: const Icon(Icons.more_horiz_rounded, color: Colors.white, size: 19),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Store options for ${business.name}'), backgroundColor: const Color(0xFF16A34A)),
+                SnackBar(content: Text('Store options for ${business.name}'), backgroundColor: AppTheme.primaryGreen),
               );
             },
           ),
@@ -418,13 +418,13 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
                 imageUrl: business.coverUrl.isNotEmpty ? business.coverUrl : business.logoUrl,
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Container(color: AppTheme.lightGrey),
-                errorWidget: (context, url, error) => Container(color: const Color(0xFFDCFCE7)),
+                errorWidget: (context, url, error) => Container(color: AppTheme.lightGreenBg),
               )
             else
               Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFF16A34A), Color(0xFF1B5E20)],
+                    colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ),
@@ -455,12 +455,12 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFDCFCE7),
+              color: AppTheme.lightGreenBg,
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Text(
               'Open now',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
             ),
           ),
           const SizedBox(height: 8),
@@ -621,10 +621,10 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                         decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFF16A34A) : Colors.white,
+                          color: isSelected ? AppTheme.primaryGreen : Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: isSelected ? const Color(0xFF16A34A) : Colors.black.withValues(alpha: 0.1),
+                            color: isSelected ? AppTheme.primaryGreen : Colors.black.withValues(alpha: 0.1),
                           ),
                         ),
                         child: Text(
@@ -660,23 +660,23 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFDCFCE7) : Colors.white,
+            color: isSelected ? AppTheme.lightGreenBg : Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isSelected ? const Color(0xFF16A34A) : Colors.black.withValues(alpha: 0.1),
+              color: isSelected ? AppTheme.primaryGreen : Colors.black.withValues(alpha: 0.1),
             ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 14, color: isSelected ? const Color(0xFF16A34A) : AppTheme.charcoal),
+              Icon(icon, size: 14, color: isSelected ? AppTheme.primaryGreen : AppTheme.charcoal),
               const SizedBox(width: 4),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: isSelected ? const Color(0xFF16A34A) : AppTheme.charcoal,
+                  color: isSelected ? AppTheme.primaryGreen : AppTheme.charcoal,
                 ),
               ),
             ],
@@ -717,9 +717,9 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
                             imageUrl: imageUrl,
                             fit: BoxFit.cover,
                             placeholder: (context, url) => Container(color: const Color(0xFFF1F5F9)),
-                            errorWidget: (context, url, error) => Container(color: const Color(0xFFDCFCE7)),
+                            errorWidget: (context, url, error) => Container(color: AppTheme.lightGreenBg),
                           )
-                        : Container(color: const Color(0xFFDCFCE7)),
+                        : Container(color: AppTheme.lightGreenBg),
                   ),
                 ),
                 Positioned(
@@ -729,7 +729,7 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF16A34A),
+                      color: AppTheme.primaryGreen,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -749,7 +749,7 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
                 children: [
                   Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
                   const SizedBox(height: 4),
-                  Text(price, style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w900, fontSize: 13)),
+                  Text(price, style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.w900, fontSize: 13)),
                 ],
               ),
             ),
@@ -799,7 +799,7 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
                   Row(
                     children: [
                       Text("GHS ${deal.discountedPrice.toStringAsFixed(0)}",
-                          style: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold, fontSize: 16)),
+                          style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold, fontSize: 16)),
                       const SizedBox(width: 8),
                       Text("GHS ${deal.originalPrice.toStringAsFixed(0)}",
                           style: const TextStyle(decoration: TextDecoration.lineThrough, color: AppTheme.mutedGrey, fontSize: 12)),

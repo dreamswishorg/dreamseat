@@ -121,17 +121,17 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
                         duration: const Duration(milliseconds: 240),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? const Color(0xFF22C55E)
+                              ? AppTheme.primaryGreen
                               : Colors.white,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: isSelected ? Colors.white : const Color(0xFF22C55E),
+                            color: isSelected ? Colors.white : AppTheme.primaryGreen,
                             width: 2.5,
                           ),
                           boxShadow: [
                             BoxShadow(
                               color: isSelected
-                                  ? const Color(0xFF22C55E).withValues(alpha: 0.45)
+                                  ? AppTheme.primaryGreen.withValues(alpha: 0.45)
                                   : Colors.black.withValues(alpha: 0.15),
                               blurRadius: isSelected ? 12 : 6,
                               offset: const Offset(0, 3),
@@ -141,7 +141,7 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
                         child: Center(
                           child: Icon(
                             Icons.restaurant_rounded,
-                            color: isSelected ? Colors.white : const Color(0xFF16A34A),
+                            color: isSelected ? Colors.white : AppTheme.primaryGreen,
                             size: isSelected ? 22 : 18,
                           ),
                         ),
@@ -204,7 +204,7 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
                                 duration: const Duration(milliseconds: 200),
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                                 decoration: BoxDecoration(
-                                  color: _isDelivery ? const Color(0xFF22C55E) : Colors.transparent,
+                                  color: _isDelivery ? AppTheme.primaryGreen : Colors.transparent,
                                   borderRadius: BorderRadius.circular(24),
                                 ),
                                 child: Text(
@@ -223,7 +223,7 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
                                 duration: const Duration(milliseconds: 200),
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                                 decoration: BoxDecoration(
-                                  color: !_isDelivery ? const Color(0xFF22C55E) : Colors.transparent,
+                                  color: !_isDelivery ? AppTheme.primaryGreen : Colors.transparent,
                                   borderRadius: BorderRadius.circular(24),
                                 ),
                                 child: Text(
@@ -468,9 +468,9 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
 
   Widget _buildFallbackCover() {
     return Container(
-      color: const Color(0xFFDCFCE7),
+      color: AppTheme.lightGreenBg,
       child: const Center(
-        child: Icon(Icons.restaurant_rounded, color: Color(0xFF16A34A), size: 32),
+        child: Icon(Icons.restaurant_rounded, color: AppTheme.primaryGreen, size: 32),
       ),
     );
   }

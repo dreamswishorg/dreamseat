@@ -232,11 +232,11 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                     children: [
                       CircleAvatar(
                         radius: 20,
-                        backgroundColor: const Color(0xFFDCFCE7),
+                        backgroundColor: AppTheme.lightGreenBg,
                         child: Text(
                           _riderName[0],
                           style: const TextStyle(
-                            color: Color(0xFF16A34A),
+                            color: AppTheme.primaryGreen,
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
@@ -261,7 +261,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                                   width: 8,
                                   height: 8,
                                   decoration: const BoxDecoration(
-                                    color: Color(0xFF22C55E),
+                                    color: AppTheme.primaryGreen,
                                     shape: BoxShape.circle,
                                   ),
                                 ),
@@ -339,7 +339,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                           decoration: BoxDecoration(
                             color: isRider
                                 ? const Color(0xFFF1F5F9)
-                                : const Color(0xFF22C55E),
+                                : AppTheme.primaryGreen,
                             borderRadius: BorderRadius.only(
                               topLeft: const Radius.circular(16),
                               topRight: const Radius.circular(16),
@@ -419,7 +419,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                       ),
                       const SizedBox(width: 8),
                       CircleAvatar(
-                        backgroundColor: const Color(0xFF22C55E),
+                        backgroundColor: AppTheme.primaryGreen,
                         radius: 22,
                         child: IconButton(
                           icon: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
@@ -460,10 +460,10 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
             Container(
               padding: const EdgeInsets.all(8),
               decoration: const BoxDecoration(
-                color: Color(0xFFDCFCE7),
+                color: AppTheme.lightGreenBg,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.phone_in_talk_rounded, color: Color(0xFF16A34A), size: 20),
+              child: const Icon(Icons.phone_in_talk_rounded, color: AppTheme.primaryGreen, size: 20),
             ),
             const SizedBox(width: 12),
             const Text('Call Courier', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
@@ -498,7 +498,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
           ),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF22C55E),
+              backgroundColor: AppTheme.primaryGreen,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
@@ -509,7 +509,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('📞 Dialing $_riderName ($_riderPhone)...'),
-                  backgroundColor: const Color(0xFF16A34A),
+                  backgroundColor: AppTheme.primaryGreen,
                 ),
               );
             },
@@ -551,7 +551,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                   Polyline(
                     points: _routePoints,
                     strokeWidth: 6.0,
-                    color: const Color(0xFF22C55E),
+                    color: AppTheme.primaryGreen,
                   ),
                 ],
               ),
@@ -578,7 +578,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                       child: const Center(
                         child: Icon(
                           Icons.restaurant_rounded,
-                          color: Color(0xFF16A34A),
+                          color: AppTheme.primaryGreen,
                           size: 22,
                         ),
                       ),
@@ -592,7 +592,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                     height: 44,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFF22C55E).withValues(alpha: 0.25),
+                        color: AppTheme.primaryGreen.withValues(alpha: 0.25),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -600,7 +600,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                           width: 20,
                           height: 20,
                           decoration: const BoxDecoration(
-                            color: Color(0xFF22C55E),
+                            color: AppTheme.primaryGreen,
                             shape: BoxShape.circle,
                           ),
                           child: const Center(
@@ -792,7 +792,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
 
                       // Green Chat Squircle Button (Image 2 Right)
                       Material(
-                        color: const Color(0xFFDCFCE7),
+                        color: AppTheme.lightGreenBg,
                         borderRadius: BorderRadius.circular(16),
                         child: InkWell(
                           onTap: _showChatModal,
@@ -801,12 +801,12 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF22C55E).withValues(alpha: 0.15),
+                              color: AppTheme.lightGreenBg,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: const Icon(
                               Icons.chat_bubble_outline_rounded,
-                              color: Color(0xFF16A34A),
+                              color: AppTheme.primaryGreen,
                               size: 20,
                             ),
                           ),
@@ -816,7 +816,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
 
                       // Green Circular Call Button (Image 2 Right)
                       Material(
-                        color: const Color(0xFF22C55E),
+                        color: AppTheme.primaryGreen,
                         shape: const CircleBorder(),
                         elevation: 2,
                         child: InkWell(
@@ -846,12 +846,12 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFDCFCE7),
+                          color: AppTheme.lightGreenBg,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
                           Icons.inventory_2_rounded,
-                          color: Color(0xFF16A34A),
+                          color: AppTheme.primaryGreen,
                           size: 14,
                         ),
                       ),
@@ -883,7 +883,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF22C55E).withValues(alpha: 0.12),
+                          color: AppTheme.lightGreenBg,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Text(
@@ -891,7 +891,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFF16A34A),
+                            color: AppTheme.primaryGreen,
                             letterSpacing: 0.6,
                           ),
                         ),
