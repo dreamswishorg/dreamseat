@@ -84,10 +84,10 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                 icon: const Icon(Icons.download_rounded, size: 16),
                 label: Text(isMobile ? "CSV" : "Export CSV", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.charcoal,
+                  backgroundColor: AppTheme.primaryGreen,
                   foregroundColor: Colors.white,
                   minimumSize: Size(isMobile ? 70 : 120, 44),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   elevation: 0,
                 ),
               ),
@@ -202,17 +202,9 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                 return Container(
                   decoration: BoxDecoration(
                     color: context.cardColor,
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(22),
                     border: Border.all(color: context.borderColor),
-                    boxShadow: context.isDark
-                        ? []
-                        : [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.01),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                    boxShadow: context.clientShadow,
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: Column(
@@ -643,9 +635,10 @@ class _AuditDetailDrawer extends StatelessWidget {
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.charcoal,
+                backgroundColor: AppTheme.primaryGreen,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                elevation: 0,
               ),
               child: const Text("Close", style: TextStyle(fontWeight: FontWeight.bold)),
             ),

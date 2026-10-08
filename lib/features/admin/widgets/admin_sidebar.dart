@@ -63,7 +63,7 @@ class AdminSidebar extends ConsumerWidget {
     }
 
     return Container(
-      color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white,
+      color: Colors.white,
       child: Column(
         children: [
           SafeArea(
@@ -72,38 +72,65 @@ class AdminSidebar extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
               child: Row(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.asset('assets/images/logo.jpg', height: 32, width: 32, fit: BoxFit.cover),
+                  Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primaryGreen.withValues(alpha: 0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset('assets/images/logo.jpg', height: 32, width: 32, fit: BoxFit.cover),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           "DreamEats HQ",
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: 15.5,
-                            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.charcoal,
+                            color: AppTheme.charcoal,
                             letterSpacing: -0.3,
                           ),
                         ),
                         const SizedBox(height: 2),
-                        Text(
-                          user?.role == 'super_admin' ? "Super Admin" : "Operations",
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            color: user?.role == 'super_admin' ? AppTheme.errorRed : AppTheme.primaryGreen,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                          decoration: BoxDecoration(
+                            color: user?.role == 'super_admin'
+                                ? AppTheme.errorRed.withValues(alpha: 0.08)
+                                : AppTheme.lightGreenBg,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            user?.role == 'super_admin' ? "Super Admin" : "Operations",
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w800,
+                              color: user?.role == 'super_admin' ? AppTheme.errorRed : AppTheme.primaryGreen,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.storefront_outlined, size: 20),
+                    icon: const Icon(Icons.storefront_outlined, size: 20, color: AppTheme.primaryGreen),
                     tooltip: "Customer App",
                     onPressed: () {
                       Navigator.push(
@@ -116,11 +143,9 @@ class AdminSidebar extends ConsumerWidget {
               ),
             ),
           ),
-          Divider(
+          const Divider(
             height: 1,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white.withValues(alpha: 0.06)
-                : const Color(0xFFF1F5F9),
+            color: Color(0xFFE2E8F0),
           ),
           const SizedBox(height: 8),
           Expanded(
@@ -163,17 +188,17 @@ class AdminSidebar extends ConsumerWidget {
           child: Row(
             children: [
               Container(
-                width: 4,
-                height: 4,
-                decoration: const BoxDecoration(color: AppTheme.secondaryGreen, shape: BoxShape.circle),
+                width: 5,
+                height: 5,
+                decoration: const BoxDecoration(color: AppTheme.primaryGreen, shape: BoxShape.circle),
               ),
               const SizedBox(width: 8),
               Text(
                 title,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.w900,
-                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.35) : const Color(0xFF94A3B8),
+                  color: Color(0xFF94A3B8),
                   letterSpacing: 1.5,
                 ),
               ),
@@ -186,26 +211,43 @@ class AdminSidebar extends ConsumerWidget {
   }
 
   Widget _item(BuildContext context, _SidebarNavItem nav) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: () => onTab(nav.index),
-          borderRadius: BorderRadius.circular(12),
-          hoverColor: isDark ? Colors.white.withValues(alpha: 0.03) : AppTheme.primaryGreen.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(14),
+          hoverColor: AppTheme.lightGreenBg,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              gradient: nav.isSelected ? const LinearGradient(colors: [AppTheme.primaryGreen, AppTheme.secondaryGreen], begin: Alignment.topLeft, end: Alignment.bottomRight) : null,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: nav.isSelected ? [BoxShadow(color: AppTheme.primaryGreen.withValues(alpha: 0.25), blurRadius: 10, offset: const Offset(0, 4))] : [],
+              gradient: nav.isSelected
+                  ? const LinearGradient(
+                      colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: nav.isSelected
+                  ? [
+                      BoxShadow(
+                        color: AppTheme.primaryGreen.withValues(alpha: 0.30),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : [],
             ),
             child: Row(
               children: [
-                Icon(nav.icon, size: 18, color: nav.isSelected ? Colors.white : (isDark ? Colors.white.withValues(alpha: 0.5) : const Color(0xFF64748B))),
+                Icon(
+                  nav.icon,
+                  size: 18,
+                  color: nav.isSelected ? Colors.white : const Color(0xFF64748B),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -213,7 +255,7 @@ class AdminSidebar extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: nav.isSelected ? FontWeight.w800 : FontWeight.w600,
-                      color: nav.isSelected ? Colors.white : (isDark ? Colors.white.withValues(alpha: 0.8) : const Color(0xFF334155)),
+                      color: nav.isSelected ? Colors.white : const Color(0xFF334155),
                       letterSpacing: -0.2,
                     ),
                   ),
@@ -221,8 +263,14 @@ class AdminSidebar extends ConsumerWidget {
                 if (nav.badge != null)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(color: nav.isSelected ? Colors.white.withValues(alpha: 0.25) : AppTheme.errorRed, borderRadius: BorderRadius.circular(8)),
-                    child: Text(nav.badge!, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                    decoration: BoxDecoration(
+                      color: nav.isSelected ? Colors.white.withValues(alpha: 0.25) : AppTheme.errorRed,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      nav.badge!,
+                      style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                    ),
                   ),
               ],
             ),

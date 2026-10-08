@@ -358,13 +358,17 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
         clipBehavior: Clip.antiAlias,
         child: Container(
           width: 650,
-          color: const Color(0xFF0F172A),
+          color: Colors.white,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-                color: Colors.black.withValues(alpha: 0.3),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
+                  ),
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -518,7 +522,7 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: AppTheme.charcoal,
                 ),
               ),
               const SizedBox(height: 6),
@@ -776,13 +780,9 @@ class _MerchantApprovalCard extends StatelessWidget {
           padding: EdgeInsets.all(isCompact ? 16 : 20),
           decoration: BoxDecoration(
             color: context.cardColor,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(22),
             border: Border.all(color: context.borderColor),
-            boxShadow: context.isDark
-                ? []
-                : [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.005), blurRadius: 5, offset: const Offset(0, 2))
-                  ],
+            boxShadow: context.clientShadow,
           ),
           child: isCompact
             ? Column(
@@ -902,8 +902,10 @@ class _MerchantApprovalCard extends StatelessWidget {
         label: Text("Approve", style: TextStyle(fontSize: fontSize)),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.primaryGreen,
+          foregroundColor: Colors.white,
           minimumSize: Size(120, height),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          elevation: 0,
         ),
       );
     } else {
@@ -913,8 +915,10 @@ class _MerchantApprovalCard extends StatelessWidget {
         label: Text("Suspend", style: TextStyle(fontSize: fontSize)),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.errorRed,
+          foregroundColor: Colors.white,
           minimumSize: Size(120, height),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          elevation: 0,
         ),
       );
     }

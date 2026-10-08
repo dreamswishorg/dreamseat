@@ -28,22 +28,9 @@ class MetricCard extends StatelessWidget {
       width: width,
       decoration: BoxDecoration(
         color: context.cardColor,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: context.borderColor),
-        boxShadow: isDark
-            ? []
-            : [
-                BoxShadow(
-                  color: color.withValues(alpha: 0.05),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+        boxShadow: context.clientShadow,
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -184,8 +171,9 @@ class ContentBox extends StatelessWidget {
       padding: padding ?? const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: context.cardColor,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: context.borderColor),
+        boxShadow: context.clientShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -472,8 +460,9 @@ class KycDocCard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: context.cardAltColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: context.borderColor),
+        boxShadow: context.clientShadow,
       ),
       child: Row(
         children: [
@@ -528,23 +517,14 @@ class ConfigBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.isDark;
     return Container(
       width: 280,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: context.cardColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: context.borderColor),
-        boxShadow: isDark
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.01),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+        boxShadow: context.clientShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

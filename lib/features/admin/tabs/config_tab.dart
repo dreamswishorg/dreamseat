@@ -288,10 +288,12 @@ class _TabConfigState extends ConsumerState<TabConfig> {
             child: ElevatedButton(
               onPressed: onPressed,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.charcoal,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                backgroundColor: AppTheme.primaryGreen,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                elevation: 0,
               ),
-              child: Text(buttonLabel),
+              child: Text(buttonLabel, style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
           ),
         ] else ...[
@@ -314,11 +316,13 @@ class _TabConfigState extends ConsumerState<TabConfig> {
               ElevatedButton(
                 onPressed: onPressed,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.charcoal,
+                  backgroundColor: AppTheme.primaryGreen,
+                  foregroundColor: Colors.white,
                   minimumSize: const Size(140, 52),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 0,
                 ),
-                child: Text(buttonLabel),
+                child: Text(buttonLabel, style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           ),

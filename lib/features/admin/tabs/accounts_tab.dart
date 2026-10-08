@@ -80,8 +80,9 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                   ? null
                   : BoxDecoration(
                       color: context.cardColor,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(22),
                       border: Border.all(color: context.borderColor),
+                      boxShadow: context.clientShadow,
                     ),
               clipBehavior: isMobile ? Clip.none : Clip.antiAlias,
               child: Column(
@@ -294,11 +295,13 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
               ElevatedButton.icon(
                 onPressed: () => _showCreateStaffDialog(context),
                 icon: const Icon(Icons.person_add_rounded, size: 16),
-                label: const Text("New Staff", style: TextStyle(fontSize: 12)),
+                label: const Text("New Staff", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.charcoal,
+                  backgroundColor: AppTheme.primaryGreen,
+                  foregroundColor: Colors.white,
                   minimumSize: const Size(120, 44),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 0,
                 ),
               ),
             ],
@@ -391,11 +394,13 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
         ElevatedButton.icon(
           onPressed: () => _showCreateStaffDialog(context),
           icon: const Icon(Icons.person_add_rounded, size: 16),
-          label: const Text("New Staff", style: TextStyle(fontSize: 12)),
+          label: const Text("New Staff", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.charcoal,
+            backgroundColor: AppTheme.primaryGreen,
+            foregroundColor: Colors.white,
             minimumSize: const Size(120, 44),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            elevation: 0,
           ),
         ),
       ],
@@ -688,7 +693,13 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                             }
                           }
                         },
-                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.charcoal, foregroundColor: Colors.white, minimumSize: const Size(120, 48), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryGreen,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(120, 48),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    elevation: 0,
+                  ),
                   child: isSaving
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                       : const Text("Create Staff Account", style: TextStyle(fontWeight: FontWeight.bold)),
@@ -1275,9 +1286,10 @@ class _UserDetailDrawer extends ConsumerWidget {
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.charcoal,
+                backgroundColor: AppTheme.primaryGreen,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                elevation: 0,
               ),
               child: const Text("Done", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
             ),
@@ -1334,7 +1346,7 @@ class _RoleBadge extends StatelessWidget {
         label = '👑 Super Admin';
         break;
       case 'admin':
-        color = const Color(0xFF0F172A);
+        color = AppTheme.primaryGreen;
         label = '🛡️ Staff Admin';
         break;
       case 'merchant':

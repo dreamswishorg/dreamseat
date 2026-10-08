@@ -445,18 +445,17 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
     return Container(
       padding: EdgeInsets.all(isMobile ? 18 : 24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [
-            const Color(0xFF0F2F24),
-            const Color(0xFF134E35),
-            AppTheme.primaryGreen.withValues(alpha: 0.95),
+            AppTheme.primaryGreen,
+            Color(0xFF1B5E20),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(color: AppTheme.primaryGreen.withValues(alpha: 0.15), blurRadius: 20, offset: const Offset(0, 8)),
+        boxShadow: const [
+          BoxShadow(color: Color(0x302E7D32), blurRadius: 22, offset: Offset(0, 8)),
         ],
       ),
       child: Column(
@@ -655,9 +654,9 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 16, offset: const Offset(0, 6))],
+        boxShadow: context.clientShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -736,11 +735,9 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 15, offset: const Offset(0, 6)),
-        ],
+        boxShadow: context.clientShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -910,9 +907,9 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 16, offset: const Offset(0, 6))],
+        boxShadow: context.clientShadow,
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -1085,9 +1082,9 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 16, offset: const Offset(0, 6))],
+        boxShadow: context.clientShadow,
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(

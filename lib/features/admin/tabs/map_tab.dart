@@ -260,11 +260,17 @@ class _TabMapState extends ConsumerState<TabMap> {
                   boxShadow: [
                     BoxShadow(
                       color: isSelected
-                          ? AppTheme.primaryGreen.withValues(alpha: 0.4)
-                          : Colors.black.withValues(alpha: 0.15),
-                      blurRadius: isSelected ? 12 : 6,
-                      offset: const Offset(0, 3),
+                          ? AppTheme.primaryGreen.withValues(alpha: 0.45)
+                          : const Color(0x1A000000),
+                      blurRadius: isSelected ? 14 : 8,
+                      offset: const Offset(0, 4),
                     ),
+                    if (!isSelected)
+                      BoxShadow(
+                        color: AppTheme.primaryGreen.withValues(alpha: 0.15),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
                   ],
                   border: Border.all(
                     color: isSelected ? Colors.white : AppTheme.primaryGreen,
@@ -273,7 +279,7 @@ class _TabMapState extends ConsumerState<TabMap> {
                 ),
                 child: Center(
                   child: Icon(
-                    Icons.storefront_rounded,
+                    Icons.restaurant_rounded,
                     color: isSelected ? Colors.white : AppTheme.primaryGreen,
                     size: isSelected ? 24 : 20,
                   ),
@@ -379,8 +385,14 @@ class _TabMapState extends ConsumerState<TabMap> {
           const Spacer(),
           ElevatedButton(
             onPressed: () {},
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.charcoal, minimumSize: const Size(double.infinity, 52)),
-            child: const Text("View Hub Details"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryGreen,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 52),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              elevation: 0,
+            ),
+            child: const Text("View Hub Details", style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),

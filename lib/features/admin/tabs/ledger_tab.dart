@@ -88,7 +88,7 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.charcoal,
+                          backgroundColor: AppTheme.primaryGreen,
                           foregroundColor: Colors.white,
                           minimumSize: Size(isCompact ? 70 : 120, 48),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -362,17 +362,9 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
         return Container(
           decoration: BoxDecoration(
             color: context.cardColor,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(22),
             border: Border.all(color: context.borderColor),
-            boxShadow: context.isDark
-                ? []
-                : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.01),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+            boxShadow: context.clientShadow,
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(
@@ -540,12 +532,12 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
                     ? ElevatedButton(
                         onPressed: () => _pay(context, ref, order, share),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.charcoal,
+                          backgroundColor: AppTheme.primaryGreen,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           minimumSize: const Size(0, 32),
                         ),
@@ -575,17 +567,9 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: context.cardColor,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: context.borderColor),
-        boxShadow: context.isDark
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+        boxShadow: context.clientShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -724,9 +708,9 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
                 icon: const Icon(Icons.check_rounded, size: 16),
                 label: Text("Settle Payout (GHS ${share.toStringAsFixed(2)})", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.charcoal,
+                  backgroundColor: AppTheme.primaryGreen,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   elevation: 0,
                 ),
               ),
@@ -846,9 +830,9 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
                               icon: const Icon(Icons.payment_rounded, size: 16),
                               label: Text("Batch Payout (GHS ${p.toStringAsFixed(2)})", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.charcoal,
+                                backgroundColor: AppTheme.primaryGreen,
                                 foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                                 elevation: 0,
                               ),
                             ),
@@ -916,9 +900,11 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
                             icon: const Icon(Icons.account_balance_wallet_rounded, size: 16),
                             label: const Text("Batch Payout", style: TextStyle(fontSize: 13)),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.charcoal,
+                              backgroundColor: AppTheme.primaryGreen,
+                              foregroundColor: Colors.white,
                               minimumSize: const Size(160, 48),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              elevation: 0,
                             ),
                           )
                         else

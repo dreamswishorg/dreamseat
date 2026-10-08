@@ -117,12 +117,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       backgroundColor: const Color(0xFFF8FAFC),
       drawer: !isWide
           ? Drawer(
-              width: 280,
-              backgroundColor: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF1E293B)
-                  : Colors.white,
-              elevation: 0,
-              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              width: 290,
+              backgroundColor: Colors.white,
+              elevation: 8,
+              shadowColor: Colors.black.withValues(alpha: 0.12),
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.horizontal(right: Radius.circular(24)),
+              ),
               child: AdminSidebar(
                 currentTab: _currentTab,
                 approvals: pendingApprovals,
@@ -136,16 +137,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           : null,
       appBar: AppBar(
         toolbarHeight: isWide ? 76 : 60,
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF0F172A)
-            : Colors.white,
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white.withValues(alpha: 0.06)
-                : Colors.black.withValues(alpha: 0.04),
+            color: const Color(0xFFE2E8F0),
             height: 1,
           ),
         ),
@@ -156,21 +154,21 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [AppTheme.primaryGreen, AppTheme.secondaryGreen],
+                        colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.primaryGreen.withValues(alpha: 0.2),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+                          color: AppTheme.primaryGreen.withValues(alpha: 0.25),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
                         ),
                       ],
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(6),
                       child: Image.asset('assets/images/logo.jpg', height: 22, width: 22, fit: BoxFit.cover),
                     ),
                   ),
@@ -636,15 +634,12 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           if (isWide)
             Container(
               width: 280,
-              decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFF1E293B)
-                    : Colors.white,
+              decoration: const BoxDecoration(
+                color: Colors.white,
                 border: Border(
                   right: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : const Color(0xFFF1F5F9),
+                    color: Color(0xFFE2E8F0),
+                    width: 1,
                   ),
                 ),
               ),

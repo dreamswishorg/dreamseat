@@ -159,22 +159,17 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
     return Container(
       padding: EdgeInsets.all(isMobile ? 18 : 28),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: context.isDark
-              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
-              : [const Color(0xFF0F172A), const Color(0xFF1E293B)],
+        gradient: const LinearGradient(
+          colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: context.isDark ? Colors.white.withValues(alpha: 0.08) : Colors.transparent,
-        ),
-        boxShadow: [
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.25),
+            color: Color(0x352E7D32),
             blurRadius: 24,
-            offset: const Offset(0, 10),
+            offset: Offset(0, 10),
           ),
         ],
       ),

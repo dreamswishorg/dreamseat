@@ -132,10 +132,16 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
                             BoxShadow(
                               color: isSelected
                                   ? AppTheme.primaryGreen.withValues(alpha: 0.45)
-                                  : Colors.black.withValues(alpha: 0.15),
-                              blurRadius: isSelected ? 12 : 6,
-                              offset: const Offset(0, 3),
+                                  : const Color(0x1A000000),
+                              blurRadius: isSelected ? 14 : 8,
+                              offset: const Offset(0, 4),
                             ),
+                            if (!isSelected)
+                              BoxShadow(
+                                color: AppTheme.primaryGreen.withValues(alpha: 0.15),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
                           ],
                         ),
                         child: Center(

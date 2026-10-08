@@ -100,6 +100,33 @@ class AppTheme {
     );
   }
 
+  // Client Drop Shadow Tokens (used across client and admin)
+  static const List<BoxShadow> clientCardShadow = [
+    BoxShadow(
+      color: Color(0x08000000),
+      blurRadius: 16,
+      offset: Offset(0, 6),
+    ),
+    BoxShadow(
+      color: Color(0x042E7D32),
+      blurRadius: 20,
+      offset: Offset(0, 8),
+    ),
+  ];
+
+  static const List<BoxShadow> clientElevatedShadow = [
+    BoxShadow(
+      color: Color(0x0F000000),
+      blurRadius: 20,
+      offset: Offset(0, 8),
+    ),
+    BoxShadow(
+      color: Color(0x082E7D32),
+      blurRadius: 24,
+      offset: Offset(0, 10),
+    ),
+  ];
+
   // Dark mode completely removed per user specification
   static ThemeData get darkTheme => lightTheme;
 }
@@ -108,10 +135,13 @@ extension ThemeContextExtension on BuildContext {
   // Dark mode permanently disabled across the application
   bool get isDark => false;
   Color get cardColor => Colors.white;
-  Color get cardAltColor => const Color(0xFFF8FAFC);
-  Color get cardSubtleColor => const Color(0xFFF1F5F9);
+  Color get cardAltColor => const Color(0xFFF9FAF9);
+  Color get cardSubtleColor => AppTheme.lightGreenBg;
   Color get textPrimary => AppTheme.charcoal;
   Color get textSecondary => AppTheme.mutedGrey;
   Color get borderColor => const Color(0xFFE2E8F0);
   Color get borderSubtleColor => const Color(0xFFF1F5F9);
+  List<BoxShadow> get clientShadow => AppTheme.clientCardShadow;
+  List<BoxShadow> get clientElevatedShadow => AppTheme.clientElevatedShadow;
 }
+

@@ -47,9 +47,9 @@ class DisputeCard extends ConsumerWidget {
           padding: EdgeInsets.all(isCompact ? 20 : 28),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: isOpen ? Colors.red.withValues(alpha: 0.1) : const Color(0xFFF1F5F9)),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 10, offset: const Offset(0, 4))],
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: isOpen ? Colors.red.withValues(alpha: 0.1) : const Color(0xFFE2E8F0)),
+            boxShadow: context.clientShadow,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,11 +106,13 @@ class DisputeCard extends ConsumerWidget {
                           child: ElevatedButton(
                             onPressed: () => ref.read(appStateProvider.notifier).resolveDispute(dispute.id),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.charcoal,
+                              backgroundColor: AppTheme.primaryGreen,
+                              foregroundColor: Colors.white,
                               minimumSize: const Size(double.infinity, 48),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              elevation: 0,
                             ),
-                            child: const Text("Close Ticket"),
+                            child: const Text("Close Ticket", style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
                         ),
                       ],
@@ -124,11 +126,13 @@ class DisputeCard extends ConsumerWidget {
                         ElevatedButton(
                           onPressed: () => ref.read(appStateProvider.notifier).resolveDispute(dispute.id),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.charcoal,
+                            backgroundColor: AppTheme.primaryGreen,
+                            foregroundColor: Colors.white,
                             minimumSize: const Size(140, 48),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            elevation: 0,
                           ),
-                          child: const Text("Close Ticket"),
+                          child: const Text("Close Ticket", style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                     ],
                   ),
