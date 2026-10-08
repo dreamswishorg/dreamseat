@@ -332,75 +332,146 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
   Widget _buildWalletCard(AppState state) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF0F5B3C), Color(0xFF003D27)],
+          colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(26),
-        boxShadow: [
-          BoxShadow(color: AppTheme.primaryGreen.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x332E7D32),
+            blurRadius: 20,
+            offset: Offset(0, 8),
+          ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.verified_rounded, color: Color(0xFF69F0AE), size: 16),
-                    SizedBox(width: 6),
-                    Text("ECO WARRIOR TIER", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 10.5, letterSpacing: 0.8)),
-                  ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(26),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -30,
+              top: -30,
+              child: Container(
+                width: 140,
+                height: 140,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [Color(0x4000E676), Color(0x0000E676)],
+                  ),
                 ),
               ),
-              const Icon(Icons.auto_awesome_rounded, color: Color(0xFF69F0AE), size: 24),
-            ],
-          ),
-          const SizedBox(height: 20),
-          const Text("YOUR DREAMPOINTS", style: TextStyle(color: Colors.white70, fontSize: 11.5, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
-          const SizedBox(height: 4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                "${state.customerDreamPoints}",
-                style: const TextStyle(color: Colors.white, fontSize: 44, fontWeight: FontWeight.w900, letterSpacing: -1),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.verified_rounded, color: Color(0xFFB9F6CA), size: 16),
+                            SizedBox(width: 6),
+                            Text(
+                              "ECO HERO TIER",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 10.5,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.stars_rounded, color: Colors.white, size: 22),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "YOUR DREAMPOINTS",
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        "${state.customerDreamPoints}",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 46,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Text(
+                        "PTS",
+                        style: TextStyle(
+                          color: Color(0xFFB9F6CA),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.eco_rounded, color: Color(0xFFB9F6CA), size: 18),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            "Earn 10 DreamPoints for every GHS 1.00 saved on rescued food packages!",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 6),
-              const Text("PTS", style: TextStyle(color: Color(0xFF69F0AE), fontSize: 18, fontWeight: FontWeight.w800)),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(16),
             ),
-            child: const Row(
-              children: [
-                Icon(Icons.info_outline_rounded, color: Colors.white70, size: 18),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text("Earn 10 DreamPoints for every GHS 1.00 saved on rescued food packages!", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600, height: 1.3)),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -681,37 +752,76 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
   Widget _buildReferralHeroCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+          colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(26),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 16, offset: const Offset(0, 6)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x332E7D32),
+            blurRadius: 18,
+            offset: Offset(0, 6),
+          ),
         ],
       ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryGreen.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(26),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -30,
+              top: -30,
+              child: Container(
+                width: 140,
+                height: 140,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [Color(0x4000E676), Color(0x0000E676)],
+                  ),
+                ),
+              ),
             ),
-            child: const Icon(Icons.card_giftcard_rounded, color: Color(0xFF69F0AE), size: 42),
-          ),
-          const SizedBox(height: 16),
-          const Text("Give GHS 5.00, Get GHS 5.00", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -0.4)),
-          const SizedBox(height: 8),
-          const Text(
-            "Invite your friends to rescue surplus food with DreamEats. Once they order their first rescue package, both of you earn GHS 5.00 credit!",
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.45),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 40),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Give GHS 5.00, Get GHS 5.00",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 21,
+                      letterSpacing: -0.4,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    "Invite your friends to rescue surplus food with DreamEats. Once they order their first rescue package, both of you earn GHS 5.00 credit!",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      height: 1.45,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -757,14 +867,22 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: AppTheme.lightGreenBg,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(referralCode, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen, letterSpacing: 2)),
+                    Text(
+                      referralCode,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.primaryGreen,
+                        letterSpacing: 2,
+                      ),
+                    ),
                     InkWell(
                       onTap: () {
                         Clipboard.setData(ClipboardData(text: referralCode));
@@ -774,7 +892,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
                       },
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(color: AppTheme.primaryGreen, borderRadius: BorderRadius.circular(8)),
                         child: const Text("COPY", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 11)),
                       ),
@@ -787,7 +905,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.charcoal,
+                    backgroundColor: AppTheme.primaryGreen,
                     foregroundColor: Colors.white,
                     minimumSize: const Size(0, 48),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

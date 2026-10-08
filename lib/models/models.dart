@@ -103,6 +103,7 @@ class BusinessProfile {
   final double distance;
   final double rating;
   final bool isApproved;
+  final String phone;
 
   BusinessProfile({
     required this.id,
@@ -118,6 +119,7 @@ class BusinessProfile {
     required this.distance,
     required this.rating,
     this.isApproved = false,
+    this.phone = '+233 24 412 3456',
   });
 
   Map<String, dynamic> toJson() => {
@@ -134,6 +136,7 @@ class BusinessProfile {
         'distance': distance,
         'rating': rating,
         'isApproved': isApproved,
+        'phone': phone,
       };
 
   factory BusinessProfile.fromJson(Map<String, dynamic> json) => BusinessProfile(
@@ -150,6 +153,7 @@ class BusinessProfile {
         distance: (json['distance'] as num?)?.toDouble() ?? 0.0,
         rating: ((json['rating'] as num?)?.toDouble() ?? 5.0) <= 0.0 ? 5.0 : ((json['rating'] as num?)?.toDouble() ?? 5.0),
         isApproved: json['isApproved'] ?? false,
+        phone: json['phone'] ?? '+233 24 412 3456',
       );
 
   BusinessProfile copyWith({
@@ -166,6 +170,7 @@ class BusinessProfile {
     double? distance,
     double? rating,
     bool? isApproved,
+    String? phone,
   }) {
     return BusinessProfile(
       id: id ?? this.id,
@@ -181,6 +186,7 @@ class BusinessProfile {
       distance: distance ?? this.distance,
       rating: rating ?? this.rating,
       isApproved: isApproved ?? this.isApproved,
+      phone: phone ?? this.phone,
     );
   }
 }

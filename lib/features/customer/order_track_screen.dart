@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
@@ -53,7 +55,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
   @override
   void initState() {
     super.initState();
-    _riderName = widget.initialRiderName ?? 'Rober Jr.';
+    _riderName = widget.initialRiderName ?? (widget.order?.courierName?.isNotEmpty == true ? widget.order!.courierName! : 'Assigned Courier');
     _routePoints = [
       _restaurantLoc,
       LatLng(5.5650, -0.1790),
@@ -505,14 +507,132 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
             ),
             icon: const Icon(Icons.call_rounded, size: 16),
             label: const Text('Dial Now'),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('📞 Dialing $_riderName ($_riderPhone)...'),
-                  backgroundColor: AppTheme.primaryGreen,
-                ),
-              );
+              final cleanPhone = _riderPhone.replaceAll(RegExp(r'[^0-9+]'), '');
+              final uri = Uri.parse('tel:$cleanPhone');
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri);
+              } else {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('📞 Dialing $_riderName ($_riderPhone)...'),
+                    backgroundColor: AppTheme.primaryGreen,
+                  ),
+                );
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showStoreCallDialog(String storeName, String storePhone) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: const BoxDecoration(
+                color: AppTheme.lightGreenBg,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.store_rounded, color: AppTheme.primaryGreen, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Call $storeName',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Connect directly with the store for collection directions, opening hours, or pack inquiries.',
+              style: TextStyle(fontSize: 13, color: AppTheme.charcoal, height: 1.4),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.phone_rounded, color: AppTheme.primaryGreen, size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SelectableText(
+                      storePhone,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 17,
+                        color: AppTheme.charcoal,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.copy_rounded, size: 18, color: AppTheme.mutedGrey),
+                    tooltip: 'Copy Number',
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: storePhone));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('📋 Store phone number copied!'),
+                          backgroundColor: AppTheme.primaryGreen,
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close', style: TextStyle(color: AppTheme.mutedGrey)),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryGreen,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            ),
+            icon: const Icon(Icons.call_rounded, size: 16),
+            label: const Text('Call Now', style: TextStyle(fontWeight: FontWeight.bold)),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final cleanPhone = storePhone.replaceAll(RegExp(r'[^0-9+]'), '');
+              final uri = Uri.parse('tel:$cleanPhone');
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri);
+              } else {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('📞 Calling $storePhone...'),
+                    backgroundColor: AppTheme.primaryGreen,
+                  ),
+                );
+              }
             },
           ),
         ],
@@ -540,7 +660,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
         ? businessName
         : (order.courierName?.isNotEmpty == true ? order.courierName! : (widget.initialRiderName ?? 'Assigned Courier'));
     final displayPhone = isPickup
-        ? (business?.location ?? 'Store Front')
+        ? (business?.phone.isNotEmpty == true ? business!.phone : '+233 24 412 3456')
         : (order.courierPhone?.isNotEmpty == true ? order.courierPhone! : _riderPhone);
 
     final status = order?.status ?? 'reserved';
@@ -978,16 +1098,12 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                       ),
                       if (isPickup)
                         ElevatedButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('📞 Connecting with $businessName ($displayPhone)...'),
-                                backgroundColor: AppTheme.primaryGreen,
-                              ),
-                            );
-                          },
+                          onPressed: () => _showStoreCallDialog(businessName, displayPhone),
                           icon: const Icon(Icons.call_rounded, size: 14),
-                          label: const Text('Call Store', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          label: Text(
+                            'Call Store ($displayPhone)',
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primaryGreen,
                             foregroundColor: Colors.white,

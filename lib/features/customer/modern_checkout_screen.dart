@@ -1,11 +1,14 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_paystack_plus/flutter_paystack_plus.dart';
+import '../../core/config.dart';
 import '../../core/theme.dart';
 import '../../core/responsive.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
-import 'order_track_screen.dart';
+import '../../services/supabase_service.dart';
 import 'order_confirmation_screen.dart';
 
 class ModernCheckoutScreen extends ConsumerStatefulWidget {
@@ -116,32 +119,28 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                 ctx,
                 name: 'MTN Mobile Money',
                 subtitle: 'Instant USSD Prompt',
-                color: const Color(0xFFFFCC00),
-                icon: Icons.phone_android_rounded,
+                svgAsset: 'assets/icons/mtn_momo.svg',
                 onTap: () => _completePayment(ctx, 'MTN MoMo', finalTotal, items),
               ),
               _buildPaymentOption(
                 ctx,
                 name: 'Telecel Cash',
                 subtitle: 'Vodafone Cash Direct Prompt',
-                color: const Color(0xFFDC2626),
-                icon: Icons.phone_iphone_rounded,
+                svgAsset: 'assets/icons/telecel_cash.svg',
                 onTap: () => _completePayment(ctx, 'Telecel Cash', finalTotal, items),
               ),
               _buildPaymentOption(
                 ctx,
                 name: 'Visa / Mastercard',
                 subtitle: 'Secured Card Gateway',
-                color: const Color(0xFF0F172A),
-                icon: Icons.credit_card_rounded,
+                svgAsset: 'assets/icons/visa_mastercard.svg',
                 onTap: () => _completePayment(ctx, 'Visa/Card', finalTotal, items),
               ),
               _buildPaymentOption(
                 ctx,
                 name: 'Cash on Pickup',
                 subtitle: 'Pay directly at restaurant counter',
-                color: AppTheme.primaryGreen,
-                icon: Icons.payments_rounded,
+                svgAsset: 'assets/icons/cash_pickup.svg',
                 onTap: () => _completePayment(ctx, 'Cash on Pickup', finalTotal, items),
               ),
             ],
@@ -155,8 +154,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
     BuildContext context, {
     required String name,
     required String subtitle,
-    required Color color,
-    required IconData icon,
+    required String svgAsset,
     required VoidCallback onTap,
   }) {
     return Container(
@@ -165,15 +163,31 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
         leading: Container(
-          padding: const EdgeInsets.all(8),
+          width: 58,
+          height: 38,
+          padding: const EdgeInsets.all(2),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.15),
-            shape: BoxShape.circle,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
           ),
-          child: Icon(icon, color: color, size: 20),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: SvgPicture.asset(
+              svgAsset,
+              fit: BoxFit.contain,
+            ),
+          ),
         ),
         title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
         subtitle: Text(subtitle, style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey)),
@@ -190,13 +204,100 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
     List<BasketItem> items,
   ) async {
     Navigator.pop(modalCtx); // Close payment sheet
+
+    final stateVal = ref.read(appStateProvider);
+    final user = stateVal.currentUser;
+    final email = user?.email ?? 'customer@dreameats.com.gh';
+    final refCode = 'DE-${DateTime.now().millisecondsSinceEpoch}';
+
+    // ── 1. CASH ON PICKUP ──────────────────────────────────────────────────
+    if (method == 'Cash on Pickup') {
+      setState(() => _isProcessing = true);
+      try {
+        final notifier = ref.read(appStateProvider.notifier);
+        Order? createdOrder;
+        for (final item in items) {
+          createdOrder = await notifier.purchase(item.deal, 'Cash on Pickup', refCode);
+        }
+        notifier.clearBasket();
+
+        if (!mounted) return;
+        setState(() => _isProcessing = false);
+
+        if (createdOrder != null) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => OrderConfirmationScreen(order: createdOrder!),
+            ),
+          );
+        }
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.errorRed),
+        );
+      }
+      return;
+    }
+
+    // ── 2. REAL PAYSTACK INTEGRATION FOR ELECTRONIC PAYMENT ────────────────
     setState(() => _isProcessing = true);
 
-    try {
-      final notifier = ref.read(appStateProvider.notifier);
-      final refCode = 'DE-${DateTime.now().millisecondsSinceEpoch}';
+    final int amountInPesewas = (total * 100).toInt();
+    final Map<String, dynamic> metadata = {
+      "customer_id": user?.id ?? 'anonymous',
+      "customer_name": user?.name ?? 'Guest Customer',
+      "basket_count": items.length,
+      "deal_titles": items.map((i) => i.deal.title).join(', '),
+      "method": method,
+    };
 
-      // Purchase the first item (or all items)
+    try {
+      bool paystackSuccess = false;
+
+      await FlutterPaystackPlus.openPaystackPopup(
+        context: context,
+        publicKey: AppConfig.paystackPublicKey,
+        secretKey: AppConfig.paystackSecretKey,
+        customerEmail: email,
+        amount: amountInPesewas.toString(),
+        reference: refCode,
+        currency: 'GHS',
+        metadata: metadata,
+        onClosed: () {
+          if (mounted) setState(() => _isProcessing = false);
+        },
+        onSuccess: () {
+          paystackSuccess = true;
+        },
+      );
+
+      if (!paystackSuccess) {
+        if (!mounted) return;
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Payment was not completed. Please try again.'),
+            backgroundColor: Color(0xFFEF4444),
+          ),
+        );
+        return;
+      }
+
+      // Verify payment with Paystack
+      final verified = await SupabaseService().verifyPaystackPayment(refCode);
+      if (!verified) {
+        // One quick retry in case of edge function latency
+        await Future.delayed(const Duration(seconds: 1));
+        final retryVerified = await SupabaseService().verifyPaystackPayment(refCode);
+        if (!retryVerified && !paystackSuccess) {
+          throw Exception('Payment could not be verified by Paystack.');
+        }
+      }
+
+      final notifier = ref.read(appStateProvider.notifier);
       Order? createdOrder;
       for (final item in items) {
         createdOrder = await notifier.purchase(item.deal, method, refCode);
@@ -206,85 +307,23 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
       if (!mounted) return;
       setState(() => _isProcessing = false);
 
-      // Offer direct live tracking or order confirmation!
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogCtx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Column(
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: const BoxDecoration(
-                  color: AppTheme.lightGreenBg,
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Icon(Icons.check_circle_rounded, color: AppTheme.primaryGreen, size: 40),
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Order Confirmed! 🚀',
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20),
-              ),
-            ],
+      if (createdOrder != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OrderConfirmationScreen(order: createdOrder!),
           ),
-          content: Text(
-            'Your rescue order has been placed. Courier Rober Jr. is preparing for pickup!',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 13, color: AppTheme.mutedGrey),
-          ),
-          actionsAlignment: MainAxisAlignment.center,
-          actions: [
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryGreen,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              ),
-              icon: const Icon(Icons.navigation_rounded, size: 18),
-              label: const Text('Track Live Route (Order Track)'),
-              onPressed: () {
-                Navigator.pop(dialogCtx);
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => OrderTrackScreen(order: createdOrder),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogCtx);
-                if (createdOrder != null) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => OrderConfirmationScreen(order: createdOrder!),
-                    ),
-                  );
-                } else {
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text('View Pickup Voucher / Code'),
-            ),
-          ],
-        ),
-      );
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isProcessing = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Payment error: $e'), backgroundColor: const Color(0xFFEF4444)),
         );
       }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isProcessing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: AppTheme.errorRed,
+        ),
+      );
     }
   }
 

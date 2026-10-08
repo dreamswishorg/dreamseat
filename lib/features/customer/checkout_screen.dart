@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_paystack_plus/flutter_paystack_plus.dart';
 import '../../core/theme.dart';
 import '../../core/responsive.dart';
@@ -33,7 +34,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       'subtitle': 'Instant USSD Prompt',
       'color': const Color(0xFFFFCC00),
       'icon': Icons.phone_android_rounded,
-      'logo_asset': 'assets/icons/mtn_momo.png',
+      'logo_asset': 'assets/icons/mtn_momo.svg',
       'bg_tint': const Color(0xFFFFFBEB),
       'border_color': const Color(0xFFF59E0B),
     },
@@ -42,7 +43,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       'subtitle': 'Vodafone Cash Prompt',
       'color': const Color(0xFFDC2626),
       'icon': Icons.phone_iphone_rounded,
-      'logo_asset': 'assets/icons/telecel_cash.png',
+      'logo_asset': 'assets/icons/telecel_cash.svg',
       'bg_tint': const Color(0xFFFEF2F2),
       'border_color': const Color(0xFFEF4444),
     },
@@ -51,7 +52,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       'subtitle': 'AT Money Prompt',
       'color': const Color(0xFF1D4ED8),
       'icon': Icons.smartphone_rounded,
-      'logo_asset': 'assets/icons/airteltigo_money.png',
+      'logo_asset': 'assets/icons/airteltigo_money.svg',
       'bg_tint': const Color(0xFFEFF6FF),
       'border_color': const Color(0xFF3B82F6),
     },
@@ -60,9 +61,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       'subtitle': 'Secured Card Gateway',
       'color': const Color(0xFF0F172A),
       'icon': Icons.credit_card_rounded,
-      'logo_asset': 'assets/icons/visa_mastercard.jpg',
+      'logo_asset': 'assets/icons/visa_mastercard.svg',
       'bg_tint': const Color(0xFFF8FAFC),
       'border_color': const Color(0xFF334155),
+    },
+    {
+      'name': 'Cash on Pickup',
+      'subtitle': 'Pay directly at restaurant counter',
+      'color': AppTheme.primaryGreen,
+      'icon': Icons.payments_rounded,
+      'logo_asset': 'assets/icons/cash_pickup.svg',
+      'bg_tint': const Color(0xFFE8F5E9),
+      'border_color': AppTheme.primaryGreen,
     },
   ];
 
@@ -159,13 +169,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 reference,
               );
         } else {
-          try {
-            order = await ref.read(appStateProvider.notifier).purchase(
-                  widget.deal,
-                  _selectedProvider,
-                  reference,
-                );
-          } catch (_) {}
+          throw Exception('Payment was not confirmed by Paystack. Please check your phone for the prompt and try again.');
         }
       }
 
@@ -803,11 +807,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(5),
-                  child: Image.asset(
+                  child: SvgPicture.asset(
                     p['logo_asset'] as String,
                     fit: BoxFit.contain,
-                    errorBuilder: (context, error, stack) =>
-                        Icon(p['icon'] as IconData, color: color, size: 20),
                   ),
                 ),
               )
@@ -941,11 +943,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(6),
-                        child: Image.asset(
+                        child: SvgPicture.asset(
                           p['logo_asset'] as String,
                           fit: BoxFit.contain,
-                          errorBuilder: (context, error, stack) =>
-                              Icon(p['icon'] as IconData, color: color, size: 22),
                         ),
                       ),
                     )

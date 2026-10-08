@@ -169,14 +169,25 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
+                              color: Colors.black.withValues(alpha: 0.12),
                               blurRadius: 10,
                             ),
                           ],
                         ),
                         child: IconButton(
                           icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.charcoal),
-                          onPressed: () => Navigator.maybePop(context),
+                          tooltip: 'Back to Home',
+                          onPressed: () {
+                            // Reset map zoom
+                            try {
+                              _mapController.move(_kAccra, 13.5);
+                            } catch (_) {}
+                            if (Navigator.canPop(context)) {
+                              Navigator.pop(context);
+                            } else {
+                              ref.read(customerTabProvider.notifier).state = 0;
+                            }
+                          },
                         ),
                       ),
                       const Spacer(),
