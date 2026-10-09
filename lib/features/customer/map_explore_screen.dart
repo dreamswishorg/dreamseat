@@ -329,10 +329,10 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
             ),
           ),
 
-          // ── 3. TOP FLOATING RESTAURANT PREVIEW CARD ────────────────────
+          // ── 3. BOTTOM FLOATING RESTAURANT PREVIEW CARD ─────────────────
           if (_selectedIndex >= 0 && _selectedIndex < filteredBusinesses.length) ...[
             Positioned(
-              top: 156,
+              bottom: 16,
               left: 16,
               right: 16,
               child: _buildTopRestaurantCard(

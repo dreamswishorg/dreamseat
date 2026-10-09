@@ -14,8 +14,7 @@ import 'search_filter_screen.dart';
 import 'merchant_storefront.dart';
 import 'home_shimmer.dart';
 import 'order_track_screen.dart';
-import 'basket_screen.dart';
-import 'loyalty_referral_screen.dart';
+import 'order_history_screen.dart';
 
 class UserLocation {
   final String address;
@@ -487,6 +486,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   }
 
   Widget _buildModernGreenHeader(BuildContext context, UserLocation userLocation, int basketCount, String? customerName) {
+    final activeOrders = ref.watch(appStateProvider.select((s) => s.orders.where((o) => o.status == 'confirmed' || o.status == 'ready' || o.status == 'pending').toList()));
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
@@ -546,37 +546,44 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
               ),
               Row(
                 children: [
-                  // Shopping Bag in White Circle with Red Badge
+                  // Orders & History in White Circle with Active Orders Badge
                   GestureDetector(
                     onTap: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const BasketScreen()),
+                      MaterialPageRoute(builder: (_) => const OrderHistoryScreen()),
                     ),
                     child: Container(
                       width: 38,
                       height: 38,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          const Icon(Icons.shopping_bag_outlined, color: AppTheme.charcoal, size: 20),
-                          if (basketCount > 0)
+                          const Icon(Icons.receipt_long_rounded, color: AppTheme.charcoal, size: 20),
+                          if (activeOrders.isNotEmpty)
                             Positioned(
                               top: 2,
                               right: 2,
                               child: Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: const BoxDecoration(
-                                  color: Color(0xFFEF4444),
+                                  color: AppTheme.primaryGreen,
                                   shape: BoxShape.circle,
                                 ),
                                 constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                                 child: Center(
                                   child: Text(
-                                    '$basketCount',
+                                    '${activeOrders.length}',
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 9,
@@ -592,27 +599,14 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  // User Avatar with Red/Coral Ring
-                  GestureDetector(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const LoyaltyReferralScreen()),
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFFEF4444), width: 2),
-                      ),
-                      child: CircleAvatar(
-                        radius: 17,
-                        backgroundColor: const Color(0xFFFED7AA),
-                        child: Text(
-                          customerName?.isNotEmpty == true ? customerName![0].toUpperCase() : '👨🏽',
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFC2410C), fontSize: 13),
-                        ),
-                      ),
-                    ),
+                  // User Avatar Profile Picture with Auto-Collapsing MenuAnchor Dropdown
+                  buildCustomerAvatarMenuAnchor(
+                    context: context,
+                    ref: ref,
+                    radius: 17,
+                    showRing: true,
+                    ringColor: const Color(0xFFEF4444),
+                    alignmentOffset: const Offset(-180, 8),
                   ),
                 ],
               ),

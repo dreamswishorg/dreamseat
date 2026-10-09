@@ -1,9 +1,12 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme.dart';
 import '../providers/app_state.dart';
 import '../features/customer/customer_profile.dart';
 import '../features/customer/customer_settings_screen.dart';
+import '../features/customer/order_history_screen.dart';
+import '../features/customer/loyalty_referral_screen.dart';
 import '../features/common/notification_screen.dart';
 import '../features/common/help_support_screen.dart';
 
@@ -17,18 +20,8 @@ AppBar buildCustomerAppBar({
   required WidgetRef ref,
   List<Widget>? extraActions,
 }) {
-  final state = ref.watch(appStateProvider);
-  final initials = state.currentUser?.name.isNotEmpty == true 
-      ? state.currentUser!.name[0].toUpperCase() 
-      : '';
-  final avatarUrl = state.currentUser?.avatarUrl;
-
   final isDark = Theme.of(context).brightness == Brightness.dark;
   final appBarBg = isDark ? const Color(0xFF0F172A) : Colors.white;
-  final menuBg = isDark ? const Color(0xFF1E293B) : Colors.white;
-  final textColor = isDark ? Colors.white : AppTheme.charcoal;
-  final subtextColor = isDark ? const Color(0xFF94A3B8) : AppTheme.mutedGrey;
-  final borderColor = isDark ? Colors.white.withValues(alpha: 0.1) : AppTheme.charcoal.withValues(alpha: 0.08);
 
   return AppBar(
     backgroundColor: appBarBg,
@@ -37,232 +30,9 @@ AppBar buildCustomerAppBar({
     actions: [
       ...?extraActions,
       buildNotificationMenuAnchor(context, ref),
-      MenuAnchor(
-        alignmentOffset: const Offset(-185, 8),
-        style: MenuStyle(
-          backgroundColor: WidgetStateProperty.all(menuBg),
-          elevation: WidgetStateProperty.all(12),
-          padding: WidgetStateProperty.all(EdgeInsets.zero),
-          shape: WidgetStateProperty.all(
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: BorderSide(color: borderColor),
-            ),
-          ),
-        ),
-        builder: (context, controller, child) {
-          return GestureDetector(
-            onTap: () =>
-                controller.isOpen ? controller.close() : controller.open(),
-            child: Padding(
-              padding: const EdgeInsets.only(right: 16.0, left: 6.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                      color: AppTheme.primaryGreen.withValues(alpha: 0.15),
-                      width: 1.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryGreen.withValues(alpha: 0.05),
-                      blurRadius: 4,
-                      spreadRadius: 1,
-                    )
-                  ],
-                ),
-                child: CircleAvatar(
-                  backgroundColor: isDark ? const Color(0xFF1E293B) : AppTheme.lightGreenBg,
-                  radius: 18,
-                  backgroundImage: avatarUrl != null
-                      ? NetworkImage(avatarUrl)
-                      : null,
-                  child: avatarUrl != null
-                      ? null
-                      : initials.isNotEmpty
-                          ? Text(
-                              initials,
-                              style: const TextStyle(
-                                color: AppTheme.primaryGreen,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            )
-                          : const Icon(Icons.person,
-                              color: AppTheme.primaryGreen, size: 16),
-                ),
-              ),
-            ),
-          );
-        },
-        menuChildren: [
-          Container(
-            width: 220,
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // User Info Block (Compact)
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: avatarUrl == null
-                              ? const LinearGradient(
-                                  colors: [Color(0xFF0F5B3C), Color(0xFF003D27)],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                )
-                              : null,
-                          image: avatarUrl != null
-                              ? DecorationImage(
-                                  image: NetworkImage(avatarUrl),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                        ),
-                        child: avatarUrl == null
-                            ? Center(
-                                child: Text(
-                                  initials,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              )
-                            : null,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              state.currentUser?.name ?? 'Guest',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 14,
-                                color: textColor,
-                                letterSpacing: -0.3,
-                              ),
-                            ),
-                            Text(
-                              state.currentUser?.email ?? '',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 10.5,
-                                color: subtextColor,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 6),
-
-                // DreamPoints Compact Pill
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 12),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF0F291E) : AppTheme.lightGreenBg,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: AppTheme.primaryGreen.withValues(alpha: 0.12)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.stars_rounded,
-                              color: AppTheme.primaryGreen, size: 16),
-                          SizedBox(width: 6),
-                          Text(
-                            "Points Balance",
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.primaryGreen,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        "${state.customerDreamPoints}p",
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w900,
-                          color: textColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Divider(
-                    height: 1,
-                    color: borderColor),
-                const SizedBox(height: 4),
-
-                _buildMenuItem(
-                  context,
-                  icon: Icons.person_outline_rounded,
-                  label: "Profile",
-                  onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const CustomerProfileScreen())),
-                ),
-                _buildMenuItem(
-                  context,
-                  icon: Icons.tune_rounded,
-                  label: "Settings",
-                  onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const CustomerSettingsScreen())),
-                ),
-                _buildMenuItem(
-                  context,
-                  icon: Icons.headset_mic_outlined,
-                  label: "Support",
-                  onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const HelpSupportScreen())),
-                ),
-
-                const SizedBox(height: 4),
-                Divider(
-                    height: 1,
-                    color: AppTheme.charcoal.withValues(alpha: 0.08)),
-                const SizedBox(height: 4),
-
-                _buildMenuItem(
-                  context,
-                  icon: Icons.logout_rounded,
-                  label: "Log Out",
-                  color: AppTheme.errorRed,
-                  onTap: () => showModernLogoutConfirmDialog(context, () => ref.read(appStateProvider.notifier).signOut()),
-                ),
-              ],
-            ),
-          ),
-        ],
+      Padding(
+        padding: const EdgeInsets.only(right: 16.0, left: 6.0),
+        child: buildCustomerAvatarMenuAnchor(context: context, ref: ref),
       ),
     ],
     bottom: PreferredSize(
@@ -276,6 +46,296 @@ AppBar buildCustomerAppBar({
   );
 }
 
+/// Reusable User Avatar with MenuAnchor that displays avatarUrl image
+/// and automatically collapses the dropdown when any option is selected.
+Widget buildCustomerAvatarMenuAnchor({
+  required BuildContext context,
+  required WidgetRef ref,
+  double radius = 18,
+  bool showRing = false,
+  Color? ringColor,
+  Offset alignmentOffset = const Offset(-185, 8),
+}) {
+  final state = ref.watch(appStateProvider);
+  final user = state.currentUser;
+  final initials = (user?.name.isNotEmpty == true)
+      ? user!.name[0].toUpperCase()
+      : '';
+  final avatarUrl = user?.avatarUrl;
+
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final menuBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+  final textColor = isDark ? Colors.white : AppTheme.charcoal;
+  final subtextColor = isDark ? const Color(0xFF94A3B8) : AppTheme.mutedGrey;
+  final borderColor = isDark
+      ? Colors.white.withValues(alpha: 0.1)
+      : AppTheme.charcoal.withValues(alpha: 0.08);
+
+  final menuCtrl = MenuController();
+
+  return MenuAnchor(
+    controller: menuCtrl,
+    alignmentOffset: alignmentOffset,
+    style: MenuStyle(
+      backgroundColor: WidgetStateProperty.all(menuBg),
+      elevation: WidgetStateProperty.all(14),
+      padding: WidgetStateProperty.all(EdgeInsets.zero),
+      shape: WidgetStateProperty.all(
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: borderColor),
+        ),
+      ),
+    ),
+    builder: (context, controller, child) {
+      return GestureDetector(
+        onTap: () => controller.isOpen ? controller.close() : controller.open(),
+        child: Container(
+          padding: EdgeInsets.all(showRing ? 2 : 0),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: showRing && ringColor != null
+                ? Border.all(color: ringColor, width: 2)
+                : Border.all(
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.15),
+                    width: 1.5,
+                  ),
+            boxShadow: [
+              BoxShadow(
+                color: (ringColor ?? AppTheme.primaryGreen).withValues(alpha: 0.12),
+                blurRadius: 4,
+                spreadRadius: 1,
+              )
+            ],
+          ),
+          child: CircleAvatar(
+            backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFFED7AA),
+            radius: radius,
+            child: (avatarUrl != null && avatarUrl.trim().isNotEmpty)
+                ? ClipOval(
+                    child: CachedNetworkImage(
+                      imageUrl: avatarUrl,
+                      width: radius * 2,
+                      height: radius * 2,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Center(
+                        child: Text(
+                          initials.isNotEmpty ? initials : '👤',
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFC2410C), fontSize: 13),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Center(
+                        child: Text(
+                          initials.isNotEmpty ? initials : '👤',
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFC2410C), fontSize: 13),
+                        ),
+                      ),
+                    ),
+                  )
+                : Text(
+                    initials.isNotEmpty ? initials : '👤',
+                    style: TextStyle(
+                      color: isDark ? AppTheme.primaryGreen : const Color(0xFFC2410C),
+                      fontWeight: FontWeight.bold,
+                      fontSize: radius * 0.75,
+                    ),
+                  ),
+          ),
+        ),
+      );
+    },
+    menuChildren: [
+      Container(
+        width: 220,
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // User Info Block (Compact)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: const BoxDecoration(shape: BoxShape.circle),
+                    child: ClipOval(
+                      child: (avatarUrl != null && avatarUrl.trim().isNotEmpty)
+                          ? CachedNetworkImage(
+                              imageUrl: avatarUrl,
+                              fit: BoxFit.cover,
+                              errorWidget: (context, url, error) => CircleAvatar(
+                                backgroundColor: AppTheme.primaryGreen,
+                                child: Text(initials,
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold)),
+                              ),
+                            )
+                          : CircleAvatar(
+                              backgroundColor: AppTheme.primaryGreen,
+                              child: Text(initials,
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold)),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user?.name ?? 'Guest',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                            color: textColor,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        Text(
+                          user?.email ?? '',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            color: subtextColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
+
+            // DreamPoints Compact Pill
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0F291E) : AppTheme.lightGreenBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.12)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.stars_rounded,
+                          color: AppTheme.primaryGreen, size: 16),
+                      SizedBox(width: 6),
+                      Text(
+                        "Points Balance",
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.primaryGreen,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    "${state.customerDreamPoints}p",
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w900,
+                      color: textColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Divider(height: 1, color: borderColor),
+            const SizedBox(height: 4),
+
+            _buildMenuItem(
+              context,
+              controller: menuCtrl,
+              icon: Icons.person_outline_rounded,
+              label: "Profile",
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const CustomerProfileScreen()),
+              ),
+            ),
+            _buildMenuItem(
+              context,
+              controller: menuCtrl,
+              icon: Icons.receipt_long_rounded,
+              label: "Orders & History",
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const OrderHistoryScreen()),
+              ),
+            ),
+            _buildMenuItem(
+              context,
+              controller: menuCtrl,
+              icon: Icons.card_giftcard_rounded,
+              label: "Rewards & Referral",
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const LoyaltyReferralScreen()),
+              ),
+            ),
+            _buildMenuItem(
+              context,
+              controller: menuCtrl,
+              icon: Icons.tune_rounded,
+              label: "Settings",
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const CustomerSettingsScreen()),
+              ),
+            ),
+            _buildMenuItem(
+              context,
+              controller: menuCtrl,
+              icon: Icons.headset_mic_outlined,
+              label: "Support",
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const HelpSupportScreen()),
+              ),
+            ),
+
+            const SizedBox(height: 4),
+            Divider(height: 1, color: borderColor),
+            const SizedBox(height: 4),
+
+            _buildMenuItem(
+              context,
+              controller: menuCtrl,
+              icon: Icons.logout_rounded,
+              label: "Log Out",
+              color: AppTheme.errorRed,
+              onTap: () => showModernLogoutConfirmDialog(
+                context,
+                () => ref.read(appStateProvider.notifier).signOut(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
 Widget buildNotificationMenuAnchor(BuildContext context, WidgetRef ref, {Color? iconColor}) {
   final state = ref.watch(appStateProvider);
   final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -284,7 +344,10 @@ Widget buildNotificationMenuAnchor(BuildContext context, WidgetRef ref, {Color? 
   final subtextColor = isDark ? const Color(0xFF94A3B8) : AppTheme.mutedGrey;
   final borderColor = isDark ? Colors.white.withValues(alpha: 0.1) : AppTheme.charcoal.withValues(alpha: 0.08);
 
+  final notifCtrl = MenuController();
+
   return MenuAnchor(
+    controller: notifCtrl,
     alignmentOffset: const Offset(-185, 8),
     style: MenuStyle(
       backgroundColor: WidgetStateProperty.all(menuBg),
@@ -400,6 +463,7 @@ Widget buildNotificationMenuAnchor(BuildContext context, WidgetRef ref, {Color? 
               const SizedBox(height: 4),
               ElevatedButton(
                 onPressed: () {
+                  if (notifCtrl.isOpen) notifCtrl.close();
                   Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationScreen()));
                 },
                 style: ElevatedButton.styleFrom(
@@ -440,13 +504,19 @@ Widget _buildMenuItem(
   required IconData icon,
   required String label,
   required VoidCallback onTap,
+  MenuController? controller,
   Color? color,
 }) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
   final defaultColor = isDark ? Colors.white : AppTheme.charcoal;
 
   return InkWell(
-    onTap: onTap,
+    onTap: () {
+      if (controller != null && controller.isOpen) {
+        controller.close();
+      }
+      onTap();
+    },
     child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8.5),
       child: Row(

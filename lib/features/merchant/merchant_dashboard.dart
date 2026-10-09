@@ -175,8 +175,12 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
         ),
         actions: [
           buildNotificationMenuAnchor(context, ref, iconColor: wide ? AppTheme.charcoal : Colors.white),
-          MenuAnchor(
-            alignmentOffset: const Offset(-185, 8),
+          Builder(
+            builder: (context) {
+              final menuCtrl = MenuController();
+              return MenuAnchor(
+                controller: menuCtrl,
+                alignmentOffset: const Offset(-185, 8),
             style: MenuStyle(
               backgroundColor: WidgetStateProperty.all(Colors.white),
               elevation: WidgetStateProperty.all(12),
@@ -338,12 +342,14 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
 
                     _buildMerchantMenuItem(
                       context,
+                      controller: menuCtrl,
                       icon: Icons.storefront_rounded,
                       label: "Business Profile",
                       onTap: () => setState(() => _currentTab = 4),
                     ),
                     _buildMerchantMenuItem(
                       context,
+                      controller: menuCtrl,
                       icon: Icons.help_outline_rounded,
                       label: "Help & Support",
                       onTap: () => Navigator.push(
@@ -358,6 +364,7 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
 
                     _buildMerchantMenuItem(
                       context,
+                      controller: menuCtrl,
                       icon: Icons.logout_rounded,
                       label: "Log Out",
                       color: AppTheme.errorRed,
@@ -367,7 +374,9 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
                 ),
               ),
             ],
-          ),
+          );
+        },
+      ),
         ],
       );
 
@@ -2047,10 +2056,16 @@ Widget _buildMerchantMenuItem(
   required IconData icon,
   required String label,
   required VoidCallback onTap,
+  MenuController? controller,
   Color? color,
 }) {
   return InkWell(
-    onTap: onTap,
+    onTap: () {
+      if (controller != null && controller.isOpen) {
+        controller.close();
+      }
+      onTap();
+    },
     child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8.5),
       child: Row(

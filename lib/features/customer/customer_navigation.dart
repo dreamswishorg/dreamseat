@@ -6,9 +6,8 @@ import '../../providers/app_state.dart';
 import 'customer_home.dart';
 import 'map_explore_screen.dart';
 import 'impact_screen.dart';
-import 'loyalty_referral_screen.dart';
-import 'order_history_screen.dart';
 import 'basket_screen.dart';
+import 'customer_profile.dart';
 
 import '../admin/admin_dashboard.dart';
 
@@ -38,8 +37,8 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
     const CustomerHomeScreen(),
     const MapExploreScreen(),
     const ImpactScreen(),
-    const OrderHistoryScreen(),
-    const LoyaltyReferralScreen(),
+    const BasketScreen(),
+    const CustomerProfileScreen(),
   ];
 
   @override
@@ -87,8 +86,8 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
                     SideNavItem(icon: Icons.explore_outlined, activeIcon: Icons.explore, label: 'Explore'),
                     SideNavItem(icon: Icons.map_outlined, activeIcon: Icons.map_rounded, label: 'Map Explore'),
                     SideNavItem(icon: Icons.eco_outlined, activeIcon: Icons.eco_rounded, label: 'Impact'),
-                    SideNavItem(icon: Icons.receipt_long_outlined, activeIcon: Icons.receipt_long, label: 'Orders'),
-                    SideNavItem(icon: Icons.stars_outlined, activeIcon: Icons.stars, label: 'Rewards'),
+                    SideNavItem(icon: Icons.shopping_basket_outlined, activeIcon: Icons.shopping_basket, label: 'Basket'),
+                    SideNavItem(icon: Icons.person_outline_rounded, activeIcon: Icons.person, label: 'Profile'),
                   ],
                   footer: basketCount > 0
                       ? (_isSideNavCollapsed
@@ -220,7 +219,7 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
       _PillNavItem(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Home'),
       _PillNavItem(icon: Icons.search_rounded, activeIcon: Icons.search_rounded, label: 'Map'),
       _PillNavItem(icon: Icons.eco_outlined, activeIcon: Icons.eco_rounded, label: 'Impact'),
-      _PillNavItem(icon: Icons.shopping_bag_outlined, activeIcon: Icons.shopping_bag_rounded, label: 'Orders'),
+      _PillNavItem(icon: Icons.shopping_basket_outlined, activeIcon: Icons.shopping_basket_rounded, label: 'Basket'),
       _PillNavItem(icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Profile'),
     ];
 

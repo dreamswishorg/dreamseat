@@ -105,7 +105,11 @@ class TermsOfServiceScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 8,
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -126,7 +130,6 @@ class TermsOfServiceScreen extends StatelessWidget {
                               ],
                             ),
                           ),
-                          const Spacer(),
                           Text(
                             "Updated October 2026",
                             style: TextStyle(fontSize: 12, color: secondaryText, fontWeight: FontWeight.w600),
@@ -364,7 +367,11 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 8,
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -385,7 +392,6 @@ class PrivacyPolicyScreen extends StatelessWidget {
                               ],
                             ),
                           ),
-                          const Spacer(),
                           Text(
                             "Compliant with Act 843",
                             style: TextStyle(fontSize: 12, color: secondaryText, fontWeight: FontWeight.w600),
