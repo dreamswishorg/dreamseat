@@ -215,7 +215,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final user = stateVal.currentUser;
     final email = user?.email ?? 'customer@dreameats.com.gh';
     final double amount = widget.deal.discountedPrice;
-    final int amountInPesewas = (amount * 100).toInt();
+    final int amountInPesewas = (amount * 100).round();
     final String reference = 'DE-${DateTime.now().millisecondsSinceEpoch}';
 
     final Map<String, dynamic> metadata = {

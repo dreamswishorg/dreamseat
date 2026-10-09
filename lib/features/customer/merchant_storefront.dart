@@ -667,10 +667,10 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Text("GHS ${deal.discountedPrice.toStringAsFixed(0)}",
+                      Text("GHS ${AppTheme.formatPrice(deal.discountedPrice)}",
                           style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold, fontSize: 16)),
                       const SizedBox(width: 8),
-                      Text("GHS ${deal.originalPrice.toStringAsFixed(0)}",
+                      Text("GHS ${AppTheme.formatPrice(deal.originalPrice)}",
                           style: const TextStyle(decoration: TextDecoration.lineThrough, color: AppTheme.mutedGrey, fontSize: 12)),
                     ],
                   ),

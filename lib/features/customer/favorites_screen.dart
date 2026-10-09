@@ -291,12 +291,12 @@ class _BusinessDealsSheet extends ConsumerWidget {
                 Row(
                   children: [
                     Text(
-                      'GHS ${deal.originalPrice.toStringAsFixed(0)}',
+                      'GHS ${AppTheme.formatPrice(deal.originalPrice)}',
                       style: const TextStyle(decoration: TextDecoration.lineThrough, color: AppTheme.mutedGrey, fontSize: 10),
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'GHS ${deal.discountedPrice.toStringAsFixed(0)}',
+                      'GHS ${AppTheme.formatPrice(deal.discountedPrice)}',
                       style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.w800, fontSize: 14),
                     ),
                   ],

@@ -1217,7 +1217,7 @@ class _MerchantAnalyticsTabState extends ConsumerState<_MerchantAnalyticsTab> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          "$sold of ${deal.quantityTotal} sold ($selloutPct%) • GHS ${deal.discountedPrice.toStringAsFixed(0)} each",
+                          "$sold of ${deal.quantityTotal} sold ($selloutPct%) • GHS ${AppTheme.formatPrice(deal.discountedPrice)} each",
                           style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey),
                         ),
                       ],
@@ -1227,7 +1227,7 @@ class _MerchantAnalyticsTabState extends ConsumerState<_MerchantAnalyticsTab> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        "GHS ${revenue.toStringAsFixed(0)}",
+                        "GHS ${AppTheme.formatPrice(revenue)}",
                         style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppTheme.primaryGreen),
                       ),
                       const Text(
@@ -2451,7 +2451,7 @@ class _MerchantListingsTabState extends ConsumerState<_MerchantListingsTab> {
                                 children: [
                                   Row(children: [Text(deal.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.charcoal)), if (!deal.isActive) ...[const SizedBox(width: 8), Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: AppTheme.lightGrey, borderRadius: BorderRadius.circular(4)), child: const Text("PAUSED", style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: AppTheme.mutedGrey)))]]),
                                   const SizedBox(height: 4),
-                                  Row(children: [Text("GHS ${deal.originalPrice.toStringAsFixed(0)}", style: const TextStyle(decoration: TextDecoration.lineThrough, color: AppTheme.mutedGrey, fontSize: 11)), const SizedBox(width: 6), Text("GHS ${deal.discountedPrice.toStringAsFixed(0)}", style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.w900, fontSize: 15))]),
+                                  Row(children: [Text("GHS ${AppTheme.formatPrice(deal.originalPrice)}", style: const TextStyle(decoration: TextDecoration.lineThrough, color: AppTheme.mutedGrey, fontSize: 11)), const SizedBox(width: 6), Text("GHS ${AppTheme.formatPrice(deal.discountedPrice)}", style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.w900, fontSize: 15))]),
                                   const SizedBox(height: 8),
                                   Row(children: [Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: deal.quantityRemaining <= 2 ? AppTheme.errorRed.withValues(alpha: 0.1) : AppTheme.lightGreenBg, borderRadius: BorderRadius.circular(8)), child: Text("${deal.quantityRemaining} of ${deal.quantityTotal} left", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: deal.quantityRemaining <= 2 ? AppTheme.errorRed : AppTheme.primaryGreen))), if (deal.quantityRemaining > 0) ...[const SizedBox(width: 8), GestureDetector(onTap: () => _boostDeal(context, deal), child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: AppTheme.secondaryGreen.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: AppTheme.secondaryGreen.withValues(alpha: 0.3))), child: const Row(children: [Icon(Icons.bolt_rounded, size: 10, color: AppTheme.secondaryGreen), SizedBox(width: 4), Text("BOOST", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.secondaryGreen))])))]]),
                                 ],
@@ -2776,7 +2776,7 @@ class _MerchantOrdersTab extends ConsumerWidget {
                     ],
                   ),
                   Text(
-                    "GHS ${order.price.toStringAsFixed(0)}",
+                    "GHS ${AppTheme.formatPrice(order.price)}",
                     style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppTheme.charcoal),
                   ),
                 ],

@@ -1030,12 +1030,12 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                             Row(
                               children: [
                                 Text(
-                                  'GHS ${deal.discountedPrice.toStringAsFixed(0)}',
+                                  'GHS ${AppTheme.formatPrice(deal.discountedPrice)}',
                                   style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.w900, fontSize: 14),
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'GHS ${deal.originalPrice.toStringAsFixed(0)}',
+                                  'GHS ${AppTheme.formatPrice(deal.originalPrice)}',
                                   style: const TextStyle(decoration: TextDecoration.lineThrough, color: AppTheme.mutedGrey, fontSize: 11),
                                 ),
                                 const Spacer(),
@@ -1957,9 +1957,9 @@ class _DealCard extends ConsumerWidget {
                           children: [
                             Row(
                               children: [
-                                Text("GHS ${deal.discountedPrice.toStringAsFixed(0)}", style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.w900, fontSize: 19)),
+                                Text("GHS ${AppTheme.formatPrice(deal.discountedPrice)}", style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.w900, fontSize: 19)),
                                 const SizedBox(width: 8),
-                                Text("GHS ${deal.originalPrice.toStringAsFixed(0)}", style: TextStyle(decoration: TextDecoration.lineThrough, color: secondaryTextColor, fontSize: 13)),
+                                Text("GHS ${AppTheme.formatPrice(deal.originalPrice)}", style: TextStyle(decoration: TextDecoration.lineThrough, color: secondaryTextColor, fontSize: 13)),
                               ],
                             ),
                             const SizedBox(height: 4),

@@ -470,7 +470,7 @@ class _BasketItemCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          'GHS ${item.deal.discountedPrice.toStringAsFixed(0)}',
+                          'GHS ${AppTheme.formatPrice(item.deal.discountedPrice)}',
                           style: const TextStyle(
                             color: AppTheme.primaryGreen,
                             fontSize: 14,
@@ -479,7 +479,7 @@ class _BasketItemCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'GHS ${item.deal.originalPrice.toStringAsFixed(0)}',
+                          'GHS ${AppTheme.formatPrice(item.deal.originalPrice)}',
                           style: TextStyle(
                             color: AppTheme.mutedGrey.withValues(alpha: 0.6),
                             fontSize: 11,

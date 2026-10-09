@@ -257,7 +257,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
     // ── 2. REAL PAYSTACK INTEGRATION FOR ELECTRONIC PAYMENT ────────────────
     setState(() => _isProcessing = true);
 
-    final int amountInPesewas = (total * 100).toInt();
+    final int amountInPesewas = (total * 100).round();
     final Map<String, dynamic> metadata = {
       "customer_id": user?.id ?? 'anonymous',
       "customer_name": user?.name ?? 'Guest Customer',

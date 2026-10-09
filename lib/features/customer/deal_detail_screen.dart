@@ -229,7 +229,7 @@ class DealDetailScreen extends ConsumerWidget {
                                   textBaseline: TextBaseline.alphabetic,
                                   children: [
                                     Text(
-                                      "GHS ${deal.discountedPrice.toStringAsFixed(0)}",
+                                      "GHS ${AppTheme.formatPrice(deal.discountedPrice)}",
                                       style: const TextStyle(
                                         color: AppTheme.primaryGreen,
                                         fontSize: 32,
@@ -239,7 +239,7 @@ class DealDetailScreen extends ConsumerWidget {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      "GHS ${deal.originalPrice.toStringAsFixed(0)}",
+                                      "GHS ${AppTheme.formatPrice(deal.originalPrice)}",
                                       style: TextStyle(
                                         decoration: TextDecoration.lineThrough,
                                         color: AppTheme.mutedGrey.withValues(alpha: 0.5),

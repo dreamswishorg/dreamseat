@@ -129,6 +129,18 @@ class AppTheme {
 
   // Dark mode completely removed per user specification
   static ThemeData get darkTheme => lightTheme;
+
+  /// Formats a price in GHS. If there are pesewas (e.g. 0.10, 15.50), shows 2 decimal places.
+  /// If it is a whole number (>= 1 with no fractional part), shows whole cedis (e.g. 15, 50).
+  static String formatPrice(num price) {
+    final double val = price.toDouble();
+    if (val == 0) return '0';
+    final int roundedCents = (val * 100).round();
+    if (roundedCents % 100 == 0 && roundedCents >= 100) {
+      return (roundedCents ~/ 100).toString();
+    }
+    return (roundedCents / 100).toStringAsFixed(2);
+  }
 }
 
 extension ThemeContextExtension on BuildContext {
