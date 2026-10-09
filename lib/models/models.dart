@@ -230,6 +230,9 @@ class FoodDeal {
     return (((originalPrice - discountedPrice) / originalPrice) * 100).round();
   }
 
+  int get discountPercent => percentageSaved;
+  int get discountPercentage => percentageSaved;
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'businessId': businessId,

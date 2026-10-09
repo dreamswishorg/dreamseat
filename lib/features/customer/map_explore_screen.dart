@@ -43,13 +43,6 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
     super.dispose();
   }
 
-  void _onCardSwiped(int index, List<BusinessProfile> businesses) {
-    if (index >= 0 && index < businesses.length) {
-      setState(() => _selectedIndex = index);
-      final biz = businesses[index];
-      _mapController.move(LatLng(biz.latitude, biz.longitude), 14.8);
-    }
-  }
 
   void _onMarkerTapped(int index, BusinessProfile biz) {
     setState(() => _selectedIndex = index);
@@ -336,140 +329,212 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
             ),
           ),
 
-          // ── 3. BOTTOM SWIPEABLE RESTAURANT CAROUSEL (Mockup 2 Center) ─
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 24,
-            child: SizedBox(
-              height: 128,
-              child: filteredBusinesses.isEmpty
-                  ? Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Text('No restaurants match this filter'),
-                      ),
-                    )
-                  : PageView.builder(
-                      controller: _pageController,
-                      itemCount: filteredBusinesses.length,
-                      onPageChanged: (idx) => _onCardSwiped(idx, filteredBusinesses),
-                      itemBuilder: (context, index) {
-                        final biz = filteredBusinesses[index];
-                        final isFavorite = favoriteIds.contains(biz.id);
+          // ── 3. TOP FLOATING RESTAURANT PREVIEW CARD ────────────────────
+          if (_selectedIndex >= 0 && _selectedIndex < filteredBusinesses.length) ...[
+            Positioned(
+              top: 156,
+              left: 16,
+              right: 16,
+              child: _buildTopRestaurantCard(
+                filteredBusinesses[_selectedIndex],
+                favoriteIds.contains(filteredBusinesses[_selectedIndex].id),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => MerchantStorefrontScreen(business: biz),
+  Widget _buildTopRestaurantCard(BusinessProfile biz, bool isFavorite) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x18000000),
+            blurRadius: 20,
+            offset: Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Color(0x0A2E7D32),
+            blurRadius: 16,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Store Thumbnail with Rating Badge
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: SizedBox(
+                  width: 82,
+                  height: 82,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      _buildStoreThumbnail(biz),
+                      Positioned(
+                        bottom: 4,
+                        left: 4,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.75),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 11),
+                              const SizedBox(width: 2),
+                              Text(
+                                biz.rating.toStringAsFixed(1),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            );
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 6),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(22),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.14),
-                                  blurRadius: 18,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                // Thumbnail
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: SizedBox(
-                                    width: 96,
-                                    height: 104,
-                                    child: _buildStoreThumbnail(biz),
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
 
-                                // Details
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        biz.name,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.charcoal,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        _isDelivery
-                                            ? 'GHS 8.50 Delivery fee • 25-35 min'
-                                            : 'Free Pickup • Ready in 15 min',
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: AppTheme.mutedGrey,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Row(
-                                        children: [
-                                          const Icon(Icons.star_rounded, size: 14, color: Color(0xFFF59E0B)),
-                                          const SizedBox(width: 2),
-                                          Text(
-                                            '${biz.rating.toStringAsFixed(1)} (120+)',
-                                            style: const TextStyle(
-                                              fontSize: 11.5,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppTheme.charcoal,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 6),
-                                          const Text('•', style: TextStyle(color: AppTheme.mutedGrey)),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            '${biz.distance.toStringAsFixed(1)} km',
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              color: AppTheme.mutedGrey,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                // Heart Icon
-                                IconButton(
-                                  icon: Icon(
-                                    isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                                    color: isFavorite ? const Color(0xFFEF4444) : AppTheme.mutedGrey,
-                                    size: 20,
-                                  ),
-                                  onPressed: () {
-                                    ref.read(appStateProvider.notifier).toggleFavorite(biz.id);
-                                  },
-                                ),
-                              ],
+              // Details Column
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            biz.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: AppTheme.charcoal,
+                              letterSpacing: -0.3,
                             ),
                           ),
-                        );
-                      },
+                        ),
+                        // Favorite Heart
+                        InkWell(
+                          onTap: () => ref.read(appStateProvider.notifier).toggleFavorite(biz.id),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(
+                              isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                              color: isFavorite ? const Color(0xFFEF4444) : AppTheme.mutedGrey,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                        // Dismiss (X)
+                        InkWell(
+                          onTap: () => setState(() => _selectedIndex = -1),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(
+                              Icons.close_rounded,
+                              color: AppTheme.mutedGrey.withValues(alpha: 0.8),
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 3),
+                    Text(
+                      _isDelivery
+                          ? 'GHS 8.50 Delivery fee • 25–35 min'
+                          : 'Free Pickup • Ready in 15 min',
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: AppTheme.mutedGrey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.lightGreenBg,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            biz.category,
+                            style: const TextStyle(
+                              color: AppTheme.primaryGreen,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Text('•', style: TextStyle(color: AppTheme.mutedGrey)),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${biz.distance.toStringAsFixed(1)} km away',
+                          style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // Action Button
+          SizedBox(
+            width: double.infinity,
+            height: 38,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => MerchantStorefrontScreen(business: biz),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryGreen,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('View Menu & Rescue Food', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  SizedBox(width: 6),
+                  Icon(Icons.arrow_forward_rounded, size: 16),
+                ],
+              ),
             ),
           ),
         ],

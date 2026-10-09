@@ -19,146 +19,7 @@ class MerchantStorefrontScreen extends ConsumerStatefulWidget {
 class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScreen> {
   String _selectedMode = 'Delivery'; // Delivery | Pickup | In-Store
   String _selectedFilter = 'All';    // All | Popular items | Build for you | Special Offers
-  String? _scheduledTime;
   String? _kitchenNote;
-
-  final List<String> _groupMembers = ['You (Host)', 'Sarah', 'Kofi'];
-
-  void _showScheduleModal() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.schedule_rounded, color: AppTheme.primaryGreen),
-                  const SizedBox(width: 8),
-                  const Text('Schedule Order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const Spacer(),
-                  IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(ctx)),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Text('Select your preferred rescue pickup or delivery window:'),
-              const SizedBox(height: 16),
-              ...[
-                'ASAP (Estimated 25-35 mins)',
-                'Today • 12:30 PM - 1:30 PM (Lunch Rush)',
-                'Today • 6:00 PM - 7:30 PM (Dinner Rescue)',
-                'Tomorrow • 10:00 AM - 11:30 AM (Bakery Batch)',
-              ].map((time) {
-                final isCurrent = _scheduledTime == time || (_scheduledTime == null && time.startsWith('ASAP'));
-                return ListTile(
-                  title: Text(time, style: TextStyle(fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal)),
-                  trailing: isCurrent ? const Icon(Icons.check_circle_rounded, color: AppTheme.primaryGreen) : null,
-                  onTap: () {
-                    setState(() => _scheduledTime = time);
-                    Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Scheduled for: $time'), backgroundColor: AppTheme.primaryGreen),
-                    );
-                  },
-                );
-              }),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showGroupOrderModal() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.group_rounded, color: AppTheme.primaryGreen),
-                  const SizedBox(width: 8),
-                  const Text('Group Order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const Spacer(),
-                  IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(ctx)),
-                ],
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Order together with coworkers or friends and split delivery or pickup fees!',
-                style: TextStyle(color: AppTheme.mutedGrey, fontSize: 13),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppTheme.lightGreenBg,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('SHAREABLE ROOM CODE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
-                          SizedBox(height: 2),
-                          Text('EATS-7842', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen)),
-                        ],
-                      ),
-                    ),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryGreen,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      icon: const Icon(Icons.share_rounded, size: 16),
-                      label: const Text('Invite'),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('🔗 Group order invite link copied!'), backgroundColor: AppTheme.primaryGreen),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text('Joined Participants (3)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: _groupMembers.map((m) {
-                  return Chip(
-                    avatar: CircleAvatar(
-                      backgroundColor: AppTheme.primaryGreen,
-                      child: Text(m[0], style: const TextStyle(fontSize: 11, color: Colors.white)),
-                    ),
-                    label: Text(m, style: const TextStyle(fontSize: 12)),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   void _showAddNoteModal() {
     final noteCtrl = TextEditingController(text: _kitchenNote);
@@ -231,6 +92,28 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
     final deals = ref.watch(appStateProvider.select((s) => s.deals.where((d) => d.businessId == business.id).toList()));
     final isFavorite = ref.watch(appStateProvider.select((s) => s.favoriteBusinessIds.contains(business.id)));
 
+    // Dynamically discover actual menu categories for this merchant
+    final availableCategories = ['All'];
+    for (final d in deals) {
+      final cat = d.category.trim();
+      if (cat.isNotEmpty && !availableCategories.contains(cat)) {
+        availableCategories.add(cat);
+      }
+    }
+    if (!availableCategories.contains('Special Offers')) {
+      availableCategories.add('Special Offers');
+    }
+
+    // Filter deals according to the selected chip
+    final filteredDeals = deals.where((d) {
+      if (_selectedFilter == 'All') return true;
+      if (_selectedFilter == 'Special Offers') {
+        return d.discountPercent >= 20 || d.originalPrice > (d.discountedPrice * 1.2);
+      }
+      return d.category.toLowerCase().trim() == _selectedFilter.toLowerCase().trim() ||
+          d.title.toLowerCase().contains(_selectedFilter.toLowerCase().trim());
+    }).toList();
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: ResponsiveCenter(
@@ -244,7 +127,7 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
               physics: const BouncingScrollPhysics(),
               slivers: [
                 _buildAppBar(context, business, isFavorite),
-                SliverToBoxAdapter(child: _buildMerchantInfo(business)),
+                SliverToBoxAdapter(child: _buildMerchantInfo(business, availableCategories)),
 
                 // ── SPECIAL OFFERS CAROUSEL (Mockup 2 Right) ─────────────
                 if (deals.isNotEmpty) ...[
@@ -305,7 +188,7 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
                   ),
                 ),
 
-                deals.isEmpty
+                filteredDeals.isEmpty
                     ? _buildEmptyDeals()
                     : isWide
                         ? SliverPadding(
@@ -319,10 +202,10 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
                               ),
                               delegate: SliverChildBuilderDelegate(
                                 (context, index) {
-                                  final deal = deals[index];
+                                  final deal = filteredDeals[index];
                                   return _buildDealCard(context, ref, deal, isFavorite);
                                 },
-                                childCount: deals.length,
+                                childCount: filteredDeals.length,
                               ),
                             ),
                           )
@@ -331,10 +214,10 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
                             sliver: SliverList(
                               delegate: SliverChildBuilderDelegate(
                                 (context, index) {
-                                  final deal = deals[index];
+                                  final deal = filteredDeals[index];
                                   return _buildDealCard(context, ref, deal, isFavorite);
                                 },
-                                childCount: deals.length,
+                                childCount: filteredDeals.length,
                               ),
                             ),
                           ),
@@ -445,7 +328,7 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
     );
   }
 
-  Widget _buildMerchantInfo(BusinessProfile business) {
+  Widget _buildMerchantInfo(BusinessProfile business, List<String> availableCategories) {
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Column(
@@ -501,26 +384,12 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
           ),
           const SizedBox(height: 18),
 
-          // ── ACTION PILLS ROW (Schedule, Group order, Add note) (Mockup 2 Right) ──
+          // ── ACTION PILL ROW (Kitchen note) ──
           Row(
             children: [
               _buildActionPill(
-                icon: Icons.schedule_rounded,
-                label: _scheduledTime != null ? 'Scheduled' : 'Schedule',
-                isSelected: _scheduledTime != null,
-                onTap: _showScheduleModal,
-              ),
-              const SizedBox(width: 8),
-              _buildActionPill(
-                icon: Icons.group_rounded,
-                label: 'Group order',
-                isSelected: false,
-                onTap: _showGroupOrderModal,
-              ),
-              const SizedBox(width: 8),
-              _buildActionPill(
                 icon: Icons.note_alt_outlined,
-                label: _kitchenNote != null ? 'Note added' : 'Add note',
+                label: _kitchenNote != null ? 'Note: $_kitchenNote' : 'Add kitchen note',
                 isSelected: _kitchenNote != null,
                 onTap: _showAddNoteModal,
               ),
@@ -612,7 +481,7 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
                   ),
                   child: const Icon(Icons.tune_rounded, size: 16, color: AppTheme.charcoal),
                 ),
-                ...['All', 'Popular items', 'Build for you', 'Desserts', 'Special Offers'].map((filter) {
+                ...availableCategories.map((filter) {
                   final isSelected = _selectedFilter == filter;
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
