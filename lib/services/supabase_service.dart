@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
@@ -1286,7 +1288,7 @@ class SupabaseService {
   // PAYSTACK METHODS
   // ---------------------------------------------------------------------------
 
-  /// Initiates a direct MoMo charge via Edge Function.
+  /// Initiates a direct MoMo charge via Edge Function with direct Paystack fallback.
   Future<Map<String, dynamic>> initiatePaystackCharge({
     required String email,
     required double amount,
@@ -1295,6 +1297,7 @@ class SupabaseService {
     required Map<String, dynamic> metadata,
     required String reference,
   }) async {
+    // 1. Try Supabase Edge Function first
     try {
       final result = await _db.functions.invoke(
         'paystack-charge',
@@ -1307,7 +1310,46 @@ class SupabaseService {
           'reference': reference,
         },
       );
-      return result.data as Map<String, dynamic>;
+      if (result.data is Map && (result.data as Map)['status'] == true) {
+        return Map<String, dynamic>.from(result.data as Map);
+      }
+    } catch (_) {}
+
+    // 2. Direct Paystack Charge API fallback (100% embedded MoMo charge)
+    try {
+      final cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+      String providerSlug = 'mtn';
+      final pLower = provider.toLowerCase();
+      if (pLower.contains('vod') || pLower.contains('telecel')) {
+        providerSlug = 'vod';
+      } else if (pLower.contains('tgo') || pLower.contains('airtel') || pLower.contains('atl')) {
+        providerSlug = 'tgo';
+      }
+
+      final response = await http.post(
+        Uri.parse('https://api.paystack.co/charge'),
+        headers: {
+          'Authorization': 'Bearer ${AppConfig.paystackSecretKey}',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'email': email,
+          'amount': (amount * 100).round().toString(),
+          'currency': 'GHS',
+          'reference': reference,
+          'metadata': metadata,
+          'mobile_money': {
+            'phone': cleanPhone,
+            'provider': providerSlug,
+          },
+        }),
+      );
+
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+      return {'status': false, 'message': 'Invalid response from Paystack'};
     } catch (e) {
       return {'status': false, 'message': e.toString()};
     }
@@ -1326,17 +1368,34 @@ class SupabaseService {
           'otp': otp,
         },
       );
-      return result.data as Map<String, dynamic>;
+      if (result.data is Map && (result.data as Map)['status'] == true) {
+        return Map<String, dynamic>.from(result.data as Map);
+      }
+    } catch (_) {}
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://api.paystack.co/charge/submit_otp'),
+        headers: {
+          'Authorization': 'Bearer ${AppConfig.paystackSecretKey}',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'otp': otp,
+          'reference': reference,
+        }),
+      );
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+      return {'status': false, 'message': 'Invalid OTP response'};
     } catch (e) {
       return {'status': false, 'message': e.toString()};
     }
   }
 
-  /// Verifies a Paystack payment [reference] via a Supabase Edge Function.
-
-  ///
-  /// Returns `true` only when the Edge Function confirms the payment was
-  /// successful. Any network or parse failure safely returns `false`.
+  /// Verifies a Paystack payment [reference] via Edge Function with direct Paystack API fallback.
   Future<bool> verifyPaystackPayment(String reference) async {
     try {
       final result = await _db.functions.invoke(
@@ -1344,14 +1403,28 @@ class SupabaseService {
         body: {'reference': reference},
       );
       final data = result.data;
-      if (data is Map) {
-        return data['verified'] == true;
+      if (data is Map && data['verified'] == true) {
+        return true;
       }
-      return false;
-    } catch (_) {
-      // Intentionally swallow – callers treat false as "not verified".
-      return false;
-    }
+    } catch (_) {}
+
+    try {
+      final response = await http.get(
+        Uri.parse('https://api.paystack.co/transaction/verify/$reference'),
+        headers: {
+          'Authorization': 'Bearer ${AppConfig.paystackSecretKey}',
+          'Content-Type': 'application/json',
+        },
+      );
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded['status'] == true && decoded['data']?['status'] == 'success') {
+          return true;
+        }
+      }
+    } catch (_) {}
+
+    return false;
   }
 
   // ---------------------------------------------------------------------------

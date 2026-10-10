@@ -118,23 +118,32 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
               _buildPaymentOption(
                 ctx,
                 name: 'MTN Mobile Money',
-                subtitle: 'Instant USSD Prompt',
+                subtitle: 'Instant In-App USSD Prompt',
                 assetPath: 'assets/icons/mtn.png',
-                onTap: () => _completePayment(ctx, 'MTN MoMo', finalTotal, items),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _promptEmbeddedMoMo('MTN MoMo', 'assets/icons/mtn.png', finalTotal, items);
+                },
               ),
               _buildPaymentOption(
                 ctx,
                 name: 'Telecel Cash',
-                subtitle: 'Vodafone Cash Direct Prompt',
+                subtitle: 'Instant Vodafone Cash Prompt',
                 assetPath: 'assets/icons/telecel.png',
-                onTap: () => _completePayment(ctx, 'Telecel Cash', finalTotal, items),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _promptEmbeddedMoMo('Telecel Cash', 'assets/icons/telecel.png', finalTotal, items);
+                },
               ),
               _buildPaymentOption(
                 ctx,
                 name: 'AirtelTigo Money',
-                subtitle: 'AT Money Prompt',
+                subtitle: 'Instant AT Money Prompt',
                 assetPath: 'assets/icons/at-logo-sm.png',
-                onTap: () => _completePayment(ctx, 'AirtelTigo Money', finalTotal, items),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _promptEmbeddedMoMo('AirtelTigo Money', 'assets/icons/at-logo-sm.png', finalTotal, items);
+                },
               ),
               _buildPaymentOption(
                 ctx,
@@ -205,6 +214,457 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
         subtitle: Text(subtitle, style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey)),
         trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppTheme.mutedGrey),
         onTap: onTap,
+      ),
+    );
+  }
+
+  void _promptEmbeddedMoMo(
+    String provider,
+    String assetPath,
+    double total,
+    List<BasketItem> items,
+  ) {
+    final user = ref.read(appStateProvider).currentUser;
+    final phoneController = TextEditingController(text: user?.phone ?? '');
+    final formKey = GlobalKey<FormState>();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (bottomSheetCtx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(bottomSheetCtx).viewInsets.bottom,
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 22),
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 34,
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.asset(assetPath, fit: BoxFit.contain),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              provider,
+                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                            ),
+                            const Text(
+                              'Direct In-App Mobile Money',
+                              style: TextStyle(fontSize: 11.5, color: AppTheme.mutedGrey),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: AppTheme.lightGreenBg,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          'GHS ${AppTheme.formatPrice(total)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: AppTheme.primaryGreen,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'Mobile Money Phone Number',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.charcoal),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: phoneController,
+                    keyboardType: TextInputType.phone,
+                    autofocus: phoneController.text.isEmpty,
+                    decoration: InputDecoration(
+                      prefixIcon: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        child: const Text('🇬🇭 +233', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.charcoal)),
+                      ),
+                      hintText: '024 123 4567',
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.8),
+                      ),
+                    ),
+                    validator: (val) {
+                      if (val == null || val.trim().isEmpty) {
+                        return 'Please enter your MoMo number';
+                      }
+                      final digits = val.replaceAll(RegExp(r'[^0-9]'), '');
+                      if (digits.length < 9) {
+                        return 'Please enter a valid 10-digit number';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.lightGreenBg.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.15)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.shield_outlined, color: AppTheme.primaryGreen, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Paystack will trigger an instant authorization prompt on this phone. Enter your MoMo PIN on your phone screen to complete payment without leaving the app.',
+                            style: const TextStyle(fontSize: 11.5, color: AppTheme.charcoal, height: 1.35),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (!formKey.currentState!.validate()) return;
+                        final rawPhone = phoneController.text.trim();
+                        Navigator.pop(bottomSheetCtx);
+                        _processEmbeddedMoMo(
+                          provider: provider,
+                          assetPath: assetPath,
+                          phone: rawPhone,
+                          total: total,
+                          items: items,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryGreen,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: Text(
+                        'Send MoMo Prompt • GHS ${AppTheme.formatPrice(total)}',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _processEmbeddedMoMo({
+    required String provider,
+    required String assetPath,
+    required String phone,
+    required double total,
+    required List<BasketItem> items,
+  }) async {
+    final stateVal = ref.read(appStateProvider);
+    final user = stateVal.currentUser;
+    final email = user?.email ?? 'customer@dreameats.com.gh';
+    final refCode = 'DE-${DateTime.now().millisecondsSinceEpoch}';
+
+    String providerCode = 'mtn';
+    if (provider == 'Telecel Cash') providerCode = 'vod';
+    if (provider == 'AirtelTigo Money') providerCode = 'tgo';
+
+    final Map<String, dynamic> metadata = {
+      "customer_id": user?.id ?? 'anonymous',
+      "customer_name": user?.name ?? 'Guest Customer',
+      "basket_count": items.length,
+      "deal_titles": items.map((i) => i.deal.title).join(', '),
+      "method": provider,
+      "phone": phone,
+    };
+
+    bool isCancelled = false;
+    StateSetter? dialogSetState;
+    String statusText = 'Sending payment prompt to $phone...';
+    bool isWaitingUser = false;
+    bool isSuccess = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dlgContext) => StatefulBuilder(
+        builder: (context, setDlgState) {
+          dialogSetState = setDlgState;
+          return PopScope(
+            canPop: isSuccess,
+            child: AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 72,
+                    height: 52,
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+                      color: Colors.white,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(assetPath, fit: BoxFit.contain),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    isSuccess
+                        ? 'Payment Approved! 🎉'
+                        : isWaitingUser
+                            ? 'Prompt Sent to Phone'
+                            : 'Connecting to Paystack...',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      color: isSuccess ? AppTheme.primaryGreen : AppTheme.charcoal,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    statusText,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 13, color: AppTheme.mutedGrey, height: 1.4),
+                  ),
+                  const SizedBox(height: 20),
+                  if (isSuccess)
+                    const Icon(Icons.check_circle_rounded, color: AppTheme.primaryGreen, size: 48)
+                  else
+                    const SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: CircularProgressIndicator(color: AppTheme.primaryGreen, strokeWidth: 3),
+                    ),
+                  const SizedBox(height: 18),
+                  if (!isSuccess)
+                    TextButton(
+                      onPressed: () {
+                        isCancelled = true;
+                        Navigator.pop(dlgContext);
+                      },
+                      child: const Text('Cancel', style: TextStyle(color: AppTheme.errorRed)),
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+
+    try {
+      final chargeRes = await SupabaseService().initiatePaystackCharge(
+        email: email,
+        amount: total,
+        phone: phone,
+        provider: providerCode,
+        metadata: metadata,
+        reference: refCode,
+      );
+
+      if (chargeRes['status'] == false) {
+        if (mounted && Navigator.canPop(context)) Navigator.pop(context);
+        throw Exception(chargeRes['message'] ?? 'Failed to initiate mobile money charge');
+      }
+
+      final chargeStatus = chargeRes['data']?['status'];
+      if (chargeStatus == 'send_otp') {
+        if (mounted && Navigator.canPop(context)) Navigator.pop(context);
+        _handleMoMoOtpRequirement(
+          refCode: refCode,
+          message: chargeRes['data']?['display_text'] ?? 'Enter the OTP sent to your phone',
+          total: total,
+          items: items,
+          provider: provider,
+        );
+        return;
+      }
+
+      dialogSetState?.call(() {
+        isWaitingUser = true;
+        statusText = 'Please check your phone screen and enter your Mobile Money PIN to approve GHS ${AppTheme.formatPrice(total)}.';
+      });
+
+      // Poll for authorization every 2 seconds for up to 60 seconds
+      bool verified = false;
+      for (int i = 0; i < 30; i++) {
+        await Future.delayed(const Duration(seconds: 2));
+        if (isCancelled || !mounted) return;
+        verified = await SupabaseService().verifyPaystackPayment(refCode);
+        if (verified) break;
+      }
+
+      if (!verified) {
+        if (mounted && Navigator.canPop(context)) Navigator.pop(context);
+        throw Exception('Payment was not confirmed. Please check your phone for the MoMo prompt and try again.');
+      }
+
+      // Payment verified successfully
+      dialogSetState?.call(() {
+        isSuccess = true;
+        statusText = 'Payment verified! Finalizing your order...';
+      });
+
+      final notifier = ref.read(appStateProvider.notifier);
+      Order? createdOrder;
+      for (final item in items) {
+        createdOrder = await notifier.purchase(item.deal, provider, refCode);
+      }
+      notifier.clearBasket();
+
+      await Future.delayed(const Duration(milliseconds: 600));
+      if (mounted && Navigator.canPop(context)) Navigator.pop(context); // Close dialog
+
+      if (createdOrder != null && mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OrderConfirmationScreen(order: createdOrder!),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: AppTheme.errorRed,
+          ),
+        );
+      }
+    }
+  }
+
+  void _handleMoMoOtpRequirement({
+    required String refCode,
+    required String message,
+    required double total,
+    required List<BasketItem> items,
+    required String provider,
+  }) {
+    final otpController = TextEditingController();
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (otpDlg) => StatefulBuilder(
+        builder: (sbContext, setOtpState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('One-Time Password (OTP)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(message, style: const TextStyle(fontSize: 13, color: AppTheme.mutedGrey)),
+              const SizedBox(height: 16),
+              TextField(
+                controller: otpController,
+                keyboardType: TextInputType.number,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'Enter 6-digit OTP / Voucher code',
+                  filled: true,
+                  fillColor: AppTheme.lightGrey,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSubmitting ? null : () => Navigator.pop(otpDlg),
+              child: const Text('Cancel', style: TextStyle(color: AppTheme.mutedGrey)),
+            ),
+            ElevatedButton(
+              onPressed: isSubmitting
+                  ? null
+                  : () async {
+                      final code = otpController.text.trim();
+                      if (code.isEmpty) return;
+                      final res = await SupabaseService().submitPaystackOtp(reference: refCode, otp: code);
+                      if (res['status'] == true) {
+                        if (otpDlg.mounted) Navigator.pop(otpDlg);
+                        final verified = await SupabaseService().verifyPaystackPayment(refCode);
+                        if (!mounted) return;
+                        if (verified) {
+                          final notifier = ref.read(appStateProvider.notifier);
+                          Order? createdOrder;
+                          for (final item in items) {
+                            createdOrder = await notifier.purchase(item.deal, provider, refCode);
+                          }
+                          notifier.clearBasket();
+                          if (createdOrder != null && mounted) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (_) => OrderConfirmationScreen(order: createdOrder!)),
+                            );
+                          }
+                        }
+                      } else {
+                        setOtpState(() => isSubmitting = false);
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(res['message'] ?? 'Invalid OTP'), backgroundColor: AppTheme.errorRed),
+                        );
+                      }
+                    },
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryGreen),
+              child: isSubmitting
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Text('Submit OTP', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
       ),
     );
   }

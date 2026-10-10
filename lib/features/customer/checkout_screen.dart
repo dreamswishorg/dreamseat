@@ -162,18 +162,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         return;
       }
 
-      // ── Wait for Webhook ───────────────────────────────────────────────
-      setState(() => _statusMessage = 'Waiting for authorization on your phone...');
+      // ── Wait for Prompt Authorization on Phone ───────────────────────────────
+      setState(() => _statusMessage = 'Prompt sent to your phone! Please enter your PIN to approve...');
 
       Order? order;
-      // MoMo can take a while for the user to type PIN.
-      for (int i = 0; i < 20; i++) {
+      // MoMo can take a few seconds for the user to type PIN. Check every 2s up to 25 times (50s)
+      for (int i = 0; i < 25; i++) {
         await Future.delayed(const Duration(seconds: 2));
         order = await _findOrder(reference);
         if (order != null) break;
-      }
 
-      if (order == null) {
         final verified = await SupabaseService().verifyPaystackPayment(reference);
         if (verified) {
           order = await ref.read(appStateProvider.notifier).purchase(
@@ -181,8 +179,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 _selectedProvider,
                 reference,
               );
-        } else {
-          throw Exception('Payment was not confirmed by Paystack. Please check your phone for the prompt and try again.');
+          break;
         }
       }
 
@@ -190,7 +187,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         setState(() => _isProcessing = false);
         _onSuccess(order);
       } else {
-        throw Exception('Payment timeout. Please check your phone for the MoMo prompt or your transaction history.');
+        throw Exception('Payment authorization timeout. If you approved on your phone, check your order history.');
       }
 
     } catch (e) {
@@ -412,20 +409,19 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   void _waitForOrder(String reference) async {
     setState(() => _statusMessage = 'Finalizing reservation with payment gateway...');
     Order? order;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 20; i++) {
       await Future.delayed(const Duration(seconds: 2));
       order = await _findOrder(reference);
       if (order != null) break;
-    }
 
-    if (order == null) {
       final verified = await SupabaseService().verifyPaystackPayment(reference);
       if (verified) {
         order = await ref.read(appStateProvider.notifier).purchase(
               widget.deal,
-              _selectedProvider.isNotEmpty ? _selectedProvider : 'MoMo / Card',
+              _selectedProvider.isNotEmpty ? _selectedProvider : 'MoMo',
               reference,
             );
+        break;
       }
     }
 
