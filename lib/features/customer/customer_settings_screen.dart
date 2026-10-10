@@ -187,6 +187,7 @@ class _CustomerSettingsScreenState
         });
         ref.read(userLocationProvider.notifier).setAddress(
               addr ?? _addressController.text,
+              pos,
             );
         _showSnackBar('Updated location to current GPS');
       }
@@ -711,6 +712,7 @@ class _CustomerSettingsScreenState
                                 });
                                 ref.read(userLocationProvider.notifier).setAddress(
                                       pred.displayName,
+                                      pred.toPosition(),
                                     );
                                 _showSnackBar("Address selected: ${pred.displayName}");
                               },

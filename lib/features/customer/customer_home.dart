@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme.dart';
 import '../../core/responsive.dart';
 import '../../core/ui_utils.dart';
@@ -19,24 +20,90 @@ import 'order_history_screen.dart';
 class UserLocation {
   final String address;
   final Position? position;
+  final bool isDefaultSet;
 
-  UserLocation({required this.address, this.position});
+  UserLocation({
+    required this.address,
+    this.position,
+    this.isDefaultSet = false,
+  });
 }
 
 class UserLocationNotifier extends Notifier<UserLocation> {
-  @override
-  UserLocation build() => UserLocation(address: "Osu, Accra");
+  static const String _prefKeyAddress = 'user_default_address';
+  static const String _prefKeyLat = 'user_default_lat';
+  static const String _prefKeyLng = 'user_default_lng';
+  static const String _prefKeyIsSet = 'user_location_set';
 
-  void setAddress(String address) {
-    state = UserLocation(address: address, position: null);
+  @override
+  UserLocation build() {
+    _loadInitialSavedLocation();
+    return UserLocation(address: "Accra, Ghana", isDefaultSet: false);
   }
 
-  Future<LocationStatusResult> fetchCurrentLocation() async {
+  Future<void> _loadInitialSavedLocation() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedAddress = prefs.getString(_prefKeyAddress);
+      final savedLat = prefs.getDouble(_prefKeyLat);
+      final savedLng = prefs.getDouble(_prefKeyLng);
+      final isSet = prefs.getBool(_prefKeyIsSet) ?? false;
+
+      if (savedAddress != null && savedAddress.isNotEmpty) {
+        Position? pos;
+        if (savedLat != null && savedLng != null) {
+          pos = Position(
+            latitude: savedLat,
+            longitude: savedLng,
+            timestamp: DateTime.now(),
+            accuracy: 0,
+            altitude: 0,
+            altitudeAccuracy: 0,
+            heading: 0,
+            headingAccuracy: 0,
+            speed: 0,
+            speedAccuracy: 0,
+          );
+        }
+        state = UserLocation(address: savedAddress, position: pos, isDefaultSet: isSet);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> loadSavedLocation() => _loadInitialSavedLocation();
+
+  Future<void> setAddress(String address, [Position? position]) async {
+    Position? resolvedPos = position;
+    resolvedPos ??= await LocationService().getLatLngFromAddress(address);
+    state = UserLocation(address: address, position: resolvedPos, isDefaultSet: true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefKeyAddress, address);
+      await prefs.setBool(_prefKeyIsSet, true);
+      if (resolvedPos != null) {
+        await prefs.setDouble(_prefKeyLat, resolvedPos.latitude);
+        await prefs.setDouble(_prefKeyLng, resolvedPos.longitude);
+      }
+    } catch (_) {}
+  }
+
+  Future<LocationStatusResult> fetchCurrentLocation({bool saveAsDefault = true}) async {
     final loc = LocationService();
     final res = await loc.getPositionWithStatus();
     if (res.status == 'success' && res.position != null) {
       final addr = await loc.getAddressFromLatLng(res.position!);
-      state = UserLocation(address: addr ?? "Current Location", position: res.position);
+      final displayAddr = addr ?? "Current Location";
+      state = UserLocation(address: displayAddr, position: res.position, isDefaultSet: true);
+      if (saveAsDefault) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(_prefKeyAddress, displayAddr);
+          await prefs.setBool(_prefKeyIsSet, true);
+          await prefs.setDouble(_prefKeyLat, res.position!.latitude);
+          await prefs.setDouble(_prefKeyLng, res.position!.longitude);
+        } catch (_) {}
+      }
     }
     return res;
   }
@@ -62,9 +129,13 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.read(userLocationProvider.notifier).fetchCurrentLocation();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await ref.read(userLocationProvider.notifier).loadSavedLocation();
+      final userLoc = ref.read(userLocationProvider);
+      if (!userLoc.isDefaultSet) {
+        // Prompt first-time users to set their default location
+        _showAddressSelectionBottomSheet(isInitialSetup: true);
       }
     });
   }
@@ -1093,17 +1164,21 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     return distance;
   }
 
-  void _showAddressSelectionBottomSheet() {
+  void _showAddressSelectionBottomSheet({bool isInitialSetup = false}) {
+    final currentAddress = ref.read(userLocationProvider).address;
     final textController = TextEditingController(
-        text: ref.read(userLocationProvider).address == "Osu, Accra"
+        text: (currentAddress == "Accra, Ghana" || currentAddress == "Osu, Accra")
             ? ""
-            : ref.read(userLocationProvider).address);
+            : currentAddress);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final sheetBg = isDark ? const Color(0xFF1E293B) : Colors.white;
     final primaryTextColor = isDark ? Colors.white : AppTheme.charcoal;
     final secondaryTextColor = isDark ? const Color(0xFF94A3B8) : AppTheme.mutedGrey;
     final inputBg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF7F8FA);
     final borderColor = isDark ? Colors.white.withValues(alpha: 0.08) : AppTheme.charcoal.withValues(alpha: 0.06);
+
+    List<PredictedAddress> predictions = [];
+    bool isSearching = false;
 
     showModalBottomSheet(
       context: context,
@@ -1112,277 +1187,465 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Top drag indicator
-              Center(
-                child: Container(
-                  width: 48,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white.withValues(alpha: 0.2) : AppTheme.charcoal.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              Text(
-                "Select Location",
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 20,
-                  color: primaryTextColor,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Search field
-              TextField(
-                controller: textController,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: primaryTextColor,
-                  fontSize: 15,
-                ),
-                decoration: InputDecoration(
-                  hintText: "Enter street, area or city...",
-                  hintStyle: TextStyle(
-                    color: secondaryTextColor.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w400,
-                  ),
-                  prefixIcon: const Icon(Icons.search_rounded,
-                      color: AppTheme.primaryGreen, size: 22),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.check_circle_rounded,
-                      color: AppTheme.primaryGreen, size: 24),
-                    onPressed: () {
-                      final val = textController.text.trim();
-                      if (val.isNotEmpty) {
-                        ref.read(userLocationProvider.notifier).setAddress(val);
-                        Navigator.pop(context);
-                      }
-                    },
-                  ),
-                  filled: true,
-                  fillColor: inputBg,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: borderColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(
-                        color: AppTheme.primaryGreen, width: 1.5),
-                  ),
-                ),
-                onSubmitted: (val) {
-                  final trimmed = val.trim();
-                  if (trimmed.isNotEmpty) {
-                    ref.read(userLocationProvider.notifier).setAddress(trimmed);
-                    Navigator.pop(context);
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Use current location tile
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () async {
-                    Navigator.pop(context);
-                    final res = await ref
-                        .read(userLocationProvider.notifier)
-                        .fetchCurrentLocation();
-                    if (context.mounted) {
-                      if (res.status == 'success') {
-                        final newAddr = ref.read(userLocationProvider).address;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
-                                const SizedBox(width: 8),
-                                Expanded(child: Text("Location updated to $newAddr")),
-                              ],
-                            ),
-                            backgroundColor: AppTheme.primaryGreen,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
-                      } else if (res.status == 'gps_disabled') {
-                        showAdaptiveDialog(
-                          context: context,
-                          builder: (ctx) => AlertDialog.adaptive(
-                            title: const Text("Location Services Disabled"),
-                            content: const Text("Location Services are turned off on your device. Turn on Location to discover nearby meals and restaurants."),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx),
-                                child: const Text("Cancel"),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(ctx);
-                                  Geolocator.openLocationSettings();
-                                },
-                                child: const Text("Settings", style: TextStyle(fontWeight: FontWeight.bold)),
-                              ),
-                            ],
-                          ),
-                        );
-                      } else if (res.status == 'permission_denied_forever') {
-                        showAdaptiveDialog(
-                          context: context,
-                          builder: (ctx) => AlertDialog.adaptive(
-                            title: const Text("Allow Location Access"),
-                            content: const Text("DreamEats uses your location to show available food deals near you. Please enable Location in Settings."),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx),
-                                child: const Text("Cancel"),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(ctx);
-                                  Geolocator.openAppSettings();
-                                },
-                                child: const Text("Open Settings", style: TextStyle(fontWeight: FontWeight.bold)),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                          color: AppTheme.primaryGreen.withValues(alpha: 0.15)),
-                      color: AppTheme.lightGreenBg,
-                      borderRadius: BorderRadius.circular(16),
+      builder: (bottomSheetContext) => StatefulBuilder(
+        builder: (dialogCtx, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(dialogCtx).viewInsets.bottom,
+          ),
+          child: SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top drag indicator
+                  Center(
+                    child: Container(
+                      width: 48,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white.withValues(alpha: 0.2) : AppTheme.charcoal.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                    child: Row(
+                  ),
+                  const SizedBox(height: 18),
+
+                  if (isInitialSetup) ...[
+                    Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: const BoxDecoration(
-                            color: AppTheme.primaryGreen,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryGreen.withValues(alpha: 0.12),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.my_location_rounded,
-                              color: Colors.white, size: 18),
+                          child: const Icon(Icons.location_on_rounded, color: AppTheme.primaryGreen, size: 24),
                         ),
-                        const SizedBox(width: 14),
-                        const Expanded(
+                        const SizedBox(width: 12),
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Use Current Location",
+                                "Set Your Location",
                                 style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                  color: AppTheme.primaryGreen,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 19,
+                                  color: primaryTextColor,
+                                  letterSpacing: -0.5,
                                 ),
                               ),
-                              SizedBox(height: 2),
+                              const SizedBox(height: 2),
                               Text(
-                                "Pinpoint your delivery location using GPS",
+                                "Choose your area to discover food deals near you",
                                 style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppTheme.mutedGrey,
+                                  fontSize: 12,
+                                  color: secondaryTextColor,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const Icon(Icons.chevron_right_rounded,
-                            color: AppTheme.primaryGreen, size: 22),
+                        IconButton(
+                          icon: Icon(Icons.close_rounded, color: secondaryTextColor),
+                          onPressed: () => Navigator.pop(bottomSheetContext),
+                        ),
                       ],
                     ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
+                    const SizedBox(height: 18),
+                  ] else ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Select Location",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 20,
+                            color: primaryTextColor,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.close_rounded, color: secondaryTextColor),
+                          onPressed: () => Navigator.pop(bottomSheetContext),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
-              // Popular areas header
-              const Text(
-                "Popular Neighborhoods",
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
-                  color: AppTheme.charcoal,
-                  letterSpacing: -0.2,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Wrap of popular areas
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  "East Legon",
-                  "Osu",
-                  "Airport Residential",
-                  "Cantonments",
-                  "Labone",
-                  "Spintex",
-                  "Madina"
-                ].map((area) {
-                  return InkWell(
-                    onTap: () {
-                      ref
-                          .read(userLocationProvider.notifier)
-                          .setAddress("$area, Accra");
-                      Navigator.pop(context);
+                  // Search field
+                  TextField(
+                    controller: textController,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: primaryTextColor,
+                      fontSize: 15,
+                    ),
+                    onChanged: (query) async {
+                      final trimmed = query.trim();
+                      if (trimmed.length >= 3) {
+                        setSheetState(() => isSearching = true);
+                        final results = await LocationService().searchPredictiveAddresses(trimmed);
+                        setSheetState(() {
+                          predictions = results;
+                          isSearching = false;
+                        });
+                      } else {
+                        setSheetState(() {
+                          predictions = [];
+                          isSearching = false;
+                        });
+                      }
                     },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0F1F3),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                            color: AppTheme.charcoal.withValues(alpha: 0.05)),
+                    decoration: InputDecoration(
+                      hintText: "Enter street, neighborhood or city...",
+                      hintStyle: TextStyle(
+                        color: secondaryTextColor.withValues(alpha: 0.7),
+                        fontWeight: FontWeight.w400,
                       ),
-                      child: Text(
-                        area,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.charcoal,
+                      prefixIcon: const Icon(Icons.search_rounded,
+                          color: AppTheme.primaryGreen, size: 22),
+                      suffixIcon: isSearching
+                          ? const Padding(
+                              padding: EdgeInsets.all(12),
+                              child: SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryGreen),
+                              ),
+                            )
+                          : textController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear_rounded, size: 18),
+                                  onPressed: () {
+                                    textController.clear();
+                                    setSheetState(() => predictions = []);
+                                  },
+                                )
+                              : null,
+                      filled: true,
+                      fillColor: inputBg,
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: borderColor),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                            color: AppTheme.primaryGreen, width: 1.5),
+                      ),
+                    ),
+                    onSubmitted: (val) async {
+                      final trimmed = val.trim();
+                      if (trimmed.isNotEmpty) {
+                        Navigator.pop(bottomSheetContext);
+                        await ref.read(userLocationProvider.notifier).setAddress(trimmed);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Row(
+                                children: [
+                                  const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                                  const SizedBox(width: 8),
+                                  Expanded(child: Text("Location set to $trimmed")),
+                                ],
+                              ),
+                              backgroundColor: AppTheme.primaryGreen,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+
+                  // Predictive results list
+                  if (predictions.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      constraints: const BoxConstraints(maxHeight: 180),
+                      decoration: BoxDecoration(
+                        color: inputBg,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: borderColor),
+                      ),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: predictions.length,
+                        separatorBuilder: (_, _) => Divider(height: 1, color: borderColor),
+                        itemBuilder: (itemCtx, idx) {
+                          final p = predictions[idx];
+                          return ListTile(
+                            dense: true,
+                            leading: const Icon(Icons.place_rounded, color: AppTheme.primaryGreen, size: 18),
+                            title: Text(
+                              p.displayName,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: primaryTextColor,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            onTap: () async {
+                              Navigator.pop(bottomSheetContext);
+                              await ref.read(userLocationProvider.notifier).setAddress(
+                                    p.displayName,
+                                    p.toPosition(),
+                                  );
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: [
+                                        const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                                        const SizedBox(width: 8),
+                                        Expanded(child: Text("Location set to ${p.displayName}")),
+                                      ],
+                                    ),
+                                    backgroundColor: AppTheme.primaryGreen,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 16),
+
+                  // Use current location tile
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () async {
+                        Navigator.pop(bottomSheetContext);
+                        final res = await ref
+                            .read(userLocationProvider.notifier)
+                            .fetchCurrentLocation();
+                        if (mounted) {
+                          if (res.status == 'success') {
+                            final newAddr = ref.read(userLocationProvider).address;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Row(
+                                  children: [
+                                    const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                                    const SizedBox(width: 8),
+                                    Expanded(child: Text("Location updated to $newAddr")),
+                                  ],
+                                ),
+                                backgroundColor: AppTheme.primaryGreen,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          } else if (res.status == 'gps_disabled') {
+                            showAdaptiveDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog.adaptive(
+                                title: const Text("Location Services Disabled"),
+                                content: const Text("Location Services are turned off on your device. Turn on Location to discover nearby meals and restaurants."),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx),
+                                    child: const Text("Cancel"),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(ctx);
+                                      Geolocator.openLocationSettings();
+                                    },
+                                    child: const Text("Settings", style: TextStyle(fontWeight: FontWeight.bold)),
+                                  ),
+                                ],
+                              ),
+                            );
+                          } else if (res.status == 'permission_denied_forever') {
+                            showAdaptiveDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog.adaptive(
+                                title: const Text("Allow Location Access"),
+                                content: const Text("DreamEats uses your location to show available food deals near you. Please enable Location in Settings."),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx),
+                                    child: const Text("Cancel"),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(ctx);
+                                      Geolocator.openAppSettings();
+                                    },
+                                    child: const Text("Open Settings", style: TextStyle(fontWeight: FontWeight.bold)),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding:
+                            const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                              color: AppTheme.primaryGreen.withValues(alpha: 0.2)),
+                          color: AppTheme.lightGreenBg,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: const BoxDecoration(
+                                color: AppTheme.primaryGreen,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.my_location_rounded,
+                                  color: Colors.white, size: 18),
+                            ),
+                            const SizedBox(width: 14),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Use Current Location",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                      color: AppTheme.primaryGreen,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    "Pinpoint your location using device GPS",
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: AppTheme.mutedGrey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right_rounded,
+                                color: AppTheme.primaryGreen, size: 22),
+                          ],
                         ),
                       ),
                     ),
-                  );
-                }).toList(),
+                  ),
+                  const SizedBox(height: 22),
+
+                  // Popular areas header
+                  Row(
+                    children: [
+                      Icon(Icons.near_me_rounded, size: 15, color: secondaryTextColor),
+                      const SizedBox(width: 6),
+                      Text(
+                        "Popular Ghana Neighborhoods",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                          color: primaryTextColor,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Wrap of popular areas
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      "East Legon",
+                      "Airport Residential",
+                      "Cantonments",
+                      "Osu",
+                      "Labone",
+                      "Spintex",
+                      "Dzorwulu",
+                      "Madina",
+                      "Tema",
+                      "Kumasi Central",
+                    ].map((area) {
+                      return InkWell(
+                        onTap: () async {
+                          Navigator.pop(bottomSheetContext);
+                          final fullName = area == "Kumasi Central"
+                              ? "Kumasi, Ghana"
+                              : "$area, Accra";
+                          await ref
+                              .read(userLocationProvider.notifier)
+                              .setAddress(fullName);
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Row(
+                                  children: [
+                                    const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                                    const SizedBox(width: 8),
+                                    Expanded(child: Text("Location set to $fullName")),
+                                  ],
+                                ),
+                                backgroundColor: AppTheme.primaryGreen,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF0F1F3),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: borderColor),
+                          ),
+                          child: Text(
+                            area,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: primaryTextColor,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                ],
               ),
-              const SizedBox(height: 12),
-            ],
+            ),
           ),
         ),
       ),
