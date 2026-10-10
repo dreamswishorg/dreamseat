@@ -1207,12 +1207,6 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                 child: InkWell(
                   onTap: () async {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("📍 Pinpointing your GPS location..."),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
                     final res = await ref
                         .read(userLocationProvider.notifier)
                         .fetchCurrentLocation();
@@ -1221,34 +1215,59 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                         final newAddr = ref.read(userLocationProvider).address;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text("✅ Location updated to: $newAddr"),
+                            content: Row(
+                              children: [
+                                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                                const SizedBox(width: 8),
+                                Expanded(child: Text("Location updated to $newAddr")),
+                              ],
+                            ),
                             backgroundColor: AppTheme.primaryGreen,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            duration: const Duration(seconds: 2),
                           ),
                         );
                       } else if (res.status == 'gps_disabled') {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text("⚠️ Your phone's GPS/Location is turned OFF. Please turn it ON."),
-                            backgroundColor: AppTheme.warningOrange,
-                            duration: const Duration(seconds: 5),
-                            action: SnackBarAction(
-                              label: 'SETTINGS',
-                              textColor: Colors.white,
-                              onPressed: () => Geolocator.openLocationSettings(),
-                            ),
+                        showAdaptiveDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog.adaptive(
+                            title: const Text("Location Services Disabled"),
+                            content: const Text("Location Services are turned off on your device. Turn on Location to discover nearby meals and restaurants."),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text("Cancel"),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(ctx);
+                                  Geolocator.openLocationSettings();
+                                },
+                                child: const Text("Settings", style: TextStyle(fontWeight: FontWeight.bold)),
+                              ),
+                            ],
                           ),
                         );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text("❌ Location permission denied. Tap Settings to allow permission."),
-                            backgroundColor: AppTheme.errorRed,
-                            duration: const Duration(seconds: 5),
-                            action: SnackBarAction(
-                              label: 'PERMISSIONS',
-                              textColor: Colors.white,
-                              onPressed: () => Geolocator.openAppSettings(),
-                            ),
+                      } else if (res.status == 'permission_denied_forever') {
+                        showAdaptiveDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog.adaptive(
+                            title: const Text("Allow Location Access"),
+                            content: const Text("DreamEats uses your location to show available food deals near you. Please enable Location in Settings."),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text("Cancel"),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(ctx);
+                                  Geolocator.openAppSettings();
+                                },
+                                child: const Text("Open Settings", style: TextStyle(fontWeight: FontWeight.bold)),
+                              ),
+                            ],
                           ),
                         );
                       }

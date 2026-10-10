@@ -60,29 +60,63 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
   }
 
   Future<void> _handleLocationPermissionTap() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.deniedForever) {
       if (!mounted) return;
-      _showSnackBar("⚠️ Your device GPS is turned OFF. Opening Location Settings...", isError: true);
-      await Geolocator.openLocationSettings();
-      await Future.delayed(const Duration(seconds: 2));
-      _checkLocationPermission();
+      showAdaptiveDialog(
+        context: context,
+        builder: (ctx) => AlertDialog.adaptive(
+          title: const Text("Location Permission"),
+          content: const Text("Location access is currently disabled. Please enable location permissions in Settings to find meals nearby."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Geolocator.openAppSettings();
+              },
+              child: const Text("Open Settings", style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
       return;
     }
 
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.deniedForever) {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
       if (!mounted) return;
-      _showSnackBar("❌ Permission permanently denied. Open Settings to allow DreamEats to access location.", isError: true);
-      await Geolocator.openAppSettings();
-    } else {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
-        if (!mounted) return;
-        _showSnackBar("✅ Location permission granted successfully!");
-      }
-      _checkLocationPermission();
+      showAdaptiveDialog(
+        context: context,
+        builder: (ctx) => AlertDialog.adaptive(
+          title: const Text("GPS / Location Services"),
+          content: const Text("Location Services are turned off on your device. Please turn on Location in Settings."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Geolocator.openLocationSettings();
+              },
+              child: const Text("Settings", style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
+      return;
     }
+
+    _checkLocationPermission();
   }
 
   Future<void> _changePassword() async {

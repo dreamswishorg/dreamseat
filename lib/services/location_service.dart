@@ -14,11 +14,6 @@ class LocationService {
   }
 
   Future<LocationStatusResult> getPositionWithStatus() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return LocationStatusResult(status: 'gps_disabled');
-    }
-
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -31,10 +26,16 @@ class LocationService {
       return LocationStatusResult(status: 'permission_denied_forever');
     }
 
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return LocationStatusResult(status: 'gps_disabled');
+    }
+
     try {
       final pos = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.best,
+          timeLimit: Duration(seconds: 10),
         ),
       );
       return LocationStatusResult(status: 'success', position: pos);
