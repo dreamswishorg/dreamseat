@@ -45,12 +45,116 @@ class MerchantHomeTab extends ConsumerWidget {
 
     final profileScore = _setupChecklist(business, deals, notifier);
 
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isDesktopOrTablet = screenWidth >= 920;
     final wide = useSideNav(context);
+
+    final queueCard = MCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MSectionHeader(
+            title: 'Fulfilment queue',
+            subtitle: 'Real-time kitchen pipeline · tap a stage to filter',
+            icon: Icons.timeline_rounded,
+          ),
+          const SizedBox(height: 16),
+          _QueueStrip(
+            stages: [
+              _Stage('New', newOrders.length, OrderStatuses.of('reserved').color, 'reserved'),
+              _Stage('Preparing', preparing.length, OrderStatuses.of('preparing').color, 'preparing'),
+              _Stage('Ready', ready.length, OrderStatuses.of('ready').color, 'ready'),
+              _Stage('On the way', onTheWay.length, OrderStatuses.of('out_for_delivery').color, 'out_for_delivery'),
+              _Stage('Completed', collected.length, OrderStatuses.of('collected').color, 'collected'),
+            ],
+            onTap: (filter) => navigate(tab: MTab.orders, filter: filter),
+          ),
+          const SizedBox(height: 18),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F1),
+              borderRadius: BorderRadius.circular(MK.rSm),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.inventory_2_outlined, size: 17, color: MK.brand),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    deals.isEmpty
+                        ? 'No listings yet — publish your first surplus pack to start receiving orders.'
+                        : '$live live · $paused paused · $lowStock low on stock · $soldOut sold out',
+                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: MK.ink),
+                  ),
+                ),
+                if (lowStock > 0 || soldOut > 0 || deals.isEmpty)
+                  TextButton(
+                    onPressed: () => navigate(tab: MTab.listings),
+                    child: const Text('Restock', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    final activityCard = MCard(
+      padding: const EdgeInsets.fromLTRB(18, 18, 10, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MSectionHeader(
+            title: 'Latest activity',
+            subtitle: orders.isEmpty ? 'Orders appear here as customers reserve' : '${orders.length} lifetime orders',
+            icon: Icons.bolt_rounded,
+            iconColor: MK.amber,
+            trailing: TextButton(
+              onPressed: () => navigate(tab: MTab.orders),
+              child: const Text('All orders', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
+            ),
+          ),
+          const SizedBox(height: 6),
+          if (orders.isEmpty)
+            const MFeedbackBlock(
+              icon: Icons.receipt_long_rounded,
+              title: 'No orders yet',
+              message: 'Once a customer reserves one of your packs, the order lands here instantly.',
+            )
+          else
+            ...orders.take(isDesktopOrTablet ? 7 : 5).map((o) => _ActivityRow(
+                  order: o,
+                  onTap: () => navigate(tab: MTab.orders, filter: o.status),
+                )),
+        ],
+      ),
+    );
+
+    final revenueCard = _RevenueCard(collected: collected);
+
+    final impactCard = _ImpactCard(
+      savedValue: savedValue,
+      meals: collected.length,
+      totalOrders: orders.length,
+      pendingPayout: pendingPayout,
+      commissionPct: (notifier.commissionRate * 100),
+    );
+
+    final quickActionsCard = _QuickActions(
+      business: business,
+      orders: orders,
+      onVerify: () => navigate(tab: MTab.verify),
+      onListing: () => navigate(tab: MTab.listings, compose: true),
+      onProfile: () => navigate(tab: MTab.shop),
+      onOrders: () => navigate(tab: MTab.orders),
+    );
+
     return ResponsiveCenter(
-      maxWidth: 1240,
+      maxWidth: 1320,
       child: ListView(
         physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(wide ? 28 : 16, wide ? 20 : 14, wide ? 28 : 16, wide ? 32 : 110),
+        padding: EdgeInsets.fromLTRB(wide ? 24 : 16, wide ? 20 : 14, wide ? 24 : 16, wide ? 32 : 110),
         children: [
           MReveal(
             child: _HeroCard(
@@ -100,150 +204,55 @@ class MerchantHomeTab extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
-          MReveal(
-            delay: 120,
-            child: MCard(
-              child: Column(
+          if (isDesktopOrTablet) ...[
+            MReveal(
+              delay: 120,
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  MSectionHeader(
-                    title: 'Fulfilment queue',
-                    subtitle: 'Tap a stage to open those orders',
-                    icon: Icons.timeline_rounded,
-                  ),
-                  const SizedBox(height: 16),
-                  _QueueStrip(
-                    stages: [
-                      _Stage('New', newOrders.length, OrderStatuses.of('reserved').color, 'reserved'),
-                      _Stage('Preparing', preparing.length, OrderStatuses.of('preparing').color, 'preparing'),
-                      _Stage('Ready', ready.length, OrderStatuses.of('ready').color, 'ready'),
-                      _Stage('On the way', onTheWay.length, OrderStatuses.of('out_for_delivery').color,
-                          'out_for_delivery'),
-                      _Stage('Completed', collected.length, OrderStatuses.of('collected').color, 'collected'),
-                    ],
-                    onTap: (filter) => navigate(tab: MTab.orders, filter: filter),
-                  ),
-                  const SizedBox(height: 18),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F1),
-                      borderRadius: BorderRadius.circular(MK.rSm),
-                    ),
-                    child: Row(
+                  // Left: Operations Column
+                  Expanded(
+                    flex: 5,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Icon(Icons.inventory_2_outlined, size: 17, color: MK.brand),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            deals.isEmpty
-                                ? 'No listings yet — publish your first surplus pack to start receiving orders.'
-                                : '$live live · $paused paused · $lowStock low on stock · $soldOut sold out',
-                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: MK.ink),
-                          ),
-                        ),
-                        if (lowStock > 0 || soldOut > 0 || deals.isEmpty)
-                          TextButton(
-                            onPressed: () => navigate(tab: MTab.listings),
-                            child: const Text('Restock', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
-                          ),
+                        queueCard,
+                        const SizedBox(height: 18),
+                        activityCard,
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 18),
+                  // Right: Analytics & Tools Column
+                  Expanded(
+                    flex: 4,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        revenueCard,
+                        const SizedBox(height: 18),
+                        impactCard,
+                        const SizedBox(height: 18),
+                        quickActionsCard,
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-
-          if (wide) ...[
-            MReveal(
-              delay: 160,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(flex: 3, child: _RevenueCard(collected: collected)),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    flex: 2,
-                    child: _ImpactCard(
-                      savedValue: savedValue,
-                      meals: collected.length,
-                      totalOrders: orders.length,
-                      pendingPayout: pendingPayout,
-                      commissionPct: (notifier.commissionRate * 100),
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ] else ...[
-            MReveal(
-              delay: 160,
-              child: _RevenueCard(collected: collected),
-            ),
+            MReveal(delay: 120, child: queueCard),
             const SizedBox(height: 16),
-            MReveal(
-              delay: 200,
-              child: _ImpactCard(
-                savedValue: savedValue,
-                meals: collected.length,
-                totalOrders: orders.length,
-                pendingPayout: pendingPayout,
-                commissionPct: (notifier.commissionRate * 100),
-              ),
-            ),
+            MReveal(delay: 160, child: revenueCard),
+            const SizedBox(height: 16),
+            MReveal(delay: 190, child: impactCard),
+            const SizedBox(height: 16),
+            MReveal(delay: 220, child: quickActionsCard),
+            const SizedBox(height: 16),
+            MReveal(delay: 250, child: activityCard),
           ],
-          const SizedBox(height: 16),
-
-          MReveal(
-            delay: 230,
-            child: _QuickActions(
-              business: business,
-              orders: orders,
-              onVerify: () => navigate(tab: MTab.verify),
-              onListing: () => navigate(tab: MTab.listings, compose: true),
-              onProfile: () => navigate(tab: MTab.shop),
-              onOrders: () => navigate(tab: MTab.orders),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          MReveal(
-            delay: 260,
-            child: MCard(
-              padding: const EdgeInsets.fromLTRB(18, 18, 10, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  MSectionHeader(
-                    title: 'Latest activity',
-                    subtitle: orders.isEmpty ? 'Orders appear here as customers reserve' : '${orders.length} lifetime orders',
-                    icon: Icons.bolt_rounded,
-                    iconColor: MK.amber,
-                    trailing: TextButton(
-                      onPressed: () => navigate(tab: MTab.orders),
-                      child: const Text('All orders', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  if (orders.isEmpty)
-                    const MFeedbackBlock(
-                      icon: Icons.receipt_long_rounded,
-                      title: 'No orders yet',
-                      message: 'Once a customer reserves one of your packs, the order lands here instantly.',
-                    )
-                  else
-                    ...orders.take(5).map((o) => _ActivityRow(
-                          order: o,
-                          onTap: () => navigate(tab: MTab.orders, filter: o.status),
-                        )),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -346,6 +355,8 @@ class _HeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isWide = MediaQuery.sizeOf(context).width >= 800;
+
     return Container(
       decoration: BoxDecoration(
         gradient: MK.heroGradient,
@@ -357,87 +368,130 @@ class _HeroCard extends StatelessWidget {
       child: Stack(
         children: [
           Positioned(right: -30, top: -40, child: _Bubble(90)),
-          Positioned(right: 34, bottom: -26, child: _Bubble(54)),
+          Positioned(right: isWide ? 220 : 34, bottom: -26, child: _Bubble(54)),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+            padding: EdgeInsets.fromLTRB(isWide ? 26 : 20, isWide ? 22 : 20, isWide ? 26 : 20, isWide ? 22 : 18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            _greeting,
-                            style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.w700),
+                          Row(
+                            children: [
+                              Text(
+                                _greeting,
+                                style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 12.5, fontWeight: FontWeight.w700),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.16),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    MPulseDot(color: business.isApproved ? MK.brandGlow : MK.amber, size: 6.5),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      business.isApproved ? 'VERIFIED STORE' : 'IN REVIEW',
+                                      style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.6),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 3),
+                          const SizedBox(height: 4),
                           Text(
                             shopName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w900, letterSpacing: -0.6),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: isWide ? 24 : 21,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.6,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.16),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
-                      ),
-                      child: Row(
+                    if (isWide) ...[
+                      const SizedBox(width: 16),
+                      Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          MPulseDot(color: business.isApproved ? MK.brandGlow : MK.amber, size: 7),
-                          const SizedBox(width: 7),
-                          Text(
-                            business.isApproved ? 'VERIFIED' : 'IN REVIEW',
-                            style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w900, letterSpacing: 0.6),
+                          _HeroButton(
+                            icon: Icons.qr_code_scanner_rounded,
+                            label: 'Verify pickup',
+                            onTap: onVerify,
+                          ),
+                          const SizedBox(width: 10),
+                          _HeroButton(
+                            icon: Icons.add_rounded,
+                            label: 'New surplus pack',
+                            onTap: onNewListing,
+                            soft: true,
                           ),
                         ],
                       ),
-                    ),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 18),
+                SizedBox(height: isWide ? 18 : 16),
+                Container(
+                  height: 1,
+                  color: Colors.white.withValues(alpha: 0.15),
+                ),
+                SizedBox(height: isWide ? 16 : 14),
                 Row(
                   children: [
                     Expanded(
                       child: _HeroMetric(label: 'Orders today', value: todayOrders.toDouble()),
                     ),
-                    Container(width: 1, height: 34, color: Colors.white.withValues(alpha: 0.18)),
+                    Container(width: 1, height: 36, color: Colors.white.withValues(alpha: 0.18)),
                     Expanded(
                       child: _HeroMetric(label: 'Collected today', value: todayRevenue, money: true),
                     ),
+                    if (isWide) ...[
+                      Container(width: 1, height: 36, color: Colors.white.withValues(alpha: 0.18)),
+                      Expanded(
+                        child: _HeroMetric(label: 'Active in queue', value: openOrders.toDouble()),
+                      ),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 18),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _HeroButton(
-                        icon: Icons.qr_code_scanner_rounded,
-                        label: 'Verify pickup',
-                        onTap: onVerify,
+                if (!isWide) ...[
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _HeroButton(
+                          icon: Icons.qr_code_scanner_rounded,
+                          label: 'Verify pickup',
+                          onTap: onVerify,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _HeroButton(
-                        icon: Icons.add_rounded,
-                        label: 'New pack',
-                        onTap: onNewListing,
-                        soft: true,
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _HeroButton(
+                          icon: Icons.add_rounded,
+                          label: 'New pack',
+                          onTap: onNewListing,
+                          soft: true,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
                 if (openOrders > 0) ...[
                   const SizedBox(height: 12),
                   Row(
@@ -446,8 +500,8 @@ class _HeroCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          '$openOrders order${openOrders == 1 ? '' : 's'} waiting on you right now.',
-                          style: TextStyle(color: Colors.white.withValues(alpha: 0.88), fontSize: 11.5, fontWeight: FontWeight.w700),
+                          '$openOrders order${openOrders == 1 ? '' : 's'} waiting on your kitchen or counter right now.',
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.92), fontSize: 11.5, fontWeight: FontWeight.w700),
                         ),
                       ),
                     ],
@@ -552,7 +606,10 @@ class _StatGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final columns = Responsive.gridCount(context, mobile: 2, tablet: 3, desktop: 4);
+    final w = MediaQuery.sizeOf(context).width;
+    final int columns = w >= 1050 ? 4 : 2;
+    final double ratio = w >= 1050 ? 1.45 : (w >= 600 ? 1.75 : 1.28);
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -560,7 +617,7 @@ class _StatGrid extends StatelessWidget {
         crossAxisCount: columns,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: 1.28,
+        childAspectRatio: ratio,
       ),
       itemCount: tiles.length,
       itemBuilder: (_, i) {
@@ -573,27 +630,27 @@ class _StatGrid extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 30,
-                  height: 30,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
                     color: t.color.withValues(alpha: 0.13),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(t.icon, size: 16, color: t.color),
+                  child: Icon(t.icon, size: 17, color: t.color),
                 ),
                 const Spacer(),
                 MCountUp(
                   t.value,
                   decimals: t.money ? 2 : 0,
                   prefix: t.money ? 'GHS ' : '',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: MK.ink, letterSpacing: -0.7),
+                  style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900, color: MK.ink, letterSpacing: -0.7),
                 ),
                 const SizedBox(height: 1),
                 Text(
                   t.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: MK.ink),
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: MK.ink),
                 ),
                 Text(
                   t.caption,
@@ -618,8 +675,59 @@ class _QueueStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isWide = MediaQuery.sizeOf(context).width >= 650;
+    if (isWide) {
+      return Row(
+        children: [
+          for (var i = 0; i < stages.length; i++) ...[
+            if (i > 0)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Icon(Icons.arrow_forward_ios_rounded, size: 11, color: MK.inkSoft.withValues(alpha: 0.35)),
+              ),
+            Expanded(
+              child: MPressable(
+                onTap: () => onTap(stages[i].filter),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: stages[i].count > 0 ? stages[i].color.withValues(alpha: 0.08) : const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(MK.rSm),
+                    border: Border.all(
+                      color: stages[i].count > 0 ? stages[i].color.withValues(alpha: 0.38) : const Color(0xFFE2E8F0),
+                      width: stages[i].count > 0 ? 1.5 : 1,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        '${stages[i].count}',
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: stages[i].color, letterSpacing: -1),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        stages[i].label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: stages[i].count > 0 ? FontWeight.w900 : FontWeight.w700,
+                          color: stages[i].count > 0 ? MK.ink : MK.inkSoft,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      );
+    }
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
       child: Row(
         children: [
           for (var i = 0; i < stages.length; i++) ...[

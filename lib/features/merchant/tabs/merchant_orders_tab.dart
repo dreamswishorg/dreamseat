@@ -43,6 +43,7 @@ class _MerchantOrdersTabState extends ConsumerState<MerchantOrdersTab> {
   ];
 
   String _filter = 'all';
+  bool _kanbanMode = false;
   final _search = TextEditingController();
   final Set<String> _busy = {};
 
@@ -142,32 +143,191 @@ class _MerchantOrdersTabState extends ConsumerState<MerchantOrdersTab> {
     }
 
     final wide = useSideNav(context);
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isTabletOrDesktop = screenWidth >= 760;
+
+    final today = all.where((o) => DateUtils.isSameDay(o.timestamp, DateTime.now())).toList();
+    final todayRevenue = today.where((o) => o.status == 'collected').fold<double>(0, (s, o) => s + o.price);
+
     return ResponsiveCenter(
-      maxWidth: 1240,
+      maxWidth: 1320,
       child: Column(
         children: [
+          // ── Tablet / PC KPI Summary Strip ──
+          if (isTabletOrDesktop)
+            Padding(
+              padding: EdgeInsets.fromLTRB(wide ? 24 : 16, 14, wide ? 24 : 16, 4),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: const [
+                    BoxShadow(color: Color(0x04000000), blurRadius: 8, offset: Offset(0, 2)),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    _OrderKpiItem(
+                      label: 'NEEDS ACTION',
+                      count: all.where((o) => o.status == 'reserved').length,
+                      color: const Color(0xFFF97316),
+                    ),
+                    _vDivider(),
+                    _OrderKpiItem(
+                      label: 'IN KITCHEN',
+                      count: all.where((o) => o.status == 'preparing').length,
+                      color: const Color(0xFFD97706),
+                    ),
+                    _vDivider(),
+                    _OrderKpiItem(
+                      label: 'READY AT COUNTER',
+                      count: all.where((o) => o.status == 'ready').length,
+                      color: MK.brand,
+                    ),
+                    _vDivider(),
+                    _OrderKpiItem(
+                      label: 'TOTAL ORDERS',
+                      count: all.length,
+                      color: MK.ink,
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: MK.brand.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.payments_outlined, size: 16, color: MK.brandDeep),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Collected today: ${MK.money(todayRevenue)}',
+                            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: MK.brandDeep),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // ── Search & Controls Toolbar ──
           Padding(
-            padding: EdgeInsets.fromLTRB(wide ? 24 : 16, wide ? 16 : 12, wide ? 24 : 16, 10),
-            child: MSearchField(
-              controller: _search,
-              hint: 'Search code, customer or pack…',
-              onChanged: (_) => setState(() {}),
-              onClear: _search.text.isEmpty
-                  ? null
-                  : () {
-                      _search.clear();
-                      setState(() {});
-                    },
+            padding: EdgeInsets.fromLTRB(wide ? 24 : 16, wide ? 14 : 10, wide ? 24 : 16, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: MSearchField(
+                    controller: _search,
+                    hint: 'Search code, customer or pack…',
+                    onChanged: (_) => setState(() {}),
+                    onClear: _search.text.isEmpty
+                        ? null
+                        : () {
+                            _search.clear();
+                            setState(() {});
+                          },
+                  ),
+                ),
+                if (isTabletOrDesktop) ...[
+                  const SizedBox(width: 10),
+                  // Kanban vs Grid View Toggle
+                  Container(
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Tooltip(
+                          message: 'Card Grid View',
+                          child: InkWell(
+                            onTap: () => setState(() => _kanbanMode = false),
+                            borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: !_kanbanMode ? MK.brand.withValues(alpha: 0.12) : Colors.transparent,
+                                borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
+                              ),
+                              child: Icon(
+                                Icons.grid_view_rounded,
+                                size: 18,
+                                color: !_kanbanMode ? MK.brandDeep : const Color(0xFF64748B),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Container(width: 1, height: 24, color: const Color(0xFFE2E8F0)),
+                        Tooltip(
+                          message: 'Kitchen Kanban (KDS)',
+                          child: InkWell(
+                            onTap: () => setState(() => _kanbanMode = true),
+                            borderRadius: const BorderRadius.horizontal(right: Radius.circular(12)),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: _kanbanMode ? MK.brand.withValues(alpha: 0.12) : Colors.transparent,
+                                borderRadius: const BorderRadius.horizontal(right: Radius.circular(12)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.view_kanban_rounded,
+                                    size: 18,
+                                    color: _kanbanMode ? MK.brandDeep : const Color(0xFF64748B),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    'KDS',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w900,
+                                      color: _kanbanMode ? MK.brandDeep : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(width: 10),
+                SizedBox(
+                  width: 46,
+                  child: MIconButton(
+                    icon: Icons.upload_file_rounded,
+                    tooltip: 'Export orders CSV',
+                    color: MK.sky,
+                    size: 46,
+                    onPressed: all.isEmpty ? null : () => _exportCsv(all),
+                  ),
+                ),
+              ],
             ),
           ),
-          MChipRow(
-            items: _filterLabels,
-            values: _filters,
-            value: _filter,
-            countOf: countOf,
-            onChanged: (v) => setState(() => _filter = v),
-          ),
+
+          if (!_kanbanMode || !isTabletOrDesktop)
+            MChipRow(
+              items: _filterLabels,
+              values: _filters,
+              value: _filter,
+              countOf: countOf,
+              onChanged: (v) => setState(() => _filter = v),
+            ),
           const SizedBox(height: 6),
+
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async {
@@ -184,85 +344,121 @@ class _MerchantOrdersTabState extends ConsumerState<MerchantOrdersTab> {
                         ),
                       ],
                     )
-                  : visible.isEmpty
-                      ? ListView(
-                          children: [
-                            MFeedbackBlock(
-                              icon: Icons.filter_alt_off_rounded,
-                              title: 'No orders in this view',
-                              message: _search.text.trim().isEmpty
-                                  ? 'Switch filter to “All” to see your other orders.'
-                                  : 'No order matches “${_search.text.trim()}”.',
-                              actionLabel: 'Show all orders',
-                              onAction: () {
-                                _search.clear();
-                                setState(() {
-                                  _filter = 'all';
-                                });
+                  : (_kanbanMode && isTabletOrDesktop)
+                      ? _OrdersKanbanBoard(
+                          allOrders: all,
+                          busy: _busy,
+                          onAdvance: _advance,
+                          onCollect: _collect,
+                          onDetails: (o) => showOrderDetailSheet(context, ref, o),
+                        )
+                      : visible.isEmpty
+                          ? ListView(
+                              children: [
+                                MFeedbackBlock(
+                                  icon: Icons.filter_alt_off_rounded,
+                                  title: 'No orders in this view',
+                                  message: _search.text.trim().isEmpty
+                                      ? 'Switch filter to “All” to see your other orders.'
+                                      : 'No order matches “${_search.text.trim()}”.',
+                                  actionLabel: 'Show all orders',
+                                  onAction: () {
+                                    _search.clear();
+                                    setState(() {
+                                      _filter = 'all';
+                                    });
+                                  },
+                                ),
+                              ],
+                            )
+                          : LayoutBuilder(
+                              builder: (context, constraints) {
+                                final isMultiCol = constraints.maxWidth >= 640;
+                                if (isMultiCol) {
+                                  return GridView.builder(
+                                    physics: const AlwaysScrollableScrollPhysics(),
+                                    padding: EdgeInsets.fromLTRB(wide ? 24 : 16, 8, wide ? 24 : 16, wide ? 24 : 110),
+                                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                                      maxCrossAxisExtent: 580,
+                                      mainAxisSpacing: 14,
+                                      crossAxisSpacing: 14,
+                                      mainAxisExtent: 248,
+                                    ),
+                                    itemCount: visible.length,
+                                    itemBuilder: (_, i) => MReveal(
+                                      delay: (i * 35).clamp(0, 320),
+                                      child: _OrderCard(
+                                        order: visible[i],
+                                        busy: _busy.contains(visible[i].id),
+                                        onAdvance: () {
+                                          final meta = OrderStatuses.of(visible[i].status);
+                                          if (meta.next == null) return;
+                                          _advance(visible[i], meta.next!, meta.nextLabel);
+                                        },
+                                        onCollect: () => _collect(visible[i]),
+                                        onRemind: () => _remind(visible[i]),
+                                        onDetails: () => showOrderDetailSheet(context, ref, visible[i]),
+                                        onTracking: () => showTrackingSheet(context, ref, visible[i], _clean),
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return ListView.separated(
+                                  physics: const AlwaysScrollableScrollPhysics(),
+                                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
+                                  itemCount: visible.length,
+                                  separatorBuilder: (context, index) => const SizedBox(height: 12),
+                                  itemBuilder: (_, i) => MReveal(
+                                    delay: (i * 45).clamp(0, 360),
+                                    child: _OrderCard(
+                                      order: visible[i],
+                                      busy: _busy.contains(visible[i].id),
+                                      onAdvance: () {
+                                        final meta = OrderStatuses.of(visible[i].status);
+                                        if (meta.next == null) return;
+                                        _advance(visible[i], meta.next!, meta.nextLabel);
+                                      },
+                                      onCollect: () => _collect(visible[i]),
+                                      onRemind: () => _remind(visible[i]),
+                                      onDetails: () => showOrderDetailSheet(context, ref, visible[i]),
+                                      onTracking: () => showTrackingSheet(context, ref, visible[i], _clean),
+                                    ),
+                                  ),
+                                );
                               },
                             ),
-                          ],
-                        )
-                      : LayoutBuilder(
-                          builder: (context, constraints) {
-                            final isMultiCol = constraints.maxWidth >= 640;
-                            if (isMultiCol) {
-                              return GridView.builder(
-                                physics: const AlwaysScrollableScrollPhysics(),
-                                padding: EdgeInsets.fromLTRB(wide ? 24 : 16, 8, wide ? 24 : 16, wide ? 24 : 110),
-                                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                                  maxCrossAxisExtent: 580,
-                                  mainAxisSpacing: 12,
-                                  crossAxisSpacing: 12,
-                                  mainAxisExtent: 220,
-                                ),
-                                itemCount: visible.length,
-                                itemBuilder: (_, i) => MReveal(
-                                  delay: (i * 35).clamp(0, 320),
-                                  child: _OrderCard(
-                                    order: visible[i],
-                                    busy: _busy.contains(visible[i].id),
-                                    onAdvance: () {
-                                      final meta = OrderStatuses.of(visible[i].status);
-                                      if (meta.next == null) return;
-                                      _advance(visible[i], meta.next!, meta.nextLabel);
-                                    },
-                                    onCollect: () => _collect(visible[i]),
-                                    onRemind: () => _remind(visible[i]),
-                                    onDetails: () => showOrderDetailSheet(context, ref, visible[i]),
-                                    onTracking: () => showTrackingSheet(context, ref, visible[i], _clean),
-                                  ),
-                                ),
-                              );
-                            }
-                            return ListView.separated(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
-                              itemCount: visible.length,
-                              separatorBuilder: (context, index) => const SizedBox(height: 12),
-                              itemBuilder: (_, i) => MReveal(
-                                delay: (i * 45).clamp(0, 360),
-                                child: _OrderCard(
-                                  order: visible[i],
-                                  busy: _busy.contains(visible[i].id),
-                                  onAdvance: () {
-                                    final meta = OrderStatuses.of(visible[i].status);
-                                    if (meta.next == null) return;
-                                    _advance(visible[i], meta.next!, meta.nextLabel);
-                                  },
-                                  onCollect: () => _collect(visible[i]),
-                                  onRemind: () => _remind(visible[i]),
-                                  onDetails: () => showOrderDetailSheet(context, ref, visible[i]),
-                                  onTracking: () => showTrackingSheet(context, ref, visible[i], _clean),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _vDivider() => Container(
+        height: 28,
+        width: 1,
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        color: const Color(0xFFE2E8F0),
+      );
+
+  void _exportCsv(List<Order> orders) {
+    final csv = buildCsv(
+      ['Code', 'Deal', 'Customer', 'Status', 'Fulfilment', 'Price (GHS)', 'Date', 'Payout'],
+      orders.map((o) => [
+        o.collectionCode,
+        o.dealTitle,
+        o.customerName,
+        o.status,
+        o.fulfillmentType,
+        o.price.toStringAsFixed(2),
+        DateFormat('yyyy-MM-dd HH:mm').format(o.timestamp),
+        o.payoutStatus,
+      ]).toList(),
+    );
+    exportCsv(
+      context,
+      csv: csv,
+      fileName: '${widget.business.name.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '_').toLowerCase()}_orders.csv',
     );
   }
 }
@@ -769,4 +965,347 @@ Future<bool> showMConfirm(
     ),
   );
   return result ?? false;
+}
+
+class _OrderKpiItem extends StatelessWidget {
+  final String label;
+  final int count;
+  final Color color;
+
+  const _OrderKpiItem({required this.label, required this.count, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '$count',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
+            color: color,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF64748B),
+            letterSpacing: 0.5,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _OrdersKanbanBoard extends StatelessWidget {
+  final List<Order> allOrders;
+  final Set<String> busy;
+  final Function(Order, String, String) onAdvance;
+  final Function(Order) onCollect;
+  final Function(Order) onDetails;
+
+  const _OrdersKanbanBoard({
+    required this.allOrders,
+    required this.busy,
+    required this.onAdvance,
+    required this.onCollect,
+    required this.onDetails,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final reserved = allOrders.where((o) => o.status == 'reserved').toList();
+    final preparing = allOrders.where((o) => o.status == 'preparing').toList();
+    final ready = allOrders.where((o) => o.status == 'ready').toList();
+    final completed = allOrders.where((o) => o.status == 'out_for_delivery' || o.status == 'collected').toList();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: _KanbanColumn(
+              title: 'New Orders',
+              count: reserved.length,
+              color: const Color(0xFFF97316),
+              icon: Icons.inbox_rounded,
+              orders: reserved,
+              busy: busy,
+              actionLabel: 'Start prep',
+              onAction: (o) => onAdvance(o, 'preparing', 'Preparing'),
+              onDetails: onDetails,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _KanbanColumn(
+              title: 'In Kitchen',
+              count: preparing.length,
+              color: const Color(0xFFD97706),
+              icon: Icons.soup_kitchen_rounded,
+              orders: preparing,
+              busy: busy,
+              actionLabel: 'Mark ready',
+              onAction: (o) => onAdvance(o, 'ready', 'Ready'),
+              onDetails: onDetails,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _KanbanColumn(
+              title: 'Ready for Counter',
+              count: ready.length,
+              color: MK.brand,
+              icon: Icons.shopping_bag_rounded,
+              orders: ready,
+              busy: busy,
+              actionLabel: 'Hand over',
+              onAction: onCollect,
+              onDetails: onDetails,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _KanbanColumn(
+              title: 'Dispatched & Done',
+              count: completed.length,
+              color: MK.sky,
+              icon: Icons.check_circle_outline_rounded,
+              orders: completed,
+              busy: busy,
+              actionLabel: null,
+              onAction: (_) {},
+              onDetails: onDetails,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _KanbanColumn extends StatelessWidget {
+  final String title;
+  final int count;
+  final Color color;
+  final IconData icon;
+  final List<Order> orders;
+  final Set<String> busy;
+  final String? actionLabel;
+  final Function(Order) onAction;
+  final Function(Order) onDetails;
+
+  const _KanbanColumn({
+    required this.title,
+    required this.count,
+    required this.color,
+    required this.icon,
+    required this.orders,
+    required this.busy,
+    required this.actionLabel,
+    required this.onAction,
+    required this.onDetails,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Column Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+              border: Border(bottom: BorderSide(color: color.withValues(alpha: 0.3), width: 2)),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 16, color: color),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      color: MK.ink,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '$count',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                      color: color,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Column Cards List
+          SizedBox(
+            height: 580,
+            child: orders.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Text(
+                        'No tickets in this stage',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF94A3B8),
+                        ),
+                      ),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.all(10),
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: orders.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    itemBuilder: (context, i) {
+                      final o = orders[i];
+                      final isBusy = busy.contains(o.id);
+                      final isDelivery = o.fulfillmentType == 'delivery';
+
+                      return Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          boxShadow: const [
+                            BoxShadow(color: Color(0x04000000), blurRadius: 4, offset: Offset(0, 1)),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: MK.brand.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    '#${o.collectionCode}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w900,
+                                      color: MK.brandDeep,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: isDelivery ? const Color(0xFFEFF6FF) : const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    isDelivery ? 'DELIVERY' : 'PICKUP',
+                                    style: TextStyle(
+                                      fontSize: 8.5,
+                                      fontWeight: FontWeight.w900,
+                                      color: isDelivery ? const Color(0xFF2563EB) : const Color(0xFF475569),
+                                    ),
+                                  ),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  MK.money(o.price),
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: MK.ink),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              orderTitle(o),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: MK.ink, height: 1.2),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${o.customerName} · ${MK.ago(o.timestamp)}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                InkWell(
+                                  onTap: () => onDetails(o),
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF1F5F9),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFF475569)),
+                                  ),
+                                ),
+                                const Spacer(),
+                                if (actionLabel != null && o.status != 'collected' && o.status != 'cancelled')
+                                  MButton(
+                                    actionLabel!,
+                                    height: 32,
+                                    loading: isBusy,
+                                    onPressed: isBusy ? null : () => onAction(o),
+                                  )
+                                else
+                                  Text(
+                                    o.status.toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w900,
+                                      color: color,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
 }

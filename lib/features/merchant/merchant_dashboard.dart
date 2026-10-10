@@ -8,13 +8,40 @@ import '../../providers/app_state.dart';
 import '../common/help_support_screen.dart';
 import 'merchant_kit.dart';
 import 'merchant_profile_screen.dart';
+import 'tabs/merchant_financials_tab.dart';
 import 'tabs/merchant_home_tab.dart';
+import 'tabs/merchant_impact_tab.dart';
 import 'tabs/merchant_listings_tab.dart';
 import 'tabs/merchant_orders_tab.dart';
+import 'tabs/merchant_reviews_tab.dart';
 import 'tabs/merchant_verify_tab.dart';
+import 'widgets/merchant_sidebar.dart';
 
-/// Responsive shell for the merchant portal: left rail on wide screens,
-/// floating bottom navigation on phones.
+/// All available destinations in the merchant portal.
+const List<MTab> kAllMerchantTabs = [
+  MTab.home,
+  MTab.orders,
+  MTab.listings,
+  MTab.verify,
+  MTab.financials,
+  MTab.impact,
+  MTab.reviews,
+  MTab.shop,
+];
+
+/// Destinations surfaced in mobile phone bottom navigation.
+const List<MTab> kPhoneBottomTabs = [
+  MTab.home,
+  MTab.orders,
+  MTab.listings,
+  MTab.verify,
+  MTab.shop,
+];
+
+/// Responsive shell for the merchant portal:
+/// - Desktop / PC (width >= 850): Dedicated executive sidebar with categorized navigation & header command bar.
+/// - Tablet (width 600 - 850): Adaptive collapsible rail / slide-out drawer matching desktop aesthetics.
+/// - Mobile (< 600): Floating bottom bar with quick drawer access to all portal capabilities.
 class MerchantDashboardScreen extends ConsumerStatefulWidget {
   const MerchantDashboardScreen({super.key});
 
@@ -58,10 +85,13 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
       MerchantOrdersTab(business: business, initialFilter: _ordersFilter),
       MerchantListingsTab(business: business, composeNew: _composeListing),
       MerchantVerifyTab(business: business),
+      MerchantFinancialsTab(business: business),
+      MerchantImpactTab(business: business),
+      MerchantReviewsTab(business: business),
       MerchantProfileScreen(business: business),
     ];
 
-    const navItems = <(IconData, IconData, String)>[
+    const phoneNavItems = <(IconData, IconData, String)>[
       (Icons.home_outlined, Icons.home_rounded, 'Home'),
       (Icons.receipt_long_outlined, Icons.receipt_long_rounded, 'Orders'),
       (Icons.inventory_2_outlined, Icons.inventory_2_rounded, 'Listings'),
@@ -69,75 +99,95 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
       (Icons.storefront_outlined, Icons.storefront_rounded, 'Shop'),
     ];
 
-    final wide = useSideNav(context);
-    final selectedIndex = kMerchantNavTabs.indexOf(_tab);
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isWide = screenWidth >= 850;
+    final isPhone = screenWidth < 600;
+
+    final selectedIndex = kAllMerchantTabs.indexOf(_tab).clamp(0, kAllMerchantTabs.length - 1);
+    final phoneSelectedIndex = kPhoneBottomTabs.indexOf(_tab);
 
     final body = Column(
       children: [
         _TopBar(
           business: business,
-          title: switch (_tab) {
-            MTab.home => 'Overview',
-            MTab.orders => 'Orders',
-            MTab.listings => 'Listings',
-            MTab.verify => 'Verify pickup',
-            MTab.shop => 'Shop profile',
-            _ => 'Overview',
-          },
+          tab: _tab,
           onProfile: () => _go(tab: MTab.shop),
-          brandTitle: wide,
+          onNewListing: () => _go(tab: MTab.listings, compose: true),
+          onVerifyCode: () => _go(tab: MTab.verify),
+          isWide: isWide,
         ),
-        Expanded(child: IndexedStack(index: selectedIndex, children: tabs)),
+        Expanded(
+          child: IndexedStack(
+            index: selectedIndex,
+            children: tabs,
+          ),
+        ),
       ],
     );
 
     return Scaffold(
       backgroundColor: MK.canvas,
-      body: wide
+      drawer: !isWide
+          ? Drawer(
+              width: 280,
+              backgroundColor: Colors.white,
+              elevation: 16,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.horizontal(right: Radius.circular(20)),
+              ),
+              child: MerchantSidebar(
+                currentTab: _tab,
+                onSelectTab: (tab) {
+                  Navigator.of(context).pop();
+                  _go(tab: tab);
+                },
+                business: business,
+                openOrdersCount: openCount,
+                isCollapsed: false,
+                onNewListing: () {
+                  Navigator.of(context).pop();
+                  _go(tab: MTab.listings, compose: true);
+                },
+                onVerifyCode: () {
+                  Navigator.of(context).pop();
+                  _go(tab: MTab.verify);
+                },
+              ),
+            )
+          : null,
+      body: isWide
           ? Row(
               children: [
-                DesktopSideNav(
-                  accentColor: MK.brand,
-                  selectedIndex: selectedIndex,
+                MerchantSidebar(
+                  currentTab: _tab,
+                  onSelectTab: (tab) => _go(tab: tab),
+                  business: business,
+                  openOrdersCount: openCount,
                   isCollapsed: _navCollapsed,
                   onToggleCollapse: () => setState(() => _navCollapsed = !_navCollapsed),
-                  onSelect: (idx) {
-                    setState(() {
-                      _tab = kMerchantNavTabs[idx];
-                      _ordersFilter = null;
-                      _composeListing = false;
-                      if (MediaQuery.sizeOf(context).width < 1150) _navCollapsed = true;
-                    });
-                  },
-                  header: _BrandChip(business: business),
-                  items: [
-                    for (var i = 0; i < navItems.length; i++)
-                      SideNavItem(
-                        icon: navItems[i].$1,
-                        activeIcon: navItems[i].$2,
-                        label: navItems[i].$3,
-                        badgeCount: kMerchantNavTabs[i] == MTab.orders ? openCount : 0,
-                      ),
-                  ],
+                  onNewListing: () => _go(tab: MTab.listings, compose: true),
+                  onVerifyCode: () => _go(tab: MTab.verify),
                 ),
                 Expanded(child: body),
               ],
             )
           : Stack(
               children: [
-                Positioned.fill(child: SafeArea(bottom: false, child: body)),
-                _BottomNav(
-                  selectedIndex: selectedIndex,
-                  orderBadge: openCount,
-                  items: navItems,
-                  onTap: (idx) {
-                    setState(() {
-                      _tab = kMerchantNavTabs[idx];
-                      _ordersFilter = null;
-                      _composeListing = false;
-                    });
-                  },
+                Positioned.fill(
+                  child: SafeArea(
+                    bottom: false,
+                    child: body,
+                  ),
                 ),
+                if (isPhone)
+                  _BottomNav(
+                    selectedIndex: phoneSelectedIndex,
+                    orderBadge: openCount,
+                    items: phoneNavItems,
+                    onTap: (idx) {
+                      _go(tab: kPhoneBottomTabs[idx]);
+                    },
+                  ),
               ],
             ),
     );
@@ -146,111 +196,253 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
 
 class _TopBar extends ConsumerWidget {
   final BusinessProfile business;
-  final String title;
+  final MTab tab;
   final VoidCallback onProfile;
-  final bool brandTitle;
+  final VoidCallback onNewListing;
+  final VoidCallback onVerifyCode;
+  final bool isWide;
 
   const _TopBar({
     required this.business,
-    required this.title,
+    required this.tab,
     required this.onProfile,
-    required this.brandTitle,
+    required this.onNewListing,
+    required this.onVerifyCode,
+    required this.isWide,
   });
+
+  (String, String) _getMeta() {
+    switch (tab) {
+      case MTab.home:
+        return ('Overview', 'Operations hub & real-time store pulse');
+      case MTab.orders:
+        return ('Live Orders', 'Kitchen fulfilment & dispatch queue');
+      case MTab.listings:
+        return ('Surplus Inventory', 'Manage surplus packs & stock levels');
+      case MTab.verify:
+        return ('Verify Pickup', 'Validate customer rescue codes & hand over packs');
+      case MTab.financials:
+        return ('Payouts & Statements', 'Revenue settlements & commission statements');
+      case MTab.impact:
+        return ('Rescue & Impact', 'Track food waste prevented & environmental savings');
+      case MTab.reviews:
+        return ('Customer Reviews', 'Ratings & verified rescuer feedback');
+      case MTab.shop:
+        return ('Shop Profile', 'Storefront details, hours & compliance');
+      default:
+        return ('Overview', 'Operations command center');
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final menuCtrl = MenuController();
     final user = ref.watch(appStateProvider).currentUser;
     final initial = (user?.name.isNotEmpty == true) ? user!.name[0].toUpperCase() : 'M';
+    final (title, subtitle) = _getMeta();
 
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 8, 6, 8),
-      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: MK.line))),
+      padding: EdgeInsets.fromLTRB(isWide ? 24 : 12, isWide ? 12 : 8, isWide ? 20 : 10, isWide ? 12 : 8),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x04000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
       child: Row(
         children: [
-          if (brandTitle) ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(9),
-              child: Image.asset('assets/images/logo.jpg', height: 30, width: 30, fit: BoxFit.cover),
+          // Drawer toggle button when on mobile / narrow tablet
+          if (!isWide) ...[
+            Builder(
+              builder: (ctx) => IconButton(
+                icon: const Icon(Icons.menu_rounded, color: MK.ink, size: 23),
+                tooltip: 'Open menu',
+                visualDensity: VisualDensity.compact,
+                onPressed: () => Scaffold.of(ctx).openDrawer(),
+              ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 4),
           ],
+
+          // Title & Subtitle or Brand
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  brandTitle ? title : business.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: MK.ink, letterSpacing: -0.4),
-                ),
-                const SizedBox(height: 3),
                 Row(
                   children: [
-                    MPill(
-                      business.isApproved ? 'Verified' : 'In review',
-                      color: business.isApproved ? MK.brand : MK.amber,
-                      pulse: !business.isApproved,
-                      fontSize: 8,
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        brandTitle ? business.name : 'Merchant portal',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11, color: MK.inkSoft, fontWeight: FontWeight.w700),
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: isWide ? 18.5 : 16,
+                        fontWeight: FontWeight.w900,
+                        color: MK.ink,
+                        letterSpacing: -0.4,
                       ),
                     ),
+                    if (isWide) ...[
+                      const SizedBox(width: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0FDF4),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFBBF7D0)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF16A34A),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            const Text(
+                              'STORE ONLINE',
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF15803D),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  isWide ? subtitle : business.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: Color(0xFF64748B),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
           ),
+
+          // Desktop Command Bar Actions
+          if (isWide) ...[
+            MButton(
+              'Verify Code',
+              icon: Icons.qr_code_scanner_rounded,
+              kind: MKind.ghost,
+              height: 38,
+              onPressed: onVerifyCode,
+            ),
+            const SizedBox(width: 8),
+            MButton(
+              'New Pack',
+              icon: Icons.add_rounded,
+              height: 38,
+              onPressed: onNewListing,
+            ),
+            const SizedBox(width: 12),
+            Container(width: 1, height: 26, color: const Color(0xFFE2E8F0)),
+            const SizedBox(width: 6),
+          ],
+
+          // Notification Bell Anchor
           buildNotificationMenuAnchor(context, ref, iconColor: MK.ink),
+
+          // User Profile Menu Anchor
           MenuAnchor(
             controller: menuCtrl,
             alignmentOffset: const Offset(-190, 8),
             style: MenuStyle(
               backgroundColor: WidgetStateProperty.all(Colors.white),
-              elevation: WidgetStateProperty.all(12),
+              elevation: WidgetStateProperty.all(14),
               padding: WidgetStateProperty.all(EdgeInsets.zero),
               shape: WidgetStateProperty.all(
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(18), side: const BorderSide(color: MK.line)),
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                  side: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
               ),
             ),
             builder: (context, controller, child) => MPressable(
               onTap: () => controller.isOpen ? controller.close() : controller.open(),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: MK.brand.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: MK.brand.withValues(alpha: 0.24)),
-                  ),
-                  child: Center(
-                    child: Text(
-                      initial,
-                      style: const TextStyle(color: MK.brandDeep, fontWeight: FontWeight.w900, fontSize: 13),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF16A34A), Color(0xFF15803D)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF16A34A).withValues(alpha: 0.25),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          initial,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14),
+                        ),
+                      ),
                     ),
-                  ),
+                    if (isWide) ...[
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user?.name ?? 'Merchant',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: MK.ink),
+                          ),
+                          Text(
+                            business.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 10, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                      const Icon(Icons.arrow_drop_down_rounded, color: Color(0xFF64748B), size: 20),
+                    ],
+                  ],
                 ),
               ),
             ),
             menuChildren: [
               SizedBox(
-                width: 230,
+                width: 240,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -258,18 +450,19 @@ class _TopBar extends ConsumerWidget {
                             user?.name ?? 'Merchant',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900, color: MK.ink),
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: MK.ink),
                           ),
+                          const SizedBox(height: 2),
                           Text(
                             user?.email ?? '',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 11, color: MK.inkSoft),
+                            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
                           ),
                         ],
                       ),
                     ),
-                    const Divider(height: 1, color: MK.line),
+                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
                     _MenuTile(
                       icon: Icons.storefront_rounded,
                       label: 'Shop profile',
@@ -286,7 +479,7 @@ class _TopBar extends ConsumerWidget {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
                       },
                     ),
-                    const Divider(height: 1, color: MK.line),
+                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
                     _MenuTile(
                       icon: Icons.logout_rounded,
                       label: 'Log out',
@@ -320,7 +513,7 @@ class _MenuTile extends StatelessWidget {
   Widget build(BuildContext context) => InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
           child: Row(
             children: [
               Icon(icon, size: 18, color: color ?? MK.ink),
@@ -328,65 +521,12 @@ class _MenuTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: color ?? MK.ink),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color ?? MK.ink),
                 ),
               ),
             ],
           ),
         ),
-      );
-}
-
-class _BrandChip extends StatelessWidget {
-  final BusinessProfile business;
-  const _BrandChip({required this.business});
-
-  @override
-  Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.asset('assets/images/logo.jpg', height: 26, width: 26, fit: BoxFit.cover),
-              ),
-              const SizedBox(width: 8),
-              RichText(
-                text: TextSpan(
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: -0.5),
-                  children: [
-                    TextSpan(text: 'DREAM', style: TextStyle(color: MK.brand)),
-                    TextSpan(text: 'EATS', style: TextStyle(color: MK.amber)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-            decoration: BoxDecoration(
-              color: MK.brand.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(9),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.storefront_rounded, size: 12, color: MK.brand),
-                const SizedBox(width: 5),
-                Flexible(
-                  child: Text(
-                    business.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: MK.brandDeep),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       );
 }
 
@@ -405,14 +545,14 @@ class _BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Positioned(
-        left: 10,
-        right: 10,
-        bottom: 10,
+        left: 12,
+        right: 12,
+        bottom: 12,
         child: Material(
-          elevation: 14,
-          shadowColor: MK.ink.withValues(alpha: 0.16),
+          elevation: 16,
+          shadowColor: Colors.black.withValues(alpha: 0.15),
           color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(24),
           child: SafeArea(
             top: false,
             child: SizedBox(
@@ -421,7 +561,7 @@ class _BottomNav extends StatelessWidget {
                 children: List.generate(items.length, (i) {
                   final selected = i == selectedIndex;
                   final item = items[i];
-                  final showBadge = i == kMerchantNavTabs.indexOf(MTab.orders) && orderBadge > 0;
+                  final showBadge = i == kPhoneBottomTabs.indexOf(MTab.orders) && orderBadge > 0;
                   return Expanded(
                     child: MPressable(
                       onTap: () {
@@ -437,7 +577,7 @@ class _BottomNav extends StatelessWidget {
                               AnimatedContainer(
                                 duration: const Duration(milliseconds: 220),
                                 curve: Curves.easeOut,
-                                width: 46,
+                                width: 44,
                                 height: 28,
                                 decoration: BoxDecoration(
                                   color: selected ? MK.brand.withValues(alpha: 0.12) : Colors.transparent,
@@ -452,7 +592,7 @@ class _BottomNav extends StatelessWidget {
                               if (showBadge)
                                 Positioned(
                                   top: -2,
-                                  right: 4,
+                                  right: 2,
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                                     constraints: const BoxConstraints(minWidth: 16),

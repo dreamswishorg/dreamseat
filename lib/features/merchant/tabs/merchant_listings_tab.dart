@@ -149,6 +149,29 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
     }
   }
 
+  void _exportCsv(List<FoodDeal> deals) {
+    if (deals.isEmpty) return;
+    exportCsv(
+      context,
+      csv: buildCsv(
+        ['Title', 'Category', 'Original', 'Discounted', 'Off', 'Total', 'Remaining', 'Status'],
+        deals
+            .map((d) => [
+                  d.title,
+                  d.category,
+                  d.originalPrice.toStringAsFixed(2),
+                  d.discountedPrice.toStringAsFixed(2),
+                  '${d.percentageSaved}%',
+                  '${d.quantityTotal}',
+                  '${d.quantityRemaining}',
+                  _bucketOf(d),
+                ])
+            .toList(),
+      ),
+      fileName: '${widget.business.name.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '_').toLowerCase()}_listings.csv',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(appStateProvider);
@@ -171,14 +194,19 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
         children: [
           Column(
             children: [
+              // ── Executive KPI Summary Ribbon (Tablet & Desktop) ──
+              if (deals.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _ListingsKpiRibbon(deals: deals),
+              ],
               Padding(
-                padding: EdgeInsets.fromLTRB(wide ? 24 : 16, wide ? 16 : 12, wide ? 24 : 16, 10),
+                padding: EdgeInsets.fromLTRB(wide ? 24 : 16, wide ? 14 : 12, wide ? 24 : 16, 10),
                 child: Row(
                   children: [
                     Expanded(
                       child: MSearchField(
                         controller: _search,
-                        hint: 'Search your listings…',
+                        hint: 'Search listings by title or category…',
                         onChanged: (_) => setState(() {}),
                         onClear: _search.text.isEmpty
                             ? null
@@ -189,36 +217,34 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    SizedBox(
-                      width: 46,
-                      child: MIconButton(
-                        icon: Icons.upload_file_rounded,
-                        tooltip: 'Export listings',
-                        color: MK.sky,
-                        size: 46,
-                        onPressed: deals.isEmpty
-                            ? null
-                            : () => exportCsv(
-                                context,
-                                csv: buildCsv(
-                                  ['Title', 'Category', 'Original', 'Discounted', 'Off', 'Total', 'Remaining', 'Status'],
-                                  deals
-                                      .map((d) => [
-                                            d.title,
-                                            d.category,
-                                            d.originalPrice.toStringAsFixed(2),
-                                            d.discountedPrice.toStringAsFixed(2),
-                                            '${d.percentageSaved}%',
-                                            '${d.quantityTotal}',
-                                            '${d.quantityRemaining}',
-                                            _bucketOf(d),
-                                          ])
-                                      .toList(),
-                                ),
-                                fileName: '${widget.business.name.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '_').toLowerCase()}_listings.csv',
-                              ),
+                    if (wide) ...[
+                      MButton(
+                        'Export CSV',
+                        icon: Icons.download_rounded,
+                        kind: MKind.ghost,
+                        height: 44,
+                        onPressed: deals.isEmpty ? null : () => _exportCsv(deals),
                       ),
-                    ),
+                      const SizedBox(width: 10),
+                      MButton(
+                        'New Surplus Pack',
+                        icon: Icons.add_rounded,
+                        kind: MKind.primary,
+                        height: 44,
+                        onPressed: () => _compose(),
+                      ),
+                    ] else ...[
+                      SizedBox(
+                        width: 44,
+                        child: MIconButton(
+                          icon: Icons.upload_file_rounded,
+                          tooltip: 'Export listings',
+                          color: MK.sky,
+                          size: 44,
+                          onPressed: deals.isEmpty ? null : () => _exportCsv(deals),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -283,11 +309,11 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                                   : GridView.builder(
                                       physics: const AlwaysScrollableScrollPhysics(),
                                       padding: EdgeInsets.fromLTRB(wide ? 24 : 16, 8, wide ? 24 : 16, wide ? 28 : 120),
-                                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                                        maxCrossAxisExtent: 380,
-                                        mainAxisSpacing: 14,
-                                        crossAxisSpacing: 14,
-                                        childAspectRatio: 0.85,
+                                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                                        maxCrossAxisExtent: wide ? 420 : 380,
+                                        mainAxisExtent: 254,
+                                        mainAxisSpacing: wide ? 16 : 12,
+                                        crossAxisSpacing: wide ? 16 : 12,
                                       ),
                                       itemCount: visible.length,
                                       itemBuilder: (_, i) => MReveal(
@@ -306,16 +332,161 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
               ),
             ],
           ),
-          Positioned(
-            right: 18,
-            bottom: 18,
-            child: FloatingActionButton.extended(
-              backgroundColor: MK.brand,
-              foregroundColor: Colors.white,
-              elevation: 5,
-              onPressed: () => _compose(),
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('New pack', style: TextStyle(fontWeight: FontWeight.w900)),
+          if (!wide)
+            Positioned(
+              right: 18,
+              bottom: 18,
+              child: FloatingActionButton.extended(
+                backgroundColor: MK.brand,
+                foregroundColor: Colors.white,
+                elevation: 5,
+                onPressed: () => _compose(),
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('New pack', style: TextStyle(fontWeight: FontWeight.w900)),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ListingsKpiRibbon extends StatelessWidget {
+  final List<FoodDeal> deals;
+  const _ListingsKpiRibbon({required this.deals});
+
+  @override
+  Widget build(BuildContext context) {
+    int live = 0;
+    int paused = 0;
+    int low = 0;
+    int soldOut = 0;
+    int totalUnits = 0;
+    int rescuedUnits = 0;
+
+    for (final d in deals) {
+      if (!d.isActive) {
+        paused++;
+      } else if (d.quantityRemaining == 0) {
+        soldOut++;
+      } else if (d.quantityRemaining <= 2) {
+        low++;
+        live++;
+      } else {
+        live++;
+      }
+      totalUnits += d.quantityRemaining;
+      rescuedUnits += (d.quantityTotal - d.quantityRemaining);
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 640;
+        final items = [
+          _RibbonItem(label: 'Live Deals', value: '$live', color: MK.brand, icon: Icons.fiber_manual_record_rounded),
+          _RibbonItem(label: 'Low Stock', value: '$low', color: MK.amber, icon: Icons.warning_amber_rounded),
+          _RibbonItem(label: 'Paused', value: '$paused', color: MK.inkSoft, icon: Icons.pause_circle_outline_rounded),
+          _RibbonItem(label: 'Sold Out', value: '$soldOut', color: MK.coral, icon: Icons.remove_circle_outline_rounded),
+          _RibbonItem(label: 'Units Left', value: '$totalUnits', color: MK.sky, icon: Icons.inventory_2_outlined),
+          _RibbonItem(label: 'Units Rescued', value: '$rescuedUnits', color: MK.grape, icon: Icons.eco_outlined),
+        ];
+
+        if (isCompact) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+            child: Row(
+              children: items.map((item) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: item,
+              )).toList(),
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 2),
+          child: Row(
+            children: items.map((item) => Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: item,
+              ),
+            )).toList(),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _RibbonItem extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  final IconData icon;
+
+  const _RibbonItem({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(MK.rSm),
+        border: Border.all(color: MK.line),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 13, color: color),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: MK.ink,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: MK.inkSoft,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

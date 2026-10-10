@@ -150,11 +150,13 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
       return true;
     }).toList();
 
+    final wide = useSideNav(context);
+
     return ResponsiveCenter(
       maxWidth: 1100,
       child: ListView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
+        padding: EdgeInsets.fromLTRB(wide ? 24 : 16, wide ? 20 : 16, wide ? 24 : 16, wide ? 32 : 90),
         children: [
           // ── Header Card ──
           Container(
