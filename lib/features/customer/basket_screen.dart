@@ -127,7 +127,12 @@ class _BasketScreenState extends ConsumerState<BasketScreen> {
       description: "You haven't added any rescue deals yet. Start exploring to save food and money!",
       icon: Icons.shopping_basket_rounded,
       actionLabel: "Explore Deals",
-      onAction: () => Navigator.pop(context),
+      onAction: () {
+        if (widget.isStandalone && Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
+        ref.read(customerTabProvider.notifier).state = 0;
+      },
     );
   }
 

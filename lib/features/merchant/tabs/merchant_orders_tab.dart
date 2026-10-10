@@ -141,12 +141,13 @@ class _MerchantOrdersTabState extends ConsumerState<MerchantOrdersTab> {
       return all.where((o) => o.status == f).length;
     }
 
+    final wide = useSideNav(context);
     return ResponsiveCenter(
-      maxWidth: 980,
+      maxWidth: 1240,
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+            padding: EdgeInsets.fromLTRB(wide ? 24 : 16, wide ? 16 : 12, wide ? 24 : 16, 10),
             child: MSearchField(
               controller: _search,
               hint: 'Search code, customer or pack…',
@@ -202,27 +203,61 @@ class _MerchantOrdersTabState extends ConsumerState<MerchantOrdersTab> {
                             ),
                           ],
                         )
-                      : ListView.separated(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
-                          itemCount: visible.length,
-                          separatorBuilder: (context, index) => const SizedBox(height: 12),
-                          itemBuilder: (_, i) => MReveal(
-                            delay: (i * 45).clamp(0, 360),
-                            child: _OrderCard(
-                              order: visible[i],
-                              busy: _busy.contains(visible[i].id),
-                              onAdvance: () {
-                                final meta = OrderStatuses.of(visible[i].status);
-                                if (meta.next == null) return;
-                                _advance(visible[i], meta.next!, meta.nextLabel);
-                              },
-                              onCollect: () => _collect(visible[i]),
-                              onRemind: () => _remind(visible[i]),
-                              onDetails: () => showOrderDetailSheet(context, ref, visible[i]),
-                              onTracking: () => showTrackingSheet(context, ref, visible[i], _clean),
-                            ),
-                          ),
+                      : LayoutBuilder(
+                          builder: (context, constraints) {
+                            final isMultiCol = constraints.maxWidth >= 640;
+                            if (isMultiCol) {
+                              return GridView.builder(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                padding: EdgeInsets.fromLTRB(wide ? 24 : 16, 8, wide ? 24 : 16, wide ? 24 : 110),
+                                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                                  maxCrossAxisExtent: 580,
+                                  mainAxisSpacing: 12,
+                                  crossAxisSpacing: 12,
+                                  mainAxisExtent: 220,
+                                ),
+                                itemCount: visible.length,
+                                itemBuilder: (_, i) => MReveal(
+                                  delay: (i * 35).clamp(0, 320),
+                                  child: _OrderCard(
+                                    order: visible[i],
+                                    busy: _busy.contains(visible[i].id),
+                                    onAdvance: () {
+                                      final meta = OrderStatuses.of(visible[i].status);
+                                      if (meta.next == null) return;
+                                      _advance(visible[i], meta.next!, meta.nextLabel);
+                                    },
+                                    onCollect: () => _collect(visible[i]),
+                                    onRemind: () => _remind(visible[i]),
+                                    onDetails: () => showOrderDetailSheet(context, ref, visible[i]),
+                                    onTracking: () => showTrackingSheet(context, ref, visible[i], _clean),
+                                  ),
+                                ),
+                              );
+                            }
+                            return ListView.separated(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
+                              itemCount: visible.length,
+                              separatorBuilder: (context, index) => const SizedBox(height: 12),
+                              itemBuilder: (_, i) => MReveal(
+                                delay: (i * 45).clamp(0, 360),
+                                child: _OrderCard(
+                                  order: visible[i],
+                                  busy: _busy.contains(visible[i].id),
+                                  onAdvance: () {
+                                    final meta = OrderStatuses.of(visible[i].status);
+                                    if (meta.next == null) return;
+                                    _advance(visible[i], meta.next!, meta.nextLabel);
+                                  },
+                                  onCollect: () => _collect(visible[i]),
+                                  onRemind: () => _remind(visible[i]),
+                                  onDetails: () => showOrderDetailSheet(context, ref, visible[i]),
+                                  onTracking: () => showTrackingSheet(context, ref, visible[i], _clean),
+                                ),
+                              ),
+                            );
+                          },
                         ),
             ),
           ),

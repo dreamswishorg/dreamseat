@@ -45,23 +45,38 @@ void main() async {
   }
 
   // 1 & 2 & 3. Initialize Hive cache, Supabase, and Firebase in parallel
-  await Future.wait([
-    CacheManager().init(),
-    Supabase.initialize(
-      url: AppConfig.supabaseUrl,
-      publishableKey: AppConfig.supabaseAnonKey,
-      authOptions: const FlutterAuthClientOptions(
-        authFlowType: AuthFlowType.pkce,
-        autoRefreshToken: true,
-      ),
-      realtimeClientOptions: const RealtimeClientOptions(
-        eventsPerSecond: 2,
-      ),
-    ),
-    Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    ),
-  ]);
+  try {
+    await Future.wait([
+      CacheManager().init().catchError((e) {
+        debugPrint('CacheManager error: $e');
+      }),
+      Supabase.initialize(
+        url: AppConfig.supabaseUrl,
+        publishableKey: AppConfig.supabaseAnonKey,
+        authOptions: const FlutterAuthClientOptions(
+          authFlowType: AuthFlowType.pkce,
+          autoRefreshToken: true,
+        ),
+        realtimeClientOptions: const RealtimeClientOptions(
+          eventsPerSecond: 2,
+        ),
+      ).catchError((e) {
+        debugPrint('Supabase.initialize error: $e');
+        return Supabase.instance;
+      }),
+      Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      ).catchError((e) {
+        debugPrint('Firebase.initializeApp error: $e');
+        return Firebase.app();
+      }),
+    ]).timeout(const Duration(seconds: 3), onTimeout: () {
+      debugPrint('Pre-runApp init timed out after 3s; launching UI immediately.');
+      return [];
+    });
+  } catch (e) {
+    debugPrint('Pre-runApp init error: $e');
+  }
 
   clearUrlParams();
 

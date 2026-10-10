@@ -45,11 +45,12 @@ class MerchantHomeTab extends ConsumerWidget {
 
     final profileScore = _setupChecklist(business, deals, notifier);
 
+    final wide = useSideNav(context);
     return ResponsiveCenter(
-      maxWidth: 1120,
+      maxWidth: 1240,
       child: ListView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 110),
+        padding: EdgeInsets.fromLTRB(wide ? 28 : 16, wide ? 20 : 14, wide ? 28 : 16, wide ? 32 : 110),
         children: [
           MReveal(
             child: _HeroCard(
@@ -157,22 +158,44 @@ class MerchantHomeTab extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          MReveal(
-            delay: 160,
-            child: _RevenueCard(collected: collected),
-          ),
-          const SizedBox(height: 16),
-
-          MReveal(
-            delay: 200,
-            child: _ImpactCard(
-              savedValue: savedValue,
-              meals: collected.length,
-              totalOrders: orders.length,
-              pendingPayout: pendingPayout,
-              commissionPct: (notifier.commissionRate * 100),
+          if (wide) ...[
+            MReveal(
+              delay: 160,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 3, child: _RevenueCard(collected: collected)),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: _ImpactCard(
+                      savedValue: savedValue,
+                      meals: collected.length,
+                      totalOrders: orders.length,
+                      pendingPayout: pendingPayout,
+                      commissionPct: (notifier.commissionRate * 100),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+          ] else ...[
+            MReveal(
+              delay: 160,
+              child: _RevenueCard(collected: collected),
+            ),
+            const SizedBox(height: 16),
+            MReveal(
+              delay: 200,
+              child: _ImpactCard(
+                savedValue: savedValue,
+                meals: collected.length,
+                totalOrders: orders.length,
+                pendingPayout: pendingPayout,
+                commissionPct: (notifier.commissionRate * 100),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
 
           MReveal(

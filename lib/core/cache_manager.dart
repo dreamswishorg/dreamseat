@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/models.dart';
@@ -31,24 +32,52 @@ class CacheManager {
 
   Future<void> init() async {
     if (_isInitialized) return;
-    await Hive.initFlutter();
+    try {
+      await Hive.initFlutter();
 
-    const secureStorage = FlutterSecureStorage();
-    String? encryptionKey = await secureStorage.read(key: encryptionKeyName);
-
-    if (encryptionKey == null) {
-      final key = Hive.generateSecureKey();
-      await secureStorage.write(
-        key: encryptionKeyName,
-        value: base64UrlEncode(key),
+      const secureStorage = FlutterSecureStorage(
+        iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
       );
-      encryptionKey = base64UrlEncode(key);
+      String? encryptionKey;
+      try {
+        encryptionKey = await secureStorage.read(key: encryptionKeyName);
+      } catch (e) {
+        debugPrint('SecureStorage read failed: $e');
+      }
+
+      if (encryptionKey == null || encryptionKey.isEmpty) {
+        final key = Hive.generateSecureKey();
+        encryptionKey = base64UrlEncode(key);
+        try {
+          await secureStorage.write(
+            key: encryptionKeyName,
+            value: encryptionKey,
+          );
+        } catch (e) {
+          debugPrint('SecureStorage write failed: $e');
+        }
+      }
+
+      try {
+        final decodedKey = base64Url.decode(encryptionKey);
+        await Hive.openBox(boxName, encryptionCipher: HiveAesCipher(decodedKey));
+      } catch (boxErr) {
+        debugPrint('Failed to open encrypted Hive box: $boxErr. Resetting box...');
+        try {
+          await Hive.deleteBoxFromDisk(boxName);
+          final key = Hive.generateSecureKey();
+          encryptionKey = base64UrlEncode(key);
+          await secureStorage.write(key: encryptionKeyName, value: encryptionKey);
+          await Hive.openBox(boxName, encryptionCipher: HiveAesCipher(key));
+        } catch (_) {
+          await Hive.openBox(boxName);
+        }
+      }
+
+      _isInitialized = true;
+    } catch (e) {
+      debugPrint('CacheManager init error: $e');
     }
-
-    final decodedKey = base64Url.decode(encryptionKey);
-    await Hive.openBox(boxName, encryptionCipher: HiveAesCipher(decodedKey));
-
-    _isInitialized = true;
   }
 
 

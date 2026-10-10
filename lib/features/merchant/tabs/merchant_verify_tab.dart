@@ -172,16 +172,169 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
         .toList()
       ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
+    final wide = useSideNav(context);
+    final isTabletOrDesktop = MediaQuery.sizeOf(context).width >= 720;
+
+    final keypadCard = MReveal(
+      delay: 60,
+      child: MCard(
+        padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+        child: Column(
+          children: [
+            Form(
+              key: _formKey,
+              child: TextFormField(
+                controller: _code,
+                keyboardType: TextInputType.text,
+                textAlign: TextAlign.center,
+                textCapitalization: TextCapitalization.characters,
+                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 6, color: MK.ink),
+                decoration: InputDecoration(
+                  hintText: '----',
+                  hintStyle: TextStyle(color: MK.inkSoft.withValues(alpha: 0.4), letterSpacing: 6),
+                  enabled: !_checking,
+                  border: InputBorder.none,
+                ),
+                onChanged: (_) => setState(() => _error = null),
+              ),
+            ),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 4,
+              width: 74,
+              decoration: BoxDecoration(color: _error != null ? MK.danger : MK.brand, borderRadius: BorderRadius.circular(4)),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.error_outline_rounded, size: 16, color: MK.danger),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(fontSize: 11.5, color: MK.danger, fontWeight: FontWeight.w800, height: 1.4),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 18),
+            _Keypad(onTap: _tap, onBackspace: _backspace),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: MButton(
+                    'Scan QR',
+                    icon: Icons.qr_code_scanner_rounded,
+                    kind: MKind.soft,
+                    onPressed: _checking ? null : _scan,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  flex: 2,
+                  child: MButton(
+                    'Verify collection',
+                    icon: Icons.check_circle_outline_rounded,
+                    loading: _checking,
+                    onPressed: _checking ? null : () => _verify(_code.text),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+
+    final awaitingCard = MReveal(
+      delay: 110,
+      child: MCard(
+        padding: const EdgeInsets.fromLTRB(18, 16, 12, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const MSectionHeader(
+              title: 'Waiting for hand-over',
+              icon: Icons.hourglass_top_rounded,
+              iconColor: MK.amber,
+            ),
+            const SizedBox(height: 8),
+            if (awaiting.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 18),
+                child: Text(
+                  'No open orders. Verified pickups show a tick here automatically.',
+                  style: TextStyle(fontSize: 12, color: MK.inkSoft, height: 1.45),
+                ),
+              )
+            else
+              ...awaiting.take(6).map(
+                    (o) => InkWell(
+                      onTap: () {
+                        _code.text = o.collectionCode;
+                        setState(() => _error = null);
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 74,
+                              child: Text(
+                                o.collectionCode,
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: MK.brand, letterSpacing: 1.1),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    orderTitle(o),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: MK.ink),
+                                  ),
+                                  Text(
+                                    '${o.customerName} · ${MK.ago(o.timestamp)}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 10.5, color: MK.inkSoft),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            MPill(
+                              OrderStatuses.of(o.status).shortLabel,
+                              color: OrderStatuses.of(o.status).color,
+                              fontSize: 8,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+          ],
+        ),
+      ),
+    );
+
     return ResponsiveCenter(
-      maxWidth: 560,
+      maxWidth: isTabletOrDesktop ? 1080 : 560,
       child: ListView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 110),
+        padding: EdgeInsets.fromLTRB(wide ? 24 : 16, wide ? 20 : 14, wide ? 24 : 16, wide ? 28 : 110),
         children: [
           MReveal(
             child: Column(
               children: [
-                Text(
+                const Text(
                   'Verify a pickup',
                   style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900, color: MK.ink, letterSpacing: -0.5),
                 ),
@@ -189,7 +342,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
                 Text(
                   awaiting.isEmpty
                       ? 'Nothing is waiting to be collected right now.'
-                      : '${awaiting.length} order${awaiting.length == 1 ? '' : 's'} waiting for hand-over.',
+                      : '${awaiting.length} order${awaiting.length == 1 ? "" : "s"} waiting for hand-over.',
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 12.5, color: MK.inkSoft, fontWeight: FontWeight.w600),
                 ),
@@ -197,155 +350,20 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
             ),
           ),
           const SizedBox(height: 20),
-          MReveal(
-            delay: 60,
-            child: MCard(
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
-              child: Column(
-                children: [
-                  Form(
-                    key: _formKey,
-                    child: TextFormField(
-                      controller: _code,
-                      keyboardType: TextInputType.text,
-                      textAlign: TextAlign.center,
-                      textCapitalization: TextCapitalization.characters,
-                      style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 6, color: MK.ink),
-                      decoration: InputDecoration(
-                        hintText: '----',
-                        hintStyle: TextStyle(color: MK.inkSoft.withValues(alpha: 0.4), letterSpacing: 6),
-                        enabled: !_checking,
-                        border: InputBorder.none,
-                      ),
-                      onChanged: (_) => setState(() => _error = null),
-                    ),
-                  ),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    height: 4,
-                    width: 74,
-                    decoration: BoxDecoration(color: _error != null ? MK.danger : MK.brand, borderRadius: BorderRadius.circular(4)),
-                  ),
-                  if (_error != null) ...[
-                    const SizedBox(height: 12),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.error_outline_rounded, size: 16, color: MK.danger),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _error!,
-                            style: const TextStyle(fontSize: 11.5, color: MK.danger, fontWeight: FontWeight.w800, height: 1.4),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                  const SizedBox(height: 18),
-                  _Keypad(onTap: _tap, onBackspace: _backspace),
-                  const SizedBox(height: 18),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: MButton(
-                          'Scan QR',
-                          icon: Icons.qr_code_scanner_rounded,
-                          kind: MKind.soft,
-                          onPressed: _checking ? null : _scan,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        flex: 2,
-                        child: MButton(
-                          'Verify collection',
-                          icon: Icons.check_circle_outline_rounded,
-                          loading: _checking,
-                          onPressed: _checking ? null : () => _verify(_code.text),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 18),
-          MReveal(
-            delay: 110,
-            child: MCard(
-              padding: const EdgeInsets.fromLTRB(18, 16, 12, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const MSectionHeader(
-                    title: 'Waiting for hand-over',
-                    icon: Icons.hourglass_top_rounded,
-                    iconColor: MK.amber,
-                  ),
-                  const SizedBox(height: 8),
-                  if (awaiting.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 18),
-                      child: Text(
-                        'No open orders. Verified pickups show a tick here automatically.',
-                        style: TextStyle(fontSize: 12, color: MK.inkSoft, height: 1.45),
-                      ),
-                    )
-                  else
-                    ...awaiting.take(6).map(
-                          (o) => InkWell(
-                            onTap: () {
-                              _code.text = o.collectionCode;
-                              setState(() => _error = null);
-                            },
-                            borderRadius: BorderRadius.circular(12),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-                              child: Row(
-                                children: [
-                                  SizedBox(
-                                    width: 74,
-                                    child: Text(
-                                      o.collectionCode,
-                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: MK.brand, letterSpacing: 1.1),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          orderTitle(o),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: MK.ink),
-                                        ),
-                                        Text(
-                                          '${o.customerName} · ${MK.ago(o.timestamp)}',
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(fontSize: 10.5, color: MK.inkSoft),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  MPill(
-                                    OrderStatuses.of(o.status).shortLabel,
-                                    color: OrderStatuses.of(o.status).color,
-                                    fontSize: 8,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                ],
-              ),
-            ),
-          ),
+          if (isTabletOrDesktop)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(flex: 6, child: keypadCard),
+                const SizedBox(width: 18),
+                Expanded(flex: 5, child: awaitingCard),
+              ],
+            )
+          else ...[
+            keypadCard,
+            const SizedBox(height: 18),
+            awaitingCard,
+          ],
         ],
       ),
     );

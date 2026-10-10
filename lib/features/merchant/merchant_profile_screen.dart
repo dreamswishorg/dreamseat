@@ -210,11 +210,12 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
     final orders = state.orders.where((o) => o.businessId == business.id).toList();
     final collected = orders.where((o) => o.status == 'collected').length;
 
+    final wide = useSideNav(context);
     return ResponsiveCenter(
-      maxWidth: 900,
+      maxWidth: 1140,
       child: ListView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 110),
+        padding: EdgeInsets.fromLTRB(wide ? 24 : 16, wide ? 20 : 14, wide ? 24 : 16, wide ? 28 : 110),
         children: [
           MReveal(child: _ShopHeader(business: business, busy: _busy, onLogo: () => _uploadImage(cover: false), onCover: () => _uploadImage(cover: true))),
           const SizedBox(height: 14),

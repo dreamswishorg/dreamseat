@@ -72,7 +72,7 @@ class ResponsiveAppWrapper extends StatelessWidget {
 
 /// Width at which we switch from phone layout (bottom tabs) to
 /// laptop layout (left sidebar).
-const double kSideNavBreakpoint = 900;
+const double kSideNavBreakpoint = 720;
 
 bool useSideNav(BuildContext context) =>
     MediaQuery.of(context).size.width >= kSideNavBreakpoint;

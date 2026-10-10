@@ -164,14 +164,15 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
         .where((d) => q.isEmpty || d.title.toLowerCase().contains(q) || d.category.toLowerCase().contains(q))
         .toList();
 
+    final wide = useSideNav(context);
     return ResponsiveCenter(
-      maxWidth: 1080,
+      maxWidth: 1240,
       child: Stack(
         children: [
           Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+                padding: EdgeInsets.fromLTRB(wide ? 24 : 16, wide ? 16 : 12, wide ? 24 : 16, 10),
                 child: Row(
                   children: [
                     Expanded(
@@ -281,12 +282,12 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                                     )
                                   : GridView.builder(
                                       physics: const AlwaysScrollableScrollPhysics(),
-                                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
-                                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                                        maxCrossAxisExtent: 420,
-                                        mainAxisSpacing: 12,
-                                        crossAxisSpacing: 12,
-                                        childAspectRatio: 0.82,
+                                      padding: EdgeInsets.fromLTRB(wide ? 24 : 16, 8, wide ? 24 : 16, wide ? 28 : 120),
+                                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                                        maxCrossAxisExtent: 380,
+                                        mainAxisSpacing: 14,
+                                        crossAxisSpacing: 14,
+                                        childAspectRatio: 0.85,
                                       ),
                                       itemCount: visible.length,
                                       itemBuilder: (_, i) => MReveal(
