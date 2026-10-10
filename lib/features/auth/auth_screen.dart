@@ -384,7 +384,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   @override
   Widget build(BuildContext context) {
     final screenW = MediaQuery.of(context).size.width;
-    final isWide = screenW >= 850;
+    final isWide = screenW >= 768;
 
     if (isWide) {
       return Scaffold(
