@@ -475,7 +475,7 @@ class DealDetailScreen extends ConsumerWidget {
                                 ScaffoldMessenger.of(context).hideCurrentSnackBar();
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (_) => const BasketScreen()),
+                                  MaterialPageRoute(builder: (_) => const BasketScreen(isStandalone: true)),
                                 );
                               },
                               child: Container(

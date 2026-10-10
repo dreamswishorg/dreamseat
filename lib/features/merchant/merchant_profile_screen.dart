@@ -1,1337 +1,993 @@
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../core/theme.dart';
-import '../../core/responsive.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/location_service.dart';
 import '../../services/supabase_service.dart';
-import '../../widgets/biometric_switch_tile.dart';
+import '../common/help_support_screen.dart';
+import 'merchant_kit.dart';
 
-/// Public-facing business profile screen for merchants to manage their storefront.
+/// Shop profile tab: identity, contact, location and compliance documents.
 class MerchantProfileScreen extends ConsumerStatefulWidget {
   final BusinessProfile business;
   const MerchantProfileScreen({super.key, required this.business});
 
   @override
-  ConsumerState<MerchantProfileScreen> createState() =>
-      _MerchantProfileScreenState();
+  ConsumerState<MerchantProfileScreen> createState() => _MerchantProfileScreenState();
 }
 
-class _MerchantProfileScreenState
-    extends ConsumerState<MerchantProfileScreen> {
-  bool _isEditing = false;
-  bool _isUploading = false;
-  bool _isSearchingAddress = false;
-  bool _isGettingGps = false;
+class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
+  bool _editing = false;
+  bool _busy = false;
+  bool _searching = false;
+  bool _gpsing = false;
 
-  double? _selectedLat;
-  double? _selectedLng;
+  late final _name = TextEditingController(text: widget.business.name);
+  late final _desc = TextEditingController(text: widget.business.description);
+  late final _location = TextEditingController(text: widget.business.location);
+  late final _phone = TextEditingController(text: widget.business.phone);
+  late String _category =
+      kDealCategories.contains(widget.business.category) ? widget.business.category : kDealCategories.first;
+  double? _lat;
+  double? _lng;
   List<PredictedAddress> _predictions = [];
 
-  late final TextEditingController _nameCtrl;
-  late final TextEditingController _descCtrl;
-  late final TextEditingController _locationCtrl;
-  late final TextEditingController _hoursCtrl;
-  String _selectedCategory = 'Restaurant Meal';
-  String _bizRegStatus = "Verified GH-2024-882";
-  String _healthStatus = "Valid: Oct 2025";
-  String _taxStatus = "GRA Compliant";
-  String? _bizRegUrl;
-  String? _healthUrl;
-  String? _taxUrl;
-
-  final List<String> _categories = [
-    'Restaurant Meal',
-    'Bakery Pack',
-    'Grocery Bundle',
-    'Fruit & Vegetable Pack',
-    'Hotel Buffet',
-    'Snacks & Drinks',
-    'Farm Produce',
-    'Wholesale Bundle',
-  ];
+  Map<String, MerchantDocument> _docs = {};
+  bool _loadingDocs = true;
 
   @override
   void initState() {
     super.initState();
-    _nameCtrl = TextEditingController(text: widget.business.name);
-    _descCtrl = TextEditingController(text: widget.business.description);
-    _locationCtrl = TextEditingController(text: widget.business.location);
-    _hoursCtrl = TextEditingController(text: '08:00 AM – 09:00 PM');
-    _selectedCategory = _categories.contains(widget.business.category)
-        ? widget.business.category
-        : _categories.first;
-    _selectedLat = widget.business.latitude;
-    _selectedLng = widget.business.longitude;
-
-    _loadKycDocuments();
-  }
-
-  Future<void> _loadKycDocuments() async {
-    try {
-      final rows = await Supabase.instance.client
-          .from('audit_logs')
-          .select()
-          .eq('entity_id', widget.business.id)
-          .eq('action', 'KYC_UPLOAD')
-          .order('created_at', ascending: true);
-
-      if (!mounted) return;
-      setState(() {
-        for (final row in rows) {
-          final meta = (row['metadata'] as Map<String, dynamic>?) ?? {};
-          final docTitle = (meta['document_title'] ?? '').toString().toLowerCase();
-          final fileUrl = meta['file_url']?.toString();
-          final refNum = meta['reference_number']?.toString();
-          if (fileUrl != null && fileUrl.isNotEmpty) {
-            if (docTitle.contains('business')) {
-              _bizRegUrl = fileUrl;
-              if (refNum != null && refNum.isNotEmpty) _bizRegStatus = "Uploaded ($refNum)";
-            } else if (docTitle.contains('health')) {
-              _healthUrl = fileUrl;
-              if (refNum != null && refNum.isNotEmpty) _healthStatus = "Uploaded ($refNum)";
-            } else if (docTitle.contains('tax') || docTitle.contains('vat')) {
-              _taxUrl = fileUrl;
-              if (refNum != null && refNum.isNotEmpty) _taxStatus = "Uploaded ($refNum)";
-            }
-          }
-        }
-      });
-    } catch (_) {}
-  }
-
-  Future<void> _onSearchAddress(String query) async {
-    if (query.trim().length < 3) {
-      if (mounted) setState(() => _predictions.clear());
-      return;
-    }
-    setState(() => _isSearchingAddress = true);
-    final results = await LocationService().searchPredictiveAddresses(query);
-    if (mounted) {
-      setState(() {
-        _predictions = results;
-        _isSearchingAddress = false;
-      });
-    }
-  }
-
-  Future<void> _useCurrentGpsLocation() async {
-    setState(() => _isGettingGps = true);
-    final pos = await LocationService().getCurrentPosition();
-    if (pos != null) {
-      final addr = await LocationService().getAddressFromLatLng(pos);
-      if (mounted) {
-        setState(() {
-          _selectedLat = pos.latitude;
-          _selectedLng = pos.longitude;
-          if (addr != null && addr.isNotEmpty) {
-            _locationCtrl.text = addr;
-          }
-          _isGettingGps = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("📍 Pinned shop GPS to: (${pos.latitude.toStringAsFixed(4)}, ${pos.longitude.toStringAsFixed(4)})"),
-            backgroundColor: AppTheme.primaryGreen,
-          ),
-        );
-      }
-    } else {
-      if (mounted) {
-        setState(() => _isGettingGps = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Could not get GPS location. Please check permissions.")),
-        );
-      }
-    }
+    _lat = widget.business.latitude;
+    _lng = widget.business.longitude;
+    _loadDocs();
   }
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
-    _descCtrl.dispose();
-    _locationCtrl.dispose();
-    _hoursCtrl.dispose();
+    _name.dispose();
+    _desc.dispose();
+    _location.dispose();
+    _phone.dispose();
     super.dispose();
   }
 
-  Future<void> _pickLogo() async {
-    final picker = ImagePicker();
-    final image = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 75,
-      maxWidth: 1024,
-      maxHeight: 1024,
-    );
-
-    if (image != null) {
-      setState(() => _isUploading = true);
-      try {
-        final bytes = await image.readAsBytes();
-        final fileName = 'logo_${DateTime.now().millisecondsSinceEpoch}.jpg';
-        final logoUrl = await SupabaseService().uploadImage(
-          bucket: 'merchant-logos',
-          path: '${widget.business.id}/$fileName',
-          fileBytes: bytes,
-        );
-
-        await ref.read(appStateProvider.notifier).updateBusinessBranding(
-          widget.business.id,
-          logoUrl: logoUrl,
-        );
-
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Logo updated successfully!"), backgroundColor: AppTheme.primaryGreen),
-        );
-      } catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Upload failed: $e"), backgroundColor: AppTheme.errorRed),
-        );
-      } finally {
-        if (mounted) setState(() => _isUploading = false);
-      }
+  Future<void> _loadDocs() async {
+    try {
+      final docs = await ref.read(appStateProvider.notifier).fetchMerchantDocuments(widget.business.id);
+      if (mounted) setState(() => _docs = docs);
+    } catch (_) {
+      // Document status simply shows as "not on file" if the vault is unreachable.
+    } finally {
+      if (mounted) setState(() => _loadingDocs = false);
     }
   }
 
-  Future<void> _pickCover() async {
-    final picker = ImagePicker();
-    final image = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 75,
-      maxWidth: 1600,
-      maxHeight: 1200,
+  void _startEditing() {
+    _name.text = widget.business.name;
+    _desc.text = widget.business.description;
+    _location.text = widget.business.location;
+    _phone.text = widget.business.phone;
+    _category =
+        kDealCategories.contains(widget.business.category) ? widget.business.category : kDealCategories.first;
+    _lat = widget.business.latitude;
+    _lng = widget.business.longitude;
+    _predictions = [];
+    setState(() => _editing = true);
+  }
+
+  void _cancelEditing() {
+    _name.text = widget.business.name;
+    _desc.text = widget.business.description;
+    _location.text = widget.business.location;
+    _phone.text = widget.business.phone;
+    _lat = widget.business.latitude;
+    _lng = widget.business.longitude;
+    setState(() {
+      _editing = false;
+      _predictions = [];
+    });
+  }
+
+  Future<void> _save() async {
+    if (_name.text.trim().length < 3) {
+      MToast.err(context, 'Shop name needs at least 3 characters');
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      await ref.read(appStateProvider.notifier).updateBusinessProfile(
+            widget.business.id,
+            name: _name.text.trim(),
+            description: _desc.text.trim(),
+            category: _category,
+            location: _location.text.trim(),
+            phone: _phone.text.trim(),
+            lat: _lat,
+            lng: _lng,
+          );
+      if (!mounted) return;
+      setState(() => _editing = false);
+      MToast.ok(context, 'Shop profile saved');
+    } catch (e) {
+      if (mounted) MToast.err(context, 'Save failed: ${e.toString().replaceFirst('Exception: ', '')}');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _uploadImage({required bool cover}) async {
+    final file = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 78, maxWidth: 1600);
+    if (file == null) return;
+    setState(() => _busy = true);
+    try {
+      final bytes = await file.readAsBytes();
+      final url = await SupabaseService().uploadImage(
+        bucket: 'merchant-logos',
+        path: '${widget.business.id}/${cover ? 'cover' : 'logo'}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        fileBytes: bytes,
+      );
+      await SupabaseService().updateBusinessImages(widget.business.id, logoUrl: cover ? null : url, coverUrl: cover ? url : null);
+      await ref.read(appStateProvider.notifier).refreshMerchantBusiness();
+      if (mounted) MToast.ok(context, cover ? 'Cover photo updated' : 'Logo updated');
+    } catch (e) {
+      if (mounted) MToast.err(context, 'Upload failed: ${e.toString().replaceFirst('Exception: ', '')}');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _dial(String phone) async {
+    final uri = Uri.parse('tel:${phone.replaceAll(RegExp(r'[^0-9+]'), '')}');
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication) && mounted) {
+      MToast.info(context, 'No phone dialer available on this device');
+    }
+  }
+
+  Future<void> _searchAddress(String query) async {
+    if (query.trim().length < 3) {
+      setState(() => _predictions = []);
+      return;
+    }
+    setState(() => _searching = true);
+    final results = await LocationService().searchPredictiveAddresses(query);
+    if (mounted) {
+      setState(() {
+        _predictions = results;
+        _searching = false;
+      });
+    }
+  }
+
+  Future<void> _useGps() async {
+    setState(() => _gpsing = true);
+    final pos = await LocationService().getCurrentPosition();
+    if (pos == null) {
+      if (mounted) {
+        setState(() => _gpsing = false);
+        MToast.err(context, 'Location permission denied or GPS unavailable');
+      }
+      return;
+    }
+    final addr = await LocationService().getAddressFromLatLng(pos);
+    if (!mounted) return;
+    setState(() {
+      _lat = pos.latitude;
+      _lng = pos.longitude;
+      if (addr != null && addr.isNotEmpty) _location.text = addr;
+      _gpsing = false;
+      _predictions = [];
+    });
+  }
+
+  Future<void> _openDocSheet(String docType, String label) async {
+    await showMSheet<void>(
+      context,
+      title: label,
+      child: _DocumentUpload(
+        business: widget.business,
+        docType: docType,
+        label: label,
+        existing: _docs[docType],
+        onSaved: (doc) => setState(() => _docs[docType] = doc),
+      ),
     );
+  }
 
-    if (image != null) {
-      setState(() => _isUploading = true);
-      try {
-        final bytes = await image.readAsBytes();
-        final fileName = 'cover_${DateTime.now().millisecondsSinceEpoch}.jpg';
-        final coverUrl = await SupabaseService().uploadImage(
-          bucket: 'merchant-logos',
-          path: '${widget.business.id}/$fileName',
-          fileBytes: bytes,
-        );
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(appStateProvider);
+    final business = state.businesses.firstWhere(
+      (b) => b.id == widget.business.id,
+      orElse: () => widget.business,
+    );
+    final deals = state.merchantDeals;
+    final orders = state.orders.where((o) => o.businessId == business.id).toList();
+    final collected = orders.where((o) => o.status == 'collected').length;
 
-        await ref.read(appStateProvider.notifier).updateBusinessBranding(
-          widget.business.id,
-          coverUrl: coverUrl,
-        );
+    return ResponsiveCenter(
+      maxWidth: 900,
+      child: ListView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 110),
+        children: [
+          MReveal(child: _ShopHeader(business: business, busy: _busy, onLogo: () => _uploadImage(cover: false), onCover: () => _uploadImage(cover: true))),
+          const SizedBox(height: 14),
+          MReveal(
+            delay: 60,
+            child: MCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  MSectionHeader(
+                    title: 'Shop information',
+                    subtitle: 'What customers see on your storefront',
+                    icon: Icons.storefront_rounded,
+                    trailing: _editing
+                        ? Row(
+                            children: [
+                              MButton('Cancel', kind: MKind.ghost, height: 38, onPressed: _busy ? null : _cancelEditing),
+                              const SizedBox(width: 8),
+                              MButton('Save', icon: Icons.check_rounded, height: 38, loading: _busy, onPressed: _busy ? null : _save),
+                            ],
+                          )
+                        : MButton('Edit', icon: Icons.edit_outlined, kind: MKind.soft, height: 38, onPressed: _startEditing),
+                  ),
+                  const SizedBox(height: 18),
+                  if (!_editing) ...[
+                    _InfoLine(icon: Icons.category_outlined, label: 'Category', value: '${categoryEmoji(business.category)} ${business.category}'),
+                    _InfoLine(
+                      icon: Icons.phone_outlined,
+                      label: 'Phone',
+                      value: business.phone.isEmpty ? 'Not added — customers cannot call you' : business.phone,
+                      valueColor: business.phone.isEmpty ? MK.danger : MK.ink,
+                      action: business.phone.isEmpty
+                          ? MButton('Add', kind: MKind.soft, height: 32, onPressed: _startEditing)
+                          : MIconButton(
+                              icon: Icons.call_rounded,
+                              color: MK.brand,
+                              size: 32,
+                              tooltip: 'Dial ${business.phone}',
+                              onPressed: () => _dial(business.phone),
+                            ),
+                    ),
+                    _InfoLine(icon: Icons.place_outlined, label: 'Location', value: business.location),
+                    _InfoLine(
+                      icon: Icons.star_outline_rounded,
+                      label: 'Rating',
+                      value: business.rating <= 0 ? 'Not rated yet' : '${business.rating.toStringAsFixed(1)} / 5.0',
+                    ),
+                    if (business.description.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        business.description,
+                        style: const TextStyle(fontSize: 12.5, color: MK.inkSoft, height: 1.5),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(Icons.my_location_rounded, size: 13, color: MK.inkSoft.withValues(alpha: 0.8)),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Coordinates ${business.latitude.toStringAsFixed(4)}, ${business.longitude.toStringAsFixed(4)}',
+                            style: const TextStyle(fontSize: 10.5, color: MK.inkSoft, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else ...[
+                    _Field(
+                      label: 'SHOP NAME',
+                      controller: _name,
+                      icon: Icons.storefront_rounded,
+                      enabled: !_busy,
+                    ),
+                    const SizedBox(height: 14),
+                    _Field(
+                      label: 'ABOUT THE SHOP',
+                      controller: _desc,
+                      icon: Icons.notes_rounded,
+                      maxLines: 3,
+                      hint: 'What you sell, how you pack, anything customers should know',
+                      enabled: !_busy,
+                    ),
+                    const SizedBox(height: 14),
+                    _Field(
+                      label: 'CONTACT PHONE',
+                      controller: _phone,
+                      icon: Icons.phone_outlined,
+                      keyboardType: TextInputType.phone,
+                      hint: 'e.g. 024 412 3456',
+                      enabled: !_busy,
+                    ),
+                    const SizedBox(height: 14),
+                    const _MiniLabel('PRIMARY CATEGORY'),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: kDealCategories
+                          .map((c) => MPressable(
+                                onTap: () => setState(() => _category = c),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 180),
+                                  padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                                  decoration: BoxDecoration(
+                                    color: _category == c ? MK.brand.withValues(alpha: 0.12) : Colors.white,
+                                    borderRadius: BorderRadius.circular(11),
+                                    border: Border.all(color: _category == c ? MK.brand : MK.line, width: _category == c ? 1.5 : 1),
+                                  ),
+                                  child: Text(
+                                    '$categoryEmoji $c',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: _category == c ? MK.brand : MK.ink,
+                                    ),
+                                  ),
+                                ),
+                              ))
+                          .toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    const _MiniLabel('SHOP LOCATION'),
+                    TextField(
+                      controller: _location,
+                      enabled: !_busy,
+                      onChanged: _searchAddress,
+                      decoration: InputDecoration(
+                        hintText: 'Start typing a street or area…',
+                        prefixIcon: const Icon(Icons.search_rounded, size: 19),
+                        suffixIcon: _gpsing
+                            ? const Padding(
+                                padding: EdgeInsets.all(12),
+                                child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: MK.brand)),
+                              )
+                            : IconButton(tooltip: 'Use my current GPS', icon: const Icon(Icons.my_location_rounded, size: 19), onPressed: _useGps),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(MK.rSm)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(MK.rSm), borderSide: const BorderSide(color: MK.line)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(MK.rSm), borderSide: const BorderSide(color: MK.brand, width: 1.6)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+                      ),
+                    ),
+                    if (_searching) ...[
+                      const SizedBox(height: 10),
+                      const LinearProgressIndicator(minHeight: 3, color: MK.brand, backgroundColor: MK.line),
+                    ],
+                    ..._predictions.take(4).map(
+                          (p) => ListTile(
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.pin_drop_outlined, size: 18, color: MK.brand),
+                            title: Text(p.displayName, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11.5)),
+                            onTap: () => setState(() {
+                              _location.text = p.displayName;
+                              _lat = p.latitude;
+                              _lng = p.longitude;
+                              _predictions = [];
+                            }),
+                          ),
+                        ),
+                    if (_lat != null && _lng != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Pinned at ${_lat!.toStringAsFixed(5)}, ${_lng!.toStringAsFixed(5)}',
+                        style: const TextStyle(fontSize: 10.5, color: MK.brand, fontWeight: FontWeight.w800),
+                      ),
+                    ],
+                  ],
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          MReveal(
+            delay: 100,
+            child: MCard(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  MSectionHeader(
+                    title: 'Compliance documents',
+                    subtitle: business.isApproved
+                        ? 'Approved by the DreamEats team'
+                        : 'Submitted documents are reviewed by our compliance team',
+                    icon: Icons.verified_user_outlined,
+                    iconColor: business.isApproved ? MK.brand : MK.amber,
+                    trailing: MIconButton(icon: Icons.refresh_rounded, onPressed: _loadingDocs ? null : _loadDocs, tooltip: 'Reload'),
+                  ),
+                  const SizedBox(height: 12),
+                  _DocRow(
+                    label: 'Business registration',
+                    doc: _docs[MerchantDocument.businessRegistration],
+                    loading: _loadingDocs,
+                    onUpload: () => _openDocSheet(MerchantDocument.businessRegistration, 'Business registration'),
+                  ),
+                  _DocRow(
+                    label: 'Health certificate',
+                    doc: _docs[MerchantDocument.healthCertificate],
+                    loading: _loadingDocs,
+                    onUpload: () => _openDocSheet(MerchantDocument.healthCertificate, 'Health certificate'),
+                  ),
+                  _DocRow(
+                    label: 'Tax clearance',
+                    doc: _docs[MerchantDocument.taxClearance],
+                    loading: _loadingDocs,
+                    onUpload: () => _openDocSheet(MerchantDocument.taxClearance, 'Tax clearance'),
+                    last: true,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          MReveal(
+            delay: 140,
+            child: MCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const MSectionHeader(title: 'Shop at a glance', icon: Icons.insights_rounded, iconColor: MK.grape),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(child: _MiniStat('${deals.where((d) => d.isActive).length}', 'live listings', MK.brand)),
+                      Expanded(child: _MiniStat('$collected', 'completed orders', MK.sky)),
+                      Expanded(
+                        child: _MiniStat(
+                          MK.money(orders.fold<double>(0, (s, o) => s + o.price)),
+                          'lifetime sales',
+                          MK.grape,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          MReveal(
+            delay: 180,
+            child: MCard(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              child: Column(
+                children: [
+                  _LinkRow(
+                    icon: Icons.help_outline_rounded,
+                    label: 'Help & support',
+                    detail: 'Ask the DreamEats team',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen())),
+                  ),
+                  if (business.phone.isNotEmpty)
+                    _LinkRow(
+                      icon: Icons.call_rounded,
+                      label: 'Call your shop line',
+                      detail: business.phone,
+                      onTap: () => _dial(business.phone),
+                    ),
+                  _LinkRow(
+                    icon: Icons.logout_rounded,
+                    label: 'Log out',
+                    detail: 'End this session',
+                    danger: true,
+                    onTap: () => ref.read(appStateProvider.notifier).signOut(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Cover photo updated successfully!"), backgroundColor: AppTheme.primaryGreen),
-        );
-      } catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Upload failed: $e"), backgroundColor: AppTheme.errorRed),
-        );
-      } finally {
-        if (mounted) setState(() => _isUploading = false);
+class _ShopHeader extends StatelessWidget {
+  final BusinessProfile business;
+  final bool busy;
+  final VoidCallback onLogo;
+  final VoidCallback onCover;
+
+  const _ShopHeader({required this.business, required this.busy, required this.onLogo, required this.onCover});
+
+  @override
+  Widget build(BuildContext context) {
+    final cover = business.coverUrl.isNotEmpty
+        ? business.coverUrl
+        : (business.logoUrl.isNotEmpty ? business.logoUrl : null);
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(MK.rLg),
+        border: Border.all(color: MK.line),
+        boxShadow: MK.shadow,
+      ),
+      child: Column(
+        children: [
+          Stack(
+            children: [
+              Container(
+                height: 128,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: cover == null ? MK.heroGradient : null,
+                  image: cover == null
+                      ? null
+                      : DecorationImage(image: NetworkImage(cover), fit: BoxFit.cover),
+                ),
+              ),
+              Positioned(
+                right: 10,
+                top: 10,
+                child: MIconButton(
+                  icon: Icons.add_photo_alternate_outlined,
+                  color: Colors.white,
+                  size: 34,
+                  onPressed: busy ? null : onCover,
+                  tooltip: 'Change cover photo',
+                ),
+              ),
+              Positioned(
+                left: 18,
+                bottom: -26,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Container(
+                      width: 68,
+                      height: 68,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 3),
+                        boxShadow: MK.shadow,
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: business.logoUrl.isEmpty
+                          ? Center(
+                              child: Text(
+                                business.name.isEmpty ? 'D' : business.name[0].toUpperCase(),
+                                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: MK.brandDeep),
+                              ),
+                            )
+                          : Image.network(business.logoUrl, fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => const Icon(Icons.storefront_rounded, color: MK.brand)),
+                    ),
+                    const SizedBox(width: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: MIconButton(
+                        icon: Icons.camera_alt_rounded,
+                        color: MK.brand,
+                        size: 30,
+                        onPressed: busy ? null : onLogo,
+                        tooltip: 'Change logo',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 34),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        business.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: MK.ink, letterSpacing: -0.4),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        business.location,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 11.5, color: MK.inkSoft, fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                ),
+                MPill(
+                  business.isApproved ? 'VERIFIED' : 'IN REVIEW',
+                  color: business.isApproved ? MK.brand : MK.amber,
+                  pulse: !business.isApproved,
+                  fontSize: 8.5,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoLine extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color? valueColor;
+  final Widget? action;
+
+  const _InfoLine({required this.icon, required this.label, required this.value, this.valueColor, this.action});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 7),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: MK.inkSoft),
+            const SizedBox(width: 10),
+            SizedBox(
+              width: 78,
+              child: Text(label, style: const TextStyle(fontSize: 11.5, color: MK.inkSoft, fontWeight: FontWeight.w700)),
+            ),
+            Expanded(
+              child: Text(
+                value,
+                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: valueColor ?? MK.ink),
+              ),
+            ),
+            if (action != null) ...[const SizedBox(width: 8), action!],
+          ],
+        ),
+      );
+}
+
+class _Field extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final IconData icon;
+  final String? hint;
+  final int maxLines;
+  final bool enabled;
+  final TextInputType? keyboardType;
+
+  const _Field({
+    required this.label,
+    required this.controller,
+    required this.icon,
+    this.hint,
+    this.maxLines = 1,
+    this.enabled = true,
+    this.keyboardType,
+  });
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _MiniLabel(label),
+          TextField(
+            controller: controller,
+            maxLines: maxLines,
+            enabled: enabled,
+            keyboardType: keyboardType,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: InputDecoration(
+              hintText: hint,
+              prefixIcon: maxLines == 1 ? Icon(icon, size: 19) : null,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(MK.rSm)),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(MK.rSm), borderSide: const BorderSide(color: MK.line)),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(MK.rSm), borderSide: const BorderSide(color: MK.brand, width: 1.6)),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: maxLines == 1 ? 13 : 11),
+            ),
+          ),
+        ],
+      );
+}
+
+class _MiniLabel extends StatelessWidget {
+  final String text;
+  const _MiniLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Text(
+          text,
+          style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w900, color: MK.inkSoft, letterSpacing: 0.9),
+        ),
+      );
+}
+
+class _MiniStat extends StatelessWidget {
+  final String value;
+  final String label;
+  final Color color;
+
+  const _MiniStat(this.value, this.label, this.color);
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: color, letterSpacing: -0.5)),
+          const SizedBox(height: 2),
+          Text(label, style: const TextStyle(fontSize: 10.5, color: MK.inkSoft, fontWeight: FontWeight.w800)),
+        ],
+      );
+}
+
+class _DocRow extends StatelessWidget {
+  final String label;
+  final MerchantDocument? doc;
+  final bool loading;
+  final bool last;
+  final VoidCallback onUpload;
+
+  const _DocRow({required this.label, required this.doc, required this.loading, required this.onUpload, this.last = false});
+
+  static const _statusMeta = {
+    'submitted': ('SUBMITTED', MK.sky),
+    'under_review': ('UNDER REVIEW', MK.amber),
+    'verified': ('VERIFIED', MK.brand),
+    'rejected': ('REJECTED', MK.danger),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final meta = _statusMeta[doc?.status ?? ''] ?? ('NOT ON FILE', MK.inkSoft);
+    final uploaded = doc?.isUploaded == true;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: last ? null : const BoxDecoration(border: Border(bottom: BorderSide(color: MK.line))),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: meta.$2.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(uploaded ? Icons.description_outlined : Icons.post_add, size: 17, color: meta.$2),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: MK.ink)),
+                const SizedBox(height: 2),
+                Text(
+                  loading
+                      ? 'Checking the vault…'
+                      : uploaded
+                          ? '${doc!.referenceNumber.isEmpty ? 'No reference number' : 'Ref ${doc!.referenceNumber}'} · uploaded ${doc!.uploadedAt == null ? '' : MK.ago(doc!.uploadedAt!)}'
+                              '${doc!.reviewerNote == null ? '' : '\n${doc!.reviewerNote}'}'
+                          : 'Upload the official document so our team can verify your shop',
+                  style: const TextStyle(fontSize: 10.5, color: MK.inkSoft, height: 1.35, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          if (!loading && uploaded) MPill(meta.$1, color: meta.$2, fontSize: 8),
+          const SizedBox(width: 8),
+          MButton(
+            uploaded ? 'Replace' : 'Upload',
+            kind: uploaded ? MKind.ghost : MKind.soft,
+            height: 34,
+            onPressed: onUpload,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LinkRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String detail;
+  final VoidCallback onTap;
+  final bool danger;
+
+  const _LinkRow({required this.icon, required this.label, required this.detail, required this.onTap, this.danger = false});
+
+  @override
+  Widget build(BuildContext context) => MPressable(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 4),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: danger ? MK.danger : MK.inkSoft),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: danger ? MK.danger : MK.ink),
+                    ),
+                    Text(detail, style: const TextStyle(fontSize: 10.5, color: MK.inkSoft, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, size: 18, color: danger ? MK.danger.withValues(alpha: 0.6) : MK.inkSoft),
+            ],
+          ),
+        ),
+      );
+}
+
+/// Persists a compliance document to the merchant documents vault.
+class _DocumentUpload extends ConsumerStatefulWidget {
+  final BusinessProfile business;
+  final String docType;
+  final String label;
+  final MerchantDocument? existing;
+  final ValueChanged<MerchantDocument> onSaved;
+
+  const _DocumentUpload({
+    required this.business,
+    required this.docType,
+    required this.label,
+    required this.onSaved,
+    this.existing,
+  });
+
+  @override
+  ConsumerState<_DocumentUpload> createState() => _DocumentUploadState();
+}
+
+class _DocumentUploadState extends ConsumerState<_DocumentUpload> {
+  final _ref = TextEditingController(text: '');
+  Uint8List? _bytes;
+  String? _fileName;
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _ref.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pick() async {
+    final file = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 82, maxWidth: 1800);
+    if (file == null) return;
+    final bytes = await file.readAsBytes();
+    if (mounted) {
+      setState(() {
+        _bytes = bytes;
+        _fileName = file.name;
+        _error = null;
+      });
+    }
+  }
+
+  Future<void> _submit() async {
+    if (_bytes == null) {
+      setState(() => _error = 'Choose a photo of the document first.');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final url = await SupabaseService().uploadImage(
+        bucket: 'uploads',
+        path: 'kyc/${widget.business.id}/${widget.docType}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        fileBytes: _bytes!,
+      );
+      final reference = _ref.text.trim();
+      await ref.read(appStateProvider.notifier).saveMerchantDocument(
+            widget.business.id,
+            docType: widget.docType,
+            fileUrl: url,
+            referenceNumber: reference,
+          );
+      if (!mounted) return;
+      widget.onSaved(MerchantDocument(
+        docType: widget.docType,
+        referenceNumber: reference,
+        fileUrl: url,
+        status: 'under_review',
+        uploadedAt: DateTime.now(),
+      ));
+      Navigator.pop(context);
+      MToast.ok(context, '${widget.label} sent for review');
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = e.toString().replaceFirst('Exception: ', '');
+        });
       }
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: false,
-        title: const Text(
-          'Business Profile',
-          style: TextStyle(color: AppTheme.charcoal, fontWeight: FontWeight.bold, fontSize: 18),
-        ),
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            child: TextButton.icon(
-              onPressed: () => setState(() => _isEditing = !_isEditing),
-              icon: Icon(_isEditing ? Icons.close : Icons.edit_rounded, color: AppTheme.primaryGreen, size: 16),
-              label: Text(_isEditing ? 'Cancel' : 'Edit', style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold, fontSize: 13)),
-              style: TextButton.styleFrom(
-                backgroundColor: AppTheme.lightGreenBg,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(20),
-        child: ResponsiveCenter(
-          maxWidth: 850,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-            // ── Visual Branding ───────────────────────────────────
-            _buildBrandingSection(),
-            const SizedBox(height: 32),
-
-            // ── Business Form ─────────────────────────────────────
-            const Text("Core Identity", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.charcoal)),
-            const SizedBox(height: 16),
-            _buildProfileForm(),
-
-            const SizedBox(height: 24),
-            if (_isEditing)
-              ElevatedButton(
-                onPressed: _save,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryGreen,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 56),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 0,
-                ),
-                child: const Text("Update Profile", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              ),
-
-            const SizedBox(height: 32),
-
-            // ── KYC & Compliance Vault ────────────────────────────
-            _buildKycVaultSection(),
-            const SizedBox(height: 32),
-
-            // ── Gallery / Photos ──────────────────────────────────
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Store Gallery", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.charcoal)),
-                TextButton(
-                  onPressed: () {},
-                  child: const Text("Manage Photos", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildGallerySection(),
-
-            const SizedBox(height: 32),
-            const Text("Security & Settings", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.charcoal)),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.06)),
-                boxShadow: const [
-                  BoxShadow(color: Color(0x06000000), blurRadius: 16, offset: Offset(0, 6)),
-                ],
-              ),
-              child: const BiometricSwitchTile(),
-            ),
-
-            const SizedBox(height: 40),
-          ],
-        ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBrandingSection() {
-    return Column(
-      children: [
-        Stack(
-          alignment: Alignment.bottomCenter,
-          clipBehavior: Clip.none,
-          children: [
-            // Cover Photo Placeholder
-            Container(
-              height: 140,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                gradient: const LinearGradient(
-                  colors: [AppTheme.charcoal, Color(0xFF475569)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Stack(
-                children: [
-                  if (widget.business.coverUrl.isNotEmpty)
-                    Positioned.fill(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: Image.network(widget.business.coverUrl, fit: BoxFit.cover),
-                      ),
-                    ),
-                  Positioned(
-                    right: -20,
-                    top: -20,
-                    child: Icon(Icons.store_mall_directory_rounded, size: 100, color: Colors.white.withValues(alpha: 0.05)),
-                  ),
-                  Center(
-                    child: TextButton.icon(
-                      onPressed: _pickCover,
-                      icon: const Icon(Icons.camera_alt_rounded, color: Colors.white70, size: 18),
-                      label: Text(
-                        widget.business.coverUrl.isEmpty ? "Add Cover" : "Change Cover",
-                        style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Logo
-            Positioned(
-              bottom: -30,
-              child: GestureDetector(
-                onTap: _isUploading ? null : _pickLogo,
-                child: Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 4),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 15, offset: const Offset(0, 5)),
-                    ],
-                  ),
-                  child: ClipOval(
-                    child: _isUploading
-                        ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
-                        : widget.business.logoUrl.isNotEmpty
-                            ? Image.network(widget.business.logoUrl, fit: BoxFit.cover)
-                            : Container(
-                                color: AppTheme.lightGreenBg,
-                                child: Icon(_categoryIcon(_selectedCategory), color: AppTheme.primaryGreen, size: 40),
-                              ),
-                  ),
-                ),
-              ),
-            ),
-            if (_isEditing)
-              Positioned(
-                bottom: -30,
-                right: MediaQuery.of(context).size.width / 2 - 45,
-                child: GestureDetector(
-                  onTap: _pickLogo,
-                  child: CircleAvatar(
-                    radius: 14,
-                    backgroundColor: AppTheme.primaryGreen,
-                    child: const Icon(Icons.add_a_photo_rounded, size: 14, color: Colors.white),
-                  ),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 40),
-      ],
-    );
-  }
-
-  Widget _buildProfileForm() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppTheme.lightGrey,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _buildField(
-            label: "Display Name",
-            controller: _nameCtrl,
-            icon: Icons.store_rounded,
-            enabled: _isEditing,
+          Text(
+            'Upload a clear photo of your ${widget.label.toLowerCase()}. Our compliance team reviews new submissions daily.',
+            style: const TextStyle(fontSize: 12.5, color: MK.inkSoft, height: 1.5),
           ),
-          const SizedBox(height: 20),
-          _buildField(
-            label: "About Business",
-            controller: _descCtrl,
-            icon: Icons.info_outline_rounded,
-            maxLines: 3,
-            enabled: _isEditing,
-          ),
-          const SizedBox(height: 20),
-          _buildLocationSection(),
-          const SizedBox(height: 20),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text("Category", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppTheme.mutedGrey)),
-              const SizedBox(height: 8),
-              _isEditing
-                  ? DropdownButtonFormField<String>(
-                      initialValue: _selectedCategory,
-                      isExpanded: true,
-                      borderRadius: BorderRadius.circular(16),
-                      dropdownColor: context.cardColor,
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.mutedGrey),
-                      decoration: _inputDecoration("Category", Icons.category_rounded),
-                      items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c, style: TextStyle(fontSize: 14, color: context.textPrimary, fontWeight: FontWeight.w600)))).toList(),
-                      onChanged: (v) => setState(() => _selectedCategory = v!),
-                    )
-                  : Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.category_rounded, size: 18, color: AppTheme.primaryGreen),
-                          const SizedBox(width: 12),
-                          Text(_selectedCategory, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                        ],
-                      ),
-                    ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLocationSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Store Location & GPS Pin", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppTheme.mutedGrey)),
-        const SizedBox(height: 8),
-        if (!_isEditing) ...[
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.location_on_rounded, size: 18, color: AppTheme.primaryGreen),
-                    const SizedBox(width: 12),
-                    Expanded(child: Text(_locationCtrl.text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600))),
-                  ],
-                ),
-                if (_selectedLat != null && _selectedLng != null) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: AppTheme.lightGreenBg, borderRadius: BorderRadius.circular(6)),
-                    child: Text(
-                      "📍 Verified GPS: (${_selectedLat!.toStringAsFixed(4)}, ${_selectedLng!.toStringAsFixed(4)})",
-                      style: const TextStyle(fontSize: 11, color: AppTheme.primaryGreen, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ] else ...[
-          TextFormField(
-            controller: _locationCtrl,
-            onChanged: (val) => _onSearchAddress(val),
-            decoration: _inputDecoration("Type street address or business name...", Icons.location_on_rounded).copyWith(
-              suffixIcon: _isSearchingAddress
-                  ? const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)))
-                  : IconButton(
-                      icon: const Icon(Icons.search_rounded, color: AppTheme.primaryGreen),
-                      onPressed: () => _onSearchAddress(_locationCtrl.text),
-                    ),
-            ),
-          ),
-          if (_predictions.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Container(
-              constraints: const BoxConstraints(maxHeight: 200),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, 4))],
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: ListView.separated(
-                shrinkWrap: true,
-                physics: const BouncingScrollPhysics(),
-                itemCount: _predictions.length,
-                separatorBuilder: (_, _) => Divider(height: 1, color: Colors.grey.shade100),
-                itemBuilder: (context, index) {
-                  final pred = _predictions[index];
-                  return ListTile(
-                    dense: true,
-                    leading: const Icon(Icons.place_outlined, size: 18, color: AppTheme.primaryGreen),
-                    title: Text(pred.displayName, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600), maxLines: 2, overflow: TextOverflow.ellipsis),
-                    subtitle: Text("Lat: ${pred.latitude.toStringAsFixed(4)}, Lng: ${pred.longitude.toStringAsFixed(4)}", style: const TextStyle(fontSize: 10, color: AppTheme.mutedGrey)),
-                    onTap: () {
-                      setState(() {
-                        _locationCtrl.text = pred.displayName;
-                        _selectedLat = pred.latitude;
-                        _selectedLng = pred.longitude;
-                        _predictions.clear();
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Pinned coordinates to: ${pred.latitude.toStringAsFixed(4)}, ${pred.longitude.toStringAsFixed(4)}")),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: _useCurrentGpsLocation,
-              icon: _isGettingGps
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryGreen))
-                  : const Icon(Icons.my_location_rounded, size: 16, color: AppTheme.primaryGreen),
-              label: const Text("📍 Use My Current Shop Location (GPS)", style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold, fontSize: 13)),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                side: const BorderSide(color: AppTheme.primaryGreen),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                backgroundColor: AppTheme.lightGreenBg,
-              ),
-            ),
-          ),
-          if (_selectedLat != null && _selectedLng != null) ...[
-            const SizedBox(height: 6),
-            Text(
-              "✅ Selected GPS: (${_selectedLat!.toStringAsFixed(4)}, ${_selectedLng!.toStringAsFixed(4)})",
-              style: const TextStyle(fontSize: 11, color: AppTheme.primaryGreen, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ],
-      ],
-    );
-  }
-
-  Widget _buildField({required String label, required TextEditingController controller, required IconData icon, int maxLines = 1, bool enabled = true}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppTheme.mutedGrey)),
-        const SizedBox(height: 8),
-        enabled
-            ? TextFormField(
-                controller: controller,
-                maxLines: maxLines,
-                decoration: _inputDecoration(label, icon),
-              )
-            : Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-                child: Row(
-                  crossAxisAlignment: maxLines > 1 ? CrossAxisAlignment.start : CrossAxisAlignment.center,
-                  children: [
-                    Icon(icon, size: 18, color: AppTheme.primaryGreen),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        controller.text,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.charcoal),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-      ],
-    );
-  }
-
-  InputDecoration _inputDecoration(String hint, IconData icon) {
-    return InputDecoration(
-      hintText: hint,
-      prefixIcon: Icon(icon, size: 18, color: AppTheme.primaryGreen),
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.05)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
-      ),
-    );
-  }
-
-  Widget _buildGallerySection() {
-    return Container(
-      height: 100,
-      alignment: Alignment.centerLeft,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        children: [
-          GestureDetector(
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Gallery management coming soon!")),
-              );
-            },
+          const SizedBox(height: 16),
+          _Field(label: 'DOCUMENT NUMBER (OPTIONAL)', controller: _ref, icon: Icons.confirmation_number_outlined, hint: 'e.g. GRA-2026-114', enabled: !_busy),
+          const SizedBox(height: 16),
+          MPressable(
+            onTap: _busy ? null : _pick,
             child: Container(
-              width: 100,
-              margin: const EdgeInsets.only(right: 12),
+              height: 116,
               decoration: BoxDecoration(
-                color: AppTheme.lightGrey,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.05)),
+                color: const Color(0xFFF1F5F1),
+                borderRadius: BorderRadius.circular(MK.rMd),
+                border: Border.all(color: _bytes == null ? MK.line : MK.brand.withValues(alpha: 0.4)),
               ),
-              child: const Icon(Icons.add_a_photo_rounded, color: AppTheme.mutedGrey),
-            ),
-          ),
-          // In a real app, map through actual gallery URLs here
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            alignment: Alignment.center,
-            child: const Text(
-              "No additional photos yet",
-              style: TextStyle(color: AppTheme.mutedGrey, fontSize: 12, fontStyle: FontStyle.italic),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildKycVaultSection() {
-    final isApproved = widget.business.isApproved;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Section Header
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.verified_user_rounded, color: AppTheme.primaryGreen, size: 20),
-                const SizedBox(width: 8),
-                const Text("KYC & Compliance Vault", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.charcoal)),
-              ],
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: isApproved ? AppTheme.primaryGreen.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                isApproved ? "VERIFIED VAULT" : "PENDING REVIEW",
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  color: isApproved ? AppTheme.primaryGreen : Colors.orange.shade800,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        const Text(
-          "Upload and update your mandatory legal, tax, and food safety inspection certificates for platform verification.",
-          style: TextStyle(color: AppTheme.mutedGrey, fontSize: 12),
-        ),
-        const SizedBox(height: 16),
-
-        // Document Cards
-        _buildKycDocTile(
-          title: "Business Registration Certificate",
-          subtitle: "Certificate of Incorporation / Registrar General",
-          status: _bizRegStatus,
-          fileUrl: _bizRegUrl,
-          icon: Icons.business_center_rounded,
-          onPreview: () => _previewKycDocument("Business Registration Certificate", _bizRegUrl),
-          onUpload: () => _showUploadDialog("Business Registration Certificate", _bizRegStatus, (val) {
-            setState(() => _bizRegStatus = val);
-          }),
-        ),
-        const SizedBox(height: 14),
-        _buildKycDocTile(
-          title: "Health & Safety Inspection Permit",
-          subtitle: "Municipal Food Hygiene & Sanitation Certificate",
-          status: _healthStatus,
-          fileUrl: _healthUrl,
-          icon: Icons.health_and_safety_rounded,
-          onPreview: () => _previewKycDocument("Health & Safety Inspection Permit", _healthUrl),
-          onUpload: () => _showUploadDialog("Health & Safety Inspection Permit", _healthStatus, (val) {
-            setState(() => _healthStatus = val);
-          }),
-        ),
-        const SizedBox(height: 14),
-        _buildKycDocTile(
-          title: "VAT / Tax Identification Number (TIN)",
-          subtitle: "Ghana Revenue Authority (GRA) Tax Compliance",
-          status: _taxStatus,
-          fileUrl: _taxUrl,
-          icon: Icons.account_balance_wallet_rounded,
-          onPreview: () => _previewKycDocument("VAT / Tax Identification Number (TIN)", _taxUrl),
-          onUpload: () => _showUploadDialog("VAT / Tax Identification Number (TIN)", _taxStatus, (val) {
-            setState(() => _taxStatus = val);
-          }),
-        ),
-      ],
-    );
-  }
-
-  void _previewKycDocument(String title, String? fileUrl) {
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        clipBehavior: Clip.antiAlias,
-        child: Container(
-          width: 550,
-          color: const Color(0xFF0F172A),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                color: Colors.black.withValues(alpha: 0.3),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                          const SizedBox(height: 2),
-                          const Text("KYC Document Preview • Pinch to zoom", style: TextStyle(color: Colors.white70, fontSize: 11)),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, color: Colors.white70),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Container(
-                  height: 380,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: InteractiveViewer(
-                    minScale: 0.8,
-                    maxScale: 4.0,
-                    child: fileUrl != null && fileUrl.isNotEmpty
-                        ? Image.network(
-                            fileUrl,
-                            fit: BoxFit.contain,
-                            loadingBuilder: (c, child, p) => p == null ? child : const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen)),
-                            errorBuilder: (c, e, s) => const Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.broken_image_rounded, color: AppTheme.errorRed, size: 40),
-                                  SizedBox(height: 8),
-                                  Text("Failed to load document image", style: TextStyle(color: AppTheme.mutedGrey, fontSize: 12)),
-                                ],
-                              ),
-                            ),
-                          )
-                        : Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.file_present_rounded, size: 48, color: AppTheme.mutedGrey),
-                                const SizedBox(height: 12),
-                                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                                const SizedBox(height: 4),
-                                const Text("Official verified record on file", style: TextStyle(color: AppTheme.mutedGrey, fontSize: 12)),
-                              ],
-                            ),
-                          ),
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                color: Colors.black.withValues(alpha: 0.2),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryGreen,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text("Done"),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildKycDocTile({
-    required String title,
-    required String subtitle,
-    required String status,
-    required String? fileUrl,
-    required IconData icon,
-    required VoidCallback onPreview,
-    required VoidCallback onUpload,
-  }) {
-    final hasImage = fileUrl != null && fileUrl.isNotEmpty;
-    final isVerified = status.toLowerCase().contains('verified') || status.toLowerCase().contains('valid') || status.toLowerCase().contains('compliant') || status.toLowerCase().contains('uploaded');
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 8, offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Image Thumbnail / Icon Area
-              GestureDetector(
-                onTap: onPreview,
-                child: Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: hasImage ? const Color(0xFF0F172A) : (isVerified ? AppTheme.primaryGreen.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1)),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFCBD5E1)),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      if (hasImage)
-                        Image.network(
-                          fileUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (c, e, s) => Center(child: Icon(icon, color: AppTheme.primaryGreen, size: 28)),
-                        )
-                      else
-                        Center(child: Icon(icon, color: isVerified ? AppTheme.primaryGreen : Colors.orange.shade800, size: 28)),
-                      Positioned(
-                        bottom: 3,
-                        right: 3,
-                        child: Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.7),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.zoom_in_rounded, size: 10, color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 14),
-
-              // Title and Status
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: AppTheme.charcoal)),
-                    const SizedBox(height: 2),
-                    Text(subtitle, style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey)),
-                    const SizedBox(height: 6),
-                    Row(
+              clipBehavior: Clip.antiAlias,
+              child: _bytes == null
+                  ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          isVerified ? Icons.check_circle_rounded : Icons.pending_actions_rounded,
-                          size: 14,
-                          color: isVerified ? AppTheme.primaryGreen : Colors.orange.shade800,
+                        const Icon(Icons.cloud_upload_rounded, size: 28, color: MK.brand),
+                        const SizedBox(height: 8),
+                        Text(
+                          widget.existing?.isUploaded == true ? 'Replace current document' : 'Choose document photo',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: MK.inkSoft),
                         ),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            status,
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: isVerified ? AppTheme.primaryGreen : Colors.orange.shade800,
-                            ),
-                            overflow: TextOverflow.ellipsis,
+                      ],
+                    )
+                  : Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.memory(_bytes!, fit: BoxFit.cover),
+                        Positioned(
+                          left: 8,
+                          bottom: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                            decoration: BoxDecoration(color: MK.ink.withValues(alpha: 0.72), borderRadius: BorderRadius.circular(8)),
+                            child: Text(_fileName ?? '', style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w800)),
                           ),
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 12),
-
-          // Action Buttons Bar
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.error_outline_rounded, size: 16, color: MK.danger),
+                const SizedBox(width: 8),
+                Expanded(child: Text(_error!, style: const TextStyle(fontSize: 11.5, color: MK.danger, fontWeight: FontWeight.w800, height: 1.4))),
+              ],
+            ),
+          ],
+          const SizedBox(height: 18),
           Row(
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onPreview,
-                  icon: const Icon(Icons.remove_red_eye_rounded, size: 14),
-                  label: const Text("View Image", style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.charcoal,
-                    side: const BorderSide(color: Color(0xFFCBD5E1)),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                ),
-              ),
+              Expanded(child: MButton('Cancel', kind: MKind.ghost, onPressed: _busy ? null : () => Navigator.pop(context))),
               const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: onUpload,
-                  icon: const Icon(Icons.upload_file_rounded, size: 14),
-                  label: Text(hasImage ? "Replace" : "Upload", style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.charcoal,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    elevation: 0,
-                  ),
-                ),
-              ),
+              Expanded(flex: 2, child: MButton('Send for review', icon: Icons.send_rounded, loading: _busy, onPressed: _busy ? null : _submit)),
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  void _showUploadDialog(String docTitle, String currentStatus, ValueChanged<String> onSave) {
-    final ctrl = TextEditingController(text: currentStatus.contains('(') ? currentStatus.split('(').last.replaceAll(')', '').trim() : currentStatus);
-    String? selectedFileName;
-    Uint8List? selectedFileBytes;
-    String? selectedFileExt;
-    bool isSaving = false;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: Row(
-              children: [
-                const Icon(Icons.upload_file_rounded, color: AppTheme.primaryGreen),
-                const SizedBox(width: 8),
-                Expanded(child: Text("Upload $docTitle", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
-              ],
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Select a clear PDF or photo scan of your certificate. Admin compliance team will verify authenticity within 24 hours.",
-                    style: TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text("Certificate / Registration Number", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.charcoal)),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: ctrl,
-                    enabled: !isSaving,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                    decoration: InputDecoration(
-                      hintText: "e.g. GH-2024-882 or FDA-2025",
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text("Document File (PDF / JPG / PNG)", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.charcoal)),
-                  const SizedBox(height: 6),
-                  GestureDetector(
-                    onTap: isSaving ? null : () async {
-                      final messenger = ScaffoldMessenger.of(context);
-                      try {
-                        final picker = ImagePicker();
-                        final image = await picker.pickImage(
-                          source: ImageSource.gallery,
-                          imageQuality: 75,
-                          maxWidth: 1600,
-                          maxHeight: 1600,
-                        );
-                        if (image != null) {
-                          final bytes = await image.readAsBytes();
-                          setDialogState(() {
-                            selectedFileName = image.name;
-                            selectedFileBytes = bytes;
-                            selectedFileExt = image.name.split('.').last.toLowerCase();
-                          });
-                        }
-                      } catch (e) {
-                        messenger.showSnackBar(
-                          SnackBar(content: Text("Error picking file: $e"), backgroundColor: AppTheme.errorRed),
-                        );
-                      }
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: selectedFileName != null ? AppTheme.primaryGreen.withValues(alpha: 0.05) : const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: selectedFileName != null ? AppTheme.primaryGreen : const Color(0xFFCBD5E1),
-                          style: selectedFileName != null ? BorderStyle.solid : BorderStyle.none,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Icon(
-                            selectedFileName != null ? Icons.check_circle_rounded : Icons.cloud_upload_rounded,
-                            color: selectedFileName != null ? AppTheme.primaryGreen : AppTheme.mutedGrey,
-                            size: 32,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            selectedFileName ?? "Tap to choose file from device",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: selectedFileName != null ? FontWeight.bold : FontWeight.normal,
-                              color: selectedFileName != null ? AppTheme.primaryGreen : AppTheme.charcoal,
-                            ),
-                          ),
-                          if (selectedFileBytes != null) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              "Compressed size: ${(selectedFileBytes!.lengthInBytes / 1024).toStringAsFixed(0)} KB (Fast Upload)",
-                              style: const TextStyle(fontSize: 10, color: AppTheme.mutedGrey),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (isSaving) ...[
-                    const SizedBox(height: 16),
-                    const LinearProgressIndicator(color: AppTheme.primaryGreen, backgroundColor: Color(0xFFE2E8F0)),
-                    const SizedBox(height: 6),
-                    const Center(
-                      child: Text(
-                        "Encrypting & uploading document to KYC Vault...",
-                        style: TextStyle(fontSize: 11, color: AppTheme.primaryGreen, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: isSaving ? null : () => Navigator.pop(ctx),
-                child: const Text("Cancel", style: TextStyle(color: AppTheme.mutedGrey)),
-              ),
-              ElevatedButton(
-                onPressed: isSaving ? null : () async {
-                  if (selectedFileBytes == null) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(
-                      const SnackBar(content: Text("⚠️ Please choose a document file first!"), backgroundColor: AppTheme.errorRed),
-                    );
-                    return;
-                  }
-
-                  setDialogState(() {
-                    isSaving = true;
-                  });
-
-                  final messenger = ScaffoldMessenger.of(context);
-                  final navigator = Navigator.of(ctx);
-
-                  try {
-                    final cleanExt = selectedFileExt ?? 'jpg';
-                    final fileName = '${docTitle.toLowerCase().replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch}.$cleanExt';
-                    
-                    // Upload to 'uploads' bucket under public storage
-                    final fileUrl = await SupabaseService().uploadImage(
-                      bucket: 'uploads',
-                      path: 'kyc/${widget.business.id}/$fileName',
-                      fileBytes: selectedFileBytes!,
-                    );
-
-                    final docNum = ctrl.text.trim().isEmpty ? "Pending" : ctrl.text.trim();
-                    final newVal = "Uploaded ($docNum)";
-
-                    // Log this upload event with URL attachment in metadata
-                    await SupabaseService().logAction(
-                      action: "KYC_UPLOAD",
-                      entityType: "business",
-                      entityId: widget.business.id,
-                      description: "Merchant uploaded KYC document: $docTitle",
-                      metadata: {
-                        'document_title': docTitle,
-                        'reference_number': docNum,
-                        'file_url': fileUrl,
-                        'uploaded_at': DateTime.now().toIso8601String(),
-                      },
-                    );
-
-                    setState(() {
-                      if (docTitle.toLowerCase().contains('business')) {
-                        _bizRegUrl = fileUrl;
-                      } else if (docTitle.toLowerCase().contains('health')) {
-                        _healthUrl = fileUrl;
-                      } else {
-                        _taxUrl = fileUrl;
-                      }
-                    });
-                    onSave(newVal);
-                    navigator.pop();
-
-                    messenger.showSnackBar(
-                      SnackBar(
-                        content: Text("✅ $docTitle uploaded and sent to KYC Vault successfully!"),
-                        backgroundColor: AppTheme.primaryGreen,
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  } catch (e) {
-                    setDialogState(() {
-                      isSaving = false;
-                    });
-                    messenger.showSnackBar(
-                      SnackBar(
-                        content: Text("❌ Upload failed: $e"),
-                        backgroundColor: AppTheme.errorRed,
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryGreen,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: isSaving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Text("Submit to Vault", style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Future<void> _save() async {
-    final name = _nameCtrl.text.trim();
-    final description = _descCtrl.text.trim();
-    final location = _locationCtrl.text.trim();
-    final category = _selectedCategory;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Saving profile and resolving GPS coordinates...')),
-    );
-
-    double? lat = _selectedLat ?? widget.business.latitude;
-    double? lng = _selectedLng ?? widget.business.longitude;
-
-    if (location.isNotEmpty && location != widget.business.location && _selectedLat == null) {
-      final pos = await LocationService().getLatLngFromAddress(location);
-      if (pos != null) {
-        lat = pos.latitude;
-        lng = pos.longitude;
-      }
-    }
-
-    try {
-      await ref.read(appStateProvider.notifier).updateBusinessProfile(
-        widget.business.id,
-        name: name,
-        description: description,
-        category: category,
-        location: location,
-        lat: lat,
-        lng: lng,
       );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Business profile & exact map location saved!'),
-            backgroundColor: AppTheme.primaryGreen,
-          ),
-        );
-        setState(() => _isEditing = false);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save profile: $e')),
-        );
-      }
-    }
-  }
-
-
-
-  IconData _categoryIcon(String category) {
-    switch (category) {
-      case 'Bakery Pack':
-        return Icons.bakery_dining;
-      case 'Restaurant Meal':
-        return Icons.restaurant;
-      case 'Fruit & Vegetable Pack':
-        return Icons.local_florist;
-      case 'Hotel Buffet':
-        return Icons.hotel;
-      case 'Grocery Bundle':
-        return Icons.shopping_basket;
-      case 'Snacks & Drinks':
-        return Icons.local_cafe;
-      case 'Farm Produce':
-        return Icons.grass;
-      default:
-        return Icons.storefront;
-    }
-  }
 }

@@ -38,6 +38,13 @@ class AppState {
   final List<SupportTicket> supportTickets;
   final ThemeMode themeMode;
   final List<CategoryItem> categories;
+  final List<Review> reviews;
+
+  /// Every listing owned by the signed-in merchant, including paused and
+  /// sold-out ones that [deals] deliberately hides from customers.
+  final List<FoodDeal> merchantDeals;
+  final bool isLoadingMerchantDeals;
+  final String? merchantDealsError;
   final bool isLoading;
   final String? errorMessage;
 
@@ -62,6 +69,10 @@ class AppState {
     this.vouchers = const [],
     this.broadcasts = const [],
     this.supportTickets = const [],
+    this.reviews = const [],
+    this.merchantDeals = const [],
+    this.isLoadingMerchantDeals = false,
+    this.merchantDealsError,
     this.themeMode = ThemeMode.light,
     this.commissionRate = 0.15,
     this.isLoading = false,
@@ -135,6 +146,8 @@ class AppState {
         vouchers: const [],
         broadcasts: const [],
         supportTickets: const [],
+        reviews: const [],
+        merchantDeals: const [],
         themeMode: ThemeMode.light,
         commissionRate: 0.15,
         isLoading: false,
@@ -164,6 +177,11 @@ class AppState {
     List<Voucher>? vouchers,
     List<BroadcastMessage>? broadcasts,
     List<SupportTicket>? supportTickets,
+    List<Review>? reviews,
+    List<FoodDeal>? merchantDeals,
+    bool? isLoadingMerchantDeals,
+    String? merchantDealsError,
+    bool clearMerchantDealsError = false,
     ThemeMode? themeMode,
     bool? isLoading,
     String? errorMessage,
@@ -192,6 +210,12 @@ class AppState {
       vouchers: vouchers ?? this.vouchers,
       broadcasts: broadcasts ?? this.broadcasts,
       supportTickets: supportTickets ?? this.supportTickets,
+      reviews: reviews ?? this.reviews,
+      merchantDeals: merchantDeals ?? this.merchantDeals,
+      isLoadingMerchantDeals: isLoadingMerchantDeals ?? this.isLoadingMerchantDeals,
+      merchantDealsError: clearMerchantDealsError
+          ? null
+          : (merchantDealsError ?? this.merchantDealsError),
       themeMode: themeMode ?? this.themeMode,
       isLoading: isLoading ?? this.isLoading,
       errorMessage:
@@ -319,6 +343,8 @@ class AppStateManager extends Notifier<AppState> {
             }
           }
         } catch (_) {}
+        // Load the merchant's full catalogue (incl. paused / sold out).
+        unawaited(loadMerchantDeals());
       }
 
       _commissionRate = platformSettings.commissionRate;
@@ -1032,6 +1058,26 @@ class AppStateManager extends Notifier<AppState> {
   // MERCHANT ACTIONS
   // ─────────────────────────────────────────────────────────────
 
+  /// Loads every listing owned by the signed-in merchant, including paused and
+  /// sold-out ones that the customer-facing [AppState.deals] list filters out.
+  Future<void> loadMerchantDeals() async {
+    final biz = getMerchantBusiness();
+    if (biz == null) {
+      state = state.copyWith(merchantDeals: [], clearMerchantDealsError: true);
+      return;
+    }
+    state = state.copyWith(isLoadingMerchantDeals: true, clearMerchantDealsError: true);
+    try {
+      final deals = await _supa.fetchMerchantDeals(biz.id);
+      state = state.copyWith(merchantDeals: deals, isLoadingMerchantDeals: false, clearMerchantDealsError: true);
+    } catch (e) {
+      state = state.copyWith(
+        isLoadingMerchantDeals: false,
+        merchantDealsError: e.toString().replaceFirst('Exception: ', ''),
+      );
+    }
+  }
+
   Future<void> addDeal({
     required String title,
     required String description,
@@ -1059,8 +1105,7 @@ class AppStateManager extends Notifier<AppState> {
     final deals = await _supa.fetchDeals();
     state = state.copyWith(deals: deals);
     CacheManager().saveDeals(state.deals);
-
-    // Notify customers nearby
+    await loadMerchantDeals();
     try {
       final newDeal = deals.firstWhere((d) => d.title == title);
       final discountPct = originalPrice > 0 ? (((originalPrice - discountedPrice) / originalPrice) * 100).round() : 0;
@@ -1106,6 +1151,7 @@ class AppStateManager extends Notifier<AppState> {
     final deals = await _supa.fetchDeals();
     state = state.copyWith(deals: deals);
     CacheManager().saveDeals(state.deals);
+    await loadMerchantDeals();
   }
 
   Future<void> deleteDeal(String dealId) async {
@@ -1113,6 +1159,7 @@ class AppStateManager extends Notifier<AppState> {
     final deals = await _supa.fetchDeals();
     state = state.copyWith(deals: deals);
     CacheManager().saveDeals(state.deals);
+    await loadMerchantDeals();
   }
 
   Future<void> confirmCollection(String orderId) async {
@@ -1166,7 +1213,8 @@ class AppStateManager extends Notifier<AppState> {
                   ? 'Kitchen is Preparing Your Pack 🍳'
                   : (status == 'collected' ? 'Order Collected! Enjoy Your Meal 🌿' : 'Order Status Update')));
       final shortId = order.id.length > 8 ? order.id.substring(0, 8) : order.id;
-      final notifBody = 'Order #$shortId is now ${status.replaceAll('_', ' ')}.';
+      final notifBody =
+          'Your pack "${order.dealTitle}" is now ${status.replaceAll('_', ' ')}. #$shortId · code ${order.collectionCode}.';
 
       await dispatchNotification(
         userId: order.customerId,
@@ -1421,6 +1469,7 @@ class AppStateManager extends Notifier<AppState> {
     String? description,
     String? category,
     String? location,
+    String? phone,
     double? lat,
     double? lng,
   }) async {
@@ -1430,6 +1479,7 @@ class AppStateManager extends Notifier<AppState> {
       description: description,
       category: category,
       location: location,
+      phone: phone,
       lat: lat,
       lng: lng,
     );
@@ -1442,6 +1492,57 @@ class AppStateManager extends Notifier<AppState> {
 
     CacheManager().saveBusinesses(state.businesses);
   }
+
+  /// Drops the memoised merchant business so the next [getMerchantBusiness]
+  /// call resolves against freshly fetched businesses.
+  void resetMerchantBusiness() {
+    _merchantBusiness = null;
+  }
+
+  /// Re-fetches the merchant's business row (e.g. right after registration).
+  /// Returns the business, or null when none is owned by this account yet.
+  Future<BusinessProfile?> refreshMerchantBusiness() async {
+    if (!_supa.isAuthenticated) return null;
+    final businesses = await _supa.fetchBusinesses();
+    state = state.copyWith(businesses: businesses);
+    CacheManager().saveBusinesses(businesses);
+    resetMerchantBusiness();
+    final biz = getMerchantBusiness();
+    if (biz != null) await loadMerchantDeals();
+    return biz;
+  }
+
+  /// Sends the customer a real pickup / status reminder notification.
+  Future<void> sendOrderReminder(Order order) async {
+    final ready = order.status == 'ready' || order.status == 'out_for_delivery';
+    await dispatchNotification(
+      userId: order.customerId,
+      title: ready
+          ? 'Ready for you from ${order.businessName} ⏰'
+          : 'Update from ${order.businessName} 🍽️',
+      body: ready
+          ? 'Your order "${order.dealTitle}" is ready. Come grab it before the pickup window closes!'
+          : 'Your order "${order.dealTitle}" is moving along. Tap to see the latest status.',
+      type: 'order',
+      data: {'screen': 'track_order', 'orderId': order.id},
+    );
+  }
+
+  Future<Map<String, MerchantDocument>> fetchMerchantDocuments(String businessId) =>
+      _supa.fetchMerchantDocuments(businessId);
+
+  Future<void> saveMerchantDocument(
+    String businessId, {
+    required String docType,
+    required String fileUrl,
+    String referenceNumber = '',
+  }) =>
+      _supa.saveMerchantDocument(
+        businessId,
+        docType: docType,
+        fileUrl: fileUrl,
+        referenceNumber: referenceNumber,
+      );
 
   Future<void> toggleUserSuspension(String userId) async {
     final user = state.users.firstWhere((u) => u.id == userId);
@@ -1658,8 +1759,10 @@ class AppStateManager extends Notifier<AppState> {
 
   Future<void> toggleDealStatus(String dealId, bool active) async {
     await _supa.updateDealStatus(dealId, active);
-    final deals = state.deals.map((d) => d.id == dealId ? d.copyWith(isActive: active) : d).toList();
+    final deals = await _supa.fetchDeals();
     state = state.copyWith(deals: deals);
+    CacheManager().saveDeals(deals);
+    await loadMerchantDeals();
   }
 
   /// Re-fetches the current user profile from Supabase and updates state.

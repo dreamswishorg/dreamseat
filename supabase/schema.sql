@@ -51,12 +51,31 @@ CREATE TABLE IF NOT EXISTS public.businesses (
   location     TEXT        DEFAULT 'Accra, Ghana',
   lat          DECIMAL(10,8),
   lng          DECIMAL(11,8),
-  rating       DECIMAL(3,2) DEFAULT 5.00,
+  rating       DECIMAL(3,2) DEFAULT 0.00,
   is_approved  BOOLEAN     DEFAULT FALSE,
+  phone        TEXT        NOT NULL DEFAULT '',
   created_at   TIMESTAMPTZ DEFAULT NOW()
 );
 
 ALTER TABLE public.businesses ENABLE ROW LEVEL SECURITY;
+
+-- ============================================================
+-- TABLE: merchant_documents (compliance uploads owned by a store)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.merchant_documents (
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id      UUID        NOT NULL REFERENCES public.businesses(id) ON DELETE CASCADE,
+  doc_type         TEXT        NOT NULL CHECK (doc_type IN ('business_registration', 'health_certificate', 'tax_clearance')),
+  reference_number TEXT        NOT NULL DEFAULT '',
+  file_url         TEXT        NOT NULL DEFAULT '',
+  status           TEXT        NOT NULL DEFAULT 'submitted' CHECK (status IN ('submitted', 'under_review', 'verified', 'rejected')),
+  reviewer_note    TEXT,
+  uploaded_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (business_id, doc_type)
+);
+
+ALTER TABLE public.merchant_documents ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================
 -- TABLE: food_deals
@@ -96,12 +115,17 @@ CREATE TABLE IF NOT EXISTS public.orders (
   price               DECIMAL(10,2) NOT NULL,
   original_price      DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   category            TEXT        NOT NULL DEFAULT 'Food Rescue',
-  status              TEXT        DEFAULT 'reserved' CHECK (status IN ('reserved', 'collected', 'cancelled', 'expired')),
+  status              TEXT        DEFAULT 'reserved' CHECK (status IN ('reserved', 'preparing', 'ready', 'out_for_delivery', 'collected', 'cancelled', 'expired')),
   payment_method      TEXT        NOT NULL,
   payment_reference   TEXT        UNIQUE,
   collection_code     TEXT        NOT NULL,
   is_rated            BOOLEAN     DEFAULT FALSE,
   payout_status       TEXT        DEFAULT 'pending' CHECK (payout_status IN ('pending', 'processing', 'paid')),
+  fulfillment_type    TEXT        NOT NULL DEFAULT 'pickup' CHECK (fulfillment_type IN ('pickup', 'delivery')),
+  courier_name        TEXT,
+  courier_phone       TEXT,
+  tracking_notes      TEXT,
+  delivery_address    TEXT,
   created_at          TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -340,6 +364,30 @@ CREATE POLICY "orders_insert" ON public.orders FOR INSERT TO authenticated WITH 
 
 DROP POLICY IF EXISTS "orders_update" ON public.orders;
 CREATE POLICY "orders_update" ON public.orders FOR UPDATE TO authenticated USING (customer_id = auth.uid() OR public.auth_is_staff() OR EXISTS (SELECT 1 FROM public.businesses b WHERE b.id = orders.business_id AND b.owner_id = auth.uid()));
+
+-- ============================================================
+-- POLICIES: MERCHANT DOCUMENTS
+-- ============================================================
+DROP POLICY IF EXISTS "merchant_docs_select_owner" ON public.merchant_documents;
+CREATE POLICY "merchant_docs_select_owner" ON public.merchant_documents FOR SELECT TO authenticated
+  USING (EXISTS (SELECT 1 FROM public.businesses b WHERE b.id = merchant_documents.business_id AND b.owner_id = auth.uid()));
+
+DROP POLICY IF EXISTS "merchant_docs_insert_owner" ON public.merchant_documents;
+CREATE POLICY "merchant_docs_insert_owner" ON public.merchant_documents FOR INSERT TO authenticated
+  WITH CHECK (EXISTS (SELECT 1 FROM public.businesses b WHERE b.id = merchant_documents.business_id AND b.owner_id = auth.uid()));
+
+DROP POLICY IF EXISTS "merchant_docs_update_owner" ON public.merchant_documents;
+CREATE POLICY "merchant_docs_update_owner" ON public.merchant_documents FOR UPDATE TO authenticated
+  USING (EXISTS (SELECT 1 FROM public.businesses b WHERE b.id = merchant_documents.business_id AND b.owner_id = auth.uid()))
+  WITH CHECK (EXISTS (SELECT 1 FROM public.businesses b WHERE b.id = merchant_documents.business_id AND b.owner_id = auth.uid()));
+
+DROP POLICY IF EXISTS "merchant_docs_delete_owner" ON public.merchant_documents;
+CREATE POLICY "merchant_docs_delete_owner" ON public.merchant_documents FOR DELETE TO authenticated
+  USING (EXISTS (SELECT 1 FROM public.businesses b WHERE b.id = merchant_documents.business_id AND b.owner_id = auth.uid()));
+
+DROP POLICY IF EXISTS "merchant_docs_staff_all" ON public.merchant_documents;
+CREATE POLICY "merchant_docs_staff_all" ON public.merchant_documents FOR ALL TO authenticated
+  USING (public.auth_is_staff()) WITH CHECK (public.auth_is_staff());
 
 -- ============================================================
 -- POLICIES: AUDIT LOGS (SUPER ADMIN ONLY FOR SELECT, STAFF FOR INSERT)

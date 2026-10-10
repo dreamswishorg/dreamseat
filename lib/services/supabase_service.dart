@@ -607,6 +607,7 @@ class SupabaseService {
     String? location,
     double? lat,
     double? lng,
+    String? phone,
   }) async {
     try {
       final updates = <String, dynamic>{};
@@ -616,6 +617,7 @@ class SupabaseService {
       if (location != null) updates['location'] = location;
       if (lat != null) updates['lat'] = lat;
       if (lng != null) updates['lng'] = lng;
+      if (phone != null) updates['phone'] = phone;
       if (updates.isEmpty) return;
 
       await _db.from('businesses').update(updates).eq('id', businessId);
@@ -623,6 +625,68 @@ class SupabaseService {
       throw Exception('Failed to update business profile: ${e.message}');
     } catch (e) {
       throw Exception('Failed to update business profile: $e');
+    }
+  }
+
+  /// Persists the uploaded logo/cover URLs for a business.
+  Future<void> updateBusinessImages(String businessId, {String? logoUrl, String? coverUrl}) async {
+    final updates = <String, dynamic>{};
+    if (logoUrl != null) updates['logo_url'] = logoUrl;
+    if (coverUrl != null) updates['cover_url'] = coverUrl;
+    if (updates.isEmpty) return;
+    try {
+      await _db.from('businesses').update(updates).eq('id', businessId);
+    } on PostgrestException catch (e) {
+      throw Exception('Failed to save shop photo: ${e.message}');
+    } catch (e) {
+      throw Exception('Failed to save shop photo: $e');
+    }
+  }
+
+  /// Reads the compliance documents a merchant has uploaded for [businessId],
+  /// keyed by `doc_type`. Returns an empty map when nothing has been uploaded.
+  Future<Map<String, MerchantDocument>> fetchMerchantDocuments(String businessId) async {
+    try {
+      final rows = await _db
+          .from('merchant_documents')
+          .select()
+          .eq('business_id', businessId);
+      final result = <String, MerchantDocument>{};
+      for (final row in (rows as List<dynamic>)) {
+        final doc = MerchantDocument.fromJson(row as Map<String, dynamic>);
+        if (doc.docType.isNotEmpty) result[doc.docType] = doc;
+      }
+      return result;
+    } on PostgrestException catch (e) {
+      throw Exception('Failed to load your documents: ${e.message}');
+    } catch (e) {
+      throw Exception('Failed to load your documents: $e');
+    }
+  }
+
+  /// Stores or replaces one compliance document for [businessId].
+  /// Persists a compliance document for [businessId]. Re-uploading the same
+  /// document type replaces it and resets the status for review.
+  Future<void> saveMerchantDocument(
+    String businessId, {
+    required String docType,
+    required String fileUrl,
+    String referenceNumber = '',
+  }) async {
+    try {
+      await _db.from('merchant_documents').upsert({
+        'business_id': businessId,
+        'doc_type': docType,
+        'file_url': fileUrl,
+        'reference_number': referenceNumber,
+        'status': 'under_review',
+        'uploaded_at': DateTime.now().toUtc().toIso8601String(),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }, onConflict: 'business_id,doc_type');
+    } on PostgrestException catch (e) {
+      throw Exception('Failed to save document: ${e.message}');
+    } catch (e) {
+      throw Exception('Failed to save document: $e');
     }
   }
 
@@ -649,8 +713,9 @@ class SupabaseService {
         latitude: (row['lat'] as num?)?.toDouble() ?? 5.6037,
         longitude: (row['lng'] as num?)?.toDouble() ?? -0.1870,
         distance: (row['distance_km'] as num?)?.toDouble() ?? 0.0,
-        rating: ((row['rating'] as num?)?.toDouble() ?? 5.0) <= 0.0 ? 5.0 : ((row['rating'] as num?)?.toDouble() ?? 5.0),
+        rating: (row['rating'] as num?)?.toDouble() ?? 0.0,
         isApproved: (row['is_approved'] as bool?) ?? false,
+        phone: (row['phone'] as String?) ?? '',
       );
 
   // ---------------------------------------------------------------------------
@@ -674,6 +739,26 @@ class SupabaseService {
       throw Exception('Failed to fetch deals: ${e.message}');
     } catch (e) {
       throw Exception('Failed to fetch deals: $e');
+    }
+  }
+
+  /// Fetches every [FoodDeal] owned by [businessId], including paused and
+  /// sold-out listings. The customer-facing [fetchDeals] filters those out,
+  /// but a merchant must still be able to see and manage them.
+  Future<List<FoodDeal>> fetchMerchantDeals(String businessId) async {
+    try {
+      final rows = await _db
+          .from('food_deals')
+          .select('*, businesses(name)')
+          .eq('business_id', businessId)
+          .order('created_at', ascending: false);
+      return (rows as List<dynamic>)
+          .map((r) => _rowToDeal(r as Map<String, dynamic>))
+          .toList();
+    } on PostgrestException catch (e) {
+      throw Exception('Failed to fetch your listings: ${e.message}');
+    } catch (e) {
+      throw Exception('Failed to fetch your listings: $e');
     }
   }
 
@@ -734,8 +819,22 @@ class SupabaseService {
         'discounted_price': discountedPrice,
         'pickup_window': pickupWindow,
         'quantity_total': quantity,
-        'quantity_remaining': quantity,
       };
+      // Editing a listing must not resurrect sold units: keep the units already
+      // sold and only move the remaining count by however much stock changed.
+      final current = await _db
+          .from('food_deals')
+          .select('quantity_total, quantity_remaining')
+          .eq('id', dealId)
+          .maybeSingle();
+      if (current != null) {
+        final oldTotal = (current['quantity_total'] as num?)?.toInt() ?? quantity;
+        final oldRemaining = (current['quantity_remaining'] as num?)?.toInt() ?? 0;
+        final sold = (oldTotal - oldRemaining).clamp(0, max(oldTotal, 0));
+        updates['quantity_remaining'] = (quantity - sold).clamp(0, max(quantity, 0));
+      } else {
+        updates['quantity_remaining'] = quantity;
+      }
       if (imageUrl != null && imageUrl.isNotEmpty) {
         updates['image_url'] = imageUrl;
       }
@@ -952,25 +1051,37 @@ class SupabaseService {
     String? courierPhone,
     String? trackingNotes,
   }) async {
-    try {
-      final updates = <String, dynamic>{'status': status};
-      if (fulfillmentType != null) updates['fulfillment_type'] = fulfillmentType;
-      if (courierName != null) updates['courier_name'] = courierName;
-      if (courierPhone != null) updates['courier_phone'] = courierPhone;
-      if (trackingNotes != null) updates['tracking_notes'] = trackingNotes;
+    final updates = <String, dynamic>{'status': status};
+    if (fulfillmentType != null) updates['fulfillment_type'] = fulfillmentType;
+    if (courierName != null) updates['courier_name'] = courierName;
+    if (courierPhone != null) updates['courier_phone'] = courierPhone;
+    if (trackingNotes != null) updates['tracking_notes'] = trackingNotes;
 
-      try {
-        await _db.from('orders').update(updates).eq('id', orderId);
-      } catch (_) {
-        // Fallback in case schema columns do not exist
-        await _db.from('orders').update({'status': status}).eq('id', orderId);
+    try {
+      final rows = await _db
+          .from('orders')
+          .update(updates)
+          .eq('id', orderId)
+          .select('id');
+      if (rows.isEmpty) {
+        throw Exception('This order is not linked to your shop, so it could not be updated.');
       }
     } on PostgrestException catch (e) {
-      debugPrint('!!! SUPABASE UPDATE ORDER STATUS ERROR: ${e.message} (code: ${e.code}, details: ${e.details}) !!!');
+      debugPrint('SUPABASE UPDATE ORDER STATUS ERROR: ${e.message} (code: ${e.code})');
+      if (e.code == '23514') {
+        throw Exception(
+          'The database still rejects the "$status" status. Run supabase/fix_merchant_order_status_tracking.sql once to widen the order status list.',
+        );
+      }
+      if (e.message.contains('does not exist') || e.message.contains('column')) {
+        throw Exception(
+          'Missing order columns in the database. Run supabase/fix_merchant_order_status_tracking.sql once.',
+        );
+      }
       throw Exception('Failed to update order status: ${e.message}');
     } catch (e) {
-      debugPrint('!!! SUPABASE UPDATE ORDER STATUS ERROR: $e !!!');
-      throw Exception('Failed to update order status: $e');
+      debugPrint('SUPABASE UPDATE ORDER STATUS ERROR: $e');
+      rethrow;
     }
   }
 

@@ -660,7 +660,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
         ? businessName
         : (order.courierName?.isNotEmpty == true ? order.courierName! : (widget.initialRiderName ?? 'Assigned Courier'));
     final displayPhone = isPickup
-        ? (business?.phone.isNotEmpty == true ? business!.phone : '+233 24 412 3456')
+        ? (business?.phone.isNotEmpty == true ? business!.phone : '')
         : (order.courierPhone?.isNotEmpty == true ? order.courierPhone! : _riderPhone);
 
     final status = order?.status ?? 'reserved';
@@ -1097,7 +1097,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                           ],
                         ),
                       ),
-                      if (isPickup)
+                      if (isPickup && displayPhone.isNotEmpty)
                         ElevatedButton.icon(
                           onPressed: () => _showStoreCallDialog(businessName, displayPhone),
                           icon: const Icon(Icons.call_rounded, size: 14),

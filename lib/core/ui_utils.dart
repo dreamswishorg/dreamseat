@@ -266,7 +266,7 @@ Widget buildCustomerAvatarMenuAnchor({
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (_) => const CustomerProfileScreen()),
+                    builder: (_) => const CustomerProfileScreen(isStandalone: true)),
               ),
             ),
             _buildMenuItem(

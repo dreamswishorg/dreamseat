@@ -37,8 +37,8 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
     const CustomerHomeScreen(),
     const MapExploreScreen(),
     const ImpactScreen(),
-    const BasketScreen(),
-    const CustomerProfileScreen(),
+    const BasketScreen(isStandalone: false),
+    const CustomerProfileScreen(isStandalone: false),
   ];
 
   @override
@@ -67,8 +67,15 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
       }),
     );
 
-    return Scaffold(
-      body: Stack(
+    return PopScope(
+      canPop: currentIndex == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          ref.read(customerTabProvider.notifier).state = 0;
+        }
+      },
+      child: Scaffold(
+        body: Stack(
         children: [
           if (wide)
             Row(
@@ -101,7 +108,7 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
                                 icon: const Icon(Icons.shopping_basket, size: 20),
                                 onPressed: () => Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (_) => const BasketScreen()),
+                                  MaterialPageRoute(builder: (_) => const BasketScreen(isStandalone: true)),
                                 ),
                               ),
                             )
@@ -119,7 +126,7 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
                                     style: const TextStyle(fontWeight: FontWeight.bold)),
                                 onPressed: () => Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (_) => const BasketScreen()),
+                                  MaterialPageRoute(builder: (_) => const BasketScreen(isStandalone: true)),
                                 ),
                               ),
                             ))
@@ -210,6 +217,7 @@ class _CustomerNavigationState extends ConsumerState<CustomerNavigation> {
       // Floating basket button (visible on home & favorites tabs only)
       floatingActionButton: null,
       bottomNavigationBar: wide ? null : _buildFloatingPillNavBar(context, currentIndex, isDark, basketCount),
+      ),
     );
   }
 

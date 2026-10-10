@@ -10,7 +10,8 @@ import '../../providers/app_state.dart';
 import 'modern_checkout_screen.dart';
 
 class BasketScreen extends ConsumerStatefulWidget {
-  const BasketScreen({super.key});
+  final bool isStandalone;
+  const BasketScreen({super.key, this.isStandalone = false});
 
   @override
   ConsumerState<BasketScreen> createState() => _BasketScreenState();
@@ -60,7 +61,13 @@ class _BasketScreenState extends ConsumerState<BasketScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (widget.isStandalone && Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              ref.read(customerTabProvider.notifier).state = 0;
+            }
+          },
         ),
         centerTitle: true,
         title: Row(

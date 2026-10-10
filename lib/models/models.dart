@@ -119,7 +119,7 @@ class BusinessProfile {
     required this.distance,
     required this.rating,
     this.isApproved = false,
-    this.phone = '+233 24 412 3456',
+    this.phone = '',
   });
 
   Map<String, dynamic> toJson() => {
@@ -151,9 +151,9 @@ class BusinessProfile {
         latitude: (json['latitude'] as num?)?.toDouble() ?? 5.6037,
         longitude: (json['longitude'] as num?)?.toDouble() ?? -0.1870,
         distance: (json['distance'] as num?)?.toDouble() ?? 0.0,
-        rating: ((json['rating'] as num?)?.toDouble() ?? 5.0) <= 0.0 ? 5.0 : ((json['rating'] as num?)?.toDouble() ?? 5.0),
+        rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
         isApproved: json['isApproved'] ?? false,
-        phone: json['phone'] ?? '+233 24 412 3456',
+        phone: json['phone'] ?? '',
       );
 
   BusinessProfile copyWith({
@@ -908,6 +908,42 @@ class TicketReply {
       );
 }
 
+/// A compliance document a merchant uploads for their business.
+class MerchantDocument {
+  static const String businessRegistration = 'business_registration';
+  static const String healthCertificate = 'health_certificate';
+  static const String taxClearance = 'tax_clearance';
+
+  final String docType;
+  final String referenceNumber;
+  final String fileUrl;
+  final String status;
+  final String? reviewerNote;
+  final DateTime? uploadedAt;
+
+  const MerchantDocument({
+    required this.docType,
+    this.referenceNumber = '',
+    this.fileUrl = '',
+    this.status = 'submitted',
+    this.reviewerNote,
+    this.uploadedAt,
+  });
+
+  bool get isUploaded => fileUrl.isNotEmpty;
+
+  factory MerchantDocument.empty(String docType) => MerchantDocument(docType: docType);
+
+  factory MerchantDocument.fromJson(Map<String, dynamic> json) => MerchantDocument(
+        docType: (json['doc_type'] as String?) ?? '',
+        referenceNumber: (json['reference_number'] as String?) ?? '',
+        fileUrl: (json['file_url'] as String?) ?? '',
+        status: (json['status'] as String?) ?? 'submitted',
+        reviewerNote: json['reviewer_note'] as String?,
+        uploadedAt: json['uploaded_at'] == null ? null : DateTime.parse(json['uploaded_at'] as String),
+      );
+}
+
 extension AppUserPrivileges on AppUser {
   List<String> get privileges {
     if (role == 'super_admin') {
@@ -956,5 +992,51 @@ extension AppUserPrivileges on AppUser {
   bool hasPrivilege(String privilege) {
     return privileges.contains(privilege);
   }
+}
+
+class Review {
+  final String id;
+  final String orderId;
+  final String businessId;
+  final String customerId;
+  final String userName;
+  final double rating;
+  final String comment;
+  final DateTime createdAt;
+
+  const Review({
+    required this.id,
+    this.orderId = '',
+    required this.businessId,
+    this.customerId = '',
+    this.userName = '',
+    required this.rating,
+    this.comment = '',
+    required this.createdAt,
+  });
+
+  factory Review.fromJson(Map<String, dynamic> json) => Review(
+        id: json['id'] as String? ?? '',
+        orderId: json['order_id'] as String? ?? '',
+        businessId: json['business_id'] as String? ?? '',
+        customerId: json['customer_id'] as String? ?? '',
+        userName: json['user_name'] as String? ?? (json['customer_name'] as String? ?? ''),
+        rating: (json['rating'] as num?)?.toDouble() ?? 5.0,
+        comment: json['comment'] as String? ?? '',
+        createdAt: json['created_at'] == null
+            ? DateTime.now()
+            : DateTime.tryParse(json['created_at'] as String) ?? DateTime.now(),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'order_id': orderId,
+        'business_id': businessId,
+        'customer_id': customerId,
+        'user_name': userName,
+        'rating': rating,
+        'comment': comment,
+        'created_at': createdAt.toIso8601String(),
+      };
 }
 

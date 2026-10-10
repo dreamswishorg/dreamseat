@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
+import '../../features/customer/deal_detail_screen.dart';
+import '../../features/customer/order_track_screen.dart';
 
 class NotificationScreen extends ConsumerWidget {
   const NotificationScreen({super.key});
@@ -142,9 +144,13 @@ class _NotificationTile extends ConsumerWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () {
+        onTap: () async {
           if (!notification.isRead) {
-            ref.read(appStateProvider.notifier).markNotificationAsRead(notification.id);
+            await ref.read(appStateProvider.notifier).markNotificationAsRead(notification.id);
+          }
+          final target = _targetScreen(ref);
+          if (target != null && context.mounted) {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => target));
           }
         },
         borderRadius: BorderRadius.circular(20),
@@ -237,6 +243,25 @@ class _NotificationTile extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget? _targetScreen(WidgetRef ref) {
+    final id = notification.dataId;
+    if (id == null) return null;
+    final state = ref.read(appStateProvider);
+    switch (notification.screen) {
+      case 'track_order':
+        for (final o in state.orders) {
+          if (o.id == id) return OrderTrackScreen(order: o);
+        }
+        break;
+      case 'deal_detail':
+        for (final d in state.deals) {
+          if (d.id == id) return DealDetailScreen(deal: d);
+        }
+        break;
+    }
+    return null;
   }
 
   IconData _getIcon(String? screen) {

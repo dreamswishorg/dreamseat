@@ -15,7 +15,8 @@ import 'privacy_security_screen.dart';
 import '../common/help_support_screen.dart';
 
 class CustomerProfileScreen extends ConsumerStatefulWidget {
-  const CustomerProfileScreen({super.key});
+  final bool isStandalone;
+  const CustomerProfileScreen({super.key, this.isStandalone = false});
 
   @override
   ConsumerState<CustomerProfileScreen> createState() =>
@@ -194,7 +195,13 @@ class _CustomerProfileScreenState
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded,
               color: AppTheme.charcoal, size: 20),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (widget.isStandalone && Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              ref.read(customerTabProvider.notifier).state = 0;
+            }
+          },
         ),
         title: Text(
           "My Profile",
