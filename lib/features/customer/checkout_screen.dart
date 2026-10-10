@@ -240,6 +240,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         reference: reference,
         currency: 'GHS',
         metadata: metadata,
+        callBackUrl: AppConfig.websiteUrl,
         onClosed: () {
           if (mounted) setState(() => _isProcessing = false);
         },
@@ -248,6 +249,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         },
       );
 
+      if (!paystackSuccess) {
+        final verifiedOnClose = await SupabaseService().verifyPaystackPayment(reference);
+        if (verifiedOnClose) {
+          paystackSuccess = true;
+        }
+      }
 
       if (!paystackSuccess) {
         if (mounted) setState(() => _isProcessing = false);

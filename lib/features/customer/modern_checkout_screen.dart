@@ -278,6 +278,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
         reference: refCode,
         currency: 'GHS',
         metadata: metadata,
+        callBackUrl: AppConfig.websiteUrl,
         onClosed: () {
           if (mounted) setState(() => _isProcessing = false);
         },
@@ -285,6 +286,14 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
           paystackSuccess = true;
         },
       );
+
+      // Verify payment with Paystack even if popup was closed or callback fired early
+      if (!paystackSuccess) {
+        final verifiedOnClose = await SupabaseService().verifyPaystackPayment(refCode);
+        if (verifiedOnClose) {
+          paystackSuccess = true;
+        }
+      }
 
       if (!paystackSuccess) {
         if (!mounted) return;

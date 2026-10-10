@@ -74,3 +74,6 @@ app.*.map.json
 
 # Sensitive service accounts
 *-adminsdk-*.json
+.env
+.env.*
+!.env.example
