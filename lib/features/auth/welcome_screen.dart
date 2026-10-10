@@ -4,7 +4,8 @@ import 'auth_screen.dart';
 import 'desktop_landing_page.dart';
 
 class WelcomeScreen extends StatefulWidget {
-  const WelcomeScreen({super.key});
+  final String? errorMessage;
+  const WelcomeScreen({super.key, this.errorMessage});
 
   @override
   State<WelcomeScreen> createState() => _WelcomeScreenState();
@@ -13,6 +14,25 @@ class WelcomeScreen extends StatefulWidget {
 class _WelcomeScreenState extends State<WelcomeScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.errorMessage != null && widget.errorMessage!.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(widget.errorMessage!),
+              backgroundColor: AppTheme.errorRed,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {

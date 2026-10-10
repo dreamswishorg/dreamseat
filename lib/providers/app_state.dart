@@ -220,6 +220,8 @@ class AppStateManager extends Notifier<AppState> {
   List<BasketItem> _basket = [];
   double _commissionRate = 0.15;
   BusinessProfile? _merchantBusiness;
+  bool _isManualAuthenticating = false;
+  bool get isManualAuthenticating => _isManualAuthenticating;
 
   RealtimeChannel? _dealsSub;
   RealtimeChannel? _ordersSub;
@@ -294,9 +296,30 @@ class AppStateManager extends Notifier<AppState> {
       ]);
 
       final profile = results[0] as AppUser?;
+      if (profile != null && profile.isSuspended) {
+        await signOut();
+        state = state.copyWith(
+          currentUser: null,
+          errorMessage: 'Your account has been suspended by administration. Please contact support.',
+        );
+        return;
+      }
+
       final businesses = List<BusinessProfile>.from(results[1] as List<BusinessProfile>);
       final deals = results[2] as List<FoodDeal>;
       final platformSettings = results[3] as PlatformSettings;
+
+      if (profile?.role == 'merchant') {
+        try {
+          final biz = await _supa.fetchMerchantBusiness(profile!.id);
+          if (biz != null) {
+            _merchantBusiness = biz;
+            if (!businesses.any((b) => b.id == biz.id)) {
+              businesses.add(biz);
+            }
+          }
+        } catch (_) {}
+      }
 
       _commissionRate = platformSettings.commissionRate;
 
@@ -519,6 +542,7 @@ class AppStateManager extends Notifier<AppState> {
     String? businessDescription,
     String? businessCategory,
   }) async {
+    _isManualAuthenticating = true;
     state = state.copyWith(isLoading: true, clearErrorMessage: true);
     try {
       final error = await _supa.signUp(
@@ -554,6 +578,10 @@ class AppStateManager extends Notifier<AppState> {
       final msg = e.toString();
       state = state.copyWith(isLoading: false, errorMessage: msg);
       return msg;
+    } finally {
+      Future.delayed(const Duration(milliseconds: 2500), () {
+        _isManualAuthenticating = false;
+      });
     }
   }
 
@@ -562,6 +590,7 @@ class AppStateManager extends Notifier<AppState> {
     required String identifier,
     required String password,
   }) async {
+    _isManualAuthenticating = true;
     state = state.copyWith(isLoading: true, clearErrorMessage: true);
     try {
       final isEmail = identifier.contains('@');
@@ -579,12 +608,24 @@ class AppStateManager extends Notifier<AppState> {
       }
 
       await _hydrate();
+
+      if (state.currentUser?.isSuspended == true) {
+        await signOut();
+        const suspendedMsg = 'Your account has been suspended by administration. Please contact support.';
+        state = state.copyWith(isLoading: false, errorMessage: suspendedMsg);
+        return suspendedMsg;
+      }
+
       state = state.copyWith(isLoading: false);
       return null;
     } catch (e) {
       final msg = e.toString();
       state = state.copyWith(isLoading: false, errorMessage: msg);
       return msg;
+    } finally {
+      Future.delayed(const Duration(milliseconds: 2500), () {
+        _isManualAuthenticating = false;
+      });
     }
   }
 
@@ -622,6 +663,14 @@ class AppStateManager extends Notifier<AppState> {
   Future<AppUser?> handleOAuthSignedIn() async {
     state = state.copyWith(isLoading: true, clearErrorMessage: true);
     await _hydrate();
+    if (state.currentUser?.isSuspended == true) {
+      await signOut();
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Your account has been suspended by administration. Please contact support.',
+      );
+      return null;
+    }
     state = state.copyWith(isLoading: false);
     return state.currentUser;
   }
@@ -1725,6 +1774,12 @@ class AppStateManager extends Notifier<AppState> {
     if (user == null) return;
 
     try {
+      final profile = await _supa.getCurrentUserProfile();
+      if (profile != null && profile.isSuspended) {
+        await signOut();
+        return;
+      }
+
       final updatedBusinesses = await _supa.fetchBusinesses();
       if (updatedBusinesses.isNotEmpty) {
         state = state.copyWith(businesses: updatedBusinesses);

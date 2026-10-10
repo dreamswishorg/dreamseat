@@ -166,10 +166,28 @@ class SupabaseService {
         return 'Email or phone number is required.';
       }
 
-      await _db.auth.signInWithPassword(
+      final authResponse = await _db.auth.signInWithPassword(
         email: resolvedEmail,
         password: password,
       );
+
+      final uid = authResponse.user?.id ?? _db.auth.currentUser?.id;
+      if (uid != null) {
+        try {
+          final profileRow = await _db
+              .from('profiles')
+              .select('is_suspended')
+              .eq('id', uid)
+              .maybeSingle();
+          if (profileRow != null && profileRow['is_suspended'] == true) {
+            await _db.auth.signOut();
+            return 'Your account has been suspended by administration. Please contact support.';
+          }
+        } catch (e) {
+          debugPrint('Error verifying profile suspension status: $e');
+        }
+      }
+
       return null;
     } on AuthException catch (e) {
       return e.message;

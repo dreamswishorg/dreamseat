@@ -102,9 +102,10 @@ class _DreamEatsAppState extends ConsumerState<DreamEatsApp> {
           );
         } else if (data.event == AuthChangeEvent.signedIn) {
           clearUrlParams();
-          // If currentUser is already set in appState, in-app sign-in / registration
-          // has already navigated directly. Skip redundant navigation to prevent screen flash.
-          if (ref.read(appStateProvider).currentUser != null) {
+          // If manual sign-in is in progress or currentUser is already set,
+          // the in-app screen handles navigation directly. Skip redundant navigation to prevent screen flash.
+          if (ref.read(appStateProvider.notifier).isManualAuthenticating ||
+              ref.read(appStateProvider).currentUser != null) {
             return;
           }
 
@@ -126,8 +127,9 @@ class _DreamEatsAppState extends ConsumerState<DreamEatsApp> {
           );
         } else if (data.event == AuthChangeEvent.signedOut) {
           if (navigatorKey.currentState != null) {
+            final errorMsg = ref.read(appStateProvider).errorMessage;
             navigatorKey.currentState?.pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+              MaterialPageRoute(builder: (_) => WelcomeScreen(errorMessage: errorMsg)),
               (route) => false,
             );
           }

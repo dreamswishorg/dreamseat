@@ -150,11 +150,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
     final state = ref.read(appStateProvider);
     final user = state.currentUser;
 
-    if (user == null) {
+    if (user == null || user.isSuspended) {
+      if (user?.isSuspended == true) {
+        ref.read(appStateProvider.notifier).signOut();
+      }
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+          MaterialPageRoute(
+            builder: (_) => WelcomeScreen(
+              errorMessage: user?.isSuspended == true
+                  ? 'Your account has been suspended by administration. Please contact support.'
+                  : null,
+            ),
+          ),
         );
       }
       return;
