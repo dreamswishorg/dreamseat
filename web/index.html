@@ -19,7 +19,10 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="DreamEats - Rescue surplus food in Ghana.">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -162,6 +165,14 @@
     <div class="loader"></div>
   </div>
 
-  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    // Ensure service worker updates immediately on reload
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        for (var r of regs) { r.update(); }
+      });
+    }
+  </script>
+  <script src="flutter_bootstrap.js?v=20261010_03" async></script>
 </body>
 </html>
