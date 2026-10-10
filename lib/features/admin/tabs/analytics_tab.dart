@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import '../../../models/models.dart';
 import '../../../core/theme.dart';
 import '../../../providers/app_state.dart';
@@ -64,31 +65,52 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
 
     // Chart points
     final spots = <FlSpot>[];
-    final List<String> dayLabels;
+    final List<String> dayLabels = [];
 
     if (_timeRangeIndex == 0) {
-      dayLabels = ['6 AM', '9 AM', '12 PM', '3 PM', '6 PM', '9 PM', 'Now'];
-      for (int i = 0; i < 7; i++) {
-        final targetHour = 6 + (i * 2.5).toInt();
-        final hourOrders = activeOrders.where((o) => o.timestamp.hour >= targetHour - 2 && o.timestamp.hour <= targetHour);
+      // Today: 6 intervals (12 AM, 4 AM, 8 AM, 12 PM, 4 PM, 8 PM)
+      for (int i = 0; i < 6; i++) {
+        final hour = i * 4;
+        final hourLabel = hour == 0
+            ? '12 AM'
+            : (hour < 12 ? '$hour AM' : (hour == 12 ? '12 PM' : '${hour - 12} PM'));
+        dayLabels.add(hourLabel);
+        final hourOrders = activeOrders.where((o) =>
+            o.timestamp.year == now.year &&
+            o.timestamp.month == now.month &&
+            o.timestamp.day == now.day &&
+            o.timestamp.hour >= hour &&
+            o.timestamp.hour < hour + 4);
         final sum = hourOrders.fold(0.0, (s, o) => s + o.price);
         spots.add(FlSpot(i.toDouble(), sum));
       }
     } else if (_timeRangeIndex == 2) {
-      dayLabels = ['1-5d', '6-10d', '11-15d', '16-20d', '21-25d', '26-30d', 'Now'];
-      for (int i = 0; i < 7; i++) {
-        final start = now.subtract(Duration(days: (6 - i) * 5));
+      // 30 Days: 6 intervals of 5 days each
+      for (int i = 0; i < 6; i++) {
+        final start = now.subtract(Duration(days: (5 - i) * 5));
+        dayLabels.add(DateFormat('d MMM').format(start));
         final end = start.add(const Duration(days: 5));
         final bracketOrders = activeOrders.where((o) => o.timestamp.isAfter(start) && o.timestamp.isBefore(end));
         final sum = bracketOrders.fold(0.0, (s, o) => s + o.price);
         spots.add(FlSpot(i.toDouble(), sum));
       }
+    } else if (_timeRangeIndex == 3) {
+      // All Time: 6 monthly intervals
+      for (int i = 0; i < 6; i++) {
+        final monthDate = DateTime(now.year, now.month - (5 - i), 1);
+        dayLabels.add(DateFormat('MMM').format(monthDate));
+        final monthOrders = allCollected.where((o) => o.timestamp.year == monthDate.year && o.timestamp.month == monthDate.month);
+        final sum = monthOrders.fold(0.0, (s, o) => s + o.price);
+        spots.add(FlSpot(i.toDouble(), sum));
+      }
     } else {
-      dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      // 7 Days: Exactly past 7 distinct days in chronological order with no repetition
       for (int i = 0; i < 7; i++) {
         final day = now.subtract(Duration(days: 6 - i));
+        final label = (i == 6) ? 'Today' : DateFormat('E').format(day);
+        dayLabels.add(label);
         final dayTotal = activeOrders
-            .where((o) => o.timestamp.day == day.day && o.timestamp.month == day.month && o.timestamp.year == day.year)
+            .where((o) => o.timestamp.year == day.year && o.timestamp.month == day.month && o.timestamp.day == day.day)
             .fold(0.0, (sum, o) => sum + o.price);
         spots.add(FlSpot(i.toDouble(), dayTotal));
       }
@@ -206,13 +228,47 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
                   height: 220,
                   child: LineChart(
                     LineChartData(
+                      lineTouchData: LineTouchData(
+                        touchTooltipData: LineTouchTooltipData(
+                          getTooltipItems: (touchedSpots) {
+                            return touchedSpots.map((spot) {
+                              final idx = spot.x.toInt();
+                              final label = (idx >= 0 && idx < dayLabels.length) ? dayLabels[idx] : '';
+                              return LineTooltipItem(
+                                '$label\nGH₵ ${spot.y.toStringAsFixed(2)}',
+                                const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                              );
+                            }).toList();
+                          },
+                        ),
+                      ),
+                      minY: 0,
+                      maxY: spots.fold<double>(0.0, (p, s) => s.y > p ? s.y : p) == 0 ? 100 : (spots.fold<double>(0.0, (p, s) => s.y > p ? s.y : p) * 1.25),
                       gridData: FlGridData(
                         show: true,
                         drawVerticalLine: false,
                         getDrawingHorizontalLine: (v) => const FlLine(color: Color(0xFFF1F5F9), strokeWidth: 1),
                       ),
                       titlesData: FlTitlesData(
-                        leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 48,
+                            getTitlesWidget: (val, meta) {
+                              if (val == 0) return const SizedBox.shrink();
+                              if (val >= 1000) {
+                                return Text(
+                                  '${(val / 1000).toStringAsFixed(1)}k',
+                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
+                                );
+                              }
+                              return Text(
+                                val.toInt().toString(),
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
+                              );
+                            },
+                          ),
+                        ),
                         rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                         topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                         bottomTitles: AxisTitles(
@@ -223,7 +279,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
                               if (idx >= 0 && idx < dayLabels.length) {
                                 return Padding(
                                   padding: const EdgeInsets.only(top: 10),
-                                  child: Text(dayLabels[idx], style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey)),
+                                  child: Text(dayLabels[idx], style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey)),
                                 );
                               }
                               return const SizedBox.shrink();
