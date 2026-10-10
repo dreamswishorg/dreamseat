@@ -7,15 +7,13 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Dreameats</string>
+	<string>DREAMEATS</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
-	<key>CFBundleDisplayName</key>
-	<string>DREAMEATS</string>
 	<key>CFBundleName</key>
 	<string>DREAMEATS</string>
 	<key>CFBundlePackageType</key>
@@ -24,10 +22,35 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>dreameats</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>dreameats</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>DreamEats uses the camera to scan QR codes for pickup verification.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>DreamEats uses Face ID for quick and secure sign-in.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>DreamEats needs your location to discover nearby food rescue deals and surplus meals.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>DreamEats needs your location to discover nearby food rescue deals and surplus meals.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>DreamEats needs permission to save images to your photo library.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>DreamEats needs photo access to upload your profile picture.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -68,30 +91,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLName</key>
-			<string>dreameats</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>dreameats</string>
-			</array>
-		</dict>
-	</array>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>DreamEats needs your location to discover nearby food rescue deals and surplus meals.</string>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>DreamEats needs your location to discover nearby food rescue deals and surplus meals.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>DreamEats uses the camera to scan QR codes for pickup verification.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>DreamEats needs photo access to upload your profile picture.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>DreamEats needs permission to save images to your photo library.</string>
-	<key>NSFaceIDUsageDescription</key>
-	<string>DreamEats uses Face ID for quick and secure sign-in.</string>
 </dict>
 </plist>
