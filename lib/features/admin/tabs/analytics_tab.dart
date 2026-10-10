@@ -150,57 +150,23 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header & Time Period Filter ─────────────────────────────
-          if (isMobile) ...[
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(color: AppTheme.primaryGreen.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                      child: const Icon(Icons.analytics_rounded, color: AppTheme.primaryGreen, size: 20),
-                    ),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: Text("Executive Analytics Suite", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
-                    ),
-                  ],
+          // ── Time Period Filter Toolbar ─────────────────────────────
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Performance Overview",
+                style: TextStyle(
+                  fontSize: isMobile ? 15 : 17,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.charcoal,
+                  letterSpacing: -0.3,
                 ),
-                const SizedBox(height: 6),
-                const Text("Real-time telemetry, environmental impact & financial velocity.", style: TextStyle(fontSize: 12, color: AppTheme.mutedGrey)),
-                const SizedBox(height: 14),
-                _buildTimeFilterPills(),
-              ],
-            ),
-          ] else ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(color: AppTheme.primaryGreen.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                      child: const Icon(Icons.analytics_rounded, color: AppTheme.primaryGreen, size: 22),
-                    ),
-                    const SizedBox(width: 12),
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("Executive Intelligence & KPI Suite", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
-                        Text("Real-time telemetry, sustainability metrics & financial throughput.", style: TextStyle(fontSize: 12, color: AppTheme.mutedGrey)),
-                      ],
-                    ),
-                  ],
-                ),
-                _buildTimeFilterPills(),
-              ],
-            ),
-          ],
-
-          const SizedBox(height: 20),
+              ),
+              _buildTimeFilterPills(),
+            ],
+          ),
+          const SizedBox(height: 16),
 
           // ── KPI Metrics Grid ─────────────────────────────────────────
           GridView.extent(

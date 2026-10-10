@@ -21,7 +21,7 @@ class _TabVouchersState extends ConsumerState<TabVouchers> {
     final state = ref.watch(appStateProvider);
     final isMobile = MediaQuery.of(context).size.width < 700;
     return Padding(
-      padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 12, 32, 32),
+      padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 20, 32, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

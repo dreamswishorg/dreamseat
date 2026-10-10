@@ -49,57 +49,14 @@ class _TabAuditState extends ConsumerState<TabAudit> {
     final isMobile = MediaQuery.of(context).size.width < 900;
 
     return Padding(
-      padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 12, 32, 32),
+      padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 20, 32, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header & Stats
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Immutable Audit Trail",
-                      style: TextStyle(
-                        fontSize: isMobile ? 18 : 22,
-                        fontWeight: FontWeight.w900,
-                        color: context.textPrimary,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      "Cryptographically recorded timeline of administrative platform activities.",
-                      style: TextStyle(fontSize: 12, color: context.textSecondary),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                onPressed: () => _exportAuditCsv(filteredLogs),
-                icon: const Icon(Icons.download_rounded, size: 16),
-                label: Text(isMobile ? "CSV" : "Export CSV", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryGreen,
-                  foregroundColor: Colors.white,
-                  minimumSize: Size(isMobile ? 70 : 120, 44),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  elevation: 0,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-
-          // Search and Filters Toolbar
+          // Sleek streamlined Toolbar
           LayoutBuilder(
             builder: (context, constraints) {
               final isCompact = constraints.maxWidth < 900;
-
               return Column(
                 children: [
                   Row(
@@ -107,45 +64,58 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                       // Search Bar
                       Expanded(
                         child: Container(
-                          height: 48,
+                          height: 44,
                           decoration: BoxDecoration(
                             color: context.cardColor,
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: context.borderColor),
                           ),
                           child: TextField(
                             onChanged: (v) => setState(() => _query = v),
-                            style: TextStyle(fontSize: 13.5, color: context.textPrimary, fontWeight: FontWeight.w600),
+                            style: TextStyle(fontSize: 13, color: context.textPrimary, fontWeight: FontWeight.w500),
                             decoration: InputDecoration(
                               hintText: "Search logs by description, staff, action...",
-                              hintStyle: TextStyle(fontSize: 13, color: context.textSecondary),
+                              hintStyle: TextStyle(fontSize: 12.5, color: context.textSecondary),
                               prefixIcon: Icon(Icons.search_rounded, size: 18, color: context.textSecondary),
                               border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                              contentPadding: const EdgeInsets.symmetric(vertical: 11),
                             ),
                           ),
                         ),
                       ),
                       if (!isCompact) ...[
-                        const SizedBox(width: 14),
+                        const SizedBox(width: 12),
                         AdminDropdown<String>(
                           label: "Actor Role",
                           value: _actorFilter,
                           items: const ['All', 'Admin', 'Merchant', 'Customer', 'System'],
                           onChanged: (val) => setState(() => _actorFilter = val ?? 'All'),
                         ),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: 12),
                         AdminDropdown<String>(
                           label: "Category",
                           value: _actionFilter,
                           items: const ['All', 'ORDER', 'DEAL', 'MERCHANT', 'USER', 'PAYOUT', 'SYSTEM'],
                           onChanged: (val) => setState(() => _actionFilter = val ?? 'All'),
                         ),
+                        const SizedBox(width: 12),
+                        ElevatedButton.icon(
+                          onPressed: () => _exportAuditCsv(filteredLogs),
+                          icon: const Icon(Icons.download_rounded, size: 15),
+                          label: const Text("Export CSV", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryGreen,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 0,
+                          ),
+                        ),
                       ]
                     ],
                   ),
                   if (isCompact) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Row(
                       children: [
                         Expanded(
@@ -156,13 +126,26 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                             onChanged: (val) => setState(() => _actorFilter = val ?? 'All'),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: AdminDropdown<String>(
                             label: "Category",
                             value: _actionFilter,
                             items: const ['All', 'ORDER', 'DEAL', 'MERCHANT', 'USER', 'PAYOUT', 'SYSTEM'],
                             onChanged: (val) => setState(() => _actionFilter = val ?? 'All'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        ElevatedButton.icon(
+                          onPressed: () => _exportAuditCsv(filteredLogs),
+                          icon: const Icon(Icons.download_rounded, size: 15),
+                          label: const Text("CSV", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryGreen,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            elevation: 0,
                           ),
                         ),
                       ],
@@ -172,7 +155,7 @@ class _TabAuditState extends ConsumerState<TabAudit> {
               );
             },
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
           // Main Table / Cards
           Expanded(

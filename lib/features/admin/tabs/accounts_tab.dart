@@ -61,7 +61,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
     final bool isMobile = screenWidth < 900;
 
     return Padding(
-      padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 12, 32, 32),
+      padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 20, 32, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

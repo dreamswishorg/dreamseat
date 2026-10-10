@@ -86,7 +86,7 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       child: Padding(
-        padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 12, 32, 32),
+        padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 20, 32, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

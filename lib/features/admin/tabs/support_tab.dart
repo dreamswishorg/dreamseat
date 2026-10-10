@@ -37,7 +37,7 @@ class _TabSupportState extends ConsumerState<TabSupport> {
     final isMobile = screenWidth < 850;
 
     return Padding(
-      padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 12, 32, 32),
+      padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 20, 32, 24),
       child: isMobile
           ? (activeTicket == null
               ? _buildQueue(tickets)

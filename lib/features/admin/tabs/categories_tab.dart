@@ -333,46 +333,34 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
       return c.name.toLowerCase().contains(_searchQuery.toLowerCase());
     }).toList();
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Top Header Bar
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Category Catalog & Imagery',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.5),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Manage deal categories, set custom category cover photos, and organize taxonomy.',
-                      style: TextStyle(fontSize: 13, color: AppTheme.mutedGrey.withValues(alpha: 0.9)),
-                    ),
-                  ],
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(32, 20, 32, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Action Toolbar
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Category Catalog & Imagery',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.3),
+              ),
+              ElevatedButton.icon(
+                onPressed: () => _showAddEditCategoryDialog(),
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text('Add Category', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryGreen,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
                 ),
-                ElevatedButton.icon(
-                  onPressed: () => _showAddEditCategoryDialog(),
-                  icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text('Add Category', style: TextStyle(fontWeight: FontWeight.bold)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryGreen,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 0,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
 
             // Metrics Row
             Row(
@@ -587,8 +575,7 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
               ),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildStatCard({

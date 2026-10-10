@@ -5,8 +5,6 @@ import '../../models/models.dart';
 import '../../providers/app_state.dart';
 import '../common/help_support_screen.dart';
 import 'settings/admin_profile_screen.dart';
-import '../customer/customer_navigation.dart';
-
 // Tabs
 import 'tabs/analytics_tab.dart';
 import 'tabs/approvals_tab.dart';
@@ -36,20 +34,43 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   final Map<int, String> _tabTitles = {
-    0: "Insights & Analytics",
+    0: "Analytics Hub",
     1: "Merchant Approvals",
     2: "User Directory",
-    3: "Financial Ledger",
+    3: "System Ledger",
     4: "Dispute Center",
     5: "Promo Vouchers",
     6: "Operational Map",
     7: "Global Broadcasts",
     8: "Infrastructure Config",
-    9: "Category Management",
-    10: "Security Audit Trail",
+    9: "Categories & Photos",
+    10: "Audit Trail",
     11: "Real-time Activity",
-    12: "Customer Support Desk",
+    12: "Support Desk",
   };
+
+  String _getTabCategory(int tab) {
+    switch (tab) {
+      case 0:
+      case 1:
+      case 2:
+      case 9:
+        return "CORE OPERATIONS";
+      case 3:
+      case 5:
+        return "FINANCIALS";
+      case 4:
+      case 6:
+      case 7:
+      case 12:
+        return "GOVERNANCE";
+      case 8:
+      case 10:
+      case 11:
+      default:
+        return "SYSTEM";
+    }
+  }
 
   void _handleSearch(String query) {
     if (query.isEmpty) return;
@@ -136,7 +157,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             )
           : null,
       appBar: AppBar(
-        toolbarHeight: isWide ? 76 : 60,
+        toolbarHeight: isWide ? 68 : 58,
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
@@ -151,133 +172,76 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             ? Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primaryGreen.withValues(alpha: 0.25),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
+                      color: const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(6),
-                      child: Image.asset('assets/images/logo.jpg', height: 22, width: 22, fit: BoxFit.cover),
+                    ),
+                    child: Text(
+                      _getTabCategory(_currentTab),
+                      style: const TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF64748B),
+                        letterSpacing: 0.8,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 14),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                            decoration: BoxDecoration(
-                              color: isSuperAdmin
-                                  ? AppTheme.errorRed.withValues(alpha: 0.08)
-                                  : AppTheme.primaryGreen.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              isSuperAdmin ? "SUPERADMIN" : "OPERATIONS",
-                              style: TextStyle(
-                                fontSize: 8,
-                                fontWeight: FontWeight.w900,
-                                color: isSuperAdmin ? AppTheme.errorRed : AppTheme.primaryGreen,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Icon(
-                            Icons.chevron_right_rounded,
-                            size: 12,
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? Colors.white.withValues(alpha: 0.3)
-                                : AppTheme.mutedGrey,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            (_tabTitles[_currentTab] ?? "Overview").toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 8,
-                              fontWeight: FontWeight.w800,
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? Colors.white.withValues(alpha: 0.4)
-                                  : AppTheme.mutedGrey,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        "DreamEats HQ",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.charcoal,
-                          fontSize: 18,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ],
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    size: 16,
+                    color: Color(0xFF94A3B8),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _tabTitles[_currentTab] ?? "Dashboard",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.charcoal,
+                      fontSize: 18,
+                      letterSpacing: -0.4,
+                    ),
                   ),
                   const Spacer(),
                   Container(
-                    width: 280,
+                    width: 290,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFF1E293B)
-                          : const Color(0xFFF1F5F9),
+                      color: const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : const Color(0xFFE2E8F0),
+                        color: const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Row(
                       children: [
                         const SizedBox(width: 10),
-                        Icon(
+                        const Icon(
                           Icons.search_rounded,
                           size: 16,
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white.withValues(alpha: 0.4)
-                              : AppTheme.mutedGrey,
+                          color: Color(0xFF94A3B8),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: TextField(
                             controller: _searchController,
                             onSubmitted: _handleSearch,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.charcoal,
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              color: AppTheme.charcoal,
+                              fontWeight: FontWeight.w500,
                             ),
-                            decoration: InputDecoration(
-                              hintText: "Search records...",
+                            decoration: const InputDecoration(
+                              hintText: "Search records, merchants, users...",
                               hintStyle: TextStyle(
-                                fontSize: 11,
-                                color: Theme.of(context).brightness == Brightness.dark
-                                    ? Colors.white.withValues(alpha: 0.4)
-                                    : AppTheme.mutedGrey,
+                                fontSize: 11.5,
+                                color: Color(0xFF94A3B8),
                                 fontWeight: FontWeight.w500,
                               ),
                               border: InputBorder.none,
                               isDense: true,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                              contentPadding: EdgeInsets.symmetric(vertical: 8),
                             ),
                           ),
                         ),
@@ -285,43 +249,52 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                           margin: const EdgeInsets.only(right: 6),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? Colors.white.withValues(alpha: 0.05)
-                                : Colors.white,
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(5),
                             border: Border.all(
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? Colors.white.withValues(alpha: 0.05)
-                                  : const Color(0xFFE2E8F0),
+                              color: const Color(0xFFE2E8F0),
                             ),
                           ),
-                          child: Text(
+                          child: const Text(
                             "⌘K",
                             style: TextStyle(
                               fontSize: 8.5,
                               fontWeight: FontWeight.bold,
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? Colors.white.withValues(alpha: 0.4)
-                                  : AppTheme.mutedGrey,
+                              color: Color(0xFF94A3B8),
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                 ],
               )
-            : Text(
-                _tabTitles[_currentTab] ?? "DreamEats HQ",
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.charcoal,
-                  fontSize: 16.5,
-                  letterSpacing: -0.3,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _getTabCategory(_currentTab),
+                    style: const TextStyle(
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF64748B),
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                  Text(
+                    _tabTitles[_currentTab] ?? "Dashboard",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.charcoal,
+                      fontSize: 16,
+                      letterSpacing: -0.3,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
         actions: [
           if (isWide) ...[
@@ -338,34 +311,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               color: AppTheme.errorRed,
               onTap: () => setState(() => _currentTab = 4),
             ),
-            VerticalDivider(
-              width: 32,
-              indent: 20,
-              endIndent: 20,
-              color: const Color(0xFFE2E8F0),
-            ),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const CustomerNavigation()),
-                );
-              },
-              icon: const Icon(Icons.storefront_rounded, size: 16),
-              label: const Text("Customer App"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryGreen,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                elevation: 0,
-              ),
-            ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
           ],
 
           PopupMenuButton<int>(
-            offset: const Offset(0, 60),
+            offset: const Offset(0, 56),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
               side: const BorderSide(color: Color(0xFFE2E8F0)),
@@ -378,7 +328,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               if (v == 0) Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminProfileScreen()));
               if (v == 1) Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpSupportScreen()));
               if (v == 2) _onLogout();
-              if (v == 3) Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerNavigation()));
             },
             itemBuilder: (context) => [
               PopupMenuItem(
@@ -489,14 +438,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   icon: Icons.settings_outlined,
                   label: "Settings",
                   color: Color(0xFF2563EB),
-                ),
-              ),
-              const PopupMenuItem(
-                value: 3,
-                child: PopupItem(
-                  icon: Icons.storefront_rounded,
-                  label: "Customer App",
-                  color: AppTheme.primaryGreen,
                 ),
               ),
               const PopupMenuItem(
