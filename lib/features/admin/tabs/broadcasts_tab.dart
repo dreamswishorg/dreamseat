@@ -157,19 +157,16 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
     final totalReach = activeCustomers + state.businesses.length;
 
     return Container(
-      padding: EdgeInsets.all(isMobile ? 18 : 28),
+      padding: EdgeInsets.all(isMobile ? 18 : 22),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: const [
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x352E7D32),
-            blurRadius: 24,
-            offset: Offset(0, 10),
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -183,34 +180,33 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryGreen.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.35)),
+                        color: AppTheme.lightGreenBg,
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.campaign_rounded, color: AppTheme.primaryGreen, size: 26),
+                      child: const Icon(Icons.campaign_rounded, color: AppTheme.primaryGreen, size: 22),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Broadcast Studio",
+                            "Global Broadcasts",
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: isMobile ? 18 : 22,
+                              fontSize: isMobile ? 16 : 18,
                               fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: -0.5,
+                              color: AppTheme.charcoal,
+                              letterSpacing: -0.4,
                             ),
                           ),
                           const SizedBox(height: 2),
-                          Text(
-                            "Instant ecosystem announcements, push notifications & email dispatch.",
+                          const Text(
+                            "Instant ecosystem announcements, push alerts & customer outreach",
                             style: TextStyle(
-                              fontSize: isMobile ? 11.5 : 13,
-                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 12,
+                              color: AppTheme.mutedGrey,
                             ),
                           ),
                         ],
@@ -219,26 +215,24 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.3)),
+                  color: AppTheme.lightGreenBg,
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.wifi_tethering_rounded, color: AppTheme.primaryGreen, size: 14),
-                    SizedBox(width: 6),
+                    Icon(Icons.wifi_tethering_rounded, color: AppTheme.primaryGreen, size: 13),
+                    SizedBox(width: 5),
                     Text(
-                      "ENGINE LIVE",
+                      "ENGINE ACTIVE",
                       style: TextStyle(
                         color: AppTheme.primaryGreen,
                         fontWeight: FontWeight.w900,
-                        fontSize: 10.5,
-                        letterSpacing: 0.6,
+                        fontSize: 10,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ],
@@ -246,17 +240,17 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          Divider(color: Colors.white.withValues(alpha: 0.08)),
           const SizedBox(height: 16),
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          const SizedBox(height: 14),
           Wrap(
             spacing: 24,
-            runSpacing: 14,
+            runSpacing: 10,
             children: [
-              _headerStat("ACTIVE REACH", "$totalReach Users", Icons.groups_rounded),
-              _headerStat("RESCUERS", "$activeCustomers Food Savers", Icons.person_rounded),
-              _headerStat("PARTNER HUBS", "${state.businesses.length} Kitchens & Stores", Icons.storefront_rounded),
-              _headerStat("DISPATCHED", "${state.broadcasts.length} Campaigns", Icons.send_rounded),
+              _headerStat("AUDIENCE REACH", "$totalReach Total", Icons.groups_rounded, const Color(0xFF2563EB)),
+              _headerStat("CUSTOMERS", "$activeCustomers Savers", Icons.person_rounded, AppTheme.primaryGreen),
+              _headerStat("MERCHANTS", "${state.businesses.length} Kitchens", Icons.storefront_rounded, const Color(0xFFD97706)),
+              _headerStat("CAMPAIGNS", "${state.broadcasts.length} Sent", Icons.send_rounded, const Color(0xFF7C3AED)),
             ],
           ),
         ],
@@ -264,35 +258,34 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
     );
   }
 
-  Widget _headerStat(String label, String value, IconData icon) {
+  Widget _headerStat(String label, String value, IconData icon, Color color) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.all(7),
+          padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.08),
-            shape: BoxShape.circle,
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, size: 14, color: AppTheme.primaryGreen),
+          child: Icon(icon, size: 14, color: color),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
-              style: TextStyle(
-                fontSize: 9,
+              style: const TextStyle(
+                fontSize: 8.5,
                 fontWeight: FontWeight.w900,
-                color: Colors.white.withValues(alpha: 0.5),
-                letterSpacing: 0.8,
+                color: Color(0xFF64748B),
+                letterSpacing: 0.6,
               ),
             ),
-            const SizedBox(height: 2),
             Text(
               value,
-              style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Colors.white),
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.charcoal),
             ),
           ],
         ),

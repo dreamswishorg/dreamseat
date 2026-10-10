@@ -4,7 +4,6 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../../models/models.dart';
 import '../../../core/theme.dart';
 import '../../../providers/app_state.dart';
-import '../widgets/admin_components.dart';
 
 class TabAnalytics extends ConsumerStatefulWidget {
   const TabAnalytics({super.key});
@@ -14,7 +13,6 @@ class TabAnalytics extends ConsumerStatefulWidget {
 }
 
 class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
-  int _touchedPieIndex = -1;
   int _timeRangeIndex = 1; // 0: Today, 1: 7 Days, 2: 30 Days, 3: All Time
 
   @override
@@ -22,51 +20,53 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 800;
 
-    // Watch real data from app state
     final state = ref.watch(appStateProvider);
-    final allCollected = state.orders.where((o) => 
-      o.status == 'collected' || o.status == 'completed' || o.payoutStatus == 'paid' || o.payoutStatus == 'pending'
-    ).toList();
+    final allCollected = state.orders.where((o) =>
+        o.status == 'collected' ||
+        o.status == 'completed' ||
+        o.payoutStatus == 'paid' ||
+        o.payoutStatus == 'pending').toList();
     final commissionRate = state.commissionRate;
-    final usersCount = state.users.length;
     final deals = state.deals;
 
     // Time-based filtering
     final now = DateTime.now();
     List<Order> filteredOrders;
     switch (_timeRangeIndex) {
-      case 0: // Today
+      case 0:
         final startOfDay = DateTime(now.year, now.month, now.day);
         filteredOrders = allCollected.where((o) => o.timestamp.isAfter(startOfDay)).toList();
         break;
-      case 1: // 7 Days
+      case 1:
         final sevenDaysAgo = now.subtract(const Duration(days: 7));
         filteredOrders = allCollected.where((o) => o.timestamp.isAfter(sevenDaysAgo)).toList();
         break;
-      case 2: // 30 Days
+      case 2:
         final thirtyDaysAgo = now.subtract(const Duration(days: 30));
         filteredOrders = allCollected.where((o) => o.timestamp.isAfter(thirtyDaysAgo)).toList();
         break;
-      case 3: // All Time
+      case 3:
       default:
         filteredOrders = allCollected;
         break;
     }
 
-    // Fall back to allCollected if current window is empty so dashboard is always vibrant
     final activeOrders = filteredOrders.isNotEmpty ? filteredOrders : allCollected;
-
     final double totalRevenue = activeOrders.fold(0.0, (s, o) => s + o.price);
     final double netProfit = totalRevenue * commissionRate;
-    final double averageOrderValue = activeOrders.isNotEmpty ? (totalRevenue / activeOrders.length) : 0.0;
+    final int mealsRescuedCount = activeOrders.length;
     final int activeDealsCount = deals.where((d) => d.quantityRemaining > 0).length;
 
-    // Chart spots computation
+    // Environmental calculations
+    final double co2SavedKg = mealsRescuedCount * 2.5;
+    final double waterSavedLitres = mealsRescuedCount * 450.0;
+    final double landfillSavedKg = mealsRescuedCount * 0.45;
+
+    // Chart points
     final spots = <FlSpot>[];
     final List<String> dayLabels;
 
     if (_timeRangeIndex == 0) {
-      // Hourly intervals for Today
       dayLabels = ['6 AM', '9 AM', '12 PM', '3 PM', '6 PM', '9 PM', 'Now'];
       for (int i = 0; i < 7; i++) {
         final targetHour = 6 + (i * 2.5).toInt();
@@ -75,8 +75,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
         spots.add(FlSpot(i.toDouble(), sum));
       }
     } else if (_timeRangeIndex == 2) {
-      // 30 Days in 5-day intervals
-      dayLabels = ['Day 1-5', '6-10', '11-15', '16-20', '21-25', '26-30', 'Now'];
+      dayLabels = ['1-5d', '6-10d', '11-15d', '16-20d', '21-25d', '26-30d', 'Now'];
       for (int i = 0; i < 7; i++) {
         final start = now.subtract(Duration(days: (6 - i) * 5));
         final end = start.add(const Duration(days: 5));
@@ -85,8 +84,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
         spots.add(FlSpot(i.toDouble(), sum));
       }
     } else {
-      // 7 Days or All Time
-      dayLabels = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Today'];
+      dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
       for (int i = 0; i < 7; i++) {
         final day = now.subtract(Duration(days: 6 - i));
         final dayTotal = activeOrders
@@ -96,7 +94,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
       }
     }
 
-    // Top Merchants from active orders
+    // Top Merchants
     final merchantStats = <String, _MerchantStat>{};
     for (final o in activeOrders) {
       final stat = merchantStats.putIfAbsent(
@@ -106,271 +104,366 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
           return _MerchantStat(
             id: o.businessId,
             name: o.businessName.isNotEmpty ? o.businessName : (biz?.name ?? "Partner Hub"),
-            category: o.category.isNotEmpty ? o.category : (biz?.category ?? "Food Hub"),
-            rating: biz?.rating ?? 5.0,
+            category: o.category.isNotEmpty ? o.category : (biz?.category ?? "Food"),
           );
         },
       );
       stat.orderCount += 1;
       stat.totalRevenue += o.price;
     }
-    final sortedMerchants = merchantStats.values.toList()..sort((a, b) => b.totalRevenue.compareTo(a.totalRevenue));
-    final topMerchants = sortedMerchants.take(10).toList();
-
-    // Top Customers from active orders
-    final customerStats = <String, _CustomerStat>{};
-    for (final o in activeOrders) {
-      final stat = customerStats.putIfAbsent(
-        o.customerId,
-        () {
-          final usr = state.users.where((u) => u.id == o.customerId).firstOrNull;
-          return _CustomerStat(
-            id: o.customerId,
-            name: o.customerName.isNotEmpty ? o.customerName : (usr?.name ?? "Community Rescuer"),
-            email: usr?.email ?? "",
-            points: usr?.dreamPoints ?? (o.price * 10).toInt(),
-          );
-        },
-      );
-      stat.orderCount += 1;
-      stat.totalSpend += o.price;
-    }
-    final sortedCustomers = customerStats.values.toList()..sort((a, b) => b.orderCount.compareTo(a.orderCount));
-    final topCustomers = sortedCustomers.take(10).toList();
-
-    // Environmental metrics
-    final int mealsRescuedCount = activeOrders.length;
-    final double co2SavedKg = mealsRescuedCount * 2.5;
-    final double waterSavedLitres = mealsRescuedCount * 450.0;
-    final double landfillSavedKg = mealsRescuedCount * 0.45;
+    final topMerchants = merchantStats.values.toList()
+      ..sort((a, b) => b.totalRevenue.compareTo(a.totalRevenue));
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
-      padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 32, vertical: isMobile ? 16 : 24),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 32, vertical: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Time Period Filter Toolbar ─────────────────────────────
+          // ── Clean Toolbar ─────────────────────────────
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Performance Overview",
+                "Platform Performance",
                 style: TextStyle(
                   fontSize: isMobile ? 15 : 17,
                   fontWeight: FontWeight.w900,
                   color: AppTheme.charcoal,
-                  letterSpacing: -0.3,
+                  letterSpacing: -0.4,
                 ),
               ),
               _buildTimeFilterPills(),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
-          // ── KPI Metrics Grid ─────────────────────────────────────────
-          GridView.extent(
-            maxCrossAxisExtent: 360,
-            mainAxisExtent: isMobile ? 172 : 155,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            children: [
-              MetricCard(
-                label: "Gross Transaction Volume",
-                value: "GHS ${totalRevenue.toStringAsFixed(2)}",
-                icon: Icons.payments_rounded,
-                color: AppTheme.primaryGreen,
-                trend: "+12.4%",
-              ),
-              MetricCard(
-                label: "Platform Revenue (Net)",
-                value: "GHS ${netProfit.toStringAsFixed(2)}",
-                icon: Icons.account_balance_rounded,
-                color: Colors.indigo,
-                subtitle: "${(commissionRate * 100).toInt()}% Platform Commission",
-              ),
-              MetricCard(
-                label: "Total Meals Rescued",
-                value: "$mealsRescuedCount",
-                icon: Icons.eco_rounded,
-                color: AppTheme.warningOrange,
-                trend: "+8.2%",
-              ),
-              MetricCard(
-                label: "Average Order Value (AOV)",
-                value: "GHS ${averageOrderValue.toStringAsFixed(2)}",
-                icon: Icons.trending_up_rounded,
-                color: Colors.teal,
-                subtitle: "Per verified rescue",
-              ),
-              MetricCard(
-                label: "Registered Community",
-                value: "$usersCount Users",
-                icon: Icons.groups_rounded,
-                color: Colors.blue,
-                trend: "Live",
-              ),
-              MetricCard(
-                label: "Active Deal Listings",
-                value: "$activeDealsCount Live",
-                icon: Icons.storefront_rounded,
-                color: AppTheme.goldAccent,
-                subtitle: "Across all partner hubs",
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 28),
-
-          // ── Environmental & Food Waste Impact Telemetry Block ────────
-          _buildEnvironmentalImpactCard(mealsRescuedCount, co2SavedKg, waterSavedLitres, landfillSavedKg, isMobile),
-
-          const SizedBox(height: 28),
-
-          // ── Revenue Velocity & Category Share Charts ────────────────
+          // ── Sleek 4 KPI Stat Cards ────────────────────
           LayoutBuilder(
             builder: (context, constraints) {
-              final isDesktop = constraints.maxWidth > 1050;
+              final isNarrow = constraints.maxWidth < 750;
+              return GridView.count(
+                crossAxisCount: isNarrow ? 2 : 4,
+                crossAxisSpacing: 14,
+                mainAxisSpacing: 14,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                childAspectRatio: isNarrow ? 1.4 : 1.7,
+                children: [
+                  _statCard("GROSS VOLUME", "GHS ${totalRevenue.toStringAsFixed(2)}", "+12.4%", Icons.payments_outlined, AppTheme.primaryGreen),
+                  _statCard("NET COMMISSION", "GHS ${netProfit.toStringAsFixed(2)}", "${(commissionRate * 100).toInt()}% Rate", Icons.account_balance_outlined, const Color(0xFF2563EB)),
+                  _statCard("MEALS RESCUED", "$mealsRescuedCount Saved", "Eco Impact", Icons.eco_outlined, const Color(0xFFD97706)),
+                  _statCard("LIVE LISTINGS", "$activeDealsCount Deals", "Active", Icons.storefront_outlined, const Color(0xFF7C3AED)),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 24),
 
-              final revenueChart = _buildChartContainer(
-                title: "Revenue Growth Velocity",
-                subtitle: "Financial throughput velocity over selected observation period.",
-                child: LineChart(
-                  LineChartData(
-                    gridData: FlGridData(
-                      show: true,
-                      drawVerticalLine: false,
-                      getDrawingHorizontalLine: (v) => const FlLine(color: Color(0xFFF1F5F9), strokeWidth: 1),
-                    ),
-                    titlesData: FlTitlesData(
-                      leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          getTitlesWidget: (val, meta) {
-                            final idx = val.toInt();
-                            if (idx >= 0 && idx < dayLabels.length) {
-                              return Padding(
-                                padding: const EdgeInsets.only(top: 12),
-                                child: Text(dayLabels[idx], style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey)),
-                              );
-                            }
-                            return const SizedBox.shrink();
-                          },
+          // ── Revenue Velocity Line Chart ───────────────
+          Container(
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Revenue Growth Velocity",
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.charcoal),
                         ),
+                        const SizedBox(height: 2),
+                        Text(
+                          "Total order value trend over the selected period",
+                          style: TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.lightGreenBg,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        "GHS ${totalRevenue.toStringAsFixed(2)} Total",
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppTheme.primaryGreen),
                       ),
                     ),
-                    borderData: FlBorderData(show: false),
-                    lineBarsData: [
-                      LineChartBarData(
-                        spots: spots.isEmpty ? [const FlSpot(0, 0), const FlSpot(6, 0)] : spots,
-                        isCurved: true,
-                        color: AppTheme.primaryGreen,
-                        barWidth: 4,
-                        isStrokeCapRound: true,
-                        belowBarData: BarAreaData(
-                          show: true,
-                          gradient: LinearGradient(
-                            colors: [AppTheme.primaryGreen.withValues(alpha: 0.25), AppTheme.primaryGreen.withValues(alpha: 0.0)],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          ),
-                        ),
-                        dotData: FlDotData(
-                          show: true,
-                          getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                            radius: 5,
-                            color: Colors.white,
-                            strokeWidth: 3,
-                            strokeColor: AppTheme.primaryGreen,
+                  ],
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  height: 220,
+                  child: LineChart(
+                    LineChartData(
+                      gridData: FlGridData(
+                        show: true,
+                        drawVerticalLine: false,
+                        getDrawingHorizontalLine: (v) => const FlLine(color: Color(0xFFF1F5F9), strokeWidth: 1),
+                      ),
+                      titlesData: FlTitlesData(
+                        leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (val, meta) {
+                              final idx = val.toInt();
+                              if (idx >= 0 && idx < dayLabels.length) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 10),
+                                  child: Text(dayLabels[idx], style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey)),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
                           ),
                         ),
                       ),
-                    ],
+                      borderData: FlBorderData(show: false),
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: spots.isEmpty ? [const FlSpot(0, 0), const FlSpot(6, 0)] : spots,
+                          isCurved: true,
+                          color: AppTheme.primaryGreen,
+                          barWidth: 3,
+                          isStrokeCapRound: true,
+                          belowBarData: BarAreaData(
+                            show: true,
+                            gradient: LinearGradient(
+                              colors: [
+                                AppTheme.primaryGreen.withValues(alpha: 0.18),
+                                AppTheme.primaryGreen.withValues(alpha: 0.0),
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                          ),
+                          dotData: const FlDotData(show: false),
+                        ),
+                      ],
+                    ),
                   ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // ── Two Clean Bottom Cards: Top Merchants & Impact ────
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isDesktop = constraints.maxWidth > 900;
+              final topMerchantsCard = Container(
+                padding: const EdgeInsets.all(22),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Top Performing Merchants",
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.charcoal),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Partners generating the highest rescue volume",
+                      style: TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
+                    ),
+                    const SizedBox(height: 16),
+                    if (topMerchants.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        child: Center(
+                          child: Text("No transactions recorded in this period", style: TextStyle(color: AppTheme.mutedGrey, fontSize: 13)),
+                        ),
+                      )
+                    else
+                      ...topMerchants.take(5).map((m) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      m.name.isNotEmpty ? m.name[0].toUpperCase() : "M",
+                                      style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.charcoal),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(m.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.charcoal), maxLines: 1),
+                                      Text("${m.orderCount} meals sold", style: TextStyle(fontSize: 11, color: AppTheme.mutedGrey)),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  "GHS ${m.totalRevenue.toStringAsFixed(2)}",
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen),
+                                ),
+                              ],
+                            ),
+                          )),
+                  ],
                 ),
               );
 
-              final categoryChart = ContentBox(
-                title: "Category Market Share",
-                padding: const EdgeInsets.all(24),
-                child: _buildCategoryMarketShareWidget(deals, constraints.maxWidth),
+              final impactCard = Container(
+                padding: const EdgeInsets.all(22),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Sustainability Impact",
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.charcoal),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Environmental savings from rescued food waste",
+                      style: TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
+                    ),
+                    const SizedBox(height: 20),
+                    _impactRow("CO₂ Emissions Prevented", "${co2SavedKg.toStringAsFixed(1)} kg", Icons.cloud_outlined, const Color(0xFF2563EB)),
+                    const SizedBox(height: 14),
+                    _impactRow("Freshwater Saved", "${waterSavedLitres.toStringAsFixed(0)} L", Icons.water_drop_outlined, const Color(0xFF0D9488)),
+                    const SizedBox(height: 14),
+                    _impactRow("Landfill Waste Diverted", "${landfillSavedKg.toStringAsFixed(1)} kg", Icons.delete_outline_rounded, const Color(0xFFD97706)),
+                  ],
+                ),
               );
 
               if (isDesktop) {
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(flex: 3, child: revenueChart),
-                    const SizedBox(width: 24),
-                    Expanded(flex: 2, child: categoryChart),
+                    Expanded(flex: 3, child: topMerchantsCard),
+                    const SizedBox(width: 20),
+                    Expanded(flex: 2, child: impactCard),
                   ],
                 );
               } else {
                 return Column(
                   children: [
-                    revenueChart,
-                    const SizedBox(height: 24),
-                    categoryChart,
+                    topMerchantsCard,
+                    const SizedBox(height: 20),
+                    impactCard,
                   ],
                 );
               }
             },
           ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
 
-          const SizedBox(height: 28),
-
-          // ── Peak Pickup Velocity & Distribution ─────────────────────
-          _buildPeakPickupHoursCard(activeOrders, isMobile),
-
-          const SizedBox(height: 28),
-
-          // ── Data Analytics Leaderboards ─────────────────────────────
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isDesktop = constraints.maxWidth > 1050;
-
-              final merchantLeaderboard = _buildMerchantLeaderboard(topMerchants, commissionRate, isMobile);
-              final customerLeaderboard = _buildCustomerLeaderboard(topCustomers, isMobile);
-
-              if (isDesktop) {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: merchantLeaderboard),
-                    const SizedBox(width: 24),
-                    Expanded(child: customerLeaderboard),
-                  ],
-                );
-              } else {
-                return Column(
-                  children: [
-                    merchantLeaderboard,
-                    const SizedBox(height: 24),
-                    customerLeaderboard,
-                  ],
-                );
-              }
-            },
+  Widget _statCard(String label, String value, String badge, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8), letterSpacing: 0.8)),
+              Icon(icon, size: 16, color: color),
+            ],
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.5)),
+              ),
+              const SizedBox(height: 2),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(badge, style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: color)),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  // ── Time Filter Pills Bar ───────────────────────────────────────────
+  Widget _impactRow(String label, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.charcoal)),
+          ),
+          Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: color)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTimeFilterPills() {
     final options = ["Today", "7 Days", "30 Days", "All Time"];
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -378,21 +471,20 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
           final isSelected = _timeRangeIndex == i;
           return GestureDetector(
             onTap: () => setState(() => _timeRangeIndex = i),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: isSelected ? Colors.white : Colors.transparent,
-                borderRadius: BorderRadius.circular(9),
+                borderRadius: BorderRadius.circular(8),
                 boxShadow: isSelected
-                    ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))]
+                    ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 1))]
                     : [],
               ),
               child: Text(
                 options[i],
                 style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                   color: isSelected ? AppTheme.primaryGreen : AppTheme.mutedGrey,
                 ),
               ),
@@ -402,858 +494,14 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
       ),
     );
   }
-
-  // ── Environmental & Waste Prevention Telemetry Card ─────────────────
-  Widget _buildEnvironmentalImpactCard(int mealsRescued, double co2Kg, double waterL, double landfillKg, bool isMobile) {
-    const int targetGoal = 500;
-    final double progress = (mealsRescued / targetGoal).clamp(0.0, 1.0);
-
-    return Container(
-      padding: EdgeInsets.all(isMobile ? 18 : 24),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            AppTheme.primaryGreen,
-            Color(0xFF1B5E20),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: const [
-          BoxShadow(color: Color(0x302E7D32), blurRadius: 22, offset: Offset(0, 8)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                      child: const Icon(Icons.public_rounded, color: Colors.white, size: 20),
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Planetary Impact Telemetry", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
-                          Text("Quantified environmental resources preserved via DreamEats rescues", style: TextStyle(color: Colors.white70, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppTheme.goldAccent.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.goldAccent.withValues(alpha: 0.4)),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.verified_rounded, color: AppTheme.goldAccent, size: 12),
-                    SizedBox(width: 4),
-                    Text("ECO AUDIT", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.goldAccent)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          // 3 Impact Pillars
-          if (isMobile) ...[
-            Column(
-              children: [
-                _buildPillarTile(Icons.cloud_off_rounded, "${co2Kg.toStringAsFixed(1)} kg", "CO2e Greenhouse Gas Avoided", const Color(0xFF10B981)),
-                const SizedBox(height: 10),
-                _buildPillarTile(Icons.water_drop_rounded, "${waterL.toStringAsFixed(0)} Litres", "Clean Freshwater Conserved", Colors.lightBlueAccent),
-                const SizedBox(height: 10),
-                _buildPillarTile(Icons.delete_sweep_rounded, "${landfillKg.toStringAsFixed(1)} kg", "Organic Landfill Waste Diverted", Colors.amberAccent),
-              ],
-            ),
-          ] else ...[
-            Row(
-              children: [
-                Expanded(child: _buildPillarTile(Icons.cloud_off_rounded, "${co2Kg.toStringAsFixed(1)} kg", "CO2e Avoided", const Color(0xFF10B981))),
-                const SizedBox(width: 14),
-                Expanded(child: _buildPillarTile(Icons.water_drop_rounded, "${waterL.toStringAsFixed(0)} L", "Water Saved", Colors.lightBlueAccent)),
-                const SizedBox(width: 14),
-                Expanded(child: _buildPillarTile(Icons.delete_sweep_rounded, "${landfillKg.toStringAsFixed(1)} kg", "Landfill Diverted", Colors.amberAccent)),
-              ],
-            ),
-          ],
-          const SizedBox(height: 20),
-          // Milestone Progress Bar
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isNarrow = constraints.maxWidth < 340;
-                    if (isNarrow) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Next Target: $targetGoal Meals",
-                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "${(progress * 100).toStringAsFixed(1)}% Completed",
-                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: AppTheme.goldAccent),
-                          ),
-                        ],
-                      );
-                    }
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            "Next Target: $targetGoal Rescued Meals",
-                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          "${(progress * 100).toStringAsFixed(1)}% Completed",
-                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: AppTheme.goldAccent),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 8,
-                    backgroundColor: Colors.white.withValues(alpha: 0.15),
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.goldAccent),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPillarTile(IconData icon, String value, String title, Color accent) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: accent.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
-            child: Icon(icon, color: accent, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white)),
-                const SizedBox(height: 2),
-                Text(title, style: const TextStyle(fontSize: 11, color: Colors.white70)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Peak Pickup Velocity & Distribution ─────────────────────────────
-  Widget _buildPeakPickupHoursCard(List<Order> orders, bool isMobile) {
-    int morning = 0; // 07:00 - 11:59
-    int lunch = 0;   // 12:00 - 14:59
-    int evening = 0; // 15:00 - 19:59
-    int dinner = 0;  // 20:00 - 23:59
-
-    for (final o in orders) {
-      final hour = o.timestamp.hour;
-      if (hour >= 7 && hour < 12) {
-        morning++;
-      } else if (hour >= 12 && hour < 15) {
-        lunch++;
-      } else if (hour >= 15 && hour < 20) {
-        evening++;
-      } else {
-        dinner++;
-      }
-    }
-
-    final total = orders.isEmpty ? 1 : orders.length;
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: context.clientShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: Colors.teal.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.access_time_filled_rounded, color: Colors.teal, size: 20),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Rescue Velocity & Peak Pickup Windows", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.charcoal), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Text("Traffic distribution analysis of customer collection hours.", style: TextStyle(fontSize: 11, color: AppTheme.mutedGrey), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          _buildTimeVelocityBar("Morning Window (07:00 - 11:59)", morning, total, AppTheme.goldAccent, Icons.wb_sunny_rounded),
-          const SizedBox(height: 14),
-          _buildTimeVelocityBar("Lunch Rush Peak (12:00 - 14:59)", lunch, total, AppTheme.warningOrange, Icons.restaurant_rounded),
-          const SizedBox(height: 14),
-          _buildTimeVelocityBar("Afternoon & Tea (15:00 - 19:59)", evening, total, AppTheme.primaryGreen, Icons.local_cafe_rounded),
-          const SizedBox(height: 14),
-          _buildTimeVelocityBar("Evening & Late Rescue (20:00 - 23:59)", dinner, total, Colors.indigo, Icons.nightlight_round),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTimeVelocityBar(String label, int count, int total, Color color, IconData icon) {
-    final double percent = count / total;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Row(
-                children: [
-                  Icon(icon, size: 14, color: color),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.charcoal), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text("$count (${(percent * 100).toStringAsFixed(1)}%)", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: color)),
-          ],
-        ),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: LinearProgressIndicator(
-            value: percent,
-            minHeight: 8,
-            backgroundColor: const Color(0xFFF1F5F9),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildChartContainer({required String title, required String subtitle, required Widget child}) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: context.clientShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppTheme.charcoal)),
-          const SizedBox(height: 4),
-          Text(subtitle, style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 12, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 24),
-          SizedBox(height: 260, child: child),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryMarketShareWidget(List<FoodDeal> deals, double availableWidth) {
-    if (deals.isEmpty) {
-      return SizedBox(
-        height: 240,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                height: 120,
-                child: PieChart(
-                  PieChartData(
-                    sections: [PieChartSectionData(color: AppTheme.lightGrey, value: 100, title: 'No Data', radius: 40)],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text("No live inventory listed yet.", style: TextStyle(color: AppTheme.mutedGrey, fontSize: 12, fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final map = <String, int>{};
-    for (final d in deals) {
-      final cat = d.category.isNotEmpty ? d.category : 'General';
-      map[cat] = (map[cat] ?? 0) + 1;
-    }
-    final colors = [AppTheme.primaryGreen, AppTheme.goldAccent, Colors.indigo, AppTheme.warningOrange, Colors.teal, Colors.purple, Colors.pink];
-    final total = deals.length;
-
-    final legendItems = <Widget>[];
-    int idx = 0;
-    for (final e in map.entries) {
-      final c = colors[idx % colors.length];
-      final percent = ((e.value / total) * 100).toStringAsFixed(1);
-      legendItems.add(
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5),
-          child: Row(
-            children: [
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(color: c, shape: BoxShape.circle),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(e.key, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.charcoal), maxLines: 1, overflow: TextOverflow.ellipsis),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-                child: Text("${e.value} ($percent%)", style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: c)),
-              ),
-            ],
-          ),
-        ),
-      );
-      idx++;
-    }
-
-    final pieChart = PieChart(
-      PieChartData(
-        pieTouchData: PieTouchData(
-          touchCallback: (FlTouchEvent event, pieTouchResponse) {
-            setState(() {
-              if (!event.isInterestedForInteractions || pieTouchResponse == null || pieTouchResponse.touchedSection == null) {
-                _touchedPieIndex = -1;
-                return;
-              }
-              _touchedPieIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
-            });
-          },
-        ),
-        sectionsSpace: 4,
-        centerSpaceRadius: 32,
-        sections: _buildPieSections(deals),
-      ),
-    );
-
-    if (availableWidth > 450) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(flex: 5, child: SizedBox(height: 200, child: pieChart)),
-          const SizedBox(width: 20),
-          Expanded(
-            flex: 6,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text("CATEGORY BREAKDOWN", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppTheme.mutedGrey, letterSpacing: 0.8)),
-                const SizedBox(height: 6),
-                ...legendItems,
-              ],
-            ),
-          ),
-        ],
-      );
-    } else {
-      return Column(
-        children: [
-          SizedBox(height: 190, child: pieChart),
-          const SizedBox(height: 16),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
-          const SizedBox(height: 14),
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: Text("CATEGORY BREAKDOWN", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: AppTheme.mutedGrey, letterSpacing: 0.8)),
-          ),
-          const SizedBox(height: 6),
-          ...legendItems,
-        ],
-      );
-    }
-  }
-
-  List<PieChartSectionData> _buildPieSections(List<FoodDeal> deals) {
-    if (deals.isEmpty) {
-      return [
-        PieChartSectionData(color: AppTheme.lightGrey, value: 100, title: 'No Data', radius: 45)
-      ];
-    }
-    final map = <String, int>{};
-    for (final d in deals) {
-      final cat = d.category.isNotEmpty ? d.category : 'General';
-      map[cat] = (map[cat] ?? 0) + 1;
-    }
-    final colors = [AppTheme.primaryGreen, AppTheme.goldAccent, Colors.indigo, AppTheme.warningOrange, Colors.teal, Colors.purple, Colors.pink];
-    final total = deals.length;
-    int idx = 0;
-    return map.entries.map((e) {
-      final isTouched = _touchedPieIndex == idx;
-      final c = colors[idx % colors.length];
-      idx++;
-      final percent = ((e.value / total) * 100).round();
-      return PieChartSectionData(
-        color: c,
-        value: e.value.toDouble(),
-        title: percent > 4 ? '$percent%' : '',
-        radius: isTouched ? 55 : 45,
-        titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white),
-      );
-    }).toList();
-  }
-
-  // ── Merchant Leaderboard (Responsive Desktop / Vertical Mobile) ────
-  Widget _buildMerchantLeaderboard(List<_MerchantStat> merchants, double commissionRate, bool isMobile) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: context.clientShadow,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF8FAFC),
-              border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: AppTheme.goldAccent.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.emoji_events_rounded, color: AppTheme.goldAccent, size: 20),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Top Performing Merchants", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.charcoal)),
-                      Text("Ranked by live transaction revenue & rescue volume", style: TextStyle(fontSize: 11, color: AppTheme.mutedGrey)),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: AppTheme.charcoal.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
-                  child: const Text("TOP 10", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
-                ),
-              ],
-            ),
-          ),
-          if (merchants.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(40.0),
-              child: NoDataState(msg: "No merchant transaction data recorded yet.", icon: Icons.storefront_rounded),
-            )
-          else
-            ListView.separated(
-              padding: EdgeInsets.zero,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: merchants.length,
-              separatorBuilder: (_, _) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
-              itemBuilder: (context, i) {
-                final m = merchants[i];
-                if (isMobile) {
-                  // Vertical Stacked Mobile Card (Touch-friendly & zero clipping)
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              _buildRankBadge(i + 1),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(m.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: AppTheme.charcoal)),
-                                    const SizedBox(height: 2),
-                                    Row(
-                                      children: [
-                                        Text(m.category, style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey)),
-                                        const SizedBox(width: 6),
-                                        const Icon(Icons.star_rounded, size: 12, color: AppTheme.goldAccent),
-                                        const SizedBox(width: 2),
-                                        Text(m.rating.toStringAsFixed(1), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.charcoal)),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primaryGreen.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text("GHS ${m.totalRevenue.toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: AppTheme.primaryGreen)),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(Icons.eco_rounded, size: 13, color: AppTheme.warningOrange),
-                                    const SizedBox(width: 4),
-                                    Text("${m.orderCount} Rescues", style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.charcoal)),
-                                  ],
-                                ),
-                                Text("Platform Cut: GHS ${(m.totalRevenue * commissionRate).toStringAsFixed(2)}", style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.mutedGrey)),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                // Desktop Layout
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  child: Row(
-                    children: [
-                      _buildRankBadge(i + 1),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(m.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: AppTheme.charcoal)),
-                            const SizedBox(height: 2),
-                            Row(
-                              children: [
-                                Text(m.category, style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey)),
-                                const SizedBox(width: 8),
-                                const Icon(Icons.star_rounded, size: 12, color: AppTheme.goldAccent),
-                                const SizedBox(width: 2),
-                                Text(m.rating.toStringAsFixed(1), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.charcoal)),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text("GHS ${m.totalRevenue.toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: AppTheme.primaryGreen)),
-                          const SizedBox(height: 2),
-                          Text("${m.orderCount} Rescues • GHS ${(m.totalRevenue * commissionRate).toStringAsFixed(2)} Net", style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppTheme.mutedGrey)),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-        ],
-      ),
-    );
-  }
-
-  // ── Customer Leaderboard (Responsive Desktop / Vertical Mobile) ────
-  Widget _buildCustomerLeaderboard(List<_CustomerStat> customers, bool isMobile) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: context.clientShadow,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF8FAFC),
-              border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: Colors.indigo.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.workspace_premium_rounded, color: Colors.indigo, size: 20),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Top Community Rescuers", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.charcoal)),
-                      Text("Ranked by meals rescued & financial impact", style: TextStyle(fontSize: 11, color: AppTheme.mutedGrey)),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: AppTheme.charcoal.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
-                  child: const Text("TOP 10", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
-                ),
-              ],
-            ),
-          ),
-          if (customers.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(40.0),
-              child: NoDataState(msg: "No customer rescue transactions recorded yet.", icon: Icons.person_rounded),
-            )
-          else
-            ListView.separated(
-              padding: EdgeInsets.zero,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: customers.length,
-              separatorBuilder: (_, _) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
-              itemBuilder: (context, i) {
-                final c = customers[i];
-                if (isMobile) {
-                  // Vertical Stacked Mobile Card (Touch-friendly & zero clipping)
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              _buildRankBadge(i + 1),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(c.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: AppTheme.charcoal)),
-                                    const SizedBox(height: 2),
-                                    Text(c.email.isNotEmpty ? c.email : "Community Hero", style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey), maxLines: 1, overflow: TextOverflow.ellipsis),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.indigo.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text("${c.orderCount} Meals Saved", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Colors.indigo)),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text("Total Spend: GHS ${c.totalSpend.toStringAsFixed(2)}", style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.charcoal)),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.stars_rounded, size: 13, color: AppTheme.goldAccent),
-                                    const SizedBox(width: 4),
-                                    Text("${c.points} Pts", style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.goldAccent)),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                // Desktop Layout
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  child: Row(
-                    children: [
-                      _buildRankBadge(i + 1),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(c.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: AppTheme.charcoal)),
-                            const SizedBox(height: 2),
-                            Text(c.email.isNotEmpty ? c.email : "Community Member", style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey)),
-                          ],
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text("${c.orderCount} Meals Saved", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: Colors.indigo)),
-                          const SizedBox(height: 2),
-                          Text("GHS ${c.totalSpend.toStringAsFixed(2)} Spent • ${c.points} Pts", style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppTheme.mutedGrey)),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRankBadge(int rank) {
-    Color bg;
-    Color fg;
-    IconData? icon;
-    if (rank == 1) {
-      bg = AppTheme.goldAccent;
-      fg = Colors.white;
-      icon = Icons.emoji_events_rounded;
-    } else if (rank == 2) {
-      bg = const Color(0xFF94A3B8); // Silver
-      fg = Colors.white;
-      icon = Icons.military_tech_rounded;
-    } else if (rank == 3) {
-      bg = const Color(0xFFD97706); // Bronze
-      fg = Colors.white;
-      icon = Icons.workspace_premium_rounded;
-    } else {
-      bg = const Color(0xFFF1F5F9);
-      fg = AppTheme.charcoal;
-    }
-
-    return Container(
-      width: 28,
-      height: 28,
-      decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-      child: Center(
-        child: icon != null
-            ? Icon(icon, size: 15, color: fg)
-            : Text("$rank", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: fg)),
-      ),
-    );
-  }
 }
 
 class _MerchantStat {
   final String id;
   final String name;
   final String category;
-  final double rating;
   int orderCount = 0;
   double totalRevenue = 0.0;
 
-  _MerchantStat({required this.id, required this.name, required this.category, required this.rating});
-}
-
-class _CustomerStat {
-  final String id;
-  final String name;
-  final String email;
-  final int points;
-  int orderCount = 0;
-  double totalSpend = 0.0;
-
-  _CustomerStat({required this.id, required this.name, required this.email, required this.points});
+  _MerchantStat({required this.id, required this.name, required this.category});
 }

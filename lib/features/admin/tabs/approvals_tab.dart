@@ -15,7 +15,8 @@ class TabApprovals extends ConsumerStatefulWidget {
 class _TabApprovalsState extends ConsumerState<TabApprovals> {
   int _selectedFilter = 0; // 0 = Pending, 1 = Active
   int _currentPage = 0;
-  static const int _itemsPerPage = 6;
+  static const int _itemsPerPage = 8;
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
@@ -24,15 +25,22 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
     final active = state.businesses.where((b) => b.isApproved).toList();
     final allList = _selectedFilter == 0 ? pending : active;
 
+    final filteredByQuery = allList.where((b) {
+      if (_searchQuery.isEmpty) return true;
+      return b.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          b.category.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          b.location.toLowerCase().contains(_searchQuery.toLowerCase());
+    }).toList();
+
     // Reset page if filter changes and current page is out of bounds
-    final totalPages = (allList.length / _itemsPerPage).ceil();
+    final totalPages = (filteredByQuery.length / _itemsPerPage).ceil();
     if (_currentPage >= totalPages && totalPages > 0) {
       _currentPage = totalPages - 1;
-    } else if (allList.isEmpty) {
+    } else if (filteredByQuery.isEmpty) {
       _currentPage = 0;
     }
 
-    final list = allList.skip(_currentPage * _itemsPerPage).take(_itemsPerPage).toList();
+    final list = filteredByQuery.skip(_currentPage * _itemsPerPage).take(_itemsPerPage).toList();
 
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 800;
@@ -43,25 +51,50 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Expanded(
+                child: Container(
+                  height: 42,
+                  constraints: const BoxConstraints(maxWidth: 320),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: TextField(
+                    onChanged: (v) => setState(() {
+                      _searchQuery = v;
+                      _currentPage = 0;
+                    }),
+                    style: const TextStyle(fontSize: 12.5, color: AppTheme.charcoal),
+                    decoration: const InputDecoration(
+                      hintText: "Search merchants by name, category...",
+                      hintStyle: TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
+                      prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppTheme.mutedGrey),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
               Container(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
-                  color: context.cardSubtleColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: context.borderColor),
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
-                    _filterTab("Pending Queue", 0, pending.length),
-                    _filterTab("Verified Partners", 1, active.length),
+                    _filterTab("Pending Queue (${pending.length})", 0),
+                    _filterTab("Verified Partners (${active.length})", 1),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           Expanded(
             child: list.isEmpty
                 ? NoDataState(
@@ -120,7 +153,7 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
     );
   }
 
-  Widget _filterTab(String label, int index, int count) {
+  Widget _filterTab(String label, int index) {
     final sel = _selectedFilter == index;
     return GestureDetector(
       onTap: () => setState(() {
@@ -128,42 +161,22 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
         _currentPage = 0;
       }),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: sel ? context.cardColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: sel && !context.isDark ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))] : [],
+          color: sel ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: sel
+              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 1))]
+              : [],
         ),
-        child: Row(
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: sel ? AppTheme.primaryGreen : context.textSecondary,
-              ),
-            ),
-            if (count > 0) ...[
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: sel ? AppTheme.primaryGreen.withValues(alpha: 0.12) : context.borderColor,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  "$count",
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w900,
-                    color: sel ? AppTheme.primaryGreen : context.textSecondary,
-                  ),
-                ),
-              ),
-            ],
-          ],
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: sel ? FontWeight.w800 : FontWeight.w600,
+            color: sel ? AppTheme.primaryGreen : AppTheme.mutedGrey,
+          ),
         ),
       ),
     );

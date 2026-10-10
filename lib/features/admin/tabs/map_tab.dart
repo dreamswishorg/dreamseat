@@ -298,22 +298,29 @@ class _TabMapState extends ConsumerState<TabMap> {
   Widget _buildTelemetryPanel(AppState state) {
     final activeOrders = state.orders.where((o) => o.status == 'reserved').length;
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("OPERATIONAL PULSE", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.mutedGrey, letterSpacing: 1.2)),
-          const SizedBox(height: 16),
+          const Text("NETWORK TELEMETRY", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: AppTheme.mutedGrey, letterSpacing: 0.8)),
+          const SizedBox(height: 14),
           _telemetryRow("Active Rescues", "$activeOrders", Icons.shopping_bag_outlined),
-          const Divider(height: 24),
+          const Divider(height: 20, color: Color(0xFFF1F5F9)),
           _telemetryRow("Hub Network", "${state.businesses.length} Active Hubs", Icons.storefront_outlined),
-          const Divider(height: 24),
-          _telemetryRow("Network Health", "Stable", Icons.check_circle_outline_rounded),
+          const Divider(height: 20, color: Color(0xFFF1F5F9)),
+          _telemetryRow("Network Health", "100% Operational", Icons.check_circle_outline_rounded),
         ],
       ),
     );
@@ -322,11 +329,11 @@ class _TabMapState extends ConsumerState<TabMap> {
   Widget _telemetryRow(String label, String value, IconData icon) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: AppTheme.primaryGreen),
-        const SizedBox(width: 12),
-        Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.charcoal)),
+        Icon(icon, size: 16, color: AppTheme.primaryGreen),
+        const SizedBox(width: 10),
+        Text(label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.charcoal)),
         const Spacer(),
-        Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
+        Text(value, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
       ],
     );
   }
@@ -334,20 +341,23 @@ class _TabMapState extends ConsumerState<TabMap> {
   Widget _buildInspectorPanel(AppState state) {
     if (_selectedBusinessId == null) {
       return Container(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFF1F5F9), style: BorderStyle.solid),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
         ),
-        child: const Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.location_searching_rounded, size: 48, color: Color(0xFFCBD5E1)),
-            SizedBox(height: 16),
-            Text("Hub Inspector", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            Text("Click a hub to view real-time intelligence.", textAlign: TextAlign.center, style: TextStyle(color: AppTheme.mutedGrey, fontSize: 12)),
-          ],
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.location_searching_rounded, size: 36, color: Color(0xFFCBD5E1)),
+              SizedBox(height: 12),
+              Text("Hub Intelligence", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.charcoal)),
+              SizedBox(height: 4),
+              Text("Click any map pin to inspect live telemetry.", textAlign: TextAlign.center, style: TextStyle(color: AppTheme.mutedGrey, fontSize: 11.5)),
+            ],
+          ),
         ),
       );
     }
@@ -356,11 +366,18 @@ class _TabMapState extends ConsumerState<TabMap> {
     final bizOrders = state.orders.where((o) => o.businessId == biz.id).length;
 
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.2), width: 2),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -369,31 +386,39 @@ class _TabMapState extends ConsumerState<TabMap> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: AppTheme.lightGreenBg, borderRadius: BorderRadius.circular(8)),
-                child: const Text("ACTIVE HUB", style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.w900, fontSize: 9)),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(color: AppTheme.lightGreenBg, borderRadius: BorderRadius.circular(6)),
+                child: const Text("VERIFIED HUB", style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.w900, fontSize: 9)),
               ),
-              IconButton(onPressed: () => setState(() => _selectedBusinessId = null), icon: const Icon(Icons.close_rounded, size: 18)),
+              IconButton(
+                onPressed: () => setState(() => _selectedBusinessId = null),
+                icon: const Icon(Icons.close_rounded, size: 16),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
             ],
           ),
+          const SizedBox(height: 12),
+          Text(biz.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
+          const SizedBox(height: 2),
+          Text("${biz.category} • ${biz.location}", style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500)),
           const SizedBox(height: 16),
-          Text(biz.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
-          Text(biz.location, style: const TextStyle(fontSize: 13, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 24),
-          _inspectorStat("Active Volume", "$bizOrders rescues"),
-          _inspectorStat("Hub Performance", "Excellent"),
-          _inspectorStat("Hub Type", "Business Center"),
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          const SizedBox(height: 12),
+          _inspectorStat("Total Rescue Orders", "$bizOrders orders"),
+          _inspectorStat("Average Rating", "${biz.rating.toStringAsFixed(1)} ★"),
+          _inspectorStat("Operating Status", "Online & Open"),
           const Spacer(),
           ElevatedButton(
             onPressed: () {},
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryGreen,
               foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 52),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              minimumSize: const Size(double.infinity, 44),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               elevation: 0,
             ),
-            child: const Text("View Hub Details", style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text("Inspect Full Ledger", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
           ),
         ],
       ),

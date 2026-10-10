@@ -80,7 +80,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                   ? null
                   : BoxDecoration(
                       color: context.cardColor,
-                      borderRadius: BorderRadius.circular(22),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: context.borderColor),
                       boxShadow: context.clientShadow,
                     ),

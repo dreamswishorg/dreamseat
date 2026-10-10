@@ -34,16 +34,30 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Top KPI Stats Row
           LayoutBuilder(
             builder: (context, constraints) {
-              final isCompact = constraints.maxWidth < 1100;
-              return Align(
-                alignment: isCompact ? Alignment.center : Alignment.centerRight,
-                child: _buildStats(orders, state.commissionRate, isCompact, constraints.maxWidth),
+              final isNarrow = constraints.maxWidth < 750;
+              final gross = orders.fold(0.0, (s, o) => s + o.price);
+              final pending = orders.where((o) => o.payoutStatus == 'pending').fold(0.0, (s, o) => s + (o.price * (1 - state.commissionRate)));
+              final settled = orders.where((o) => o.payoutStatus == 'paid').fold(0.0, (s, o) => s + (o.price * (1 - state.commissionRate)));
+
+              return GridView.count(
+                crossAxisCount: isNarrow ? 1 : 3,
+                crossAxisSpacing: 14,
+                mainAxisSpacing: 12,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                childAspectRatio: isNarrow ? 3.4 : 2.6,
+                children: [
+                  _statCard("TOTAL GROSS VOLUME", "GHS ${gross.toStringAsFixed(2)}", Icons.payments_outlined, const Color(0xFF2563EB)),
+                  _statCard("PENDING DISPERSAL", "GHS ${pending.toStringAsFixed(2)}", Icons.pending_actions_rounded, AppTheme.warningOrange),
+                  _statCard("SETTLED PAYOUTS", "GHS ${settled.toStringAsFixed(2)}", Icons.check_circle_outline_rounded, AppTheme.primaryGreen),
+                ],
               );
             },
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
           // Toolbar
           LayoutBuilder(
@@ -56,25 +70,21 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
                     children: [
                       Expanded(
                         child: Container(
-                          height: 48,
+                          height: 44,
                           decoration: BoxDecoration(
-                            color: context.cardColor,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: context.borderColor),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
                           ),
                           child: TextField(
                             onChanged: (v) => setState(() => _query = v),
-                            style: TextStyle(
-                              fontSize: 13.5,
-                              color: context.textPrimary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            decoration: InputDecoration(
+                            style: const TextStyle(fontSize: 13, color: AppTheme.charcoal, fontWeight: FontWeight.w500),
+                            decoration: const InputDecoration(
                               hintText: "Search Transaction ID, Merchant...",
-                              hintStyle: TextStyle(fontSize: 13, color: context.textSecondary),
-                              prefixIcon: Icon(Icons.search_rounded, size: 18, color: context.textSecondary),
+                              hintStyle: TextStyle(fontSize: 12.5, color: AppTheme.mutedGrey),
+                              prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppTheme.mutedGrey),
                               border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                              contentPadding: EdgeInsets.symmetric(vertical: 11),
                             ),
                           ),
                         ),
@@ -82,40 +92,39 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
                       const SizedBox(width: 12),
                       ElevatedButton.icon(
                         onPressed: () => _exportLedger(orders, state.commissionRate),
-                        icon: const Icon(Icons.download_rounded, size: 16),
-                        label: Text(
-                          isCompact ? "CSV" : "Export CSV",
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
+                        icon: const Icon(Icons.download_rounded, size: 15),
+                        label: Text(isCompact ? "CSV" : "Export CSV", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryGreen,
                           foregroundColor: Colors.white,
-                          minimumSize: Size(isCompact ? 70 : 120, 48),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           elevation: 0,
                         ),
                       ),
                       if (!isCompact) ...[
-                        const SizedBox(width: 14),
+                        const SizedBox(width: 12),
                         _buildViewToggle(fullWidth: false),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: 12),
                         _buildPayoutFilter(orders, fullWidth: false),
                       ],
                     ],
                   ),
                   if (isCompact) ...[
-                    const SizedBox(height: 12),
-                    // Distinct, dedicated full-width segmented rows so they NEVER collide or merge!
-                    _buildViewToggle(fullWidth: true),
                     const SizedBox(height: 10),
-                    _buildPayoutFilter(orders, fullWidth: true),
+                    Row(
+                      children: [
+                        Expanded(child: _buildViewToggle(fullWidth: false)),
+                        const SizedBox(width: 10),
+                        Expanded(child: _buildPayoutFilter(orders, fullWidth: false)),
+                      ],
+                    ),
                   ],
                 ],
               );
             },
           ),
-
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
           Expanded(
             child: _groupByMerchant
@@ -148,53 +157,43 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
     }
   }
 
-  Widget _buildStats(List<Order> orders, double rate, bool fullWidth, double maxWidth) {
-    final pending = orders.where((o) => o.payoutStatus == 'pending').fold(0.0, (s, o) => s + (o.price * (1 - rate)));
-    final settled = orders.where((o) => o.payoutStatus == 'paid').fold(0.0, (s, o) => s + (o.price * (1 - rate)));
-
+  Widget _statCard(String label, String value, IconData icon, Color color) {
     return Container(
-      constraints: fullWidth ? BoxConstraints(maxWidth: maxWidth) : null,
-      child: Row(
-        mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
-        children: [
-          if (fullWidth)
-            Expanded(child: _statBox("PENDING DISPERSAL", "GHS ${pending.toStringAsFixed(2)}", AppTheme.warningOrange))
-          else
-            _statBox("PENDING DISPERSAL", "GHS ${pending.toStringAsFixed(2)}", AppTheme.warningOrange),
-          const SizedBox(width: 16),
-          if (fullWidth)
-            Expanded(child: _statBox("TOTAL SETTLED", "GHS ${settled.toStringAsFixed(2)}", AppTheme.primaryGreen))
-          else
-            _statBox("TOTAL SETTLED", "GHS ${settled.toStringAsFixed(2)}", AppTheme.primaryGreen),
-        ],
-      ),
-    );
-  }
-
-  Widget _statBox(String label, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: context.isDark ? 0.15 : 0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: context.isDark ? 0.25 : 0.1), width: 1.5),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
+      child: Row(
         children: [
-          Text(
-            label,
-            style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: color, letterSpacing: 0.5),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 20),
           ),
-          const SizedBox(height: 4),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerRight,
-            child: Text(
-              value,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: context.textPrimary),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8), letterSpacing: 0.6),
+                ),
+                const SizedBox(height: 2),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    value,
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.4),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
