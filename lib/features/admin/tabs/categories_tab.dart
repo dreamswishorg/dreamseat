@@ -333,8 +333,10 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
       return c.name.toLowerCase().contains(_searchQuery.toLowerCase());
     }).toList();
 
+    final isMobile = MediaQuery.of(context).size.width < 650;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(32, 20, 32, 24),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 32, vertical: isMobile ? 16 : 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -342,18 +344,23 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Category Catalog & Imagery',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.3),
+              Expanded(
+                child: Text(
+                  'Category Catalog & Imagery',
+                  style: TextStyle(fontSize: isMobile ? 15 : 17, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.3),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
+              const SizedBox(width: 8),
               ElevatedButton.icon(
                 onPressed: () => _showAddEditCategoryDialog(),
                 icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Add Category', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                label: Text(isMobile ? 'Add' : 'Add Category', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryGreen,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 16, vertical: isMobile ? 10 : 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
@@ -362,32 +369,56 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
           ),
           const SizedBox(height: 18),
 
-            // Metrics Row
-            Row(
-              children: [
+          // Responsive Metrics KPI Row/Column
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 650;
+              final statCards = [
                 _buildStatCard(
                   title: 'Total Categories',
                   value: '${categories.length}',
                   icon: Icons.category_rounded,
                   color: AppTheme.primaryGreen,
+                  isCompact: isNarrow,
                 ),
-                const SizedBox(width: 16),
                 _buildStatCard(
                   title: 'Live Rescue Deals',
                   value: '${deals.length}',
                   icon: Icons.inventory_2_rounded,
                   color: const Color(0xFF2563EB),
+                  isCompact: isNarrow,
                 ),
-                const SizedBox(width: 16),
                 _buildStatCard(
                   title: 'Preset Food Photos',
                   value: '${_presetImages.length}',
                   icon: Icons.photo_library_rounded,
                   color: const Color(0xFFD97706),
+                  isCompact: isNarrow,
                 ),
-              ],
-            ),
-            const SizedBox(height: 24),
+              ];
+
+              if (isNarrow) {
+                return Column(
+                  children: [
+                    for (int i = 0; i < statCards.length; i++) ...[
+                      if (i > 0) const SizedBox(height: 10),
+                      statCards[i],
+                    ],
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  for (int i = 0; i < statCards.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 16),
+                    Expanded(child: statCards[i]),
+                  ],
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 24),
 
             // Search Bar
             Container(
@@ -583,44 +614,65 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
     required String value,
     required IconData icon,
     required Color color,
+    bool isCompact = false,
   }) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(icon, color: color, size: 24),
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 14 : 18,
+        vertical: isCompact ? 12 : 18,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(isCompact ? 9 : 12),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
+            child: Icon(icon, color: color, size: isCompact ? 20 : 24),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: isCompact ? 11 : 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.mutedGrey,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    value,
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.5),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: isCompact ? 1 : 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: isCompact ? 18 : 22,
+                    fontWeight: FontWeight.w900,
+                    color: AppTheme.charcoal,
+                    letterSpacing: -0.5,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

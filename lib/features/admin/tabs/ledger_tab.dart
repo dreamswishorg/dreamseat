@@ -6,6 +6,7 @@ import '../../../core/web_utils.dart';
 import '../../../models/models.dart';
 import '../../../providers/app_state.dart';
 import '../widgets/admin_components.dart';
+import '../admin_providers.dart';
 
 class TabLedger extends ConsumerStatefulWidget {
   const TabLedger({super.key});
@@ -14,9 +15,26 @@ class TabLedger extends ConsumerStatefulWidget {
 }
 
 class _TabLedgerState extends ConsumerState<TabLedger> {
+  final TextEditingController _searchController = TextEditingController();
   String _query = '';
   String _filter = 'All';
   bool _groupByMerchant = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final prefill = ref.read(adminLedgerSearchProvider);
+    if (prefill.isNotEmpty) {
+      _query = prefill;
+      _searchController.text = prefill;
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +52,7 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top KPI Stats Row
+          // Compact Metrics Strip
           LayoutBuilder(
             builder: (context, constraints) {
               final isNarrow = constraints.maxWidth < 750;
@@ -42,89 +60,77 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
               final pending = orders.where((o) => o.payoutStatus == 'pending').fold(0.0, (s, o) => s + (o.price * (1 - state.commissionRate)));
               final settled = orders.where((o) => o.payoutStatus == 'paid').fold(0.0, (s, o) => s + (o.price * (1 - state.commissionRate)));
 
-              return GridView.count(
-                crossAxisCount: isNarrow ? 1 : 3,
-                crossAxisSpacing: 14,
-                mainAxisSpacing: 12,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                childAspectRatio: isNarrow ? 3.4 : 2.6,
-                children: [
-                  _statCard("TOTAL GROSS VOLUME", "GHS ${gross.toStringAsFixed(2)}", Icons.payments_outlined, const Color(0xFF2563EB)),
-                  _statCard("PENDING DISPERSAL", "GHS ${pending.toStringAsFixed(2)}", Icons.pending_actions_rounded, AppTheme.warningOrange),
-                  _statCard("SETTLED PAYOUTS", "GHS ${settled.toStringAsFixed(2)}", Icons.check_circle_outline_rounded, AppTheme.primaryGreen),
-                ],
-              );
+              return _buildKpiBar(gross, pending, settled, isNarrow);
             },
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
 
-          // Toolbar
+          // Streamlined Unified Toolbar
           LayoutBuilder(
             builder: (context, constraints) {
-              final isCompact = constraints.maxWidth < 900;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                          ),
-                          child: TextField(
-                            onChanged: (v) => setState(() => _query = v),
-                            style: const TextStyle(fontSize: 13, color: AppTheme.charcoal, fontWeight: FontWeight.w500),
-                            decoration: const InputDecoration(
-                              hintText: "Search Transaction ID, Merchant...",
-                              hintStyle: TextStyle(fontSize: 12.5, color: AppTheme.mutedGrey),
-                              prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppTheme.mutedGrey),
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 11),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      ElevatedButton.icon(
-                        onPressed: () => _exportLedger(orders, state.commissionRate),
-                        icon: const Icon(Icons.download_rounded, size: 15),
-                        label: Text(isCompact ? "CSV" : "Export CSV", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryGreen,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          elevation: 0,
-                        ),
-                      ),
-                      if (!isCompact) ...[
-                        const SizedBox(width: 12),
-                        _buildViewToggle(fullWidth: false),
-                        const SizedBox(width: 12),
-                        _buildPayoutFilter(orders, fullWidth: false),
-                      ],
-                    ],
-                  ),
-                  if (isCompact) ...[
-                    const SizedBox(height: 10),
+              final isCompact = constraints.maxWidth < 850;
+              if (isCompact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                     Row(
                       children: [
-                        Expanded(child: _buildViewToggle(fullWidth: false)),
-                        const SizedBox(width: 10),
-                        Expanded(child: _buildPayoutFilter(orders, fullWidth: false)),
+                        Expanded(child: _buildSearchBox()),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: () => _exportLedger(orders, state.commissionRate),
+                          icon: const Icon(Icons.download_rounded, size: 18),
+                          tooltip: "Export CSV",
+                          style: IconButton.styleFrom(
+                            backgroundColor: AppTheme.primaryGreen,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.all(10),
+                          ),
+                        ),
                       ],
                     ),
+                    const SizedBox(height: 8),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      child: Row(
+                        children: [
+                          _buildViewToggle(),
+                          const SizedBox(width: 8),
+                          _buildPayoutFilter(orders),
+                        ],
+                      ),
+                    ),
                   ],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(child: _buildSearchBox()),
+                  const SizedBox(width: 10),
+                  _buildViewToggle(),
+                  const SizedBox(width: 10),
+                  _buildPayoutFilter(orders),
+                  const SizedBox(width: 10),
+                  ElevatedButton.icon(
+                    onPressed: () => _exportLedger(orders, state.commissionRate),
+                    icon: const Icon(Icons.download_rounded, size: 15),
+                    label: const Text("Export CSV", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      elevation: 0,
+                    ),
+                  ),
                 ],
               );
             },
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
 
           Expanded(
             child: _groupByMerchant
@@ -157,44 +163,117 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
     }
   }
 
-  Widget _statCard(String label, String value, IconData icon, Color color) {
+  Widget _buildSearchBox() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      height: 40,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (v) {
+          setState(() => _query = v);
+          if (v.isEmpty) {
+            ref.read(adminLedgerSearchProvider.notifier).state = '';
+          }
+        },
+        style: const TextStyle(fontSize: 12.5, color: AppTheme.charcoal, fontWeight: FontWeight.w500),
+        decoration: InputDecoration(
+          hintText: "Search Transaction ID, Merchant...",
+          hintStyle: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
+          prefixIcon: const Icon(Icons.search_rounded, size: 17, color: AppTheme.mutedGrey),
+          suffixIcon: _query.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear_rounded, size: 16, color: AppTheme.mutedGrey),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() => _query = '');
+                    ref.read(adminLedgerSearchProvider.notifier).state = '';
+                  },
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKpiBar(double gross, double pending, double settled, bool isNarrow) {
+    final chips = [
+      _statChip("TOTAL GROSS", "GHS ${gross.toStringAsFixed(2)}", Icons.payments_outlined, const Color(0xFF2563EB)),
+      _statChip("PENDING PAYOUT", "GHS ${pending.toStringAsFixed(2)}", Icons.pending_actions_rounded, AppTheme.warningOrange),
+      _statChip("SETTLED PAYOUTS", "GHS ${settled.toStringAsFixed(2)}", Icons.check_circle_outline_rounded, AppTheme.primaryGreen),
+    ];
+
+    if (isNarrow) {
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          children: [
+            for (int i = 0; i < chips.length; i++) ...[
+              if (i > 0) const SizedBox(width: 8),
+              chips[i],
+            ],
+          ],
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        for (int i = 0; i < chips.length; i++) ...[
+          if (i > 0) const SizedBox(width: 10),
+          Expanded(child: chips[i]),
+        ],
+      ],
+    );
+  }
+
+  Widget _statChip(String label, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(7),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: Icon(icon, color: color, size: 16),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8), letterSpacing: 0.6),
-                ),
-                const SizedBox(height: 2),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    value,
-                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.4),
-                  ),
-                ),
-              ],
-            ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8), letterSpacing: 0.5),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                value,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.3),
+              ),
+            ],
           ),
         ],
       ),
@@ -203,10 +282,10 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
 
   Widget _buildViewToggle({bool fullWidth = false}) {
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: context.cardSubtleColor,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(11),
         border: Border.all(color: context.borderSubtleColor),
       ),
       child: Row(
@@ -223,11 +302,11 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
     final btn = GestureDetector(
       onTap: () => setState(() => _groupByMerchant = label == "Merchants"),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
         decoration: BoxDecoration(
           color: sel ? context.cardColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           boxShadow: sel && !context.isDark
               ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)]
               : [],
@@ -235,12 +314,12 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: sel ? AppTheme.primaryGreen : context.textSecondary),
-            const SizedBox(width: 8),
+            Icon(icon, size: 14, color: sel ? AppTheme.primaryGreen : context.textSecondary),
+            const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11.5,
                 fontWeight: FontWeight.bold,
                 color: sel ? AppTheme.primaryGreen : context.textSecondary,
               ),
@@ -264,10 +343,10 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
     };
 
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: context.cardSubtleColor,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(11),
         border: Border.all(color: context.borderSubtleColor),
       ),
       child: Row(
@@ -278,11 +357,11 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
           final btn = GestureDetector(
             onTap: () => setState(() => _filter = f),
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              duration: const Duration(milliseconds: 180),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
               decoration: BoxDecoration(
                 color: sel ? context.cardColor : Colors.transparent,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
                 boxShadow: sel && !context.isDark
                     ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)]
                     : [],
@@ -294,24 +373,24 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
                   Text(
                     f,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11.5,
                       fontWeight: FontWeight.bold,
                       color: sel ? AppTheme.primaryGreen : context.textSecondary,
                     ),
                   ),
-                  const SizedBox(width: 5),
+                  const SizedBox(width: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                     decoration: BoxDecoration(
                       color: sel
                           ? AppTheme.primaryGreen.withValues(alpha: 0.15)
                           : context.textSecondary.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       "$count",
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 9.5,
                         fontWeight: FontWeight.w800,
                         color: sel ? AppTheme.primaryGreen : context.textSecondary,
                       ),

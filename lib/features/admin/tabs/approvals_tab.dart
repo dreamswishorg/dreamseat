@@ -183,36 +183,6 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
   }
 
   void _showVault(BuildContext context, BusinessProfile b) {
-    final state = ref.read(appStateProvider);
-    final kycLogs = state.auditLogs.where((log) => 
-      log.action == 'KYC_UPLOAD' && 
-      log.entityId == b.id
-    ).toList();
-
-    String getDocSub(String title, String defaultSub) {
-      final log = kycLogs.firstWhere(
-        (l) => l.metadata['document_title']?.toString().toLowerCase().contains(title.toLowerCase()) ?? false,
-        orElse: () => AuditLog(id: '', actorId: '', actorName: '', actorRole: '', action: '', entityType: '', entityId: '', description: '', metadata: {}, createdAt: DateTime.now())
-      );
-      if (log.id.isNotEmpty) {
-        final refNum = log.metadata['reference_number'] ?? 'Uploaded';
-        return "Ref: $refNum";
-      }
-      return defaultSub;
-    }
-
-    String? getDocUrl(String title) {
-      final log = kycLogs.firstWhere(
-        (l) => l.metadata['document_title']?.toString().toLowerCase().contains(title.toLowerCase()) ?? false,
-        orElse: () => AuditLog(id: '', actorId: '', actorName: '', actorRole: '', action: '', entityType: '', entityId: '', description: '', metadata: {}, createdAt: DateTime.now())
-      );
-      return log.id.isNotEmpty ? log.metadata['file_url']?.toString() : null;
-    }
-
-    final bizUrl = getDocUrl("business");
-    final healthUrl = getDocUrl("health");
-    final taxUrl = getDocUrl("vat");
-
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
@@ -222,141 +192,187 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
           width: 850,
           constraints: const BoxConstraints(maxHeight: 720),
           padding: const EdgeInsets.all(28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryGreen.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.verified_user_rounded, color: AppTheme.primaryGreen, size: 24),
-                      ),
-                      const SizedBox(width: 14),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("KYC Compliance Vault", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
-                          Text("Verification documents for ${b.name} (${b.category})", style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 13)),
-                        ],
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    icon: const Icon(Icons.close_rounded),
-                    style: IconButton.styleFrom(backgroundColor: const Color(0xFFF1F5F9)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Status Summary Strip
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.location_on_outlined, size: 16, color: AppTheme.mutedGrey),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        b.location,
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.charcoal),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: b.isApproved ? AppTheme.primaryGreen.withValues(alpha: 0.1) : Colors.amber.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        b.isApproved ? "✅ VERIFIED & APPROVED" : "⌛ PENDING APPROVAL",
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w900,
-                          color: b.isApproved ? AppTheme.primaryGreen : const Color(0xFFB45309),
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Document Cards Grid
-              Expanded(
-                child: SingleChildScrollView(
+          child: FutureBuilder<Map<String, MerchantDocument>>(
+            future: ref.read(appStateProvider.notifier).fetchMerchantDocuments(b.id),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SizedBox(
+                  height: 350,
                   child: Center(
-                    child: Wrap(
-                      spacing: 16,
-                      runSpacing: 16,
-                      alignment: WrapAlignment.center,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _KycDocVaultCard(
-                          title: "Business Registration",
-                          sub: getDocSub("business", "Verified GH-2024-882"),
-                          fileUrl: bizUrl,
-                          business: b,
-                          icon: Icons.business_center_rounded,
-                          onInspect: () => _viewDocument(context, "Business Registration", bizUrl, b),
-                        ),
-                        _KycDocVaultCard(
-                          title: "Health & Safety Permit",
-                          sub: getDocSub("health", "Valid: Oct 2025"),
-                          fileUrl: healthUrl,
-                          business: b,
-                          icon: Icons.health_and_safety_rounded,
-                          onInspect: () => _viewDocument(context, "Health & Safety Certificate", healthUrl, b),
-                        ),
-                        _KycDocVaultCard(
-                          title: "VAT / Tax Certificate",
-                          sub: getDocSub("vat", "GRA Compliant"),
-                          fileUrl: taxUrl,
-                          business: b,
-                          icon: Icons.account_balance_wallet_rounded,
-                          onInspect: () => _viewDocument(context, "VAT Registration", taxUrl, b),
+                        CircularProgressIndicator(color: AppTheme.primaryGreen),
+                        SizedBox(height: 16),
+                        Text(
+                          "Accessing KYC Compliance Vault...",
+                          style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.mutedGrey, fontSize: 13),
                         ),
                       ],
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
+                );
+              }
 
-              // Bottom Actions
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              final docs = snapshot.data ?? {};
+              final bizDoc = docs[MerchantDocument.businessRegistration];
+              final healthDoc = docs[MerchantDocument.healthCertificate];
+              final taxDoc = docs[MerchantDocument.taxClearance];
+
+              final bizUrl = bizDoc != null && bizDoc.fileUrl.isNotEmpty ? bizDoc.fileUrl : null;
+              final healthUrl = healthDoc != null && healthDoc.fileUrl.isNotEmpty ? healthDoc.fileUrl : null;
+              final taxUrl = taxDoc != null && taxDoc.fileUrl.isNotEmpty ? taxDoc.fileUrl : null;
+
+              String formatSub(MerchantDocument? doc) {
+                if (doc != null && doc.referenceNumber.isNotEmpty) {
+                  return "Ref: ${doc.referenceNumber}";
+                }
+                if (doc != null && doc.isUploaded) {
+                  return "Document Photo Attached";
+                }
+                return "Not Uploaded Yet";
+              }
+
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.charcoal,
-                      side: const BorderSide(color: Color(0xFFCBD5E1)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryGreen.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.verified_user_rounded, color: AppTheme.primaryGreen, size: 24),
+                          ),
+                          const SizedBox(width: 14),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text("KYC Compliance Vault", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
+                              Text("Verification documents for ${b.name} (${b.category})", style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 13)),
+                            ],
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        icon: const Icon(Icons.close_rounded),
+                        style: IconButton.styleFrom(backgroundColor: const Color(0xFFF1F5F9)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Status Summary Strip
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
                     ),
-                    child: const Text("Close Vault", style: TextStyle(fontWeight: FontWeight.w700)),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined, size: 16, color: AppTheme.mutedGrey),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            b.location,
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.charcoal),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: b.isApproved ? AppTheme.primaryGreen.withValues(alpha: 0.1) : Colors.amber.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            b.isApproved ? "✅ VERIFIED & APPROVED" : "⌛ PENDING APPROVAL",
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w900,
+                              color: b.isApproved ? AppTheme.primaryGreen : const Color(0xFFB45309),
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Document Cards Grid
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Center(
+                        child: Wrap(
+                          spacing: 16,
+                          runSpacing: 16,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            _KycDocVaultCard(
+                              title: "Business Registration",
+                              sub: formatSub(bizDoc),
+                              fileUrl: bizUrl,
+                              business: b,
+                              isUploaded: bizDoc?.isUploaded ?? false,
+                              icon: Icons.business_center_rounded,
+                              onInspect: () => _viewDocument(context, "Business Registration", bizUrl, b),
+                            ),
+                            _KycDocVaultCard(
+                              title: "Health & Safety Permit",
+                              sub: formatSub(healthDoc),
+                              fileUrl: healthUrl,
+                              business: b,
+                              isUploaded: healthDoc?.isUploaded ?? false,
+                              icon: Icons.health_and_safety_rounded,
+                              onInspect: () => _viewDocument(context, "Health & Safety Certificate", healthUrl, b),
+                            ),
+                            _KycDocVaultCard(
+                              title: "VAT / Tax Certificate",
+                              sub: formatSub(taxDoc),
+                              fileUrl: taxUrl,
+                              business: b,
+                              isUploaded: taxDoc?.isUploaded ?? false,
+                              icon: Icons.account_balance_wallet_rounded,
+                              onInspect: () => _viewDocument(context, "VAT Registration", taxUrl, b),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Bottom Actions
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.charcoal,
+                          side: const BorderSide(color: Color(0xFFCBD5E1)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                        ),
+                        child: const Text("Close Vault", style: TextStyle(fontWeight: FontWeight.w700)),
+                      ),
+                    ],
                   ),
                 ],
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),
@@ -447,7 +463,35 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
                               );
                             },
                           )
-                        : _buildSimulatedCertificate(business, title),
+                        : Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFD97706).withValues(alpha: 0.12),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.file_upload_outlined, color: Color(0xFFD97706), size: 48),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  const Text(
+                                    "No Photo Attachment Uploaded",
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.charcoal),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    "${business.name} has not submitted a photograph or file attachment for $title yet.",
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(fontSize: 13, color: AppTheme.mutedGrey),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                   ),
                 ),
               ),
@@ -457,7 +501,7 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    if (fileUrl != null)
+                    if (fileUrl != null && fileUrl.isNotEmpty)
                       TextButton.icon(
                         icon: const Icon(Icons.open_in_new_rounded, color: AppTheme.primaryGreen, size: 16),
                         label: const Text("Open Original Url", style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
@@ -486,101 +530,6 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
       ),
     );
   }
-
-  Widget _buildSimulatedCertificate(BusinessProfile business, String title) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFCFBF7),
-        border: Border.all(color: const Color(0xFFD4AF37), width: 6),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            children: [
-              const Icon(Icons.workspace_premium_rounded, color: Color(0xFFD4AF37), size: 48),
-              const SizedBox(height: 12),
-              Text(
-                title.toUpperCase(),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF1E293B),
-                  letterSpacing: 1,
-                ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                "REPUBLIC OF GHANA",
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.mutedGrey,
-                  letterSpacing: 1.5,
-                ),
-              ),
-            ],
-          ),
-          Column(
-            children: [
-              const Text(
-                "This certifies that the business profile",
-                style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: AppTheme.charcoal),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                business.name,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.charcoal,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                "located at ${business.location} is officially registered and compliant with standard operating procedures.",
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey),
-              ),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("REFERENCE", style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey)),
-                  Text("GH-9982-2026", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.charcoal)),
-                ],
-              ),
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFFD4AF37).withValues(alpha: 0.15),
-                  border: Border.all(color: const Color(0xFFD4AF37), width: 2),
-                ),
-                child: const Center(
-                  child: Icon(Icons.verified_rounded, color: Color(0xFFD4AF37), size: 28),
-                ),
-              ),
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text("STATUS", style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey)),
-                  Text("VALID & VERIFIED", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _KycDocVaultCard extends StatelessWidget {
@@ -589,6 +538,7 @@ class _KycDocVaultCard extends StatelessWidget {
   final String? fileUrl;
   final BusinessProfile business;
   final IconData icon;
+  final bool isUploaded;
   final VoidCallback onInspect;
 
   const _KycDocVaultCard({
@@ -597,6 +547,7 @@ class _KycDocVaultCard extends StatelessWidget {
     required this.fileUrl,
     required this.business,
     required this.icon,
+    this.isUploaded = false,
     required this.onInspect,
   });
 
@@ -681,23 +632,38 @@ class _KycDocVaultCard extends StatelessWidget {
                       ),
                     )
                   else
-                    // Fallback Official Certificate Mockup Thumbnail
+                    // Unuploaded State Placeholder
                     Container(
-                      padding: const EdgeInsets.all(12),
-                      color: const Color(0xFFFCFBF7),
+                      padding: const EdgeInsets.all(14),
+                      color: const Color(0xFFF8FAFC),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.workspace_premium_rounded, color: Color(0xFFD4AF37), size: 28),
-                          const SizedBox(height: 4),
-                          Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF1E293B)), maxLines: 1, overflow: TextOverflow.ellipsis),
-                          const SizedBox(height: 2),
-                          const Text("REPUBLIC OF GHANA", style: TextStyle(fontSize: 7.5, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey, letterSpacing: 1)),
-                          const SizedBox(height: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(color: AppTheme.primaryGreen.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
-                            child: const Text("VERIFIED SEAL", style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFD97706).withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.file_upload_outlined, color: Color(0xFFD97706), size: 28),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            title,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppTheme.charcoal),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            "NO ATTACHMENT YET",
+                            style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: Color(0xFFD97706), letterSpacing: 0.5),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            "Pending merchant upload",
+                            style: TextStyle(fontSize: 9.5, color: AppTheme.mutedGrey),
                           ),
                         ],
                       ),
@@ -718,25 +684,36 @@ class _KycDocVaultCard extends StatelessWidget {
                         children: [
                           Icon(Icons.zoom_in_rounded, size: 12, color: Colors.white),
                           SizedBox(width: 4),
-                          Text("Tap to Zoom", style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w700)),
+                          Text("Tap to View", style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w700)),
                         ],
                       ),
                     ),
                   ),
 
-                  // Badge top-left: Live Upload vs Verified Record
+                  // Badge top-left
                   Positioned(
                     top: 8,
                     left: 8,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                       decoration: BoxDecoration(
-                        color: hasUploadedImage ? AppTheme.primaryGreen : Colors.blue.shade700,
+                        color: hasUploadedImage ? AppTheme.primaryGreen : const Color(0xFFD97706),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Text(
-                        hasUploadedImage ? "LIVE UPLOAD" : "COMPLIANCE RECORD",
-                        style: const TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            hasUploadedImage ? Icons.check_circle_rounded : Icons.hourglass_empty_rounded,
+                            size: 10,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            hasUploadedImage ? "PHOTO ATTACHMENT" : "NOT UPLOADED",
+                            style: const TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.w900, letterSpacing: 0.3),
+                          ),
+                        ],
                       ),
                     ),
                   ),

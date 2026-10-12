@@ -15,6 +15,7 @@ class TabAnalytics extends ConsumerStatefulWidget {
 
 class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
   int _timeRangeIndex = 1; // 0: Today, 1: 7 Days, 2: 30 Days, 3: All Time
+  bool _useBarChart = false;
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +99,10 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
       // All Time: 6 monthly intervals
       for (int i = 0; i < 6; i++) {
         final monthDate = DateTime(now.year, now.month - (5 - i), 1);
-        dayLabels.add(DateFormat('MMM').format(monthDate));
+        final label = monthDate.year == now.year
+            ? DateFormat('MMM').format(monthDate)
+            : DateFormat("MMM ''yy").format(monthDate);
+        dayLabels.add(label);
         final monthOrders = allCollected.where((o) => o.timestamp.year == monthDate.year && o.timestamp.month == monthDate.month);
         final sum = monthOrders.fold(0.0, (s, o) => s + o.price);
         spots.add(FlSpot(i.toDouble(), sum));
@@ -196,121 +200,63 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _useBarChart ? "Revenue Volume Distribution" : "Revenue Growth Velocity",
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.charcoal),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _useBarChart
+                                ? "Periodic transaction totals across the selected timeline"
+                                : "Total order value trend over the selected period",
+                            style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Row(
                       children: [
-                        const Text(
-                          "Revenue Growth Velocity",
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.charcoal),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppTheme.lightGreenBg,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            "GHS ${totalRevenue.toStringAsFixed(2)} Total",
+                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppTheme.primaryGreen),
+                          ),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          "Total order value trend over the selected period",
-                          style: TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _miniChartTypeBtn(Icons.show_chart_rounded, !_useBarChart, () => setState(() => _useBarChart = false), "Line Chart"),
+                              _miniChartTypeBtn(Icons.bar_chart_rounded, _useBarChart, () => setState(() => _useBarChart = true), "Bar Chart"),
+                            ],
+                          ),
                         ),
                       ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppTheme.lightGreenBg,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        "GHS ${totalRevenue.toStringAsFixed(2)} Total",
-                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppTheme.primaryGreen),
-                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
                   height: 220,
-                  child: LineChart(
-                    LineChartData(
-                      lineTouchData: LineTouchData(
-                        touchTooltipData: LineTouchTooltipData(
-                          getTooltipItems: (touchedSpots) {
-                            return touchedSpots.map((spot) {
-                              final idx = spot.x.toInt();
-                              final label = (idx >= 0 && idx < dayLabels.length) ? dayLabels[idx] : '';
-                              return LineTooltipItem(
-                                '$label\nGH₵ ${spot.y.toStringAsFixed(2)}',
-                                const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
-                              );
-                            }).toList();
-                          },
-                        ),
-                      ),
-                      minY: 0,
-                      maxY: spots.fold<double>(0.0, (p, s) => s.y > p ? s.y : p) == 0 ? 100 : (spots.fold<double>(0.0, (p, s) => s.y > p ? s.y : p) * 1.25),
-                      gridData: FlGridData(
-                        show: true,
-                        drawVerticalLine: false,
-                        getDrawingHorizontalLine: (v) => const FlLine(color: Color(0xFFF1F5F9), strokeWidth: 1),
-                      ),
-                      titlesData: FlTitlesData(
-                        leftTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 48,
-                            getTitlesWidget: (val, meta) {
-                              if (val == 0) return const SizedBox.shrink();
-                              if (val >= 1000) {
-                                return Text(
-                                  '${(val / 1000).toStringAsFixed(1)}k',
-                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
-                                );
-                              }
-                              return Text(
-                                val.toInt().toString(),
-                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
-                              );
-                            },
-                          ),
-                        ),
-                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                        bottomTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            getTitlesWidget: (val, meta) {
-                              final idx = val.toInt();
-                              if (idx >= 0 && idx < dayLabels.length) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(top: 10),
-                                  child: Text(dayLabels[idx], style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey)),
-                                );
-                              }
-                              return const SizedBox.shrink();
-                            },
-                          ),
-                        ),
-                      ),
-                      borderData: FlBorderData(show: false),
-                      lineBarsData: [
-                        LineChartBarData(
-                          spots: spots.isEmpty ? [const FlSpot(0, 0), const FlSpot(6, 0)] : spots,
-                          isCurved: true,
-                          color: AppTheme.primaryGreen,
-                          barWidth: 3,
-                          isStrokeCapRound: true,
-                          belowBarData: BarAreaData(
-                            show: true,
-                            gradient: LinearGradient(
-                              colors: [
-                                AppTheme.primaryGreen.withValues(alpha: 0.18),
-                                AppTheme.primaryGreen.withValues(alpha: 0.0),
-                              ],
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                            ),
-                          ),
-                          dotData: const FlDotData(show: false),
-                        ),
-                      ],
-                    ),
-                  ),
+                  child: _useBarChart
+                      ? _buildBarChart(spots, dayLabels, isMobile)
+                      : _buildLineChart(spots, dayLabels),
                 ),
               ],
             ),
@@ -526,7 +472,14 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
         children: List.generate(options.length, (i) {
           final isSelected = _timeRangeIndex == i;
           return GestureDetector(
-            onTap: () => setState(() => _timeRangeIndex = i),
+            onTap: () {
+              setState(() {
+                _timeRangeIndex = i;
+                if (i == 3) {
+                  _useBarChart = true; // Auto-switch to Bar Chart for All Time so data is never compressed!
+                }
+              });
+            },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -545,6 +498,216 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
                 ),
               ),
             ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _miniChartTypeBtn(IconData icon, bool selected, VoidCallback onTap, String tooltip) {
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+          decoration: BoxDecoration(
+            color: selected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(6),
+            boxShadow: selected
+                ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4)]
+                : [],
+          ),
+          child: Icon(
+            icon,
+            size: 15,
+            color: selected ? AppTheme.primaryGreen : AppTheme.mutedGrey,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLineChart(List<FlSpot> spots, List<String> dayLabels) {
+    final maxSpotY = spots.fold<double>(0.0, (p, s) => s.y > p ? s.y : p);
+    final maxY = maxSpotY == 0 ? 100.0 : (maxSpotY * 1.25);
+
+    return LineChart(
+      LineChartData(
+        lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipItems: (touchedSpots) {
+              return touchedSpots.map((spot) {
+                final idx = spot.x.toInt();
+                final label = (idx >= 0 && idx < dayLabels.length) ? dayLabels[idx] : '';
+                return LineTooltipItem(
+                  '$label\nGH₵ ${spot.y.toStringAsFixed(2)}',
+                  const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                );
+              }).toList();
+            },
+          ),
+        ),
+        minY: 0,
+        maxY: maxY,
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (v) => const FlLine(color: Color(0xFFF1F5F9), strokeWidth: 1),
+        ),
+        titlesData: FlTitlesData(
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 48,
+              getTitlesWidget: (val, meta) {
+                if (val == 0) return const SizedBox.shrink();
+                if (val >= 1000) {
+                  return Text(
+                    '${(val / 1000).toStringAsFixed(1)}k',
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
+                  );
+                }
+                return Text(
+                  val.toInt().toString(),
+                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
+                );
+              },
+            ),
+          ),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (val, meta) {
+                final idx = val.toInt();
+                if (idx >= 0 && idx < dayLabels.length) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Text(dayLabels[idx], style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey)),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+        ),
+        borderData: FlBorderData(show: false),
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots.isEmpty ? [const FlSpot(0, 0), const FlSpot(6, 0)] : spots,
+            isCurved: true,
+            color: AppTheme.primaryGreen,
+            barWidth: 3,
+            isStrokeCapRound: true,
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.primaryGreen.withValues(alpha: 0.18),
+                  AppTheme.primaryGreen.withValues(alpha: 0.0),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+            dotData: const FlDotData(show: false),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBarChart(List<FlSpot> spots, List<String> dayLabels, bool isMobile) {
+    final maxSpotY = spots.fold<double>(0.0, (p, s) => s.y > p ? s.y : p);
+    final maxY = maxSpotY == 0 ? 100.0 : (maxSpotY * 1.25);
+
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        maxY: maxY,
+        minY: 0,
+        barTouchData: BarTouchData(
+          touchTooltipData: BarTouchTooltipData(
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              final idx = group.x.toInt();
+              final label = (idx >= 0 && idx < dayLabels.length) ? dayLabels[idx] : '';
+              return BarTooltipItem(
+                '$label\nGH₵ ${rod.toY.toStringAsFixed(2)}',
+                const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+              );
+            },
+          ),
+        ),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (v) => const FlLine(color: Color(0xFFF1F5F9), strokeWidth: 1),
+        ),
+        titlesData: FlTitlesData(
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 48,
+              getTitlesWidget: (val, meta) {
+                if (val == 0) return const SizedBox.shrink();
+                if (val >= 1000) {
+                  return Text(
+                    '${(val / 1000).toStringAsFixed(1)}k',
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
+                  );
+                }
+                return Text(
+                  val.toInt().toString(),
+                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
+                );
+              },
+            ),
+          ),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (val, meta) {
+                final idx = val.toInt();
+                if (idx >= 0 && idx < dayLabels.length) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      dayLabels[idx],
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+        ),
+        borderData: FlBorderData(show: false),
+        barGroups: List.generate(spots.length, (idx) {
+          final val = spots[idx].y;
+          return BarChartGroupData(
+            x: idx,
+            barRods: [
+              BarChartRodData(
+                toY: val,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF10B981), AppTheme.primaryGreen],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                width: isMobile ? 18 : 26,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                backDrawRodData: BackgroundBarChartRodData(
+                  show: true,
+                  toY: maxY,
+                  color: const Color(0xFFF8FAFC),
+                ),
+              ),
+            ],
           );
         }),
       ),

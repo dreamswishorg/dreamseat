@@ -19,6 +19,7 @@ import 'tabs/audit_tab.dart';
 import 'tabs/pulse_tab.dart';
 import 'tabs/support_tab.dart';
 import 'tabs/categories_tab.dart';
+import 'admin_providers.dart';
 import 'widgets/admin_components.dart';
 import 'widgets/admin_sidebar.dart';
 
@@ -30,7 +31,6 @@ class AdminDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
-  int _currentTab = 0;
   final TextEditingController _searchController = TextEditingController();
 
   final Map<int, String> _tabTitles = {
@@ -78,19 +78,19 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     final state = ref.read(appStateProvider);
 
     if (state.businesses.any((b) => b.name.toLowerCase().contains(query.toLowerCase()))) {
-      setState(() => _currentTab = 1);
+      ref.read(adminTabProvider.notifier).state = 1;
       _searchController.clear();
       return;
     }
 
     if (state.users.any((u) => u.name.toLowerCase().contains(query.toLowerCase()) || u.email.toLowerCase().contains(query.toLowerCase()))) {
-      setState(() => _currentTab = 2);
+      ref.read(adminTabProvider.notifier).state = 2;
       _searchController.clear();
       return;
     }
 
     if (state.orders.any((o) => o.id.toLowerCase().contains(query.toLowerCase()))) {
-      setState(() => _currentTab = 3);
+      ref.read(adminTabProvider.notifier).state = 3;
       _searchController.clear();
       return;
     }
@@ -105,6 +105,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     final state = ref.watch(appStateProvider);
     final user = state.currentUser;
     final isSuperAdmin = user?.role == 'super_admin';
+    final currentTab = ref.watch(adminTabProvider);
     
     // Calculate allowed tabs based on permissions
     final allowedTabs = <int>[];
@@ -122,9 +123,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     if (user?.hasPrivilege('pulse') ?? false) allowedTabs.add(11);
     if (user?.hasPrivilege('support') ?? false) allowedTabs.add(12);
 
-    if (allowedTabs.isNotEmpty && !allowedTabs.contains(_currentTab)) {
+    if (allowedTabs.isNotEmpty && !allowedTabs.contains(currentTab)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        setState(() => _currentTab = allowedTabs.first);
+        ref.read(adminTabProvider.notifier).state = allowedTabs.first;
       });
     }
 
@@ -146,11 +147,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 borderRadius: BorderRadius.horizontal(right: Radius.circular(24)),
               ),
               child: AdminSidebar(
-                currentTab: _currentTab,
+                currentTab: currentTab,
                 approvals: pendingApprovals,
                 disputes: openDisputes,
                 onTab: (i) {
-                  setState(() => _currentTab = i);
+                  ref.read(adminTabProvider.notifier).state = i;
                   Navigator.pop(context);
                 },
               ),
@@ -178,7 +179,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      _getTabCategory(_currentTab),
+                      _getTabCategory(currentTab),
                       style: const TextStyle(
                         fontSize: 9.5,
                         fontWeight: FontWeight.w800,
@@ -195,7 +196,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    _tabTitles[_currentTab] ?? "Dashboard",
+                    _tabTitles[currentTab] ?? "Dashboard",
                     style: const TextStyle(
                       fontWeight: FontWeight.w900,
                       color: AppTheme.charcoal,
@@ -275,7 +276,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    _getTabCategory(_currentTab),
+                    _getTabCategory(currentTab),
                     style: const TextStyle(
                       fontSize: 8.5,
                       fontWeight: FontWeight.w800,
@@ -284,7 +285,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                     ),
                   ),
                   Text(
-                    _tabTitles[_currentTab] ?? "Dashboard",
+                    _tabTitles[currentTab] ?? "Dashboard",
                     style: const TextStyle(
                       fontWeight: FontWeight.w900,
                       color: AppTheme.charcoal,
@@ -302,14 +303,14 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               count: pendingApprovals,
               icon: Icons.how_to_reg_rounded,
               color: AppTheme.warningOrange,
-              onTap: () => setState(() => _currentTab = 1),
+              onTap: () => ref.read(adminTabProvider.notifier).state = 1,
             ),
             const SizedBox(width: 8),
             _HeaderAction(
               count: openDisputes,
               icon: Icons.gavel_rounded,
               color: AppTheme.errorRed,
-              onTap: () => setState(() => _currentTab = 4),
+              onTap: () => ref.read(adminTabProvider.notifier).state = 4,
             ),
             const SizedBox(width: 8),
           ],
@@ -585,10 +586,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 ),
               ),
               child: AdminSidebar(
-                currentTab: _currentTab,
+                currentTab: currentTab,
                 approvals: pendingApprovals,
                 disputes: openDisputes,
-                onTab: (i) => setState(() => _currentTab = i),
+                onTab: (i) => ref.read(adminTabProvider.notifier).state = i,
               ),
             ),
           Expanded(
@@ -598,7 +599,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 duration: const Duration(milliseconds: 300),
                 switchInCurve: Curves.easeOutCubic,
                 switchOutCurve: Curves.easeInCubic,
-                    child: _buildCurrentTab(),
+                    child: _buildCurrentTab(currentTab),
               ),
             ),
           ),
@@ -641,8 +642,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   }
 
   // Returns the widget for the currently selected tab.
-  Widget _buildCurrentTab() {
-    switch (_currentTab) {
+  Widget _buildCurrentTab(int currentTab) {
+    switch (currentTab) {
       case 0:
         return const TabAnalytics();
       case 1:

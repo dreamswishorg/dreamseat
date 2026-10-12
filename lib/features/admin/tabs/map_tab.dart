@@ -4,7 +4,10 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/theme.dart';
+import '../../../models/models.dart';
 import '../../../providers/app_state.dart';
+import '../admin_providers.dart';
+import 'package:intl/intl.dart';
 
 class TabMap extends ConsumerStatefulWidget {
   const TabMap({super.key});
@@ -409,8 +412,9 @@ class _TabMapState extends ConsumerState<TabMap> {
           _inspectorStat("Average Rating", "${biz.rating.toStringAsFixed(1)} ★"),
           _inspectorStat("Operating Status", "Online & Open"),
           const Spacer(),
-          ElevatedButton(
-            onPressed: () {},
+          ElevatedButton.icon(
+            onPressed: () => _showMerchantLedgerModal(context, biz, state),
+            icon: const Icon(Icons.receipt_long_rounded, size: 16),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryGreen,
               foregroundColor: Colors.white,
@@ -418,7 +422,7 @@ class _TabMapState extends ConsumerState<TabMap> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               elevation: 0,
             ),
-            child: const Text("Inspect Full Ledger", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+            label: const Text("Inspect Full Ledger", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
           ),
         ],
       ),
@@ -434,6 +438,161 @@ class _TabMapState extends ConsumerState<TabMap> {
           Text(label, style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 13)),
           Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.charcoal)),
         ],
+      ),
+    );
+  }
+
+  void _showMerchantLedgerModal(BuildContext context, BusinessProfile biz, AppState state) {
+    final bizOrders = state.orders.where((o) =>
+      o.businessId == biz.id ||
+      o.businessName.toLowerCase() == biz.name.toLowerCase()
+    ).toList();
+
+    final gross = bizOrders.fold(0.0, (s, o) => s + o.price);
+    final net = gross * (1 - state.commissionRate);
+    final pending = bizOrders.where((o) => o.payoutStatus == 'pending').fold(0.0, (s, o) => s + (o.price * (1 - state.commissionRate)));
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        height: MediaQuery.of(context).size.height * 0.75,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(color: const Color(0xFFCBD5E1), borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(biz.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
+                      const SizedBox(height: 2),
+                      Text("${biz.category} • ${biz.location}", style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey)),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("GROSS VOLUME", style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8))),
+                        const SizedBox(height: 2),
+                        Text("GHS ${gross.toStringAsFixed(2)}", style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF2563EB))),
+                      ],
+                    ),
+                  ),
+                  Container(width: 1, height: 32, color: const Color(0xFFE2E8F0)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("EST. NET PAYOUT", style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8))),
+                        const SizedBox(height: 2),
+                        Text("GHS ${net.toStringAsFixed(2)}", style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen)),
+                      ],
+                    ),
+                  ),
+                  Container(width: 1, height: 32, color: const Color(0xFFE2E8F0)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("PENDING", style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8))),
+                        const SizedBox(height: 2),
+                        Text("GHS ${pending.toStringAsFixed(2)}", style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.warningOrange)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text("Recent Transactions (${bizOrders.length})", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.charcoal)),
+            const SizedBox(height: 10),
+            Expanded(
+              child: bizOrders.isEmpty
+                  ? const Center(
+                      child: Text("No transactions recorded for this hub yet.", style: TextStyle(color: AppTheme.mutedGrey, fontSize: 13)),
+                    )
+                  : ListView.separated(
+                      itemCount: bizOrders.length,
+                      separatorBuilder: (_, _) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                      itemBuilder: (context, i) {
+                        final order = bizOrders[i];
+                        final isPaid = order.payoutStatus == 'paid';
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                          leading: CircleAvatar(
+                            backgroundColor: isPaid ? AppTheme.primaryGreen.withValues(alpha: 0.1) : AppTheme.warningOrange.withValues(alpha: 0.1),
+                            child: Icon(isPaid ? Icons.check_circle_rounded : Icons.pending_rounded, size: 18, color: isPaid ? AppTheme.primaryGreen : AppTheme.warningOrange),
+                          ),
+                          title: Text("Order #${order.id.substring(0, order.id.length > 8 ? 8 : order.id.length)}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          subtitle: Text(DateFormat('d MMM yyyy, HH:mm').format(order.timestamp), style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey)),
+                          trailing: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text("GHS ${order.price.toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: AppTheme.charcoal)),
+                              Text(order.payoutStatus.toUpperCase(), style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: isPaid ? AppTheme.primaryGreen : AppTheme.warningOrange)),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                ref.read(adminLedgerSearchProvider.notifier).state = biz.name;
+                ref.read(adminTabProvider.notifier).state = 3;
+              },
+              icon: const Icon(Icons.open_in_new_rounded, size: 16),
+              label: const Text("Open in Full System Ledger", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryGreen,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 46),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
