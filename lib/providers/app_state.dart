@@ -390,8 +390,19 @@ class AppStateManager extends Notifier<AppState> {
       });
 
       _ordersSub = _supa.subscribeToOrders(_supa.currentUserId!, profile.role, (updatedOrders) {
-        state = state.copyWith(orders: updatedOrders);
+        SustainabilityStats customerStats = state.customerStats;
+        if (profile.role == 'customer') {
+          customerStats = SustainabilityStats.zero();
+          for (final o in updatedOrders) {
+            if (o.status != 'cancelled') {
+              final savings = o.originalPrice - o.price;
+              customerStats = customerStats.addMeal(savings > 0 ? savings : 0, o.price);
+            }
+          }
+        }
+        state = state.copyWith(orders: updatedOrders, customerStats: customerStats);
         CacheManager().saveOrders(updatedOrders);
+        CacheManager().saveCustomerStats(customerStats);
       });
 
       // 2. Parallel Data Fetching
@@ -470,7 +481,7 @@ class AppStateManager extends Notifier<AppState> {
       SustainabilityStats customerStats = SustainabilityStats.zero();
       if (profile.role == 'customer') {
         for (final o in orders) {
-          if (o.status == 'collected' || o.status == 'reserved') {
+          if (o.status != 'cancelled') {
             final savings = o.originalPrice - o.price;
             customerStats = customerStats.addMeal(savings > 0 ? savings : 0, o.price);
           }
@@ -564,6 +575,7 @@ class AppStateManager extends Notifier<AppState> {
     required String password,
     required String role,
     String? phone,
+    String? referralCode,
     String? businessName,
     String? businessDescription,
     String? businessCategory,
@@ -577,6 +589,7 @@ class AppStateManager extends Notifier<AppState> {
         password: password,
         role: role,
         phone: phone,
+        referralCode: referralCode,
         businessName: businessName,
         businessDescription: businessDescription,
         businessCategory: businessCategory,

@@ -52,6 +52,7 @@ class SupabaseService {
     required String password,
     required String role,
     String? phone,
+    String? referralCode,
     String? businessName,
     String? businessDescription,
     String? businessCategory,
@@ -65,6 +66,7 @@ class SupabaseService {
           'role': role,
           'email': email,
           'phone': phone,
+          'referred_by': referralCode?.trim().toUpperCase(),
           'businessName': businessName,
           'businessDescription': businessDescription,
           'businessCategory': businessCategory,
@@ -79,6 +81,16 @@ class SupabaseService {
       if (response.session == null) {
         return 'needs_confirmation';
       }
+
+      // Automatically apply referral code if provided upon registration
+      if (referralCode != null && referralCode.trim().isNotEmpty) {
+        try {
+          await applyReferralCode(referralCode.trim().toUpperCase());
+        } catch (e) {
+          debugPrint('Error applying referral during signup: $e');
+        }
+      }
+
       return null;
     } on AuthException catch (e) {
       return e.message;
@@ -353,6 +365,21 @@ class SupabaseService {
         );
       }
     }
+
+    // Auto-apply referral code from registration metadata if not yet redeemed
+    if (profile != null && profile.referralCredit == 0.0) {
+      final meta = currentUser.userMetadata ?? {};
+      final referredBy = meta['referred_by'] as String?;
+      if (referredBy != null && referredBy.trim().isNotEmpty) {
+        try {
+          final applied = await applyReferralCode(referredBy.trim().toUpperCase());
+          if (applied) {
+            profile = await fetchProfile(currentUser.id) ?? profile;
+          }
+        } catch (_) {}
+      }
+    }
+
     return profile;
   }
 
@@ -2127,27 +2154,43 @@ class SupabaseService {
   Future<bool> applyReferralCode(String code) async {
     final currentUid = _db.auth.currentUser?.id;
     if (currentUid == null) return false;
+    final normalizedCode = code.trim().toUpperCase();
     try {
       final result = await _db.rpc('apply_referral_code', params: {
-        'target_code': code,
+        'target_code': normalizedCode,
         'user_id': currentUid,
       });
-      return result as bool;
+      if (result as bool) {
+        // Ensure the individual also gets Dream Points if the database RPC didn't update it
+        try {
+          final myRow = await _db.from('profiles').select('dream_points').eq('id', currentUid).single();
+          final myPoints = (myRow['dream_points'] as num?)?.toInt() ?? 0;
+          await _db.from('profiles').update({'dream_points': myPoints + 50}).eq('id', currentUid);
+        } catch (_) {}
+        return true;
+      }
+      return false;
     } catch (e) {
       // Fallback if RPC is not created in Supabase
       try {
-        final targetRows = await _db.from('profiles').select('id, dream_points').eq('referral_code', code);
+        final targetRows = await _db.from('profiles').select('id, dream_points').eq('referral_code', normalizedCode);
         if (targetRows.isEmpty) return false;
         final referrerId = targetRows.first['id'] as String;
         if (referrerId == currentUid) return false;
         final referrerPoints = (targetRows.first['dream_points'] as num?)?.toInt() ?? 0;
 
-        final myRow = await _db.from('profiles').select('referral_credit').eq('id', currentUid).single();
+        final myRow = await _db.from('profiles').select('referral_credit, dream_points').eq('id', currentUid).single();
         final myCredit = (myRow['referral_credit'] as num?)?.toDouble() ?? 0.0;
+        final myPoints = (myRow['dream_points'] as num?)?.toInt() ?? 0;
         if (myCredit > 0) return false;
 
+        // Reward referrer with 100 DreamPoints
         await _db.from('profiles').update({'dream_points': referrerPoints + 100}).eq('id', referrerId);
-        await _db.from('profiles').update({'referral_credit': 15.0}).eq('id', currentUid);
+        // Reward individual who used referral with GHS 15 credit AND 50 DreamPoints
+        await _db.from('profiles').update({
+          'referral_credit': 15.0,
+          'dream_points': myPoints + 50,
+        }).eq('id', currentUid);
         return true;
       } catch (err) {
         debugPrint('applyReferralCode REST fallback error: $err');

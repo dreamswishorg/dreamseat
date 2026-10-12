@@ -38,7 +38,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("🎉 Success! GHS 5.00 credit added to your account + 50 DreamPoints!"),
+            content: Text("🎉 Success! Referral credit added to your account + 50 DreamPoints!"),
             backgroundColor: AppTheme.primaryGreen,
           ),
         );
@@ -799,7 +799,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    "Give GHS 5.00, Get GHS 5.00",
+                    "Share & Earn Dream Points",
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
@@ -809,7 +809,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    "Invite your friends to rescue surplus food with DreamEats. Once they order their first rescue package, both of you earn GHS 5.00 credit!",
+                    "Invite your friends to rescue surplus food with DreamEats. When they sign up with your code, they get 50 Dream Points + credit, and you earn 100 Dream Points!",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,
@@ -834,11 +834,11 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
         const SizedBox(height: 14),
         Row(
           children: [
-            _buildStepMiniCard("1", "Share", "Send your code to friends"),
+            _buildStepMiniCard("1", "Share", "Send code to friends"),
             const SizedBox(width: 10),
-            _buildStepMiniCard("2", "Rescue", "Friend orders 1st meal"),
+            _buildStepMiniCard("2", "Rescue", "Friend joins & orders"),
             const SizedBox(width: 10),
-            _buildStepMiniCard("3", "Earn", "Both get GHS 5 credit!"),
+            _buildStepMiniCard("3", "Earn", "Both get Dream Points!"),
           ],
         ),
       ],
@@ -912,7 +912,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
                     elevation: 0,
                   ),
                   onPressed: () {
-                    Clipboard.setData(ClipboardData(text: "Join DreamEats with my code $referralCode and get GHS 5.00 off your first food rescue package!"));
+                    Clipboard.setData(ClipboardData(text: "Join DreamEats with my code $referralCode to get 50 Dream Points + discount on your first food rescue package!\nhttps://dreameats.app"));
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("🚀 Invite message copied! Ready to paste in WhatsApp."), backgroundColor: AppTheme.primaryGreen),
                     );

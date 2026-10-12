@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme.dart';
 import '../../providers/app_state.dart';
 
@@ -15,9 +17,11 @@ class ImpactScreen extends ConsumerWidget {
     final textColor = isDark ? Colors.white : AppTheme.charcoal;
 
     // Derived eco metrics
-    final mealsCount = userStats.mealsRescued;
-    final moneySaved = userStats.moneySaved;
-    final co2Kg = userStats.co2Saved;
+    final validOrders = appState.orders.where((o) => o.status != 'cancelled').toList();
+    final ordersSpent = validOrders.fold<double>(0.0, (sum, o) => sum + o.price);
+    final moneySpent = userStats.moneySpent > 0 ? userStats.moneySpent : ordersSpent;
+    final mealsCount = userStats.mealsRescued > 0 ? userStats.mealsRescued : validOrders.length;
+    final co2Kg = userStats.co2Saved > 0 ? userStats.co2Saved : (mealsCount * 2.5);
     final treesEquivalent = (co2Kg / 10.0).clamp(0.0, 999.0);
     final waterSavedLiters = mealsCount * 350; // avg 350L virtual water saved per meal
 
@@ -38,7 +42,7 @@ class ImpactScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            tooltip: 'Share Your Impact',
+            tooltip: 'Share Referral & Earn Points',
             icon: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
@@ -47,14 +51,7 @@ class ImpactScreen extends ConsumerWidget {
               ),
               child: const Icon(Icons.share_rounded, color: AppTheme.primaryGreen, size: 18),
             ),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('🎉 Your eco impact card is ready to share!'),
-                  backgroundColor: AppTheme.primaryGreen,
-                ),
-              );
-            },
+            onPressed: () => _showReferralShareSheet(context, ref, appState, mealsCount, co2Kg),
           ),
           const SizedBox(width: 12),
         ],
@@ -165,8 +162,8 @@ class ImpactScreen extends ConsumerWidget {
                       Expanded(
                         child: _HeroStatItem(
                           icon: Icons.account_balance_wallet_rounded,
-                          label: 'Saved',
-                          value: 'GH₵${moneySaved.toStringAsFixed(0)}',
+                          label: 'Spent',
+                          value: 'GH₵${moneySpent.toStringAsFixed(moneySpent % 1 == 0 ? 0 : 2)}',
                           unit: 'cash',
                         ),
                       ),
@@ -351,9 +348,270 @@ class ImpactScreen extends ConsumerWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.primaryGreen,
+                side: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              onPressed: () => _showReferralShareSheet(context, ref, appState, mealsCount, co2Kg),
+              icon: const Icon(Icons.card_giftcard_rounded, size: 20),
+              label: const Text(
+                'Invite Friends & Earn Dream Points',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  void _showReferralShareSheet(BuildContext context, WidgetRef ref, AppState appState, int mealsCount, double co2Kg) {
+    final user = appState.currentUser;
+    final referralCode = (user != null && user.referralCode.isNotEmpty)
+        ? user.referralCode
+        : 'REF-${user?.id.substring(0, 6).toUpperCase() ?? "DREAM"}';
+
+    final inviteMessage = "🌱 I've rescued $mealsCount surplus meals and saved ${co2Kg.toStringAsFixed(1)}kg CO₂ on DreamEats Ghana! Join the movement and get 50 Dream Points + GH₵15 credit on your first meal rescue with my referral code: $referralCode\n\nhttps://dreameats.app";
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalContext) {
+        final isDark = Theme.of(modalContext).brightness == Brightness.dark;
+        final sheetBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+        final textColor = isDark ? Colors.white : AppTheme.charcoal;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: sheetBg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 20,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
+          padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(modalContext).padding.bottom + 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag handle
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Icon Badge
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF10B981), Color(0xFF047857)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.3),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.loyalty_rounded, color: Colors.white, size: 32),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Share Your Impact & Earn Points',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: textColor,
+                  letterSpacing: -0.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Invite friends to rescue surplus meals! When someone uses your referral code, they receive 50 Dream Points + GH₵15 credit, and you earn 100 Dream Points! 🌱✨',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? Colors.white70 : AppTheme.mutedGrey,
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              // Referral Code Display Card
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: AppTheme.lightGreenBg,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'YOUR REFERRAL CODE',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primaryGreen.withValues(alpha: 0.8),
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          SelectableText(
+                            referralCode,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.2,
+                              color: AppTheme.charcoal,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryGreen,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
+                      ),
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: referralCode));
+                        HapticFeedback.lightImpact();
+                        Navigator.pop(modalContext);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                                const SizedBox(width: 10),
+                                Text('Referral code "$referralCode" copied!'),
+                              ],
+                            ),
+                            backgroundColor: AppTheme.primaryGreen,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.copy_rounded, size: 16),
+                      label: const Text('Copy Code', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              // WhatsApp Share Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF25D366),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 0,
+                  ),
+                  onPressed: () async {
+                    HapticFeedback.mediumImpact();
+                    Navigator.pop(modalContext);
+                    final waUrl = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(inviteMessage)}');
+                    try {
+                      if (await canLaunchUrl(waUrl)) {
+                        await launchUrl(waUrl, mode: LaunchMode.externalApplication);
+                      } else {
+                        await Clipboard.setData(ClipboardData(text: inviteMessage));
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('Invite message copied to clipboard!'),
+                              backgroundColor: AppTheme.primaryGreen,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          );
+                        }
+                      }
+                    } catch (_) {
+                      await Clipboard.setData(ClipboardData(text: inviteMessage));
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Invite message copied to clipboard!'),
+                            backgroundColor: AppTheme.primaryGreen,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  icon: const Icon(Icons.chat_bubble_outline_rounded, size: 20),
+                  label: const Text(
+                    'Share on WhatsApp',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Copy Full Invite Message Button
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: textColor,
+                    side: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.15)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: inviteMessage));
+                    HapticFeedback.lightImpact();
+                    Navigator.pop(modalContext);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('🎉 Full impact invite message copied to clipboard!'),
+                        backgroundColor: AppTheme.primaryGreen,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.share_rounded, size: 18),
+                  label: const Text(
+                    'Copy Full Invite Message',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

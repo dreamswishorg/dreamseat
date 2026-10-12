@@ -551,17 +551,18 @@ DECLARE
   referrer_id UUID;
   referrer_pts INT;
   my_credit DECIMAL;
+  my_pts INT;
 BEGIN
   SELECT id, COALESCE(dream_points, 0) INTO referrer_id, referrer_pts FROM public.profiles WHERE referral_code = target_code;
   IF NOT FOUND OR referrer_id = user_id THEN
     RETURN FALSE;
   END IF;
-  SELECT COALESCE(referral_credit, 0.0) INTO my_credit FROM public.profiles WHERE id = user_id;
+  SELECT COALESCE(referral_credit, 0.0), COALESCE(dream_points, 0) INTO my_credit, my_pts FROM public.profiles WHERE id = user_id;
   IF my_credit > 0 THEN
     RETURN FALSE;
   END IF;
   UPDATE public.profiles SET dream_points = referrer_pts + 100 WHERE id = referrer_id;
-  UPDATE public.profiles SET referral_credit = 15.0 WHERE id = user_id;
+  UPDATE public.profiles SET referral_credit = 15.0, dream_points = my_pts + 50 WHERE id = user_id;
   RETURN TRUE;
 END;
 $$;

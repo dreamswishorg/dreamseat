@@ -33,6 +33,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   final _suNameController = TextEditingController();
   final _suEmailController = TextEditingController();
   final _suPhoneController = TextEditingController();
+  final _suReferralController = TextEditingController();
   final _suPasswordController = TextEditingController();
   final _suConfirmPasswordController = TextEditingController();
   final _suBizNameController = TextEditingController();
@@ -89,6 +90,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     _suNameController.dispose();
     _suEmailController.dispose();
     _suPhoneController.dispose();
+    _suReferralController.dispose();
     _suPasswordController.dispose();
     _suConfirmPasswordController.dispose();
     _suBizNameController.dispose();
@@ -246,6 +248,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
             }
             return raw; // fallback: store as typed
           }(),
+          referralCode: _suReferralController.text.trim().isNotEmpty
+              ? _suReferralController.text.trim().toUpperCase()
+              : null,
           businessName:
               _suRole == 'merchant' ? _suBizNameController.text.trim() : null,
           businessDescription:
@@ -913,24 +918,50 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                     icon: Icons.phone_outlined,
                     keyboardType: TextInputType.phone,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return 'Phone number is required';
+                      final digits = v.replaceAll(RegExp(r'[^0-9]'), '');
+                      if (digits.length < 9 || digits.length > 12) {
+                        return 'Enter a valid phone number';
+                      }
+                      return null;
+                    },
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            _buildInputField(
-              controller: _suEmailController,
-              label: 'Email Address',
-              hint: 'you@example.com',
-              icon: Icons.mail_outline_rounded,
-              keyboardType: TextInputType.emailAddress,
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Email is required';
-                if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(v.trim())) {
-                  return 'Enter a valid email address';
-                }
-                return null;
-              },
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: _buildInputField(
+                    controller: _suEmailController,
+                    label: 'Email Address',
+                    hint: 'you@example.com',
+                    icon: Icons.mail_outline_rounded,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return 'Email is required';
+                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(v.trim())) {
+                        return 'Enter a valid email address';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: _buildInputField(
+                    controller: _suReferralController,
+                    label: 'Referral Code (Optional)',
+                    hint: 'e.g. REF-1234ABCD',
+                    icon: Icons.card_giftcard_rounded,
+                    textCapitalization: TextCapitalization.characters,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             Row(
@@ -1699,11 +1730,27 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
             const SizedBox(height: 14),
             _buildInputField(
               controller: _suPhoneController,
-              label: 'Phone Number (Optional)',
+              label: 'Phone Number',
               hint: '0245678901',
               icon: Icons.phone_android_rounded,
               keyboardType: TextInputType.phone,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return 'Phone number is required';
+                final digits = v.replaceAll(RegExp(r'[^0-9]'), '');
+                if (digits.length < 9 || digits.length > 12) {
+                  return 'Enter a valid phone number';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 14),
+            _buildInputField(
+              controller: _suReferralController,
+              label: 'Referral Code (Optional)',
+              hint: 'e.g. REF-1234ABCD',
+              icon: Icons.card_giftcard_rounded,
+              textCapitalization: TextCapitalization.characters,
             ),
           ],
         );
@@ -2046,6 +2093,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     String? Function(String?)? validator,
     List<TextInputFormatter>? inputFormatters,
     Iterable<String>? autofillHints,
+    TextCapitalization textCapitalization = TextCapitalization.none,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2063,6 +2111,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
+          textCapitalization: textCapitalization,
           obscureText: obscureText,
           enableSuggestions: !obscureText,
           autocorrect: !obscureText,
