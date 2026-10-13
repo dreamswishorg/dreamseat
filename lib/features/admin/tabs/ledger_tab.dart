@@ -69,61 +69,52 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
           LayoutBuilder(
             builder: (context, constraints) {
               final isCompact = constraints.maxWidth < 850;
-              if (isCompact) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(child: _buildSearchBox()),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          onPressed: () => _exportLedger(orders, state.commissionRate),
-                          icon: const Icon(Icons.download_rounded, size: 18),
-                          tooltip: "Export CSV",
-                          style: IconButton.styleFrom(
-                            backgroundColor: AppTheme.primaryGreen,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.all(10),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      child: Row(
-                        children: [
-                          _buildViewToggle(),
-                          const SizedBox(width: 8),
-                          _buildPayoutFilter(orders),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              }
-
-              return Row(
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(child: _buildSearchBox()),
-                  const SizedBox(width: 10),
-                  _buildViewToggle(),
-                  const SizedBox(width: 10),
-                  _buildPayoutFilter(orders),
-                  const SizedBox(width: 10),
-                  ElevatedButton.icon(
-                    onPressed: () => _exportLedger(orders, state.commissionRate),
-                    icon: const Icon(Icons.download_rounded, size: 15),
-                    label: const Text("Export CSV", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryGreen,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      elevation: 0,
+                  // Row 1: Search Box + Export CSV
+                  Row(
+                    children: [
+                      Expanded(child: _buildSearchBox()),
+                      const SizedBox(width: 10),
+                      isCompact
+                          ? IconButton(
+                              onPressed: () => _exportLedger(orders, state.commissionRate),
+                              icon: const Icon(Icons.download_rounded, size: 18),
+                              tooltip: "Export CSV",
+                              style: IconButton.styleFrom(
+                                backgroundColor: AppTheme.primaryGreen,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                padding: const EdgeInsets.all(10),
+                              ),
+                            )
+                          : ElevatedButton.icon(
+                              onPressed: () => _exportLedger(orders, state.commissionRate),
+                              icon: const Icon(Icons.download_rounded, size: 15),
+                              label: const Text("Export CSV", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryGreen,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                elevation: 0,
+                              ),
+                            ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Row 2: Filters under the Search Bar
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      children: [
+                        _buildViewToggle(),
+                        const SizedBox(width: 10),
+                        _buildPayoutFilter(orders),
+                      ],
                     ),
                   ),
                 ],

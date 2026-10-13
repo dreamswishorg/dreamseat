@@ -316,68 +316,131 @@ class AdminDropdown<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDark;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-      decoration: BoxDecoration(
-        color: context.cardColor,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: context.borderColor),
-        boxShadow: isDark
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+    final selectedText = itemLabel != null ? itemLabel!(value) : value.toString();
+
+    return Theme(
+      data: Theme.of(context).copyWith(
+        hoverColor: Colors.transparent,
+        splashColor: Colors.transparent,
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          onChanged: onChanged,
+      child: PopupMenuButton<T>(
+        initialValue: value,
+        offset: const Offset(0, 46),
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          dropdownColor: context.cardColor,
-          elevation: 12,
-          icon: Padding(
-            padding: const EdgeInsets.only(left: 6),
-            child: Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: context.textSecondary),
+          side: BorderSide(
+            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+            width: 1,
           ),
-          style: TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w800,
-            color: context.textPrimary,
-            letterSpacing: -0.2,
-          ),
-          items: items.map((item) {
-            final isSelected = item == value;
-            final text = itemLabel != null ? itemLabel!(item) : item.toString();
-            return DropdownMenuItem<T>(
-              value: item,
+        ),
+        color: context.cardColor,
+        elevation: 14,
+        shadowColor: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+        onSelected: onChanged,
+        itemBuilder: (context) => items.map((item) {
+          final isSelected = item == value;
+          final text = itemLabel != null ? itemLabel!(item) : item.toString();
+          return PopupMenuItem<T>(
+            value: item,
+            height: 42,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? (isDark
+                        ? AppTheme.primaryGreen.withValues(alpha: 0.16)
+                        : AppTheme.primaryGreen.withValues(alpha: 0.08))
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
                 children: [
                   if (icon != null) ...[
-                    Icon(icon, size: 14, color: isSelected ? AppTheme.primaryGreen : context.textSecondary),
+                    Icon(
+                      icon,
+                      size: 15,
+                      color: isSelected ? AppTheme.primaryGreen : context.textSecondary,
+                    ),
                     const SizedBox(width: 8),
                   ],
-                  if (label != null)
-                    Text(
-                      "$label: ",
-                      style: TextStyle(fontWeight: FontWeight.w500, color: context.textSecondary, fontSize: 12),
-                    ),
-                  Text(
-                    text,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: isSelected ? AppTheme.primaryGreen : context.textPrimary,
-                      fontSize: 12.5,
+                  Expanded(
+                    child: Text(
+                      text,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                        color: isSelected ? AppTheme.primaryGreen : context.textPrimary,
+                        letterSpacing: -0.2,
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 10),
+                  if (isSelected)
+                    const Icon(
+                      Icons.check_rounded,
+                      size: 16,
+                      color: AppTheme.primaryGreen,
+                    ),
                 ],
               ),
-            );
-          }).toList(),
+            ),
+          );
+        }).toList(),
+        child: Container(
+          height: 42,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: context.cardColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+              width: 1,
+            ),
+            boxShadow: isDark
+                ? []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 15, color: context.textSecondary),
+                const SizedBox(width: 8),
+              ],
+              if (label != null) ...[
+                Text(
+                  "$label: ",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: context.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+              Text(
+                selectedText,
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: context.textPrimary,
+                  fontSize: 12.5,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 18,
+                color: context.textSecondary,
+              ),
+            ],
+          ),
         ),
       ),
     );

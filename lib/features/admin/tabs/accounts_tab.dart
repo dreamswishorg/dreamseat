@@ -117,7 +117,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Row 1: Search + Status dropdown + Actions
+        // Row 1: Search bar + Action buttons
         Row(
           children: [
             Expanded(
@@ -127,6 +127,13 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: TextField(
                   onChanged: (v) => setState(() {
@@ -143,16 +150,6 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            AdminDropdown<String>(
-              label: "Status",
-              value: _statusFilter,
-              items: const ['All', 'Active', 'Suspended'],
-              onChanged: (val) => setState(() {
-                _statusFilter = val ?? 'All';
-                _currentPage = 0;
-              }),
             ),
             const SizedBox(width: 10),
             ElevatedButton.icon(
@@ -184,12 +181,29 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
         ),
         const SizedBox(height: 12),
 
-        // Row 2: Sleek Segmented Role Filter Pills
+        // Row 2: Filters under the Search Bar (Status Dropdown + Role Segmented Pills)
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
           child: Row(
             children: [
+              AdminDropdown<String>(
+                icon: Icons.tune_rounded,
+                label: "Status",
+                value: _statusFilter,
+                items: const ['All', 'Active', 'Suspended'],
+                onChanged: (val) => setState(() {
+                  _statusFilter = val ?? 'All';
+                  _currentPage = 0;
+                }),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                height: 24,
+                width: 1,
+                color: const Color(0xFFE2E8F0),
+              ),
+              const SizedBox(width: 10),
               _rolePill("All Accounts", totalCount, 'All', Icons.group_rounded, AppTheme.primaryGreen),
               const SizedBox(width: 8),
               _rolePill("Customers", customerCount, 'Customer', Icons.shopping_bag_outlined, const Color(0xFF2563EB)),

@@ -50,51 +50,58 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Container(
-                  height: 42,
-                  constraints: const BoxConstraints(maxWidth: 320),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: TextField(
-                    onChanged: (v) => setState(() {
-                      _searchQuery = v;
-                      _currentPage = 0;
-                    }),
-                    style: const TextStyle(fontSize: 12.5, color: AppTheme.charcoal),
-                    decoration: const InputDecoration(
-                      hintText: "Search merchants by name, category...",
-                      hintStyle: TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
-                      prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppTheme.mutedGrey),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 10),
-                    ),
-                  ),
+          // ── Full-Width Search Bar ─────────────────────────────────
+          Container(
+            height: 42,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
+              ],
+            ),
+            child: TextField(
+              onChanged: (v) => setState(() {
+                _searchQuery = v;
+                _currentPage = 0;
+              }),
+              style: const TextStyle(fontSize: 13, color: AppTheme.charcoal, fontWeight: FontWeight.w500),
+              decoration: const InputDecoration(
+                hintText: "Search merchants by name, category, or location...",
+                hintStyle: TextStyle(fontSize: 12.5, color: AppTheme.mutedGrey),
+                prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppTheme.mutedGrey),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(vertical: 11),
               ),
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    _filterTab("Pending Queue (${pending.length})", 0),
-                    _filterTab("Verified Partners (${active.length})", 1),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
+
+          // ── Filter Queue Pills Under Search Bar ───────────────────
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  _filterTab("Pending Queue (${pending.length})", 0),
+                  const SizedBox(width: 4),
+                  _filterTab("Verified Partners (${active.length})", 1),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           Expanded(
             child: list.isEmpty
                 ? NoDataState(

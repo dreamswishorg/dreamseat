@@ -321,11 +321,8 @@ class AppStateManager extends Notifier<AppState> {
 
       final profile = results[0] as AppUser?;
       if (profile != null && profile.isSuspended) {
-        await signOut();
-        state = state.copyWith(
-          currentUser: null,
-          errorMessage: 'Your account has been suspended by administration. Please contact support.',
-        );
+        const suspendedMsg = 'Your account has been suspended by administration. Please contact support.';
+        await signOut(errorMessage: suspendedMsg);
         return;
       }
 
@@ -648,10 +645,14 @@ class AppStateManager extends Notifier<AppState> {
 
       await _hydrate();
 
-      if (state.currentUser?.isSuspended == true) {
-        await signOut();
+      if (state.errorMessage != null && state.errorMessage!.toLowerCase().contains('suspended')) {
+        await signOut(errorMessage: state.errorMessage);
+        return state.errorMessage;
+      }
+
+      if (state.currentUser == null || state.currentUser!.isSuspended) {
         const suspendedMsg = 'Your account has been suspended by administration. Please contact support.';
-        state = state.copyWith(isLoading: false, errorMessage: suspendedMsg);
+        await signOut(errorMessage: suspendedMsg);
         return suspendedMsg;
       }
 
@@ -702,19 +703,17 @@ class AppStateManager extends Notifier<AppState> {
   Future<AppUser?> handleOAuthSignedIn() async {
     state = state.copyWith(isLoading: true, clearErrorMessage: true);
     await _hydrate();
-    if (state.currentUser?.isSuspended == true) {
-      await signOut();
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: 'Your account has been suspended by administration. Please contact support.',
-      );
+    if (state.errorMessage != null && state.errorMessage!.toLowerCase().contains('suspended') ||
+        state.currentUser?.isSuspended == true) {
+      const suspendedMsg = 'Your account has been suspended by administration. Please contact support.';
+      await signOut(errorMessage: suspendedMsg);
       return null;
     }
     state = state.copyWith(isLoading: false);
     return state.currentUser;
   }
 
-  Future<void> signOut() async {
+  Future<void> signOut({String? errorMessage}) async {
     stopBackgroundRefresh();
     await _supa.signOut();
     _basket = [];
@@ -723,7 +722,9 @@ class AppStateManager extends Notifier<AppState> {
     if (_ordersSub != null) Supabase.instance.client.removeChannel(_ordersSub!);
     if (_notificationsSub != null) Supabase.instance.client.removeChannel(_notificationsSub!);
     await CacheManager().clearAll();
-    state = AppState.empty();
+    state = errorMessage != null
+        ? AppState.empty().copyWith(errorMessage: errorMessage)
+        : AppState.empty();
   }
 
   Future<String?> resetPassword(String email) async {
@@ -1892,7 +1893,8 @@ class AppStateManager extends Notifier<AppState> {
     try {
       final profile = await _supa.getCurrentUserProfile();
       if (profile != null && profile.isSuspended) {
-        await signOut();
+        const suspendedMsg = 'Your account has been suspended by administration. Please contact support.';
+        await signOut(errorMessage: suspendedMsg);
         return;
       }
 

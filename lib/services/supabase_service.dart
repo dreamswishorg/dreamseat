@@ -191,9 +191,13 @@ class SupabaseService {
               .select('is_suspended')
               .eq('id', uid)
               .maybeSingle();
-          if (profileRow != null && profileRow['is_suspended'] == true) {
-            await _db.auth.signOut();
-            return 'Your account has been suspended by administration. Please contact support.';
+          if (profileRow != null) {
+            final val = profileRow['is_suspended'];
+            final isSusp = val == true || val == 'true' || val == 1;
+            if (isSusp) {
+              await _db.auth.signOut();
+              return 'Your account has been suspended by administration. Please contact support.';
+            }
           }
         } catch (e) {
           debugPrint('Error verifying profile suspension status: $e');
@@ -475,7 +479,9 @@ class SupabaseService {
         role: (row['role'] as String?) ?? 'customer',
         phone: row['phone'] as String?,
         avatarUrl: row['avatar_url'] as String?,
-        isSuspended: (row['is_suspended'] as bool?) ?? false,
+        isSuspended: (row['is_suspended'] == true ||
+            row['is_suspended'] == 'true' ||
+            row['is_suspended'] == 1),
         isApproved: true,
         dreamPoints: (row['dream_points'] as int?) ?? 0,
         referralCredit: (row['referral_credit'] as num?)?.toDouble() ?? 0.0,
@@ -1362,10 +1368,24 @@ class SupabaseService {
   /// Suspends or un-suspends the account of [userId].
   Future<void> toggleUserSuspension(String userId, bool suspend) async {
     try {
-      await _db
+      // 1. Try secure RPC function (bypasses client-side RLS quirks)
+      try {
+        await _db.rpc('admin_toggle_user_suspension', params: {
+          'target_user_id': userId,
+          'should_suspend': suspend,
+        });
+        return;
+      } catch (rpcErr) {
+        debugPrint('admin_toggle_user_suspension RPC not available, falling back to direct update: $rpcErr');
+      }
+
+      // 2. Direct table update fallback
+      final res = await _db
           .from('profiles')
           .update({'is_suspended': suspend})
-          .eq('id', userId);
+          .eq('id', userId)
+          .select('id, is_suspended');
+      debugPrint('toggleUserSuspension update response: $res');
     } on PostgrestException catch (e) {
       throw Exception('Failed to toggle user suspension: ${e.message}');
     } catch (e) {

@@ -59,16 +59,23 @@ class _TabAuditState extends ConsumerState<TabAudit> {
               final isCompact = constraints.maxWidth < 900;
               return Column(
                 children: [
+                  // Row 1: Search Bar + Export CSV
                   Row(
                     children: [
-                      // Search Bar
                       Expanded(
                         child: Container(
-                          height: 44,
+                          height: 42,
                           decoration: BoxDecoration(
                             color: context.cardColor,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: context.borderColor),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.02),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
                           child: TextField(
                             onChanged: (v) => setState(() => _query = v),
@@ -83,74 +90,47 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                           ),
                         ),
                       ),
-                      if (!isCompact) ...[
-                        const SizedBox(width: 12),
+                      const SizedBox(width: 10),
+                      ElevatedButton.icon(
+                        onPressed: () => _exportAuditCsv(filteredLogs),
+                        icon: const Icon(Icons.download_rounded, size: 15),
+                        label: Text(isCompact ? "CSV" : "Export CSV", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryGreen,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 0,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Row 2: Filters under the Search Bar
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      children: [
                         AdminDropdown<String>(
+                          icon: Icons.person_outline_rounded,
                           label: "Actor Role",
                           value: _actorFilter,
                           items: const ['All', 'Admin', 'Merchant', 'Customer', 'System'],
                           onChanged: (val) => setState(() => _actorFilter = val ?? 'All'),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         AdminDropdown<String>(
+                          icon: Icons.category_rounded,
                           label: "Category",
                           value: _actionFilter,
                           items: const ['All', 'ORDER', 'DEAL', 'MERCHANT', 'USER', 'PAYOUT', 'SYSTEM'],
                           onChanged: (val) => setState(() => _actionFilter = val ?? 'All'),
                         ),
-                        const SizedBox(width: 12),
-                        ElevatedButton.icon(
-                          onPressed: () => _exportAuditCsv(filteredLogs),
-                          icon: const Icon(Icons.download_rounded, size: 15),
-                          label: const Text("Export CSV", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryGreen,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            elevation: 0,
-                          ),
-                        ),
-                      ]
-                    ],
-                  ),
-                  if (isCompact) ...[
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: AdminDropdown<String>(
-                            label: "Role",
-                            value: _actorFilter,
-                            items: const ['All', 'Admin', 'Merchant', 'Customer', 'System'],
-                            onChanged: (val) => setState(() => _actorFilter = val ?? 'All'),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: AdminDropdown<String>(
-                            label: "Category",
-                            value: _actionFilter,
-                            items: const ['All', 'ORDER', 'DEAL', 'MERCHANT', 'USER', 'PAYOUT', 'SYSTEM'],
-                            onChanged: (val) => setState(() => _actionFilter = val ?? 'All'),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        ElevatedButton.icon(
-                          onPressed: () => _exportAuditCsv(filteredLogs),
-                          icon: const Icon(Icons.download_rounded, size: 15),
-                          label: const Text("CSV", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryGreen,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            elevation: 0,
-                          ),
-                        ),
                       ],
                     ),
-                  ],
+                  ),
                 ],
               );
             },

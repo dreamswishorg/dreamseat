@@ -107,7 +107,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
     }
   }
 
-  void _navigate() {
+  Future<void> _navigate() async {
     if (!mounted) return;
 
     final settings = _fetchedSettings ?? ref.read(appStateProvider).platformSettings;
@@ -147,19 +147,28 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
       return;
     }
 
-    final state = ref.read(appStateProvider);
-    final user = state.currentUser;
+    // Fetch fresh profile from Supabase to guarantee suspended users cannot enter from cache
+    AppUser? freshUser;
+    try {
+      freshUser = await SupabaseService().getCurrentUserProfile();
+    } catch (_) {}
 
-    if (user == null || user.isSuspended) {
-      if (user?.isSuspended == true) {
-        ref.read(appStateProvider.notifier).signOut();
+    final state = ref.read(appStateProvider);
+    final user = freshUser ?? state.currentUser;
+
+    if (user == null || user.isSuspended || freshUser?.isSuspended == true) {
+      final isSuspended = user?.isSuspended == true || freshUser?.isSuspended == true;
+      if (isSuspended) {
+        await ref.read(appStateProvider.notifier).signOut(
+          errorMessage: 'Your account has been suspended by administration. Please contact support.',
+        );
       }
       if (mounted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => WelcomeScreen(
-              errorMessage: user?.isSuspended == true
+              errorMessage: isSuspended
                   ? 'Your account has been suspended by administration. Please contact support.'
                   : null,
             ),

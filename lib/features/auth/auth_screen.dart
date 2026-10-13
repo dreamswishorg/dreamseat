@@ -149,7 +149,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     setState(() => _isLoading = false);
 
     if (error != null) {
-      _showSnackBar("Auto-login failed: ${error.replaceAll('AuthException: ', '').trim()}", isError: true);
+      if (error.toLowerCase().contains('suspended')) {
+        _showSuspendedDialog(error.replaceAll('AuthException: ', '').trim());
+      } else {
+        _showSnackBar("Auto-login failed: ${error.replaceAll('AuthException: ', '').trim()}", isError: true);
+      }
       return;
     }
 
@@ -171,7 +175,40 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     );
   }
 
-
+  void _showSuspendedDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        icon: const Icon(Icons.block_rounded, color: AppTheme.errorRed, size: 48),
+        title: const Text(
+          "Account Suspended",
+          style: TextStyle(fontWeight: FontWeight.w900, color: AppTheme.charcoal),
+        ),
+        content: Text(
+          message.isNotEmpty
+              ? message
+              : "Your account has been suspended by administration. Please contact customer support for assistance.",
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 13.5, color: AppTheme.charcoal),
+        ),
+        actions: [
+          Center(
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.charcoal,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text("Understood", style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   // ─── Sign-in ───────────────────────────────────────────────────────────────
 
@@ -188,8 +225,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     setState(() => _isLoading = false);
 
     if (error != null) {
-      _showSnackBar(error.replaceAll('AuthException: ', '').trim(),
-          isError: true);
+      if (error.toLowerCase().contains('suspended')) {
+        _showSuspendedDialog(error.replaceAll('AuthException: ', '').trim());
+      } else {
+        _showSnackBar(error.replaceAll('AuthException: ', '').trim(), isError: true);
+      }
       return;
     }
 

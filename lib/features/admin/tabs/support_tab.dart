@@ -132,23 +132,9 @@ class _TabSupportState extends ConsumerState<TabSupport> {
                         ],
                       ],
                     ),
-                    Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          _filterPill("All", 0),
-                          _filterPill("Open", 1),
-                          _filterPill("Resolved", 2),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 Container(
                   height: 38,
                   decoration: BoxDecoration(
@@ -166,6 +152,25 @@ class _TabSupportState extends ConsumerState<TabSupport> {
                       prefixIcon: Icon(Icons.search_rounded, size: 16, color: AppTheme.mutedGrey),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(vertical: 9),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _filterPill("All", 0),
+                        _filterPill("Open", 1),
+                        _filterPill("Resolved", 2),
+                      ],
                     ),
                   ),
                 ),

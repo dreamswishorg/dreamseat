@@ -43,50 +43,57 @@ class _TabDisputesState extends ConsumerState<TabDisputes> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Top Toolbar: Search & Queue Pills ──────────────────
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Container(
-                  height: 42,
-                  constraints: const BoxConstraints(maxWidth: 340),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: TextField(
-                    onChanged: (v) => setState(() => _searchQuery = v),
-                    style: const TextStyle(fontSize: 12.5, color: AppTheme.charcoal),
-                    decoration: const InputDecoration(
-                      hintText: "Search dispute ID, customer, merchant...",
-                      hintStyle: TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
-                      prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppTheme.mutedGrey),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 10),
-                    ),
-                  ),
+          // ── Top Toolbar: Full-Width Search Bar ───────────────────
+          Container(
+            height: 42,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
+              ],
+            ),
+            child: TextField(
+              onChanged: (v) => setState(() => _searchQuery = v),
+              style: const TextStyle(fontSize: 13, color: AppTheme.charcoal, fontWeight: FontWeight.w500),
+              decoration: const InputDecoration(
+                hintText: "Search dispute ID, customer, merchant, issue description...",
+                hintStyle: TextStyle(fontSize: 12.5, color: AppTheme.mutedGrey),
+                prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppTheme.mutedGrey),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(vertical: 11),
               ),
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    _filterTab("Open ($openCount)", 0),
-                    _filterTab("Resolved ($resolvedCount)", 1),
-                    _filterTab("All (${disputes.length})", 2),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
+
+          // ── Filter Queue Pills Under Search Bar ─────────────────
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  _filterTab("Open ($openCount)", 0),
+                  const SizedBox(width: 4),
+                  _filterTab("Resolved ($resolvedCount)", 1),
+                  const SizedBox(width: 4),
+                  _filterTab("All (${disputes.length})", 2),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
 
           // ── Disputes List ──────────────────────────────────────
           Expanded(
