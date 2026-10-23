@@ -34,120 +34,139 @@ class _TabConfigState extends ConsumerState<TabConfig> {
 
     return SingleChildScrollView(
       padding: isMobile ? const EdgeInsets.fromLTRB(16, 12, 16, 32) : const EdgeInsets.fromLTRB(32, 12, 32, 48),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Visual grouping of configuration modules
-          Wrap(
-            spacing: 24,
-            runSpacing: 24,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final available = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : MediaQuery.sizeOf(context).width - 32;
+          final sectionWidth = isMobile
+              ? double.infinity
+              : (available < 500 ? available : 500.0);
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Platform Governance Section
-              _buildConfigSection(
-                title: "Platform Governance",
-                description: "Master switches for ecosystem availability and operational state.",
-                isMobile: isMobile,
+              // Visual grouping of configuration modules
+              Wrap(
+                spacing: isMobile ? 0 : 24,
+                runSpacing: 18,
                 children: [
-                  _buildToggleTile(
-                    title: "Maintenance Mode",
-                    subtitle: "Instantly block all user traffic with a branded outage screen.",
-                    value: settings.maintenanceMode,
-                    icon: Icons.power_settings_new_rounded,
-                    activeColor: AppTheme.errorRed,
-                    statusText: settings.maintenanceMode ? "OFFLINE" : "OPERATIONAL",
-                    onChanged: (v) => ref.read(appStateProvider.notifier).toggleMaintenanceMode(v),
-                  ),
-                ],
-              ),
-
-              // 2. Financial Engine Section
-              _buildConfigSection(
-                title: "Financial Engine",
-                description: "Configure system-wide take rates and billing parameters.",
-                isMobile: isMobile,
-                children: [
-                  _buildSliderTile(
-                    title: "System Commission Rate",
-                    subtitle: "Percentage of the rescue price retained by DREAMEATS.",
-                    value: state.commissionRate,
-                    icon: Icons.account_balance_rounded,
-                    trailingText: "${(state.commissionRate * 100).toStringAsFixed(1)}%",
-                    onChanged: (v) => ref.read(appStateProvider.notifier).setCommissionRate(v),
-                  ),
-                ],
-              ),
-
-              // 3. Client Compliance Section
-              _buildConfigSection(
-                title: "Client Compliance",
-                description: "Enforce application integrity and mandatory software updates.",
-                isMobile: isMobile,
-                children: [
-                  _buildInputTile(
-                    title: "Minimum Software Version",
-                    subtitle: "Force users on older versions to update before transacting.",
-                    controller: _versionController,
-                    icon: Icons.system_update_rounded,
-                    buttonLabel: "Apply Force",
+                  // 1. Platform Governance Section
+                  _buildConfigSection(
+                    title: "Platform Governance",
+                    description: "Master switches for ecosystem availability and operational state.",
                     isMobile: isMobile,
-                    onPressed: () => _handleUpdateVersion(_versionController.text),
+                    width: sectionWidth,
+                    children: [
+                      _buildToggleTile(
+                        title: "Maintenance Mode",
+                        subtitle: "Instantly block all user traffic with a branded outage screen.",
+                        value: settings.maintenanceMode,
+                        icon: Icons.power_settings_new_rounded,
+                        activeColor: AppTheme.errorRed,
+                        statusText: settings.maintenanceMode ? "OFFLINE" : "OPERATIONAL",
+                        onChanged: (v) => ref.read(appStateProvider.notifier).toggleMaintenanceMode(v),
+                      ),
+                    ],
                   ),
-                ],
-              ),
 
-              // 4. Infrastructure Health (Read-only status)
-              _buildConfigSection(
-                title: "Infrastructure Health",
-                description: "Real-time status of underlying technical service nodes.",
-                isMobile: isMobile,
-                children: [
-                  _buildStatusTile("Supabase Data Cluster", true),
-                  const Divider(height: 1),
-                  _buildStatusTile("Firebase Messaging Hub", true),
-                  const Divider(height: 1),
-                  _buildStatusTile("Paystack Gateway", true),
+                  // 2. Financial Engine Section
+                  _buildConfigSection(
+                    title: "Financial Engine",
+                    description: "Configure system-wide take rates and billing parameters.",
+                    isMobile: isMobile,
+                    width: sectionWidth,
+                    children: [
+                      _buildSliderTile(
+                        title: "System Commission Rate",
+                        subtitle: "Percentage of the rescue price retained by DREAMEATS.",
+                        value: state.commissionRate,
+                        icon: Icons.account_balance_rounded,
+                        trailingText: "${(state.commissionRate * 100).toStringAsFixed(1)}%",
+                        onChanged: (v) => ref.read(appStateProvider.notifier).setCommissionRate(v),
+                      ),
+                    ],
+                  ),
+
+                  // 3. Client Compliance Section
+                  _buildConfigSection(
+                    title: "Client Compliance",
+                    description: "Enforce application integrity and mandatory software updates.",
+                    isMobile: isMobile,
+                    width: sectionWidth,
+                    children: [
+                      _buildInputTile(
+                        title: "Minimum Software Version",
+                        subtitle: "Force users on older versions to update before transacting.",
+                        controller: _versionController,
+                        icon: Icons.system_update_rounded,
+                        buttonLabel: "Apply Force",
+                        isMobile: isMobile,
+                        onPressed: () => _handleUpdateVersion(_versionController.text),
+                      ),
+                    ],
+                  ),
+
+                  // 4. Infrastructure Health (Read-only status)
+                  _buildConfigSection(
+                    title: "Infrastructure Health",
+                    description: "Real-time status of underlying technical service nodes.",
+                    isMobile: isMobile,
+                    width: sectionWidth,
+                    children: [
+                      _buildStatusTile("Supabase Data Cluster", true),
+                      const Divider(height: 1),
+                      _buildStatusTile("Firebase Messaging Hub", true),
+                      const Divider(height: 1),
+                      _buildStatusTile("Paystack Gateway", true),
+                    ],
+                  ),
                 ],
               ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildConfigSection({required String title, required String description, required List<Widget> children, required bool isMobile}) {
-    return Container(
-      width: isMobile ? double.infinity : 500, // Responsive width for clean multi-column wrapping
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 10, offset: const Offset(0, 4))],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF8FAFC),
-              border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+  Widget _buildConfigSection({required String title, required String description, required List<Widget> children, required bool isMobile, required double width}) {
+    final sectionPadding = isMobile ? 16.0 : 24.0;
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: width),
+      child: Container(
+        width: width,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFF1F5F9)),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: EdgeInsets.all(sectionPadding),
+              decoration: const BoxDecoration(
+                color: Color(0xFFF8FAFC),
+                border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: AppTheme.charcoal, letterSpacing: 1.2)),
+                  const SizedBox(height: 4),
+                  Text(description, style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey, height: 1.4)),
+                ],
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: AppTheme.charcoal, letterSpacing: 1.2)),
-                const SizedBox(height: 4),
-                Text(description, style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey, height: 1.4)),
-              ],
+            Padding(
+              padding: EdgeInsets.all(sectionPadding),
+              child: Column(children: children),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(children: children),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -173,8 +192,8 @@ class _TabConfigState extends ConsumerState<TabConfig> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-              Text(subtitle, style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey)),
+              Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+              Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey)),
             ],
           ),
         ),
@@ -182,7 +201,7 @@ class _TabConfigState extends ConsumerState<TabConfig> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(statusText, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: value ? activeColor : AppTheme.primaryGreen)),
+            Text(statusText, maxLines: 1, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: value ? activeColor : AppTheme.primaryGreen)),
             const SizedBox(height: 4),
             Switch(
               value: value,
@@ -217,12 +236,16 @@ class _TabConfigState extends ConsumerState<TabConfig> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-                  Text(subtitle, style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey)),
+                  Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                  Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey)),
                 ],
               ),
             ),
-            Text(trailingText, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen)),
+            const SizedBox(width: 12),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(trailingText, maxLines: 1, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen)),
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -261,8 +284,8 @@ class _TabConfigState extends ConsumerState<TabConfig> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-                  Text(subtitle, style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey)),
+                  Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                  Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey)),
                 ],
               ),
             ),
@@ -348,12 +371,16 @@ class _TabConfigState extends ConsumerState<TabConfig> {
             ),
           ),
           const SizedBox(width: 16),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.charcoal)),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(color: (ok ? AppTheme.primaryGreen : AppTheme.errorRed).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-            child: Text(ok ? "ONLINE" : "ERROR", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: ok ? AppTheme.primaryGreen : AppTheme.errorRed)),
+          Expanded(
+            child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppTheme.charcoal)),
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(color: (ok ? AppTheme.primaryGreen : AppTheme.errorRed).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+              child: Text(ok ? "ONLINE" : "ERROR", maxLines: 1, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: ok ? AppTheme.primaryGreen : AppTheme.errorRed)),
+            ),
           ),
         ],
       ),

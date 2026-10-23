@@ -424,13 +424,17 @@ class AdminDropdown<T> extends StatelessWidget {
                   ),
                 ),
               ],
-              Text(
-                selectedText,
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  color: context.textPrimary,
-                  fontSize: 12.5,
-                  letterSpacing: -0.2,
+              Flexible(
+                child: Text(
+                  selectedText,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: context.textPrimary,
+                    fontSize: 12.5,
+                    letterSpacing: -0.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 6),
@@ -519,7 +523,7 @@ class KycDocCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 340,
+      constraints: const BoxConstraints(maxWidth: 340),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: context.cardAltColor,
@@ -581,7 +585,7 @@ class ConfigBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 280,
+      constraints: const BoxConstraints(maxWidth: 280),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: context.cardColor,

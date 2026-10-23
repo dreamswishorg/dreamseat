@@ -182,37 +182,25 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
         const SizedBox(height: 12),
 
         // Row 2: Filters under the Search Bar (Status Dropdown + Role Segmented Pills)
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          child: Row(
-            children: [
-              AdminDropdown<String>(
-                icon: Icons.tune_rounded,
-                label: "Status",
-                value: _statusFilter,
-                items: const ['All', 'Active', 'Suspended'],
-                onChanged: (val) => setState(() {
-                  _statusFilter = val ?? 'All';
-                  _currentPage = 0;
-                }),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                height: 24,
-                width: 1,
-                color: const Color(0xFFE2E8F0),
-              ),
-              const SizedBox(width: 10),
-              _rolePill("All Accounts", totalCount, 'All', Icons.group_rounded, AppTheme.primaryGreen),
-              const SizedBox(width: 8),
-              _rolePill("Customers", customerCount, 'Customer', Icons.shopping_bag_outlined, const Color(0xFF2563EB)),
-              const SizedBox(width: 8),
-              _rolePill("Merchants", merchantCount, 'Merchant', Icons.storefront_rounded, const Color(0xFFD97706)),
-              const SizedBox(width: 8),
-              _rolePill("Staff Team", staffCount, 'Staff', Icons.shield_rounded, AppTheme.charcoal),
-            ],
-          ),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            AdminDropdown<String>(
+              icon: Icons.tune_rounded,
+              label: "Status",
+              value: _statusFilter,
+              items: const ['All', 'Active', 'Suspended'],
+              onChanged: (val) => setState(() {
+                _statusFilter = val ?? 'All';
+                _currentPage = 0;
+              }),
+            ),
+            _rolePill("All Accounts", totalCount, 'All', Icons.group_rounded, AppTheme.primaryGreen),
+            _rolePill("Customers", customerCount, 'Customer', Icons.shopping_bag_outlined, const Color(0xFF2563EB)),
+            _rolePill("Merchants", merchantCount, 'Merchant', Icons.storefront_rounded, const Color(0xFFD97706)),
+            _rolePill("Staff Team", staffCount, 'Staff', Icons.shield_rounded, AppTheme.charcoal),
+          ],
         ),
       ],
     );
@@ -284,11 +272,17 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            "Showing ${_currentPage * _itemsPerPage + 1} - ${((_currentPage + 1) * _itemsPerPage).clamp(0, totalRecords)} of $totalRecords accounts",
-            style: const TextStyle(fontSize: 11.5, color: AppTheme.mutedGrey, fontWeight: FontWeight.w600),
+          Flexible(
+            child: Text(
+              "Showing ${_currentPage * _itemsPerPage + 1} - ${((_currentPage + 1) * _itemsPerPage).clamp(0, totalRecords)} of $totalRecords accounts",
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 11.5, color: AppTheme.mutedGrey, fontWeight: FontWeight.w600),
+            ),
           ),
+          const SizedBox(width: 12),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
                 onPressed: _currentPage > 0 ? () => setState(() => _currentPage--) : null,
@@ -387,15 +381,20 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
             return AlertDialog(
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Row(
+              title: Row(
                 children: [
-                  Icon(Icons.shield_rounded, color: AppTheme.primaryGreen),
-                  SizedBox(width: 12),
-                  Text("Add New Staff Account", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppTheme.charcoal)),
+                  const Icon(Icons.shield_rounded, color: AppTheme.primaryGreen),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text("Add New Staff Account", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppTheme.charcoal)),
+                  ),
                 ],
               ),
-              content: SizedBox(
-                width: 500,
+              content: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: (MediaQuery.sizeOf(context).width * 0.94).clamp(240.0, 500.0),
+                  maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+                ),
                 child: SingleChildScrollView(
                   child: Form(
                     key: formKey,
@@ -625,8 +624,8 @@ class _MemberCard extends StatelessWidget {
                 // Bottom: Balances + Actions
                 Row(
                   children: [
-                    _buildLoyaltyAndWallet(),
-                    const Spacer(),
+                    Expanded(child: _buildLoyaltyAndWallet()),
+                    const SizedBox(width: 10),
                     _buildStatusChip(),
                     const SizedBox(width: 10),
                     if (!isSelf)
@@ -761,6 +760,7 @@ class _MemberCard extends StatelessWidget {
             Flexible(
               child: Text(
                 user.name.isNotEmpty ? user.name : "Unnamed User",
+                maxLines: 1,
                 style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: AppTheme.charcoal),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -778,8 +778,9 @@ class _MemberCard extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           user.email,
-          style: const TextStyle(fontSize: 11.5, color: AppTheme.mutedGrey),
+          maxLines: 1,
           overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 11.5, color: AppTheme.mutedGrey),
         ),
       ],
     );
@@ -790,21 +791,29 @@ class _MemberCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (user.dreamPoints > 0)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFEF3C7),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              "⭐ ${user.dreamPoints} pts",
-              style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: Color(0xFFB45309)),
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                "⭐ ${user.dreamPoints} pts",
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: Color(0xFFB45309)),
+              ),
             ),
           ),
         if (user.dreamPoints > 0) const SizedBox(width: 8),
-        Text(
-          "GH₵ ${user.referralCredit.toStringAsFixed(2)}",
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.charcoal),
+        Flexible(
+          child: Text(
+            "GH₵ ${user.referralCredit.toStringAsFixed(2)}",
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.charcoal),
+          ),
         ),
       ],
     );
@@ -857,6 +866,7 @@ class _UserDetailDrawer extends ConsumerWidget {
     final state = ref.watch(appStateProvider);
     final currentUser = state.users.firstWhere((u) => u.id == user.id, orElse: () => user);
     final isSelf = currentUser.id == state.currentUser?.id;
+    final isMobileDrawer = MediaQuery.sizeOf(context).width < 600;
 
     void copyText(String label, String text) {
       Clipboard.setData(ClipboardData(text: text));
@@ -874,11 +884,14 @@ class _UserDetailDrawer extends ConsumerWidget {
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      padding: const EdgeInsets.fromLTRB(28, 20, 28, 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.9),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(isMobileDrawer ? 20 : 28, 20, isMobileDrawer ? 20 : 28, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           Center(
             child: Container(
               width: 40,
@@ -893,14 +906,17 @@ class _UserDetailDrawer extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Account Profile", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
-                  SizedBox(height: 2),
-                  Text("Identity, security & balance overview", style: TextStyle(color: AppTheme.mutedGrey, fontSize: 12)),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text("Account Profile", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
+                    SizedBox(height: 2),
+                    Text("Identity, security & balance overview", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.mutedGrey, fontSize: 12)),
+                  ],
+                ),
               ),
+              const SizedBox(width: 12),
               IconButton(
                 onPressed: () => Navigator.pop(context),
                 icon: const Icon(Icons.close_rounded, size: 20),
@@ -933,14 +949,16 @@ class _UserDetailDrawer extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(currentUser.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
+                      Text(currentUser.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
                       const SizedBox(height: 2),
                       InkWell(
                         onTap: () => copyText("Email", currentUser.email),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(currentUser.email, style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 12)),
+                            Flexible(
+                              child: Text(currentUser.email, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 12)),
+                            ),
                             const SizedBox(width: 4),
                             const Icon(Icons.copy_rounded, size: 11, color: AppTheme.mutedGrey),
                           ],
@@ -1036,7 +1054,9 @@ class _UserDetailDrawer extends ConsumerWidget {
               child: const Text("Close", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
             ),
           ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }

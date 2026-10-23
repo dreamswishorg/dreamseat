@@ -318,27 +318,33 @@ class _TabSupportState extends ConsumerState<TabSupport> {
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.headset_mic_outlined, size: 48, color: Color(0xFFCBD5E1)),
-            SizedBox(height: 12),
-            Text(
-              "Select a ticket from the queue",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.charcoal),
-            ),
-            SizedBox(height: 4),
-            Text(
-              "View customer inquiries and respond with official solutions",
-              style: TextStyle(color: AppTheme.mutedGrey, fontSize: 12),
-            ),
-          ],
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.headset_mic_outlined, size: 48, color: Color(0xFFCBD5E1)),
+              SizedBox(height: 12),
+              Text(
+                "Select a ticket from the queue",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.charcoal),
+              ),
+              SizedBox(height: 4),
+              Text(
+                "View customer inquiries and respond with official solutions",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppTheme.mutedGrey, fontSize: 12),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildTicketDetail(SupportTicket t, {VoidCallback? onBack}) {
+    final narrow = MediaQuery.sizeOf(context).width < 850;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -357,7 +363,7 @@ class _TabSupportState extends ConsumerState<TabSupport> {
         children: [
           // Header Bar
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            padding: EdgeInsets.symmetric(horizontal: narrow ? 16 : 20, vertical: 14),
             decoration: const BoxDecoration(
               color: Colors.white,
               border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
@@ -404,22 +410,30 @@ class _TabSupportState extends ConsumerState<TabSupport> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                _statusPill(t.status),
-                if (t.status != 'resolved') ...[
-                  const SizedBox(width: 10),
-                  ElevatedButton.icon(
-                    onPressed: () => ref.read(appStateProvider.notifier).resolveTicket(t.id),
-                    icon: const Icon(Icons.check_rounded, size: 14),
-                    label: const Text("Mark Resolved", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryGreen,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
+                Flexible(
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.end,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      _statusPill(t.status),
+                      if (t.status != 'resolved')
+                        ElevatedButton.icon(
+                          onPressed: () => ref.read(appStateProvider.notifier).resolveTicket(t.id),
+                          icon: const Icon(Icons.check_rounded, size: 14),
+                          label: const Text("Mark Resolved", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryGreen,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
+                    ],
                   ),
-                ],
+                ),
               ],
             ),
           ),
@@ -577,58 +591,70 @@ class _TabSupportState extends ConsumerState<TabSupport> {
 
     return Align(
       alignment: isStaff ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 14),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.45),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: isStaff ? AppTheme.primaryGreen : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: isStaff ? null : Border.all(color: const Color(0xFFE2E8F0)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final bubbleMaxWidth = constraints.maxWidth.isFinite
+              ? (constraints.maxWidth * 0.85).clamp(220.0, 560.0)
+              : MediaQuery.sizeOf(context).width * 0.85;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            constraints: BoxConstraints(maxWidth: bubbleMaxWidth),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: isStaff ? AppTheme.primaryGreen : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: isStaff ? null : Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  isStaff ? "DreamEats Support" : senderName,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: isStaff ? Colors.white.withValues(alpha: 0.9) : AppTheme.charcoal,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        isStaff ? "DreamEats Support" : senderName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: isStaff ? Colors.white.withValues(alpha: 0.9) : AppTheme.charcoal,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      timeStr,
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isStaff ? Colors.white70 : AppTheme.mutedGrey,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(height: 6),
                 Text(
-                  timeStr,
+                  message,
                   style: TextStyle(
-                    fontSize: 10,
-                    color: isStaff ? Colors.white70 : AppTheme.mutedGrey,
+                    fontSize: 13,
+                    height: 1.4,
+                    color: isStaff ? Colors.white : const Color(0xFF1E293B),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 6),
-            Text(
-              message,
-              style: TextStyle(
-                fontSize: 13,
-                height: 1.4,
-                color: isStaff ? Colors.white : const Color(0xFF1E293B),
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

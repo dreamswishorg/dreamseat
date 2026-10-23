@@ -301,13 +301,17 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
           children: [
             Icon(Icons.bolt_rounded, size: 18, color: AppTheme.warningOrange),
             const SizedBox(width: 6),
-            Text(
-              "QUICK-START PRESET TEMPLATES",
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w900,
-                color: context.textSecondary,
-                letterSpacing: 0.6,
+            Flexible(
+              child: Text(
+                "QUICK-START PRESET TEMPLATES",
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: context.textSecondary,
+                  letterSpacing: 0.6,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -380,22 +384,28 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
                 child: const Icon(Icons.edit_notifications_rounded, color: AppTheme.primaryGreen, size: 20),
               ),
               const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Compose Campaign",
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                      color: context.textPrimary,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Compose Campaign",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: context.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  Text(
-                    "Target audience, message content & priority",
-                    style: TextStyle(color: context.textSecondary, fontSize: 12),
-                  ),
-                ],
+                    Text(
+                      "Target audience, message content & priority",
+                      style: TextStyle(color: context.textSecondary, fontSize: 12),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -696,20 +706,27 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(Icons.phone_iphone_rounded, size: 20, color: AppTheme.primaryGreen),
-                  const SizedBox(width: 8),
-                  Text(
-                    "Live Push Preview",
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: context.textPrimary,
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.phone_iphone_rounded, size: 20, color: AppTheme.primaryGreen),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        "Live Push Preview",
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: context.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
@@ -813,9 +830,13 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
             children: [
               Icon(Icons.mark_email_read_rounded, size: 14, color: AppTheme.primaryGreen),
               const SizedBox(width: 6),
-              Text(
-                "Multi-channel broadcast will deliver via Push & Email",
-                style: TextStyle(fontSize: 11, color: context.textSecondary, fontWeight: FontWeight.w600),
+              Expanded(
+                child: Text(
+                  "Multi-channel broadcast will deliver via Push & Email",
+                  style: TextStyle(fontSize: 11, color: context.textSecondary, fontWeight: FontWeight.w600),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
@@ -851,15 +872,19 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
               children: [
                 Icon(Icons.history_rounded, size: 22, color: context.textPrimary),
                 const SizedBox(width: 12),
-                Text(
-                  "Campaign Audit Trail",
-                  style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    color: context.textPrimary,
+                Expanded(
+                  child: Text(
+                    "Campaign Audit Trail",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                      color: context.textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(

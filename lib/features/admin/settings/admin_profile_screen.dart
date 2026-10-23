@@ -116,7 +116,9 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 960),
           child: SingleChildScrollView(
-            padding: EdgeInsets.all(isMobile ? 16 : 32),
+            padding: isMobile
+                ? const EdgeInsets.all(16)
+                : const EdgeInsets.fromLTRB(32, 20, 32, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -197,25 +199,35 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  user?.name ?? 'Admin',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: AppTheme.charcoal,
-                    letterSpacing: -0.4,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    user?.name ?? 'Admin',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.charcoal,
+                      letterSpacing: -0.4,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  user?.email ?? '',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.mutedGrey,
-                    fontWeight: FontWeight.w500,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    user?.email ?? '',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.mutedGrey,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
                 Wrap(
@@ -261,25 +273,30 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
                           Flexible(
                             child: Text(
                               user?.name ?? 'Admin',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w900,
                                 color: AppTheme.charcoal,
                                 letterSpacing: -0.4,
                               ),
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: 12),
-                          _buildBadge(
-                            label: isSuperAdmin ? "👑 SUPER ADMIN" : "🛡️ STAFF ADMIN",
-                            color: isSuperAdmin ? AppTheme.errorRed : AppTheme.primaryGreen,
+                          Flexible(
+                            child: _buildBadge(
+                              label: isSuperAdmin ? "👑 SUPER ADMIN" : "🛡️ STAFF ADMIN",
+                              color: isSuperAdmin ? AppTheme.errorRed : AppTheme.primaryGreen,
+                            ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 4),
                       Text(
                         user?.email ?? '',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 14,
                           color: AppTheme.mutedGrey,
@@ -287,20 +304,35 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 14),
-                      Row(
+                      Wrap(
+                        spacing: 20,
+                        runSpacing: 6,
                         children: [
-                          const Icon(Icons.verified_rounded, size: 16, color: AppTheme.primaryGreen),
-                          const SizedBox(width: 6),
-                          const Text(
-                            "Verified Staff Account",
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.verified_rounded, size: 16, color: AppTheme.primaryGreen),
+                              const SizedBox(width: 6),
+                              const Text(
+                                "Verified Staff Account",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 20),
-                          const Icon(Icons.schedule_rounded, size: 16, color: AppTheme.mutedGrey),
-                          const SizedBox(width: 6),
-                          Text(
-                            "Member since ${user != null ? '${user.createdAt.year}' : '2024'}",
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.mutedGrey),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.schedule_rounded, size: 16, color: AppTheme.mutedGrey),
+                              const SizedBox(width: 6),
+                              Text(
+                                "Member since ${user != null ? '${user.createdAt.year}' : '2024'}",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.mutedGrey),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -353,13 +385,17 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                "Personal Information",
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.charcoal,
-                  letterSpacing: -0.3,
+              Flexible(
+                child: Text(
+                  "Personal Information",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    color: AppTheme.charcoal,
+                    letterSpacing: -0.3,
+                  ),
                 ),
               ),
               if (!_isEditing)
@@ -608,6 +644,8 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
                 children: [
                   Text(
                     title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
@@ -618,6 +656,8 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppTheme.mutedGrey,
@@ -629,7 +669,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
               ),
             ),
             if (trailing != null)
-              trailing
+              Flexible(child: trailing)
             else
               const Icon(Icons.chevron_right_rounded, size: 20, color: Color(0xFF94A3B8)),
           ],
@@ -642,73 +682,82 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
     final newPasswordController = TextEditingController();
     final confirmController = TextEditingController();
     final messenger = ScaffoldMessenger.of(context);
+    final screenSize = MediaQuery.of(context).size;
 
     await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Change Security Key', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Enter your new secure password below.', style: TextStyle(fontSize: 13, color: AppTheme.mutedGrey)),
-            const SizedBox(height: 16),
-            TextField(
-              controller: newPasswordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'New Password',
-                filled: true,
-                fillColor: const Color(0xFFF8FAFC),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+      builder: (ctx) => ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: screenSize.width * 0.94,
+          maxHeight: screenSize.height * 0.85,
+        ),
+        child: AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Change Security Key', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Enter your new secure password below.', style: TextStyle(fontSize: 13, color: AppTheme.mutedGrey)),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: newPasswordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: 'New Password',
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFC),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: confirmController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: 'Confirm Password',
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFC),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: confirmController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Confirm Password',
-                filled: true,
-                fillColor: const Color(0xFFF8FAFC),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel', style: TextStyle(color: AppTheme.mutedGrey, fontWeight: FontWeight.bold)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (newPasswordController.text != confirmController.text) {
+                  messenger.showSnackBar(
+                    const SnackBar(content: Text('Passwords do not match'), backgroundColor: AppTheme.errorRed),
+                  );
+                  return;
+                }
+                final error = await SupabaseService().updatePassword(newPasswordController.text);
+                if (error != null) {
+                  messenger.showSnackBar(SnackBar(content: Text('Error: $error'), backgroundColor: AppTheme.errorRed));
+                } else {
+                  messenger.showSnackBar(
+                    const SnackBar(content: Text('🔒 Security key updated successfully'), backgroundColor: AppTheme.primaryGreen),
+                  );
+                }
+                if (ctx.mounted) Navigator.pop(ctx, true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryGreen,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
+              child: const Text('Update'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel', style: TextStyle(color: AppTheme.mutedGrey, fontWeight: FontWeight.bold)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (newPasswordController.text != confirmController.text) {
-                messenger.showSnackBar(
-                  const SnackBar(content: Text('Passwords do not match'), backgroundColor: AppTheme.errorRed),
-                );
-                return;
-              }
-              final error = await SupabaseService().updatePassword(newPasswordController.text);
-              if (error != null) {
-                messenger.showSnackBar(SnackBar(content: Text('Error: $error'), backgroundColor: AppTheme.errorRed));
-              } else {
-                messenger.showSnackBar(
-                  const SnackBar(content: Text('🔒 Security key updated successfully'), backgroundColor: AppTheme.primaryGreen),
-                );
-              }
-              if (ctx.mounted) Navigator.pop(ctx, true);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryGreen,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text('Update'),
-          ),
-        ],
       ),
     );
   }
@@ -736,29 +785,38 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
 
   void _onLogout() async {
     final navigator = Navigator.of(context);
+    final screenSize = MediaQuery.of(context).size;
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Log out', style: TextStyle(fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
-        content: const Text('Are you sure you want to log out?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel', style: TextStyle(color: AppTheme.mutedGrey, fontWeight: FontWeight.w600)),
+      builder: (ctx) => ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: screenSize.width * 0.94,
+          maxHeight: screenSize.height * 0.85,
+        ),
+        child: AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Log out', style: TextStyle(fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
+          content: const SingleChildScrollView(
+            child: Text('Are you sure you want to log out?'),
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.errorRed,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel', style: TextStyle(color: AppTheme.mutedGrey, fontWeight: FontWeight.w600)),
             ),
-            child: const Text('Log out', style: TextStyle(fontWeight: FontWeight.w800)),
-          ),
-        ],
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.errorRed,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              ),
+              child: const Text('Log out', style: TextStyle(fontWeight: FontWeight.w800)),
+            ),
+          ],
+        ),
       ),
     );
     if (confirm == true) {

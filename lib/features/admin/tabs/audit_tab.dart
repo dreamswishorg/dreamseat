@@ -108,34 +108,31 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                   const SizedBox(height: 12),
 
                   // Row 2: Filters under the Search Bar
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    child: Row(
-                      children: [
-                        AdminDropdown<String>(
-                          icon: Icons.person_outline_rounded,
-                          label: "Actor Role",
-                          value: _actorFilter,
-                          items: const ['All', 'Admin', 'Merchant', 'Customer', 'System'],
-                          onChanged: (val) => setState(() => _actorFilter = val ?? 'All'),
-                        ),
-                        const SizedBox(width: 10),
-                        AdminDropdown<String>(
-                          icon: Icons.category_rounded,
-                          label: "Category",
-                          value: _actionFilter,
-                          items: const ['All', 'ORDER', 'DEAL', 'MERCHANT', 'USER', 'PAYOUT', 'SYSTEM'],
-                          onChanged: (val) => setState(() => _actionFilter = val ?? 'All'),
-                        ),
-                      ],
-                    ),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      AdminDropdown<String>(
+                        icon: Icons.person_outline_rounded,
+                        label: "Actor Role",
+                        value: _actorFilter,
+                        items: const ['All', 'Admin', 'Merchant', 'Customer', 'System'],
+                        onChanged: (val) => setState(() => _actorFilter = val ?? 'All'),
+                      ),
+                      AdminDropdown<String>(
+                        icon: Icons.category_rounded,
+                        label: "Category",
+                        value: _actionFilter,
+                        items: const ['All', 'ORDER', 'DEAL', 'MERCHANT', 'USER', 'PAYOUT', 'SYSTEM'],
+                        onChanged: (val) => setState(() => _actionFilter = val ?? 'All'),
+                      ),
+                    ],
                   ),
                 ],
               );
             },
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
 
           // Main Table / Cards
           Expanded(
@@ -162,6 +159,7 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                 }
 
                 // Desktop Table structure
+                final tableWidth = constraints.maxWidth < 1120 ? 1120.0 : constraints.maxWidth;
                 return Container(
                   decoration: BoxDecoration(
                     color: context.cardColor,
@@ -170,37 +168,43 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                     boxShadow: context.clientShadow,
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Column(
-                    children: [
-                      // Sticky table header
-                      Container(
-                        color: context.cardAltColor,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                        decoration: BoxDecoration(
-                          border: Border(bottom: BorderSide(color: context.borderColor)),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(flex: 3, child: _tableHeaderLabel("TIMESTAMP")),
-                            Expanded(flex: 3, child: _tableHeaderLabel("ACTOR")),
-                            Expanded(flex: 3, child: _tableHeaderLabel("ACTION")),
-                            Expanded(flex: 3, child: _tableHeaderLabel("TARGET ENTITY")),
-                            Expanded(flex: 6, child: _tableHeaderLabel("DESCRIPTION")),
-                            Expanded(flex: 2, child: _tableHeaderLabel("DETAILS", align: TextAlign.end)),
-                          ],
-                        ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: tableWidth,
+                      child: Column(
+                        children: [
+                          // Sticky table header
+                          Container(
+                            color: context.cardAltColor,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                            decoration: BoxDecoration(
+                              border: Border(bottom: BorderSide(color: context.borderColor)),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(flex: 3, child: _tableHeaderLabel("TIMESTAMP")),
+                                Expanded(flex: 3, child: _tableHeaderLabel("ACTOR")),
+                                Expanded(flex: 3, child: _tableHeaderLabel("ACTION")),
+                                Expanded(flex: 2, child: _tableHeaderLabel("TARGET ENTITY")),
+                                Expanded(flex: 6, child: _tableHeaderLabel("DESCRIPTION")),
+                                Expanded(flex: 1, child: _tableHeaderLabel("DETAILS", align: TextAlign.end)),
+                              ],
+                            ),
+                          ),
+                          // Table body
+                          Expanded(
+                            child: filteredLogs.isEmpty
+                                ? const NoDataState(msg: "No matching audit logs found.")
+                                : ListView.separated(
+                                    itemCount: filteredLogs.length,
+                                    separatorBuilder: (ctx, idx) => Divider(height: 1, color: context.borderColor),
+                                    itemBuilder: (ctx, i) => _buildTableRow(filteredLogs[i]),
+                                  ),
+                          ),
+                        ],
                       ),
-                      // Table body
-                      Expanded(
-                        child: filteredLogs.isEmpty
-                            ? const NoDataState(msg: "No matching audit logs found.")
-                            : ListView.separated(
-                                itemCount: filteredLogs.length,
-                                separatorBuilder: (ctx, idx) => Divider(height: 1, color: context.borderColor),
-                                itemBuilder: (ctx, i) => _buildTableRow(filteredLogs[i]),
-                              ),
-                      ),
-                    ],
+                    ),
                   ),
                 );
               },
@@ -289,6 +293,8 @@ class _TabAuditState extends ConsumerState<TabAudit> {
               flex: 3,
               child: Text(
                 timeStr,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(fontSize: 12.5, color: context.textSecondary, fontWeight: FontWeight.w500),
               ),
             ),
@@ -313,6 +319,8 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                     ),
                     child: Text(
                       roleLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w900, color: roleColor, letterSpacing: 0.4),
                     ),
                   ),
@@ -335,6 +343,7 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                       ),
                       child: Text(
                         log.action,
+                        maxLines: 1,
                         style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: actionColor),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -349,10 +358,12 @@ class _TabAuditState extends ConsumerState<TabAudit> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(log.entityType.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: context.textPrimary)),
+                  Text(log.entityType.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: context.textPrimary)),
                   const SizedBox(height: 2),
                   Text(
                     log.entityId.length > 8 ? log.entityId.substring(0, 8).toUpperCase() : log.entityId,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontSize: 10, fontFamily: 'Courier', color: context.textSecondary),
                   ),
                 ],
@@ -430,22 +441,34 @@ class _TabAuditState extends ConsumerState<TabAudit> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(timeStr, style: TextStyle(fontSize: 11, color: context.textSecondary, fontWeight: FontWeight.bold)),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: actionColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  log.action,
-                  style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w900, color: actionColor),
+              Flexible(
+                child: Text(timeStr, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: context.textSecondary, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: actionColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    log.action,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w900, color: actionColor),
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(log.description, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: context.textPrimary)),
+          Text(
+            log.description,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: context.textPrimary),
+          ),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -457,6 +480,8 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                 ),
                 child: Text(
                   roleLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: roleColor),
                 ),
               ),
@@ -520,106 +545,116 @@ class _AuditDetailDrawer extends StatelessWidget {
     final timeStr = DateFormat('MMMM d, yyyy • h:mm a').format(log.createdAt);
     final hasMetadata = log.metadata.isNotEmpty;
     final metaJson = hasMetadata ? const JsonEncoder.withIndent('  ').convert(log.metadata) : '';
+    final sidePadding = (MediaQuery.sizeOf(context).width * 0.06).clamp(16.0, 28.0);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: context.cardColor,
-        borderRadius: const BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: (MediaQuery.sizeOf(context).width * 0.94).clamp(240.0, 720.0),
+        maxHeight: MediaQuery.sizeOf(context).height * 0.9,
       ),
-      padding: const EdgeInsets.fromLTRB(28, 20, 28, 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(width: 44, height: 5, decoration: BoxDecoration(color: context.borderColor, borderRadius: BorderRadius.circular(10))),
-          ),
-          const SizedBox(height: 24),
-          Row(
+      child: Container(
+        decoration: BoxDecoration(
+          color: context.cardColor,
+          borderRadius: const BorderRadius.only(topLeft: Radius.circular(28), topRight: Radius.circular(28)),
+        ),
+        padding: EdgeInsets.fromLTRB(sidePadding, 20, sidePadding, 32),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen.withValues(alpha: context.isDark ? 0.2 : 0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(Icons.history_edu_rounded, color: AppTheme.primaryGreen),
+              Center(
+                child: Container(width: 44, height: 5, decoration: BoxDecoration(color: context.borderColor, borderRadius: BorderRadius.circular(10))),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Audit Record Details", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: context.textPrimary, letterSpacing: -0.3)),
-                    const SizedBox(height: 2),
-                    Text("Action ID: ${log.id}", style: TextStyle(fontSize: 11.5, color: context.textSecondary, fontFamily: 'Courier')),
-                  ],
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryGreen.withValues(alpha: context.isDark ? 0.2 : 0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(Icons.history_edu_rounded, color: AppTheme.primaryGreen),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Audit Record Details", maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: context.textPrimary, letterSpacing: -0.3)),
+                        const SizedBox(height: 2),
+                        Text("Action ID: ${log.id}", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11.5, color: context.textSecondary, fontFamily: 'Courier')),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Detail list items
+              _detailItem(context, "Timestamp", timeStr),
+              _detailItem(context, "Action Code", log.action.toUpperCase()),
+              _detailItem(context, "Actor Account", "${log.actorName} (${log.actorRole.toUpperCase()})"),
+              _detailItem(context, "Target Entity", "${log.entityType.toUpperCase()} (ID: ${log.entityId})"),
+              _detailItem(context, "Action Summary", log.description),
+
+              if (hasMetadata) ...[
+                const SizedBox(height: 16),
+                Text("Payload Metadata (JSON)", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: context.textPrimary)),
+                const SizedBox(height: 8),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 180),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: context.cardAltColor,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: context.borderColor),
+                    ),
+                    child: SingleChildScrollView(
+                      child: Text(
+                        metaJson,
+                        style: TextStyle(fontSize: 11.5, fontFamily: 'Courier', color: context.textPrimary),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 28),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryGreen,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    elevation: 0,
+                  ),
+                  child: const Text("Close", style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-
-          // Detail list items
-          _detailItem(context, "Timestamp", timeStr),
-          _detailItem(context, "Action Code", log.action.toUpperCase()),
-          _detailItem(context, "Actor Account", "${log.actorName} (${log.actorRole.toUpperCase()})"),
-          _detailItem(context, "Target Entity", "${log.entityType.toUpperCase()} (ID: ${log.entityId})"),
-          _detailItem(context, "Action Summary", log.description),
-
-          if (hasMetadata) ...[
-            const SizedBox(height: 16),
-            Text("Payload Metadata (JSON)", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: context.textPrimary)),
-            const SizedBox(height: 8),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 180),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: context.cardAltColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: context.borderColor),
-                ),
-                child: SingleChildScrollView(
-                  child: Text(
-                    metaJson,
-                    style: TextStyle(fontSize: 11.5, fontFamily: 'Courier', color: context.textPrimary),
-                  ),
-                ),
-              ),
-            ),
-          ],
-
-          const SizedBox(height: 28),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryGreen,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                elevation: 0,
-              ),
-              child: const Text("Close", style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _detailItem(BuildContext context, String label, String value) {
+    final labelWidth = (MediaQuery.sizeOf(context).width * 0.34).clamp(92.0, 140.0);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 140,
-            child: Text(label, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: context.textSecondary)),
+            width: labelWidth,
+            child: Text(label, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: context.textSecondary)),
           ),
           Expanded(
             child: Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: context.textPrimary)),

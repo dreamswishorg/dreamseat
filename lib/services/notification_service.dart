@@ -64,7 +64,11 @@ class NotificationService {
 
     // 8. Subscribe to global topics
     if (!kIsWeb) {
-      await FirebaseMessaging.instance.subscribeToTopic('all_users');
+      try {
+        await FirebaseMessaging.instance.subscribeToTopic('all_users');
+      } catch (e) {
+        debugPrint('NotificationService: subscribeToTopic(all_users) skipped: $e');
+      }
     }
   }
 

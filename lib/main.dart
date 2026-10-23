@@ -81,7 +81,11 @@ void main() async {
   clearUrlParams();
 
   // 4. Register background message handler
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  try {
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    debugPrint('Firebase background message handler registration error: $e');
+  }
 
   // 5. Initialize push notifications (non-blocking)
   NotificationService().initialize(navigatorKey).catchError((e) {

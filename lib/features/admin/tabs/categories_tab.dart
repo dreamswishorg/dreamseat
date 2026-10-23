@@ -91,14 +91,21 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  isEditing ? 'Edit Category' : 'Add New Category',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                Expanded(
+                  child: Text(
+                    isEditing ? 'Edit Category' : 'Add New Category',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
-            content: SizedBox(
-              width: 480,
+            content: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: (MediaQuery.sizeOf(ctx).width * 0.94).clamp(240.0, 480.0),
+                maxHeight: MediaQuery.sizeOf(ctx).height * 0.9,
+              ),
               child: SingleChildScrollView(
                 child: Form(
                   key: formKey,
@@ -336,7 +343,7 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
     final isMobile = MediaQuery.of(context).size.width < 650;
 
     return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 32, vertical: isMobile ? 16 : 20),
+      padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 20, 32, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -352,7 +359,7 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               ElevatedButton.icon(
                 onPressed: () => _showAddEditCategoryDialog(),
                 icon: const Icon(Icons.add_rounded, size: 18),
@@ -477,7 +484,10 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
             else
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final crossAxisCount = constraints.maxWidth > 900 ? 3 : (constraints.maxWidth > 600 ? 2 : 1);
+                  final gridWidth = constraints.maxWidth;
+                  final crossAxisCount = gridWidth > 1200 ? 4 : (gridWidth > 900 ? 3 : (gridWidth > 600 ? 2 : 1));
+                  final cellWidth = (gridWidth - 16 * (crossAxisCount - 1)) / crossAxisCount;
+                  final childAspectRatio = cellWidth / (cellWidth * 0.62 + 56);
 
                   return GridView.builder(
                     shrinkWrap: true,
@@ -486,7 +496,7 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
                       crossAxisCount: crossAxisCount,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
-                      childAspectRatio: 1.25,
+                      childAspectRatio: childAspectRatio,
                     ),
                     itemCount: filtered.length,
                     itemBuilder: (context, idx) {
@@ -660,13 +670,17 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: isCompact ? 1 : 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: isCompact ? 18 : 22,
-                    fontWeight: FontWeight.w900,
-                    color: AppTheme.charcoal,
-                    letterSpacing: -0.5,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: isCompact ? 18 : 22,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.charcoal,
+                      letterSpacing: -0.5,
+                    ),
                   ),
                 ),
               ],

@@ -334,9 +334,13 @@ class _TabMapState extends ConsumerState<TabMap> {
       children: [
         Icon(icon, size: 16, color: AppTheme.primaryGreen),
         const SizedBox(width: 10),
-        Text(label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.charcoal)),
-        const Spacer(),
-        Text(value, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
+        Expanded(
+          child: Text(label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.charcoal), maxLines: 1, overflow: TextOverflow.ellipsis),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(value, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: AppTheme.charcoal), maxLines: 1, overflow: TextOverflow.ellipsis),
+        ),
       ],
     );
   }
@@ -402,16 +406,21 @@ class _TabMapState extends ConsumerState<TabMap> {
             ],
           ),
           const SizedBox(height: 12),
-          Text(biz.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
+          Flexible(
+            child: Text(biz.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppTheme.charcoal), maxLines: 2, overflow: TextOverflow.ellipsis),
+          ),
           const SizedBox(height: 2),
-          Text("${biz.category} • ${biz.location}", style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500)),
+          Text("${biz.category} • ${biz.location}", maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500)),
           const SizedBox(height: 16),
           const Divider(height: 1, color: Color(0xFFF1F5F9)),
           const SizedBox(height: 12),
           _inspectorStat("Total Rescue Orders", "$bizOrders orders"),
           _inspectorStat("Average Rating", "${biz.rating.toStringAsFixed(1)} ★"),
           _inspectorStat("Operating Status", "Online & Open"),
-          const Spacer(),
+          LayoutBuilder(
+            builder: (context, constraints) =>
+                constraints.hasBoundedHeight ? const Spacer() : const SizedBox(height: 16),
+          ),
           ElevatedButton.icon(
             onPressed: () => _showMerchantLedgerModal(context, biz, state),
             icon: const Icon(Icons.receipt_long_rounded, size: 16),
@@ -435,8 +444,13 @@ class _TabMapState extends ConsumerState<TabMap> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 13)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.charcoal)),
+          Expanded(
+            child: Text(label, style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.charcoal), maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
         ],
       ),
     );
@@ -509,7 +523,11 @@ class _TabMapState extends ConsumerState<TabMap> {
                       children: [
                         const Text("GROSS VOLUME", style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8))),
                         const SizedBox(height: 2),
-                        Text("GHS ${gross.toStringAsFixed(2)}", style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF2563EB))),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text("GHS ${gross.toStringAsFixed(2)}", style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF2563EB))),
+                        ),
                       ],
                     ),
                   ),
@@ -521,7 +539,11 @@ class _TabMapState extends ConsumerState<TabMap> {
                       children: [
                         const Text("EST. NET PAYOUT", style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8))),
                         const SizedBox(height: 2),
-                        Text("GHS ${net.toStringAsFixed(2)}", style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen)),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text("GHS ${net.toStringAsFixed(2)}", style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen)),
+                        ),
                       ],
                     ),
                   ),
@@ -533,7 +555,11 @@ class _TabMapState extends ConsumerState<TabMap> {
                       children: [
                         const Text("PENDING", style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8))),
                         const SizedBox(height: 2),
-                        Text("GHS ${pending.toStringAsFixed(2)}", style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.warningOrange)),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text("GHS ${pending.toStringAsFixed(2)}", style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.warningOrange)),
+                        ),
                       ],
                     ),
                   ),

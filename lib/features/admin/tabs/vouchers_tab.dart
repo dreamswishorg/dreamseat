@@ -35,33 +35,29 @@ class _TabVouchersState extends ConsumerState<TabVouchers> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Top Toolbar ──────────────────────────────────────
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Container(
-                  height: 42,
-                  constraints: const BoxConstraints(maxWidth: 320),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: TextField(
-                    onChanged: (v) => setState(() => _searchQuery = v),
-                    style: const TextStyle(fontSize: 12.5, color: AppTheme.charcoal),
-                    decoration: const InputDecoration(
-                      hintText: "Search promo codes...",
-                      hintStyle: TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
-                      prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppTheme.mutedGrey),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 10),
-                    ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final searchField = Container(
+                height: 42,
+                constraints: const BoxConstraints(maxWidth: 320),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: TextField(
+                  onChanged: (v) => setState(() => _searchQuery = v),
+                  style: const TextStyle(fontSize: 12.5, color: AppTheme.charcoal),
+                  decoration: const InputDecoration(
+                    hintText: "Search promo codes...",
+                    hintStyle: TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
+                    prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppTheme.mutedGrey),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(vertical: 10),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
+              );
+              final createButton = ElevatedButton.icon(
                 onPressed: _showCreateDialog,
                 icon: const Icon(Icons.add_rounded, size: 18),
                 label: const Text("Create Voucher", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
@@ -72,16 +68,36 @@ class _TabVouchersState extends ConsumerState<TabVouchers> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   elevation: 0,
                 ),
-              ),
-            ],
+              );
+
+              if (constraints.maxWidth < 430) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    searchField,
+                    const SizedBox(height: 10),
+                    createButton,
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  searchField,
+                  const Spacer(),
+                  createButton,
+                ],
+              );
+            },
           ),
           const SizedBox(height: 16),
 
           // ── Quick Summary Row ────────────────────────────────
-          Row(
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
             children: [
               _summaryChip("Active Vouchers", "$activeCount live", AppTheme.primaryGreen),
-              const SizedBox(width: 10),
               _summaryChip("Total Claims", "$totalUsed redeemed", const Color(0xFF2563EB)),
             ],
           ),
@@ -93,11 +109,14 @@ class _TabVouchersState extends ConsumerState<TabVouchers> {
                 ? const NoDataState(msg: "No promo vouchers match your search.")
                 : LayoutBuilder(
                     builder: (context, constraints) {
-                      final isNarrow = constraints.maxWidth < 750;
+                      final width = constraints.maxWidth;
+                      final columns = width >= 760 ? 2 : 1;
+                      final cellWidth = columns == 2 ? (width - 16) / 2 : width;
+                      final cellHeight = cellWidth < 560 ? 152.0 : 168.0;
                       return GridView.builder(
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: isNarrow ? 1 : 2,
-                          childAspectRatio: isNarrow ? 2.8 : 3.0,
+                          crossAxisCount: columns,
+                          childAspectRatio: cellWidth / cellHeight,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 14,
                         ),
@@ -145,14 +164,17 @@ class _TabVouchersState extends ConsumerState<TabVouchers> {
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           title: const Text("Create Promo Voucher", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: AppTheme.charcoal)),
-          content: SizedBox(
-            width: 400,
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: (MediaQuery.sizeOf(context).width * 0.94).clamp(240.0, 400.0),
+            ),
+            child: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   const Text("VOUCHER CODE", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8), letterSpacing: 0.8)),
                   const SizedBox(height: 6),
                   TextFormField(
@@ -232,6 +254,7 @@ class _TabVouchersState extends ConsumerState<TabVouchers> {
                 ],
               ),
             ),
+            ),
           ),
           actions: [
             TextButton(
@@ -293,50 +316,62 @@ class _VoucherItemCard extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: AppTheme.lightGreenBg,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.3)),
-                    ),
-                    child: Text(
-                      voucher.code,
-                      style: const TextStyle(
-                        fontFamily: 'monospace',
-                        fontWeight: FontWeight.w900,
-                        fontSize: 13,
-                        color: AppTheme.primaryGreen,
-                        letterSpacing: 1.0,
+              Expanded(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: AppTheme.lightGreenBg,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.3)),
+                        ),
+                        child: Text(
+                          voucher.code,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 13,
+                            color: AppTheme.primaryGreen,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.copy_rounded, size: 14, color: AppTheme.mutedGrey),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    tooltip: "Copy code",
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: voucher.code));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Copied '${voucher.code}'"), duration: const Duration(seconds: 1)),
-                      );
-                    },
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.copy_rounded, size: 14, color: AppTheme.mutedGrey),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: "Copy code",
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: voucher.code));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Copied '${voucher.code}'"), duration: const Duration(seconds: 1)),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 10),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    voucher.isActive ? "ACTIVE" : "PAUSED",
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w900,
-                      color: voucher.isActive ? AppTheme.primaryGreen : AppTheme.mutedGrey,
-                      letterSpacing: 0.5,
+                  Flexible(
+                    child: Text(
+                      voucher.isActive ? "ACTIVE" : "PAUSED",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        color: voucher.isActive ? AppTheme.primaryGreen : AppTheme.mutedGrey,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -354,25 +389,35 @@ class _VoucherItemCard extends ConsumerWidget {
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "${voucher.discountAmount}${voucher.discountType == 'percentage' ? '%' : ' GHS'} OFF",
-                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.charcoal, letterSpacing: -0.3),
-                  ),
-                  Text(
-                    "Platform funded",
-                    style: TextStyle(fontSize: 10.5, color: AppTheme.mutedGrey),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "${voucher.discountAmount}${voucher.discountType == 'percentage' ? '%' : ' GHS'} OFF",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.charcoal, letterSpacing: -0.3),
+                    ),
+                    Text(
+                      "Platform funded",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 10.5, color: AppTheme.mutedGrey),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
                     "${voucher.usageCount} / ${voucher.usageLimit} uses",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.charcoal),
                   ),
                   const SizedBox(height: 4),

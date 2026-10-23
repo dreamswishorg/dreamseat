@@ -158,6 +158,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             )
           : null,
       appBar: AppBar(
+        titleSpacing: isWide ? 24 : 8,
         toolbarHeight: isWide ? 68 : 58,
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
@@ -205,8 +206,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                     ),
                   ),
                   const Spacer(),
-                  Container(
-                    width: 290,
+                  Flexible(
+                    flex: 0,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 290, minWidth: 160),
+                      child: Container(
                     height: 38,
                     decoration: BoxDecoration(
                       color: const Color(0xFFF8FAFC),
@@ -266,6 +270,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -594,12 +600,56 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             ),
           Expanded(
             child: Container(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                    child: _buildCurrentTab(currentTab),
+              color: const Color(0xFFF8FAFC),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Content is centred and capped on ultra-wide screens so
+                  // nothing drifts to the far edges of the page.
+                  const double kMaxContentWidth = 1360;
+                  final contentWidth = constraints.maxWidth > kMaxContentWidth
+                      ? kMaxContentWidth
+                      : constraints.maxWidth;
+
+                  // Tabs size themselves from MediaQuery. Report the REAL
+                  // content width (screen minus sidebar) so mobile/desktop
+                  // breakpoints inside tabs pick the right layout.
+                  final mq = MediaQuery.of(context);
+                  return Align(
+                    alignment: Alignment.topCenter,
+                    child: SizedBox(
+                      width: contentWidth,
+                      height: constraints.maxHeight,
+                      child: MediaQuery(
+                        data: mq.copyWith(
+                          size: Size(contentWidth, constraints.maxHeight),
+                        ),
+                        child: ClipRect(
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 250),
+                            switchInCurve: Curves.easeOutCubic,
+                            switchOutCurve: Curves.easeInCubic,
+                            // Default builder centres children in a loose
+                            // Stack, which shrinks and shifts tab content.
+                            layoutBuilder: (currentChild, previousChildren) {
+                              return Stack(
+                                fit: StackFit.expand,
+                                alignment: Alignment.topLeft,
+                                children: [
+                                  ...previousChildren,
+                                  if (currentChild != null) currentChild,
+                                ],
+                              );
+                            },
+                            child: KeyedSubtree(
+                              key: ValueKey<int>(currentTab),
+                              child: _buildCurrentTab(currentTab),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),

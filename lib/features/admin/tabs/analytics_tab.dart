@@ -142,16 +142,20 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
-      padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 32, vertical: 20),
+      padding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.fromLTRB(32, 20, 32, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Clean Toolbar ─────────────────────────────
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
                 "Platform Performance",
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: isMobile ? 15 : 17,
                   fontWeight: FontWeight.w900,
@@ -167,14 +171,17 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
           // ── Sleek 4 KPI Stat Cards ────────────────────
           LayoutBuilder(
             builder: (context, constraints) {
-              final isNarrow = constraints.maxWidth < 750;
+              final width = constraints.maxWidth;
+              final crossAxisCount = width < 600 ? 2 : (width < 1000 ? 3 : 4);
+              final childAspectRatio = width < 420 ? 1.0 : (width < 600 ? 1.25 : (width < 1000 ? 1.5 : 1.7));
+              final spacing = width < 600 ? 10.0 : 14.0;
               return GridView.count(
-                crossAxisCount: isNarrow ? 2 : 4,
-                crossAxisSpacing: 14,
-                mainAxisSpacing: 14,
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: spacing,
+                mainAxisSpacing: spacing,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                childAspectRatio: isNarrow ? 1.4 : 1.7,
+                childAspectRatio: childAspectRatio,
                 children: [
                   _statCard("GROSS VOLUME", "GHS ${totalRevenue.toStringAsFixed(2)}", "+12.4%", Icons.payments_outlined, AppTheme.primaryGreen),
                   _statCard("NET COMMISSION", "GHS ${netProfit.toStringAsFixed(2)}", "${(commissionRate * 100).toInt()}% Rate", Icons.account_balance_outlined, const Color(0xFF2563EB)),
@@ -187,79 +194,94 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
           const SizedBox(height: 24),
 
           // ── Revenue Velocity Line Chart ───────────────
-          Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          LayoutBuilder(
+            builder: (context, chartConstraints) {
+              final chartNarrow = chartConstraints.maxWidth < 560;
+              return Container(
+                padding: EdgeInsets.all(chartNarrow ? 16 : 22),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _useBarChart ? "Revenue Volume Distribution" : "Revenue Growth Velocity",
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.charcoal),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            _useBarChart
-                                ? "Periodic transaction totals across the selected timeline"
-                                : "Total order value trend over the selected period",
-                            style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
                     Row(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppTheme.lightGreenBg,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            "GHS ${totalRevenue.toStringAsFixed(2)} Total",
-                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppTheme.primaryGreen),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _useBarChart ? "Revenue Volume Distribution" : "Revenue Growth Velocity",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.charcoal),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _useBarChart
+                                    ? "Periodic transaction totals across the selected timeline"
+                                    : "Total order value trend over the selected period",
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                        Flexible(
+                          child: Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            alignment: WrapAlignment.end,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              _miniChartTypeBtn(Icons.show_chart_rounded, !_useBarChart, () => setState(() => _useBarChart = false), "Line Chart"),
-                              _miniChartTypeBtn(Icons.bar_chart_rounded, _useBarChart, () => setState(() => _useBarChart = true), "Bar Chart"),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.lightGreenBg,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  "GHS ${totalRevenue.toStringAsFixed(2)} Total",
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppTheme.primaryGreen),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _miniChartTypeBtn(Icons.show_chart_rounded, !_useBarChart, () => setState(() => _useBarChart = false), "Line Chart"),
+                                    _miniChartTypeBtn(Icons.bar_chart_rounded, _useBarChart, () => setState(() => _useBarChart = true), "Bar Chart"),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      height: 220,
+                      child: _useBarChart
+                          ? _buildBarChart(spots, dayLabels, chartNarrow)
+                          : _buildLineChart(spots, dayLabels, chartNarrow),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  height: 220,
-                  child: _useBarChart
-                      ? _buildBarChart(spots, dayLabels, isMobile)
-                      : _buildLineChart(spots, dayLabels),
-                ),
-              ],
-            ),
+              );
+            },
           ),
           const SizedBox(height: 24),
 
@@ -267,8 +289,9 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
           LayoutBuilder(
             builder: (context, constraints) {
               final isDesktop = constraints.maxWidth > 900;
+              final cardPadding = constraints.maxWidth < 600 ? 16.0 : 22.0;
               final topMerchantsCard = Container(
-                padding: const EdgeInsets.all(22),
+                padding: EdgeInsets.all(cardPadding),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -318,13 +341,16 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(m.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.charcoal), maxLines: 1),
-                                      Text("${m.orderCount} meals sold", style: TextStyle(fontSize: 11, color: AppTheme.mutedGrey)),
+                                      Text(m.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.charcoal), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                      Text("${m.orderCount} meals sold", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: AppTheme.mutedGrey)),
                                     ],
                                   ),
                                 ),
+                                const SizedBox(width: 8),
                                 Text(
                                   "GHS ${m.totalRevenue.toStringAsFixed(2)}",
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen),
                                 ),
                               ],
@@ -335,7 +361,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
               );
 
               final impactCard = Container(
-                padding: const EdgeInsets.all(22),
+                padding: EdgeInsets.all(cardPadding),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -404,7 +430,10 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8), letterSpacing: 0.8)),
+              Flexible(
+                child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8), letterSpacing: 0.8)),
+              ),
+              const SizedBox(width: 4),
               Icon(icon, size: 16, color: color),
             ],
           ),
@@ -413,7 +442,8 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
             children: [
               FittedBox(
                 fit: BoxFit.scaleDown,
-                child: Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.5)),
+                alignment: Alignment.centerLeft,
+                child: Text(value, maxLines: 1, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: -0.5)),
               ),
               const SizedBox(height: 2),
               Container(
@@ -422,7 +452,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
                   color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: Text(badge, style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: color)),
+                child: Text(badge, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: color)),
               ),
             ],
           ),
@@ -451,9 +481,10 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.charcoal)),
+            child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.charcoal)),
           ),
-          Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: color)),
+          const SizedBox(width: 8),
+          Text(value, maxLines: 1, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: color)),
         ],
       ),
     );
@@ -461,45 +492,52 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
 
   Widget _buildTimeFilterPills() {
     final options = ["Today", "7 Days", "30 Days", "All Time"];
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: List.generate(options.length, (i) {
-          final isSelected = _timeRangeIndex == i;
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                _timeRangeIndex = i;
-                if (i == 3) {
-                  _useBarChart = true; // Auto-switch to Bar Chart for All Time so data is never compressed!
-                }
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: isSelected ? Colors.white : Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: isSelected
-                    ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 1))]
-                    : [],
-              ),
-              child: Text(
-                options[i],
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected ? AppTheme.primaryGreen : AppTheme.mutedGrey,
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: (MediaQuery.sizeOf(context).width - 48).clamp(0.0, 360.0)),
+      child: Container(
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: List.generate(options.length, (i) {
+              final isSelected = _timeRangeIndex == i;
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _timeRangeIndex = i;
+                    if (i == 3) {
+                      _useBarChart = true; // Auto-switch to Bar Chart for All Time so data is never compressed!
+                    }
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isSelected ? Colors.white : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: isSelected
+                        ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 1))]
+                        : [],
+                  ),
+                  child: Text(
+                    options[i],
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                      color: isSelected ? AppTheme.primaryGreen : AppTheme.mutedGrey,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          );
-        }),
+              );
+            }),
+          ),
+        ),
       ),
     );
   }
@@ -528,7 +566,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
     );
   }
 
-  Widget _buildLineChart(List<FlSpot> spots, List<String> dayLabels) {
+  Widget _buildLineChart(List<FlSpot> spots, List<String> dayLabels, bool narrow) {
     final maxSpotY = spots.fold<double>(0.0, (p, s) => s.y > p ? s.y : p);
     final maxY = maxSpotY == 0 ? 100.0 : (maxSpotY * 1.25);
 
@@ -559,18 +597,20 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 48,
+              reservedSize: narrow ? 36 : 48,
               getTitlesWidget: (val, meta) {
                 if (val == 0) return const SizedBox.shrink();
                 if (val >= 1000) {
                   return Text(
                     '${(val / 1000).toStringAsFixed(1)}k',
-                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
+                    maxLines: 1,
+                    style: TextStyle(fontSize: narrow ? 9 : 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
                   );
                 }
                 return Text(
                   val.toInt().toString(),
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
+                  maxLines: 1,
+                  style: TextStyle(fontSize: narrow ? 9 : 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
                 );
               },
             ),
@@ -580,12 +620,18 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
+              reservedSize: narrow ? 30 : 38,
               getTitlesWidget: (val, meta) {
                 final idx = val.toInt();
                 if (idx >= 0 && idx < dayLabels.length) {
                   return Padding(
                     padding: const EdgeInsets.only(top: 10),
-                    child: Text(dayLabels[idx], style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey)),
+                    child: Text(
+                      dayLabels[idx],
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: narrow ? 9 : 11, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
+                    ),
                   );
                 }
                 return const SizedBox.shrink();
@@ -619,7 +665,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
     );
   }
 
-  Widget _buildBarChart(List<FlSpot> spots, List<String> dayLabels, bool isMobile) {
+  Widget _buildBarChart(List<FlSpot> spots, List<String> dayLabels, bool narrow) {
     final maxSpotY = spots.fold<double>(0.0, (p, s) => s.y > p ? s.y : p);
     final maxY = maxSpotY == 0 ? 100.0 : (maxSpotY * 1.25);
 
@@ -649,18 +695,20 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 48,
+              reservedSize: narrow ? 36 : 48,
               getTitlesWidget: (val, meta) {
                 if (val == 0) return const SizedBox.shrink();
                 if (val >= 1000) {
                   return Text(
                     '${(val / 1000).toStringAsFixed(1)}k',
-                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
+                    maxLines: 1,
+                    style: TextStyle(fontSize: narrow ? 9 : 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
                   );
                 }
                 return Text(
                   val.toInt().toString(),
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
+                  maxLines: 1,
+                  style: TextStyle(fontSize: narrow ? 9 : 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
                 );
               },
             ),
@@ -670,14 +718,20 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
+              reservedSize: narrow ? 30 : 38,
               getTitlesWidget: (val, meta) {
                 final idx = val.toInt();
                 if (idx >= 0 && idx < dayLabels.length) {
                   return Padding(
                     padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      dayLabels[idx],
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: (narrow ? 34.0 : 48.0)),
+                      child: Text(
+                        dayLabels[idx],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: narrow ? 9 : 11, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
+                      ),
                     ),
                   );
                 }
@@ -699,7 +753,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
-                width: isMobile ? 18 : 26,
+                width: narrow ? 18 : 26,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
                 backDrawRodData: BackgroundBarChartRodData(
                   show: true,

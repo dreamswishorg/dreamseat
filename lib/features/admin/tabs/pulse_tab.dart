@@ -29,7 +29,7 @@ class TabPulse extends ConsumerWidget {
               clipBehavior: Clip.antiAlias,
               child: Column(
                 children: [
-                  _buildHeader(),
+                  _buildHeader(context, isMobile),
                   Expanded(
                     child: logs.isEmpty
                         ? const NoDataState(msg: "Waiting for platform signals...", icon: Icons.sensors_rounded)
@@ -49,9 +49,9 @@ class TabPulse extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context, bool isMobile) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 24, vertical: 16),
       decoration: const BoxDecoration(
         color: Color(0xFFF8FAFC),
         border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
@@ -60,12 +60,18 @@ class TabPulse extends ConsumerWidget {
         children: [
           const Icon(Icons.sensors_rounded, color: AppTheme.primaryGreen, size: 20),
           const SizedBox(width: 12),
-          const Text("Live Activity Ticker", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-          const Spacer(),
+          Expanded(
+            child: Text("Live Activity Ticker",
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+          ),
+          const SizedBox(width: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(color: AppTheme.lightGreenBg, borderRadius: BorderRadius.circular(20)),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppTheme.primaryGreen, shape: BoxShape.circle)),
                 const SizedBox(width: 8),
@@ -90,23 +96,30 @@ class _PulseTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(time, style: TextStyle(fontFamily: 'monospace', fontSize: 12, color: AppTheme.mutedGrey.withValues(alpha: 0.6))),
-          const SizedBox(width: 20),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: _getBg(log.action),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              log.action.toUpperCase(),
-              style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: _getColor(log.action)),
+          const SizedBox(width: 16),
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: _getBg(log.action),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                log.action.toUpperCase(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: _getColor(log.action)),
+              ),
             ),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: RichText(
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
               text: TextSpan(
                 style: const TextStyle(fontSize: 13, color: AppTheme.charcoal),
                 children: [

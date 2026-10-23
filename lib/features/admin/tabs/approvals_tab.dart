@@ -195,17 +195,20 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         backgroundColor: Colors.white,
-        child: Container(
-          width: 850,
-          constraints: const BoxConstraints(maxHeight: 720),
-          padding: const EdgeInsets.all(28),
-          child: FutureBuilder<Map<String, MerchantDocument>>(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: (MediaQuery.sizeOf(ctx).width * 0.94).clamp(240.0, 850.0),
+            maxHeight: MediaQuery.sizeOf(ctx).height * 0.9,
+          ),
+          child: Container(
+            padding: MediaQuery.sizeOf(ctx).width < 600 ? const EdgeInsets.all(16) : const EdgeInsets.all(28),
+            child: FutureBuilder<Map<String, MerchantDocument>>(
             future: ref.read(appStateProvider.notifier).fetchMerchantDocuments(b.id),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SizedBox(
-                  height: 350,
-                  child: Center(
+                return SizedBox(
+                  height: (MediaQuery.sizeOf(context).height * 0.55).clamp(160.0, 350.0),
+                  child: const Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -248,26 +251,31 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryGreen.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(12),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryGreen.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.verified_user_rounded, color: AppTheme.primaryGreen, size: 24),
                             ),
-                            child: const Icon(Icons.verified_user_rounded, color: AppTheme.primaryGreen, size: 24),
-                          ),
-                          const SizedBox(width: 14),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text("KYC Compliance Vault", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
-                              Text("Verification documents for ${b.name} (${b.category})", style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 13)),
-                            ],
-                          ),
-                        ],
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text("KYC Compliance Vault", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
+                                  Text("Verification documents for ${b.name} (${b.category})", maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 13)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       IconButton(
                         onPressed: () => Navigator.pop(ctx),
                         icon: const Icon(Icons.close_rounded),
@@ -382,6 +390,7 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
             },
           ),
         ),
+        ),
       ),
     );
   }
@@ -392,12 +401,17 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         clipBehavior: Clip.antiAlias,
-        child: Container(
-          width: 650,
-          color: Colors.white,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: (MediaQuery.sizeOf(ctx).width * 0.94).clamp(240.0, 650.0),
+            maxHeight: MediaQuery.sizeOf(ctx).height * 0.9,
+          ),
+          child: SingleChildScrollView(
+            child: Container(
+              color: Colors.white,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
                 decoration: const BoxDecoration(
@@ -414,11 +428,15 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
                         children: [
                           Text(
                             title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             "${business.name} • Pinch to zoom & inspect",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(color: Colors.white70, fontSize: 12),
                           ),
                         ],
@@ -434,7 +452,7 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
               Padding(
                 padding: const EdgeInsets.all(24),
                 child: Container(
-                  height: 450,
+                  height: (MediaQuery.sizeOf(ctx).height * 0.55).clamp(220.0, 450.0),
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -531,7 +549,9 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
                   ],
                 ),
               ),
-            ],
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -562,8 +582,12 @@ class _KycDocVaultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasUploadedImage = fileUrl != null && fileUrl!.isNotEmpty;
 
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth = constraints.maxWidth.isFinite ? constraints.maxWidth.clamp(200.0, 250.0) : 250.0;
+
     return Container(
-      width: 250,
+      width: cardWidth,
       decoration: BoxDecoration(
         color: context.cardColor,
         borderRadius: BorderRadius.circular(20),
@@ -750,6 +774,8 @@ class _KycDocVaultCard extends StatelessWidget {
         ],
       ),
     );
+      },
+    );
   }
 }
 
@@ -844,8 +870,9 @@ class _MerchantApprovalCard extends StatelessWidget {
             Flexible(
               child: Text(
                 business.name,
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: titleSize, color: context.textPrimary),
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: titleSize, color: context.textPrimary),
               ),
             ),
             const SizedBox(width: 8),
@@ -855,8 +882,9 @@ class _MerchantApprovalCard extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           "${business.category} • ${business.location}",
-          style: TextStyle(fontSize: subSize, color: context.textSecondary, fontWeight: FontWeight.w500),
+          maxLines: 1,
           overflow: TextOverflow.ellipsis,
+          style: TextStyle(fontSize: subSize, color: context.textSecondary, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 4),
         Row(
@@ -870,7 +898,9 @@ class _MerchantApprovalCard extends StatelessWidget {
             const SizedBox(width: 12),
             Icon(Icons.access_time_rounded, size: 12, color: context.textSecondary.withValues(alpha: 0.6)),
             const SizedBox(width: 4),
-            Text("Applied 2d ago", style: TextStyle(fontSize: metaSize - 1, color: context.textSecondary, fontWeight: FontWeight.w600)),
+            Flexible(
+              child: Text("Applied 2d ago", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: metaSize - 1, color: context.textSecondary, fontWeight: FontWeight.w600)),
+            ),
           ],
         ),
       ],

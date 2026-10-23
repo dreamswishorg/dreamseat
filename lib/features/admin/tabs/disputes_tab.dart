@@ -173,32 +173,43 @@ class _DisputeCard extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      "DISPUTE #${dispute.id.length > 8 ? dispute.id.substring(0, 8).toUpperCase() : dispute.id.toUpperCase()}",
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF475569),
-                        letterSpacing: 0.5,
+              Expanded(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          "DISPUTE #${dispute.id.length > 8 ? dispute.id.substring(0, 8).toUpperCase() : dispute.id.toUpperCase()}",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF475569),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  if (dispute.orderId.isNotEmpty)
-                    Text(
-                      "Order: #${dispute.orderId.length > 8 ? dispute.orderId.substring(0, 8).toUpperCase() : dispute.orderId.toUpperCase()}",
-                      style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey, fontWeight: FontWeight.w600),
-                    ),
-                ],
+                    const SizedBox(width: 8),
+                    if (dispute.orderId.isNotEmpty)
+                      Flexible(
+                        child: Text(
+                          "Order: #${dispute.orderId.length > 8 ? dispute.orderId.substring(0, 8).toUpperCase() : dispute.orderId.toUpperCase()}",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
                 decoration: BoxDecoration(
@@ -250,9 +261,9 @@ class _DisputeCard extends ConsumerWidget {
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
-            child: Row(
-              children: [
-                Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final claimantCell = Expanded(
                   child: Row(
                     children: [
                       const Icon(Icons.person_outline_rounded, size: 16, color: Color(0xFF64748B)),
@@ -264,18 +275,17 @@ class _DisputeCard extends ConsumerWidget {
                             const Text("CLAIMANT", style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey)),
                             Text(
                               dispute.customerName.isNotEmpty ? dispute.customerName : "Customer",
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.charcoal),
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.charcoal),
                             ),
                           ],
                         ),
                       ),
                     ],
                   ),
-                ),
-                Container(width: 1, height: 26, color: const Color(0xFFE2E8F0)),
-                const SizedBox(width: 14),
-                Expanded(
+                );
+                final defendantCell = Expanded(
                   child: Row(
                     children: [
                       const Icon(Icons.storefront_rounded, size: 16, color: Color(0xFF64748B)),
@@ -287,31 +297,63 @@ class _DisputeCard extends ConsumerWidget {
                             const Text("DEFENDANT", style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey)),
                             Text(
                               dispute.merchantName.isNotEmpty ? dispute.merchantName : "Merchant Partner",
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.charcoal),
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.charcoal),
                             ),
                           ],
                         ),
                       ),
                     ],
                   ),
-                ),
-                if (isOpen) ...[
-                  const SizedBox(width: 14),
-                  ElevatedButton.icon(
-                    onPressed: () => ref.read(appStateProvider.notifier).resolveDispute(dispute.id),
-                    icon: const Icon(Icons.done_all_rounded, size: 14),
-                    label: const Text("Resolve Dispute", style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryGreen,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      elevation: 0,
-                    ),
+                );
+                final dividerCell = Container(width: 1, height: 26, color: const Color(0xFFE2E8F0));
+                final resolveButton = ElevatedButton.icon(
+                  onPressed: () => ref.read(appStateProvider.notifier).resolveDispute(dispute.id),
+                  icon: const Icon(Icons.done_all_rounded, size: 14),
+                  label: const Text("Resolve Dispute", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryGreen,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    elevation: 0,
                   ),
-                ],
-              ],
+                );
+
+                if (isOpen && constraints.maxWidth < 480) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          claimantCell,
+                          const SizedBox(width: 14),
+                          dividerCell,
+                          const SizedBox(width: 14),
+                          defendantCell,
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      resolveButton,
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    claimantCell,
+                    const SizedBox(width: 14),
+                    dividerCell,
+                    const SizedBox(width: 14),
+                    defendantCell,
+                    if (isOpen) ...[
+                      const SizedBox(width: 14),
+                      resolveButton,
+                    ],
+                  ],
+                );
+              },
             ),
           ),
         ],
