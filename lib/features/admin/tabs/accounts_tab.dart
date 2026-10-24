@@ -124,16 +124,10 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
               child: Container(
                 height: 42,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.cardColor,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.02),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  border: Border.all(color: context.borderColor),
+                  boxShadow: context.clientShadow,
                 ),
                 child: TextField(
                   onChanged: (v) => setState(() {

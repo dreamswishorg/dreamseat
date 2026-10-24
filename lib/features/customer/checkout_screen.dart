@@ -231,7 +231,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       await FlutterPaystackPlus.openPaystackPopup(
         context: context,
         publicKey: AppConfig.paystackPublicKey,
-        secretKey: AppConfig.paystackSecretKey,
+        secretKey: AppConfig.paystackSecretKey.isNotEmpty ? AppConfig.paystackSecretKey : null,
         customerEmail: email,
         amount: amountInPesewas.toString(),
         reference: reference,

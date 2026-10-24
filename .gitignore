@@ -72,8 +72,11 @@ migrate_working_dir/
 app.*.symbols
 app.*.map.json
 
-# Sensitive service accounts
+# Sensitive service accounts & local scripts
 *-adminsdk-*.json
 .env
 .env.*
 !.env.example
+scratch/
+supabase/reset_*.sql
+.github/

@@ -586,3 +586,117 @@ DROP TRIGGER IF EXISTS on_review_inserted ON public.reviews;
 CREATE TRIGGER on_review_inserted
   AFTER INSERT OR UPDATE ON public.reviews
   FOR EACH ROW EXECUTE FUNCTION public.update_business_rating();
+
+-- ============================================================
+-- SECURITY HARDENING: ANTI-FIELD TAMPERING & CHECK CONSTRAINTS
+-- ============================================================
+
+-- 1. Prevent profile field tampering & self-escalation
+CREATE OR REPLACE FUNCTION public.protect_profile_fields()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NOT (public.auth_is_staff() OR auth.role() = 'service_role') THEN
+    IF NEW.role IS DISTINCT FROM OLD.role THEN
+      RAISE EXCEPTION 'Security Violation: Users cannot alter their own account role.';
+    END IF;
+    IF NEW.is_suspended IS DISTINCT FROM OLD.is_suspended THEN
+      RAISE EXCEPTION 'Security Violation: Users cannot alter their suspension status.';
+    END IF;
+    IF NEW.dream_points IS DISTINCT FROM OLD.dream_points THEN
+      RAISE EXCEPTION 'Security Violation: Dream points can only be modified by system functions.';
+    END IF;
+    IF NEW.referral_credit IS DISTINCT FROM OLD.referral_credit THEN
+      RAISE EXCEPTION 'Security Violation: Referral credit can only be modified by system functions.';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_protect_profile_fields ON public.profiles;
+CREATE TRIGGER trg_protect_profile_fields
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.protect_profile_fields();
+
+-- 2. Prevent unauthorized merchant self-approval
+CREATE OR REPLACE FUNCTION public.protect_business_fields()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NOT (public.auth_is_staff() OR auth.role() = 'service_role') THEN
+    IF NEW.is_approved IS DISTINCT FROM OLD.is_approved THEN
+      RAISE EXCEPTION 'Security Violation: Only staff can approve or reject businesses.';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_protect_business_fields ON public.businesses;
+CREATE TRIGGER trg_protect_business_fields
+  BEFORE UPDATE ON public.businesses
+  FOR EACH ROW EXECUTE FUNCTION public.protect_business_fields();
+
+-- 3. Prevent unauthorized order tampering
+CREATE OR REPLACE FUNCTION public.protect_order_fields()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_is_merchant BOOLEAN;
+BEGIN
+  IF public.auth_is_staff() OR auth.role() = 'service_role' THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT EXISTS (
+    SELECT 1 FROM public.businesses b
+    WHERE b.id = OLD.business_id AND b.owner_id = auth.uid()
+  ) INTO v_is_merchant;
+
+  IF v_is_merchant THEN
+    IF NEW.price IS DISTINCT FROM OLD.price OR
+       NEW.customer_id IS DISTINCT FROM OLD.customer_id THEN
+      RAISE EXCEPTION 'Security Violation: Merchants cannot alter order price or customer.';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  IF OLD.customer_id = auth.uid() THEN
+    IF NEW.price IS DISTINCT FROM OLD.price OR
+       NEW.business_id IS DISTINCT FROM OLD.business_id OR
+       NEW.deal_id IS DISTINCT FROM OLD.deal_id THEN
+      RAISE EXCEPTION 'Security Violation: Order details cannot be modified after placement.';
+    END IF;
+
+    IF NEW.collection_code IS DISTINCT FROM OLD.collection_code OR
+       NEW.payout_status IS DISTINCT FROM OLD.payout_status THEN
+      RAISE EXCEPTION 'Security Violation: Unauthorized modification of order verification code or payout status.';
+    END IF;
+
+    IF NEW.status IS DISTINCT FROM OLD.status THEN
+      IF NOT (OLD.status = 'reserved' AND NEW.status = 'cancelled') THEN
+        RAISE EXCEPTION 'Security Violation: Customers can only cancel reserved orders.';
+      END IF;
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  RAISE EXCEPTION 'Unauthorized: You do not have permission to modify this order.';
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_protect_order_fields ON public.orders;
+CREATE TRIGGER trg_protect_order_fields
+  BEFORE UPDATE ON public.orders
+  FOR EACH ROW EXECUTE FUNCTION public.protect_order_fields();
+

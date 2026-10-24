@@ -1491,44 +1491,47 @@ class SupabaseService {
       }
     } catch (_) {}
 
-    // 2. Direct Paystack Charge API fallback (100% embedded MoMo charge)
-    try {
-      final cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
-      String providerSlug = 'mtn';
-      final pLower = provider.toLowerCase();
-      if (pLower.contains('vod') || pLower.contains('telecel')) {
-        providerSlug = 'vod';
-      } else if (pLower.contains('tgo') || pLower.contains('airtel') || pLower.contains('atl')) {
-        providerSlug = 'tgo';
-      }
+    // 2. Direct Paystack Charge API fallback (only if secret key is provided via build config)
+    if (AppConfig.paystackSecretKey.isNotEmpty) {
+      try {
+        final cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+        String providerSlug = 'mtn';
+        final pLower = provider.toLowerCase();
+        if (pLower.contains('vod') || pLower.contains('telecel')) {
+          providerSlug = 'vod';
+        } else if (pLower.contains('tgo') || pLower.contains('airtel') || pLower.contains('atl')) {
+          providerSlug = 'tgo';
+        }
 
-      final response = await http.post(
-        Uri.parse('https://api.paystack.co/charge'),
-        headers: {
-          'Authorization': 'Bearer ${AppConfig.paystackSecretKey}',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'email': email,
-          'amount': (amount * 100).round().toString(),
-          'currency': 'GHS',
-          'reference': reference,
-          'metadata': metadata,
-          'mobile_money': {
-            'phone': cleanPhone,
-            'provider': providerSlug,
+        final response = await http.post(
+          Uri.parse('https://api.paystack.co/charge'),
+          headers: {
+            'Authorization': 'Bearer ${AppConfig.paystackSecretKey}',
+            'Content-Type': 'application/json',
           },
-        }),
-      );
+          body: jsonEncode({
+            'email': email,
+            'amount': (amount * 100).round().toString(),
+            'currency': 'GHS',
+            'reference': reference,
+            'metadata': metadata,
+            'mobile_money': {
+              'phone': cleanPhone,
+              'provider': providerSlug,
+            },
+          }),
+        );
 
-      final decoded = jsonDecode(response.body);
-      if (decoded is Map<String, dynamic>) {
-        return decoded;
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic>) {
+          return decoded;
+        }
+        return {'status': false, 'message': 'Invalid response from Paystack'};
+      } catch (e) {
+        return {'status': false, 'message': e.toString()};
       }
-      return {'status': false, 'message': 'Invalid response from Paystack'};
-    } catch (e) {
-      return {'status': false, 'message': e.toString()};
     }
+    return {'status': false, 'message': 'Payment failed. Please try again.'};
   }
 
   Future<Map<String, dynamic>> submitPaystackOtp({
@@ -1549,26 +1552,29 @@ class SupabaseService {
       }
     } catch (_) {}
 
-    try {
-      final response = await http.post(
-        Uri.parse('https://api.paystack.co/charge/submit_otp'),
-        headers: {
-          'Authorization': 'Bearer ${AppConfig.paystackSecretKey}',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'otp': otp,
-          'reference': reference,
-        }),
-      );
-      final decoded = jsonDecode(response.body);
-      if (decoded is Map<String, dynamic>) {
-        return decoded;
+    if (AppConfig.paystackSecretKey.isNotEmpty) {
+      try {
+        final response = await http.post(
+          Uri.parse('https://api.paystack.co/charge/submit_otp'),
+          headers: {
+            'Authorization': 'Bearer ${AppConfig.paystackSecretKey}',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'otp': otp,
+            'reference': reference,
+          }),
+        );
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic>) {
+          return decoded;
+        }
+        return {'status': false, 'message': 'Invalid OTP response'};
+      } catch (e) {
+        return {'status': false, 'message': e.toString()};
       }
-      return {'status': false, 'message': 'Invalid OTP response'};
-    } catch (e) {
-      return {'status': false, 'message': e.toString()};
     }
+    return {'status': false, 'message': 'OTP verification failed'};
   }
 
   /// Verifies a Paystack payment [reference] via Edge Function with direct Paystack API fallback.
@@ -1584,21 +1590,23 @@ class SupabaseService {
       }
     } catch (_) {}
 
-    try {
-      final response = await http.get(
-        Uri.parse('https://api.paystack.co/transaction/verify/$reference'),
-        headers: {
-          'Authorization': 'Bearer ${AppConfig.paystackSecretKey}',
-          'Content-Type': 'application/json',
-        },
-      );
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
-        if (decoded['status'] == true && decoded['data']?['status'] == 'success') {
-          return true;
+    if (AppConfig.paystackSecretKey.isNotEmpty) {
+      try {
+        final response = await http.get(
+          Uri.parse('https://api.paystack.co/transaction/verify/$reference'),
+          headers: {
+            'Authorization': 'Bearer ${AppConfig.paystackSecretKey}',
+            'Content-Type': 'application/json',
+          },
+        );
+        if (response.statusCode == 200) {
+          final decoded = jsonDecode(response.body);
+          if (decoded['status'] == true && decoded['data']?['status'] == 'success') {
+            return true;
+          }
         }
-      }
-    } catch (_) {}
+      } catch (_) {}
+    }
 
     return false;
   }

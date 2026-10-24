@@ -35,6 +35,8 @@
 
   <title>DREAMEATS</title>
   <link rel="manifest" href="manifest.json">
+  <!-- Liquid Glass JS Engine -->
+  <script src="liquid_glass.js" defer></script>
   <style>
     html, body {
       height: 100%;
@@ -42,10 +44,15 @@
       padding: 0;
       overflow: hidden;
       overscroll-behavior: none;
+      background: transparent;
     }
 
     body {
       min-height: 100vh;
+    }
+
+    flutter-view {
+      background: transparent !important;
     }
 
     #flutter_canvas {

@@ -18,6 +18,15 @@ serve(async (req) => {
     return new Response("ok", { headers: CORS_HEADERS });
   }
 
+  // Require Authorization or Supabase API key
+  const authHeader = req.headers.get("authorization") || req.headers.get("apikey");
+  if (!authHeader) {
+    return new Response(JSON.stringify({ verified: false, message: "Unauthorized request." }), {
+      status: 401,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+
   const PAYSTACK_SECRET_KEY = Deno.env.get("PAYSTACK_SECRET_KEY");
   if (!PAYSTACK_SECRET_KEY) {
     return new Response(JSON.stringify({ verified: false, message: "PAYSTACK_SECRET_KEY is not set in Supabase Secrets." }), {
@@ -27,11 +36,12 @@ serve(async (req) => {
   }
 
   try {
-    const { reference } = await req.json();
+    const body = await req.json();
+    const reference = typeof body?.reference === 'string' ? body.reference.trim() : '';
 
-    if (!reference) {
+    if (!reference || reference.length > 120 || !/^[a-zA-Z0-9_\-\.\:\+]+$/.test(reference)) {
       return new Response(
-        JSON.stringify({ verified: false, message: "Missing reference" }),
+        JSON.stringify({ verified: false, message: "Invalid or missing reference." }),
         { status: 400, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
       );
     }

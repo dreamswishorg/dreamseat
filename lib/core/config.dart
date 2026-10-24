@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 /// Application configuration constants.
 /// Supabase and Paystack keys are embedded here for the DreamEats app.
 class AppConfig {
@@ -27,18 +25,11 @@ class AppConfig {
     defaultValue: 'pk_live_e6500f08c004c1a3bd280e13937920e745f095ea',
   );
 
-  /// Paystack live secret key
+  /// Paystack live secret key — NEVER embedded in client.
+  /// Server-side payment operations are executed via Supabase Edge Functions.
   static String get paystackSecretKey {
-    const envKey = String.fromEnvironment('PAYSTACK_SECRET_KEY');
-    if (envKey.isNotEmpty) return envKey;
-    try {
-      return utf8.decode(base64.decode('c2tfbGl2ZV8zMjU0YTNmMWExOWRhMGU4M2ViOWJmNmYzMzRlMGMxZmZiNDFhODg3'));
-    } catch (_) {
-      return '';
-    }
+    return const String.fromEnvironment('PAYSTACK_SECRET_KEY', defaultValue: '');
   }
-
-
 
   static const bool isLive = bool.fromEnvironment(
     'PAYSTACK_LIVE',
@@ -60,12 +51,8 @@ class AppConfig {
   static const String currencyCode = 'GHS';
 
   // ─── SMTP (used only in Edge Functions) ───────────────────────────────────
-  // These are set as Supabase secrets, not embedded here:
-  // supabase secrets set SMTP_HOST=smtp.hostinger.com
-  // supabase secrets set SMTP_PORT=587
-  // supabase secrets set SMTP_USER=support@winningedgeinvestment.com
-  // supabase secrets set SMTP_PASS=Brutality@54
-  // supabase secrets set SMTP_FROM_NAME=DreamEats
+  // Configured purely via Supabase secrets:
+  // supabase secrets set SMTP_HOST=... SMTP_PORT=587 SMTP_USER=... SMTP_PASS=... SMTP_FROM_NAME=DreamEats
 
   // ─── Feature Flags ────────────────────────────────────────────────────────
   static const bool enableRealtime = true;

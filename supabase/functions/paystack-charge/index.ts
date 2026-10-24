@@ -12,6 +12,13 @@ const CORS_HEADERS = {
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: CORS_HEADERS });
+  // Require Authorization or Supabase API key
+  const authHeader = req.headers.get("authorization") || req.headers.get("apikey");
+  if (!authHeader) {
+    return new Response(JSON.stringify({ status: false, message: "Unauthorized request." }), {
+      status: 401,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
   }
 
   const PAYSTACK_SECRET_KEY = Deno.env.get("PAYSTACK_SECRET_KEY");
@@ -23,7 +30,25 @@ serve(async (req) => {
   }
 
   try {
-    const { action, email, amount, phone, provider, metadata, reference, otp } = await req.json();
+    const body = await req.json();
+    const { action, email, amount, phone, provider, metadata, reference, otp } = body ?? {};
+
+    // Validate email & amount if initiating charge
+    if (action !== "submit_otp" && !otp) {
+      const numAmount = Number(amount);
+      if (isNaN(numAmount) || numAmount <= 0 || numAmount > 100000) {
+        return new Response(JSON.stringify({ status: false, message: "Invalid payment amount." }), {
+          status: 400,
+          headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+        });
+      }
+      if (!email || typeof email !== 'string' || !email.includes('@')) {
+        return new Response(JSON.stringify({ status: false, message: "Invalid customer email address." }), {
+          status: 400,
+          headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     if (action === "submit_otp" || otp) {
       const response = await fetch("https://api.paystack.co/charge/submit_otp", {

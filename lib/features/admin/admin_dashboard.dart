@@ -135,14 +135,18 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     final pendingApprovals = state.businesses.where((b) => !b.isApproved).length;
     final openDisputes = state.disputes.where((d) => d.status == 'open').length;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: isDark
+          ? const Color(0xFF0F172A).withValues(alpha: 0.94)
+          : const Color(0xFFF8FAFC).withValues(alpha: 0.90),
       drawer: !isWide
           ? Drawer(
               width: 290,
-              backgroundColor: Colors.white,
-              elevation: 8,
-              shadowColor: Colors.black.withValues(alpha: 0.12),
+              backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+              elevation: 12,
+              shadowColor: Colors.black.withValues(alpha: 0.16),
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.horizontal(right: Radius.circular(24)),
               ),
@@ -160,13 +164,15 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       appBar: AppBar(
         titleSpacing: isWide ? 24 : 8,
         toolbarHeight: isWide ? 68 : 58,
-        backgroundColor: Colors.white,
+        backgroundColor: isDark
+            ? const Color(0xFF0F172A).withValues(alpha: 0.88)
+            : Colors.white.withValues(alpha: 0.90),
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(
-            color: const Color(0xFFE2E8F0),
+            color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
             height: 1,
           ),
         ),
@@ -174,15 +180,15 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             ? Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(6),
+                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       _getTabCategory(currentTab),
                       style: const TextStyle(
-                        fontSize: 9.5,
+                        fontSize: 10,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF64748B),
                         letterSpacing: 0.8,
@@ -198,9 +204,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   const SizedBox(width: 8),
                   Text(
                     _tabTitles[currentTab] ?? "Dashboard",
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w900,
-                      color: AppTheme.charcoal,
+                      color: isDark ? Colors.white : AppTheme.charcoal,
                       fontSize: 18,
                       letterSpacing: -0.4,
                     ),
@@ -211,14 +217,14 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 290, minWidth: 160),
                       child: Container(
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: const Color(0xFFE2E8F0),
-                      ),
-                    ),
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+                          ),
+                        ),
                     child: Row(
                       children: [
                         const SizedBox(width: 10),
@@ -600,7 +606,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             ),
           Expanded(
             child: Container(
-              color: const Color(0xFFF8FAFC),
+              color: Colors.transparent,
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   // Content is centred and capped on ultra-wide screens so
@@ -636,7 +642,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                                 alignment: Alignment.topLeft,
                                 children: [
                                   ...previousChildren,
-                                  if (currentChild != null) currentChild,
+                                  ?currentChild,
                                 ],
                               );
                             },

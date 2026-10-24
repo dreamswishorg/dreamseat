@@ -100,30 +100,30 @@ class AppTheme {
     );
   }
 
-  // Client Drop Shadow Tokens (used across client and admin)
+  // Client Drop Shadow Tokens (luxurious liquid glass ambient depth)
   static const List<BoxShadow> clientCardShadow = [
     BoxShadow(
-      color: Color(0x08000000),
-      blurRadius: 16,
+      color: Color(0x0A000000),
+      blurRadius: 18,
       offset: Offset(0, 6),
     ),
     BoxShadow(
-      color: Color(0x042E7D32),
-      blurRadius: 20,
-      offset: Offset(0, 8),
+      color: Color(0x0610B981),
+      blurRadius: 24,
+      offset: Offset(0, 10),
     ),
   ];
 
   static const List<BoxShadow> clientElevatedShadow = [
     BoxShadow(
-      color: Color(0x0F000000),
-      blurRadius: 20,
-      offset: Offset(0, 8),
-    ),
-    BoxShadow(
-      color: Color(0x082E7D32),
+      color: Color(0x12000000),
       blurRadius: 24,
       offset: Offset(0, 10),
+    ),
+    BoxShadow(
+      color: Color(0x0A10B981),
+      blurRadius: 30,
+      offset: Offset(0, 12),
     ),
   ];
 
@@ -146,9 +146,9 @@ class AppTheme {
 extension ThemeContextExtension on BuildContext {
   // Dark mode permanently disabled across the application
   bool get isDark => false;
-  Color get cardColor => Colors.white;
-  Color get cardAltColor => const Color(0xFFF9FAF9);
-  Color get cardSubtleColor => AppTheme.lightGreenBg;
+  Color get cardColor => Colors.white.withValues(alpha: 0.94);
+  Color get cardAltColor => const Color(0xFFF8FAFC).withValues(alpha: 0.90);
+  Color get cardSubtleColor => const Color(0xFFE8F5E9).withValues(alpha: 0.85);
   Color get textPrimary => AppTheme.charcoal;
   Color get textSecondary => AppTheme.mutedGrey;
   Color get borderColor => const Color(0xFFE2E8F0);
