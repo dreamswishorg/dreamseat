@@ -21,12 +21,12 @@ const List<MTab> kMerchantNavTabs = [MTab.home, MTab.orders, MTab.listings, MTab
 class MK {
   MK._();
 
-  static const Color canvas = Color(0xFFF6F8F5);
+  static Color get canvas => kIsWeb ? Colors.transparent : const Color(0xFFF8FAFC).withValues(alpha: 0.94);
   static const Color ink = AppTheme.charcoal;
   static const Color inkSoft = AppTheme.mutedGrey;
-  static const Color line = Color(0xFFE7ECE6);
+  static const Color line = Color(0xFFE2E8F0);
   static const Color brand = AppTheme.primaryGreen;
-  static const Color brandDeep = Color(0xFF0F5132);
+  static const Color brandDeep = Color(0xFF166534);
   static const Color brandGlow = Color(0xFF34D399);
   static const Color amber = Color(0xFFFFB300);
   static const Color coral = Color(0xFFFF6B4A);
@@ -40,27 +40,27 @@ class MK {
 
   static List<BoxShadow> get shadow => [
         BoxShadow(
-          color: ink.withValues(alpha: 0.05),
+          color: Colors.black.withValues(alpha: 0.04),
           blurRadius: 18,
           offset: const Offset(0, 6),
         ),
         BoxShadow(
-          color: brand.withValues(alpha: 0.04),
+          color: brand.withValues(alpha: 0.03),
           blurRadius: 26,
-          offset: const Offset(0, 12),
+          offset: const Offset(0, 10),
         ),
       ];
 
   static List<BoxShadow> get shadowLift => [
         BoxShadow(
-          color: ink.withValues(alpha: 0.10),
-          blurRadius: 28,
-          offset: const Offset(0, 12),
+          color: Colors.black.withValues(alpha: 0.08),
+          blurRadius: 26,
+          offset: const Offset(0, 10),
         ),
         BoxShadow(
           color: brand.withValues(alpha: 0.10),
-          blurRadius: 34,
-          offset: const Offset(0, 16),
+          blurRadius: 36,
+          offset: const Offset(0, 14),
         ),
       ];
 
@@ -424,6 +424,7 @@ class MCard extends StatelessWidget {
   final Color? color;
   final VoidCallback? onTap;
   final bool glow;
+  final double? radius;
 
   const MCard({
     super.key,
@@ -432,15 +433,23 @@ class MCard extends StatelessWidget {
     this.color,
     this.onTap,
     this.glow = false,
+    this.radius,
   });
 
   @override
   Widget build(BuildContext context) {
+    final r = radius ?? MK.rMd;
     final card = Container(
+      padding: padding,
       decoration: BoxDecoration(
-        color: color ?? Colors.white,
-        borderRadius: BorderRadius.circular(MK.rMd),
-        border: Border.all(color: MK.line),
+        color: color ?? Colors.white.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(r),
+        border: Border.all(
+          color: glow
+              ? MK.brand.withValues(alpha: 0.40)
+              : const Color(0xFFE2E8F0).withValues(alpha: 0.90),
+          width: glow ? 1.4 : 1.1,
+        ),
         boxShadow: glow ? MK.shadowLift : MK.shadow,
       ),
       child: child,
@@ -659,6 +668,7 @@ class MStatTile extends StatelessWidget {
   final int decimals;
   final String prefix;
   final String suffix;
+  final VoidCallback? onTap;
 
   const MStatTile({
     super.key,
@@ -670,63 +680,80 @@ class MStatTile extends StatelessWidget {
     this.decimals = 0,
     this.prefix = '',
     this.suffix = '',
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return MCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      onTap: onTap,
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                width: 30,
-                height: 30,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.13),
-                  borderRadius: BorderRadius.circular(10),
+                  gradient: RadialGradient(
+                    colors: [
+                      color.withValues(alpha: 0.22),
+                      color.withValues(alpha: 0.08),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
                 ),
-                child: Icon(icon, size: 16, color: color),
+                child: Icon(icon, size: 18, color: color),
               ),
               const Spacer(),
-              Transform.rotate(
-                angle: math.pi / 2,
-                child: Icon(Icons.chevron_right_rounded, size: 16, color: color.withValues(alpha: 0.45)),
-              ),
+              if (caption.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: color.withValues(alpha: 0.25)),
+                  ),
+                  child: Text(
+                    caption,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: color,
+                    ),
+                  ),
+                ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           MCountUp(
             value,
             decimals: decimals,
             prefix: prefix,
             suffix: suffix,
             style: TextStyle(
-              fontSize: 21,
+              fontSize: 22,
               fontWeight: FontWeight.w900,
               color: MK.ink,
               letterSpacing: -0.6,
               fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
             ),
           ),
-          const SizedBox(height: 1),
+          const SizedBox(height: 2),
           Text(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: MK.inkSoft),
-          ),
-          if (caption.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              caption,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: color),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: MK.inkSoft,
+              letterSpacing: -0.2,
             ),
-          ],
+          ),
         ],
       ),
     );

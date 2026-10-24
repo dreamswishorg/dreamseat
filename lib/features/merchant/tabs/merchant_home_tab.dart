@@ -361,14 +361,15 @@ class _HeroCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: MK.heroGradient,
         borderRadius: BorderRadius.circular(MK.rLg),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.22), width: 1.2),
         boxShadow: [
           BoxShadow(color: MK.brandDeep.withValues(alpha: 0.32), blurRadius: 30, offset: const Offset(0, 14)),
         ],
       ),
       child: Stack(
         children: [
-          Positioned(right: -30, top: -40, child: _Bubble(90)),
-          Positioned(right: isWide ? 220 : 34, bottom: -26, child: _Bubble(54)),
+          Positioned(right: -30, top: -40, child: _Bubble(120)),
+          Positioned(right: isWide ? 220 : 34, bottom: -26, child: _Bubble(70)),
           Padding(
             padding: EdgeInsets.fromLTRB(isWide ? 26 : 20, isWide ? 22 : 20, isWide ? 26 : 20, isWide ? 22 : 18),
             child: Column(
@@ -625,38 +626,60 @@ class _StatGrid extends StatelessWidget {
         return MPressable(
           onTap: t.onTap,
           child: MCard(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: t.color.withValues(alpha: 0.13),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(t.icon, size: 17, color: t.color),
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          colors: [
+                            t.color.withValues(alpha: 0.22),
+                            t.color.withValues(alpha: 0.08),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: t.color.withValues(alpha: 0.25), width: 1),
+                      ),
+                      child: Icon(t.icon, size: 18, color: t.color),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: t.color.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: t.color.withValues(alpha: 0.25)),
+                      ),
+                      child: Text(
+                        t.caption.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w900,
+                          color: t.color,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const Spacer(),
                 MCountUp(
                   t.value,
                   decimals: t.money ? 2 : 0,
                   prefix: t.money ? 'GHS ' : '',
-                  style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900, color: MK.ink, letterSpacing: -0.7),
+                  style: const TextStyle(fontSize: 23, fontWeight: FontWeight.w900, color: MK.ink, letterSpacing: -0.7),
                 ),
-                const SizedBox(height: 1),
+                const SizedBox(height: 2),
                 Text(
                   t.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: MK.ink),
-                ),
-                Text(
-                  t.caption,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: t.color),
+                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: MK.inkSoft),
                 ),
               ],
             ),

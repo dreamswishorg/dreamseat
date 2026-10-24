@@ -160,11 +160,11 @@ class _MerchantOrdersTabState extends ConsumerState<MerchantOrdersTab> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.white.withValues(alpha: 0.92),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: const Color(0xFFE2E8F0)),
-                  boxShadow: const [
-                    BoxShadow(color: Color(0x04000000), blurRadius: 8, offset: Offset(0, 2)),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 2)),
                   ],
                 ),
                 child: Row(

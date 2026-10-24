@@ -92,8 +92,9 @@ class AdminSidebar extends ConsumerWidget {
               child: Row(
                 children: [
                   Container(
-                    width: 36,
-                    height: 36,
+                    width: 38,
+                    height: 38,
+                    padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
@@ -109,8 +110,15 @@ class AdminSidebar extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    child: const Center(
-                      child: Icon(Icons.eco_rounded, color: Colors.white, size: 20),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        'assets/images/logo.jpg',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => const Center(
+                          child: Icon(Icons.eco_rounded, color: Colors.white, size: 20),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),

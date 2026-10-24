@@ -168,6 +168,7 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.22), width: 1.2),
               boxShadow: [
                 BoxShadow(
                   color: const Color(0xFF0F2F1E).withValues(alpha: 0.3),

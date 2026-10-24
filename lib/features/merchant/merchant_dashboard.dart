@@ -242,14 +242,14 @@ class _TopBar extends ConsumerWidget {
     final (title, subtitle) = _getMeta();
 
     return Container(
-      color: Colors.white,
       padding: EdgeInsets.fromLTRB(isWide ? 24 : 12, isWide ? 12 : 8, isWide ? 20 : 10, isWide ? 12 : 8),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
-        boxShadow: [
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.92),
+        border: const Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+        boxShadow: const [
           BoxShadow(
-            color: Color(0x04000000),
-            blurRadius: 8,
+            color: Color(0x06000000),
+            blurRadius: 10,
             offset: Offset(0, 2),
           ),
         ],
@@ -548,11 +548,19 @@ class _BottomNav extends StatelessWidget {
         left: 12,
         right: 12,
         bottom: 12,
-        child: Material(
-          elevation: 16,
-          shadowColor: Colors.black.withValues(alpha: 0.15),
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.94),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.10),
+                blurRadius: 20,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
           child: SafeArea(
             top: false,
             child: SizedBox(
@@ -577,16 +585,17 @@ class _BottomNav extends StatelessWidget {
                               AnimatedContainer(
                                 duration: const Duration(milliseconds: 220),
                                 curve: Curves.easeOut,
-                                width: 44,
-                                height: 28,
+                                width: 48,
+                                height: 30,
                                 decoration: BoxDecoration(
-                                  color: selected ? MK.brand.withValues(alpha: 0.12) : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(14),
+                                  color: selected ? const Color(0xFFE8F5E9) : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(15),
+                                  border: selected ? Border.all(color: const Color(0xFFC8E6C9), width: 1) : null,
                                 ),
                                 child: Icon(
                                   selected ? item.$2 : item.$1,
                                   size: 19,
-                                  color: selected ? MK.brand : MK.inkSoft,
+                                  color: selected ? const Color(0xFF166534) : MK.inkSoft,
                                 ),
                               ),
                               if (showBadge)
@@ -616,7 +625,7 @@ class _BottomNav extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 9.5,
                               fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
-                              color: selected ? MK.brand : MK.inkSoft,
+                              color: selected ? const Color(0xFF166534) : MK.inkSoft,
                             ),
                           ),
                         ],

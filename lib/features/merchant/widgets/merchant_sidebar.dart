@@ -33,14 +33,14 @@ class MerchantSidebar extends StatelessWidget {
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeInOutCubic,
       width: width,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(right: BorderSide(color: Color(0xFFE2E8F0))),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.95),
+        border: const Border(right: BorderSide(color: Color(0xFFE2E8F0))),
         boxShadow: [
           BoxShadow(
-            color: Color(0x06000000),
-            blurRadius: 10,
-            offset: Offset(2, 0),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(3, 0),
           ),
         ],
       ),
@@ -53,38 +53,56 @@ class MerchantSidebar extends StatelessWidget {
             _buildHeader(context),
 
             const Divider(height: 1, color: Color(0xFFF1F5F9)),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
 
             // ── Quick Actions (when expanded) ──
             if (!isCollapsed && (onNewListing != null || onVerifyCode != null))
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                 child: Row(
                   children: [
                     if (onNewListing != null)
                       Expanded(
                         child: Material(
-                          color: AppTheme.primaryGreen,
-                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
                           child: InkWell(
                             onTap: onNewListing,
-                            borderRadius: BorderRadius.circular(10),
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 8),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.add_rounded, color: Colors.white, size: 16),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'New Pack',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 11.5,
-                                    ),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Ink(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF166534), Color(0xFF1B5E20)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF166534).withValues(alpha: 0.28),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 3),
                                   ),
                                 ],
+                              ),
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 9.5),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.add_rounded, color: Colors.white, size: 16),
+                                    SizedBox(width: 5),
+                                    Text(
+                                      '+ New Pack',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 12,
+                                        letterSpacing: -0.2,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -95,15 +113,15 @@ class MerchantSidebar extends StatelessWidget {
                     if (onVerifyCode != null)
                       Material(
                         color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
                         child: InkWell(
                           onTap: onVerifyCode,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                           child: const Tooltip(
                             message: 'Verify pickup code',
                             child: Padding(
-                              padding: EdgeInsets.all(8),
-                              child: Icon(Icons.qr_code_scanner_rounded, size: 16, color: AppTheme.charcoal),
+                              padding: EdgeInsets.all(9),
+                              child: Icon(Icons.qr_code_scanner_rounded, size: 17, color: Color(0xFF1E293B)),
                             ),
                           ),
                         ),
@@ -411,7 +429,7 @@ class MerchantSidebar extends StatelessWidget {
           message: item.label,
           preferBelow: false,
           child: Material(
-            color: isSelected ? const Color(0xFFDCFCE7) : Colors.transparent,
+            color: isSelected ? const Color(0xFFE8F5E9) : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
@@ -420,13 +438,17 @@ class MerchantSidebar extends StatelessWidget {
               child: Container(
                 height: 44,
                 alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: isSelected ? Border.all(color: const Color(0xFFC8E6C9), width: 1) : null,
+                ),
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
                     Icon(
                       isSelected ? item.activeIcon : item.icon,
                       size: 21,
-                      color: isSelected ? const Color(0xFF15803D) : const Color(0xFF64748B),
+                      color: isSelected ? const Color(0xFF166534) : const Color(0xFF64748B),
                     ),
                     if (item.badgeCount > 0)
                       Positioned(
@@ -460,22 +482,26 @@ class MerchantSidebar extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2.5),
       child: Material(
-        color: isSelected ? const Color(0xFFDCFCE7) : Colors.transparent,
+        color: isSelected ? const Color(0xFFE8F5E9) : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          hoverColor: const Color(0xFFF1F5F9),
+          hoverColor: const Color(0xFFF8FAFC),
           onTap: () => onSelectTab(item.tab),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9.5),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: isSelected ? Border.all(color: const Color(0xFFC8E6C9), width: 1) : null,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(
               children: [
                 Icon(
                   isSelected ? item.activeIcon : item.icon,
                   size: 19,
-                  color: isSelected ? const Color(0xFF15803D) : const Color(0xFF64748B),
+                  color: isSelected ? const Color(0xFF166534) : const Color(0xFF64748B),
                 ),
                 const SizedBox(width: 11),
                 Expanded(
@@ -485,8 +511,8 @@ class MerchantSidebar extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                      color: isSelected ? const Color(0xFF15803D) : const Color(0xFF334155),
+                      fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                      color: isSelected ? const Color(0xFF166534) : const Color(0xFF334155),
                       letterSpacing: -0.2,
                     ),
                   ),
@@ -495,7 +521,7 @@ class MerchantSidebar extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF16A34A) : const Color(0xFFEF4444),
+                      color: isSelected ? const Color(0xFF166534) : const Color(0xFFEF4444),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
