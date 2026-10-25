@@ -19,6 +19,7 @@ import 'features/auth/welcome_screen.dart';
 import 'features/customer/customer_navigation.dart';
 import 'features/merchant/merchant_dashboard.dart';
 import 'features/admin/admin_dashboard.dart';
+import 'features/rider/rider_dashboard.dart';
 
 import 'providers/app_state.dart';
 
@@ -137,6 +138,8 @@ class _DreamEatsAppState extends ConsumerState<DreamEatsApp> {
             destination = const MerchantDashboardScreen();
           } else if (profile.role == 'admin' || profile.role == 'super_admin') {
             destination = const AdminDashboardScreen();
+          } else if (profile.role == 'rider') {
+            destination = const RiderDashboardScreen();
           } else {
             destination = const CustomerNavigation();
           }

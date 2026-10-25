@@ -316,8 +316,10 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                               decoration: BoxDecoration(color: Colors.amber.shade100, shape: BoxShape.circle),
                               child: const Icon(Icons.phone_android_rounded, color: Colors.brown, size: 20),
                             ),
-                            title: Text(widget.business.phone.isNotEmpty ? widget.business.phone : '024 123 4567', style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: const Text('MTN Mobile Money / Telecel Cash'),
+                            title: Text(widget.business.hasPayoutAccount ? widget.business.payoutAccountNumber : 'No payout account set', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text(widget.business.hasPayoutAccount
+                                ? '${widget.business.payoutProvider} \u00b7 ${widget.business.payoutAccountName}'
+                                : 'Add one under Profile \u2192 Payout account'),
                           ),
                         ],
                       ),

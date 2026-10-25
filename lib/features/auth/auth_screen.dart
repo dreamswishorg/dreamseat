@@ -7,6 +7,7 @@ import '../../providers/app_state.dart';
 import '../customer/customer_navigation.dart';
 import '../merchant/merchant_dashboard.dart';
 import '../admin/admin_dashboard.dart';
+import '../rider/rider_dashboard.dart';
 import 'forgot_password_screen.dart';
 import '../common/legal_screens.dart';
 import '../../services/biometric_service.dart';
@@ -39,8 +40,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   final _suBizNameController = TextEditingController();
   final _suBizDescController = TextEditingController();
   final _suBizAddressController = TextEditingController();
+  final _suLicenseController = TextEditingController();
 
   String _suRole = 'customer';
+  String _suVehicleType = 'Motorbike';
   String _suBizCategory = 'Restaurant Meal';
   bool _obscureSignIn = true;
   bool _obscureSignUp = true;
@@ -96,6 +99,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     _suBizNameController.dispose();
     _suBizDescController.dispose();
     _suBizAddressController.dispose();
+    _suLicenseController.dispose();
     super.dispose();
   }
 
@@ -165,6 +169,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       destination = const MerchantDashboardScreen();
     } else if (user.role == 'admin' || user.role == 'super_admin') {
       destination = const AdminDashboardScreen();
+    } else if (user.role == 'rider') {
+      destination = const RiderDashboardScreen();
     } else {
       destination = const CustomerNavigation();
     }
@@ -247,6 +253,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       destination = const MerchantDashboardScreen();
     } else if (user.role == 'admin' || user.role == 'super_admin') {
       destination = const AdminDashboardScreen();
+    } else if (user.role == 'rider') {
+      destination = const RiderDashboardScreen();
     } else {
       destination = const CustomerNavigation();
     }
@@ -296,6 +304,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
           businessDescription:
               _suRole == 'merchant' ? _suBizDescController.text.trim() : null,
           businessCategory: _suRole == 'merchant' ? _suBizCategory : null,
+          vehicleType: _suRole == 'rider' ? _suVehicleType : null,
+          licenseNumber: _suRole == 'rider' ? _suLicenseController.text.trim() : null,
         );
 
     if (!mounted) return;
@@ -371,6 +381,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     final Widget destination;
     if (_suRole == 'merchant') {
       destination = const MerchantDashboardScreen();
+    } else if (_suRole == 'rider') {
+      destination = const RiderDashboardScreen();
     } else {
       destination = const CustomerNavigation();
     }
@@ -1530,6 +1542,18 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
               _suStep = 0;
             }),
           ),
+          const SizedBox(height: 12),
+          _buildRoleTile(
+            role: 'rider',
+            title: 'Courier / Rider Partner',
+            subtitle: 'Deliver orders across Accra & earn GHS',
+            icon: Icons.two_wheeler_rounded,
+            isSelected: _suRole == 'rider',
+            onTap: () => setState(() {
+              _suRole = 'rider';
+              _suStep = 0;
+            }),
+          ),
           const SizedBox(height: 22),
 
           // Step Progress Bar
@@ -1539,7 +1563,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
               Text(
                 _suRole == 'customer'
                     ? (_suStep == 0 ? 'Step 1 of 2: Personal Info' : 'Step 2 of 2: Security & Terms')
-                    : (_suStep == 0 ? 'Step 1 of 2: Account Security' : 'Step 2 of 2: Store Setup'),
+                    : (_suRole == 'merchant'
+                        ? (_suStep == 0 ? 'Step 1 of 2: Account Security' : 'Step 2 of 2: Store Setup')
+                        : (_suStep == 0 ? 'Step 1 of 2: Rider Info' : 'Step 2 of 2: Vehicle & Security')),
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -1611,7 +1637,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                 child: _buildPrimaryButton(
                   label: _suStep == 0
                       ? 'Next Step ➔'
-                      : (_suRole == 'customer' ? 'Create Account' : 'Launch Store 🚀'),
+                      : (_suRole == 'customer'
+                          ? 'Create Account'
+                          : (_suRole == 'merchant' ? 'Launch Store 🚀' : 'Register Rider 🛵')),
                   onPressed: _isLoading ? null : _nextStep,
                 ),
               ),
@@ -1861,7 +1889,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
           ],
         );
       }
-    } else {
+    } else if (_suRole == 'business') {
       // Merchant Flow
       if (_suStep == 0) {
         // Merchant Step 0: Contact & Security
@@ -2068,6 +2096,144 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: 20),
+            _buildTermsCheckbox(),
+          ],
+        );
+      }
+    } else {
+      // Rider Registration (Step 0: Personal, Step 1: Vehicle & Security)
+      if (_suStep == 0) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Rider Personal Information',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.charcoal.withValues(alpha: 0.8),
+              ),
+            ),
+            const SizedBox(height: 10),
+            _buildInputField(
+              controller: _suNameController,
+              label: 'Full Legal Name',
+              hint: 'As on your Ghana Card / ID',
+              icon: Icons.person_outline_rounded,
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+            ),
+            const SizedBox(height: 14),
+            _buildInputField(
+              controller: _suEmailController,
+              label: 'Email Address',
+              hint: 'rider@example.com',
+              icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return 'Email is required';
+                if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(v.trim())) {
+                  return 'Enter a valid email address';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 14),
+            _buildInputField(
+              controller: _suPhoneController,
+              label: 'MoMo / Phone Number',
+              hint: '0245678901',
+              icon: Icons.phone_android_rounded,
+              keyboardType: TextInputType.phone,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return 'Phone number required for delivery alerts';
+                return null;
+              },
+            ),
+          ],
+        );
+      } else {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Vehicle & Dispatch Setup',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.charcoal.withValues(alpha: 0.8),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.08)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Vehicle Type', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey)),
+                  const SizedBox(height: 4),
+                  DropdownButtonFormField<String>(
+                    initialValue: _suVehicleType,
+                    isExpanded: true,
+                    borderRadius: BorderRadius.circular(16),
+                    dropdownColor: Colors.white,
+                    decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.zero),
+                    items: ['Motorbike', 'Bicycle', 'Scooter', 'Car']
+                        .map((v) => DropdownMenuItem(value: v, child: Text(v)))
+                        .toList(),
+                    onChanged: (v) => setState(() => _suVehicleType = v!),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            _buildInputField(
+              controller: _suLicenseController,
+              label: 'Driver License / Ghana Card PIN',
+              hint: 'e.g. GHA-123456789-0',
+              icon: Icons.badge_outlined,
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'ID or license is required' : null,
+            ),
+            const SizedBox(height: 14),
+            _buildInputField(
+              controller: _suPasswordController,
+              label: 'Create Password',
+              hint: 'Min. 6 characters',
+              icon: Icons.lock_outline_rounded,
+              obscureText: _obscureSignUp,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureSignUp ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  color: AppTheme.mutedGrey,
+                  size: 20,
+                ),
+                onPressed: () => setState(() => _obscureSignUp = !_obscureSignUp),
+              ),
+              validator: (v) => (v == null || v.length < 6) ? 'At least 6 characters' : null,
+            ),
+            const SizedBox(height: 14),
+            _buildInputField(
+              controller: _suConfirmPasswordController,
+              label: 'Confirm Password',
+              hint: 'Re-enter your password',
+              icon: Icons.lock_outline_rounded,
+              obscureText: _obscureConfirm,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  color: AppTheme.mutedGrey,
+                  size: 20,
+                ),
+                onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+              ),
+              validator: (v) => (v != _suPasswordController.text) ? 'Passwords do not match' : null,
             ),
             const SizedBox(height: 20),
             _buildTermsCheckbox(),

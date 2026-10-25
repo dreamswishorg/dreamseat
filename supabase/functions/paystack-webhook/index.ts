@@ -13,7 +13,7 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 // Initialize Supabase Admin client
 const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-serve(async (req) => {
+serve(async (req: any) => {
   try {
     const signature = req.headers.get("x-paystack-signature");
     if (!signature) {
@@ -72,6 +72,10 @@ serve(async (req) => {
     }
 
     const collectionCode = `DE-${Math.floor(1000 + Math.random() * 9000)}`;
+    const fulfillmentType = metadata.fulfillment_type || "pickup";
+    const quoteId = metadata.quote_id || null;
+    const deliveryFee = metadata.delivery_fee || 0.0;
+    const deliveryAddress = metadata.delivery_address || "";
 
     const { error: orderError } = await supabaseAdmin
       .from("orders")
@@ -82,17 +86,33 @@ serve(async (req) => {
         business_name: metadata.business_name,
         customer_id: metadata.customer_id,
         customer_name: metadata.customer_name,
-        price: data.amount / 100, // Convert pesewas back to GHS
+        price: data.amount / 100, // Total charged in GHS
         status: "reserved",
-        payment_method: data.channel,
+        food_status: "reserved",
+        payment_status: "paid",
+        payment_method: data.channel || "card",
         payment_reference: reference,
         collection_code: collectionCode,
+        fulfillment_type: fulfillmentType,
+        delivery_address: deliveryAddress,
+        delivery_fee: deliveryFee,
+        delivery_pin: `${Math.floor(1000 + Math.random() * 9000)}`,
+        delivery_status: fulfillmentType === "delivery" ? "dispatch_pending" : "none",
+        quote_id: quoteId,
         created_at: new Date().toISOString(),
       });
 
     if (orderError) {
       console.error("Error creating order:", orderError);
       return new Response("Database error", { status: 500 });
+    }
+
+    // Mark quote as consumed if present
+    if (quoteId) {
+      await supabaseAdmin
+        .from("delivery_quotes")
+        .update({ is_consumed: true })
+        .eq("id", quoteId);
     }
 
     // 4. Update Deal Stock Atomically
@@ -112,7 +132,7 @@ serve(async (req) => {
       headers: { "Content-Type": "application/json" },
     });
 
-  } catch (err) {
+  } catch (err: any) {
     console.error("Webhook processing error:", err);
     return new Response("Server error", { status: 500 });
   }

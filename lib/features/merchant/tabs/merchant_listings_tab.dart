@@ -54,6 +54,16 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
   }
 
   Future<void> _compose([FoodDeal? existing]) async {
+    if (!widget.business.isApproved) {
+      await showMResult(
+        context,
+        title: 'Verification In Review',
+        message: 'Your shop application is currently in review by compliance. You cannot publish surplus packs until your business documents are approved.',
+        ok: false,
+        actionLabel: 'Got it',
+      );
+      return;
+    }
     await showMSheet<void>(
       context,
       title: existing == null ? 'Publish a surplus pack' : 'Edit listing',
@@ -63,6 +73,10 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
   }
 
   Future<void> _toggle(FoodDeal deal, bool activate) async {
+    if (activate && !widget.business.isApproved) {
+      if (mounted) MToast.err(context, 'Cannot activate listing: Shop is awaiting admin verification.');
+      return;
+    }
     try {
       await ref.read(appStateProvider.notifier).toggleDealStatus(deal.id, activate);
       if (mounted) MToast.ok(context, '${deal.title} is now ${activate ? 'live' : 'paused'}');
@@ -392,15 +406,14 @@ class _ListingsKpiRibbon extends StatelessWidget {
         ];
 
         if (isCompact) {
-          return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
+          const gap = 8.0;
+          final itemW = (constraints.maxWidth - 32 - gap) / 2;
+          return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-            child: Row(
-              children: items.map((item) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: item,
-              )).toList(),
+            child: Wrap(
+              spacing: gap,
+              runSpacing: gap,
+              children: items.map((item) => SizedBox(width: itemW, child: item)).toList(),
             ),
           );
         }

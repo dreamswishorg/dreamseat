@@ -22,9 +22,13 @@ class ModernCheckoutScreen extends ConsumerStatefulWidget {
 
 class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
   final TextEditingController _promoController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController(text: 'Accra Central, Greater Accra, Ghana');
+  bool _isDelivery = false;
   String _appliedPromoCode = '';
   double _discountAmount = 0.0;
   bool _isProcessing = false;
+
+  double get _deliveryFee => _isDelivery ? (_appliedPromoCode == 'FREEDEL' ? 0.0 : 12.0) : 0.0;
 
   final List<String> _suggestedVouchers = [
     'WELCOME20',
@@ -35,6 +39,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
   @override
   void dispose() {
     _promoController.dispose();
+    _addressController.dispose();
     super.dispose();
   }
 
@@ -154,10 +159,10 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
               ),
               _buildPaymentOption(
                 ctx,
-                name: 'Cash on Pickup',
-                subtitle: 'Pay directly at restaurant counter',
+                name: _isDelivery ? 'Cash on Delivery' : 'Cash on Pickup',
+                subtitle: _isDelivery ? 'Pay rider upon doorstep delivery' : 'Pay directly at restaurant counter',
                 assetPath: 'assets/icons/cash_pickup.svg',
-                onTap: () => _completePayment(ctx, 'Cash on Pickup', finalTotal, items),
+                onTap: () => _completePayment(ctx, _isDelivery ? 'Cash on Delivery' : 'Cash on Pickup', finalTotal, items),
               ),
             ],
           ),
@@ -558,7 +563,14 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
       final notifier = ref.read(appStateProvider.notifier);
       Order? createdOrder;
       for (final item in items) {
-        createdOrder = await notifier.purchase(item.deal, provider, refCode);
+        createdOrder = await notifier.purchase(
+          item.deal,
+          provider,
+          refCode,
+          fulfillmentType: _isDelivery ? 'delivery' : 'pickup',
+          deliveryAddress: _isDelivery ? _addressController.text.trim() : null,
+          deliveryFee: _deliveryFee,
+        );
       }
       notifier.clearBasket();
 
@@ -640,7 +652,14 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                           final notifier = ref.read(appStateProvider.notifier);
                           Order? createdOrder;
                           for (final item in items) {
-                            createdOrder = await notifier.purchase(item.deal, provider, refCode);
+                            createdOrder = await notifier.purchase(
+                              item.deal,
+                              provider,
+                              refCode,
+                              fulfillmentType: _isDelivery ? 'delivery' : 'pickup',
+                              deliveryAddress: _isDelivery ? _addressController.text.trim() : null,
+                              deliveryFee: _deliveryFee,
+                            );
                           }
                           notifier.clearBasket();
                           if (createdOrder != null && mounted) {
@@ -689,7 +708,14 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
         final notifier = ref.read(appStateProvider.notifier);
         Order? createdOrder;
         for (final item in items) {
-          createdOrder = await notifier.purchase(item.deal, 'Cash on Pickup', refCode);
+          createdOrder = await notifier.purchase(
+            item.deal,
+            method,
+            refCode,
+            fulfillmentType: _isDelivery ? 'delivery' : 'pickup',
+            deliveryAddress: _isDelivery ? _addressController.text.trim() : null,
+            deliveryFee: _deliveryFee,
+          );
         }
         notifier.clearBasket();
 
@@ -781,7 +807,14 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
       final notifier = ref.read(appStateProvider.notifier);
       Order? createdOrder;
       for (final item in items) {
-        createdOrder = await notifier.purchase(item.deal, method, refCode);
+        createdOrder = await notifier.purchase(
+          item.deal,
+          method,
+          refCode,
+          fulfillmentType: _isDelivery ? 'delivery' : 'pickup',
+          deliveryAddress: _isDelivery ? _addressController.text.trim() : null,
+          deliveryFee: _deliveryFee,
+        );
       }
       notifier.clearBasket();
 
@@ -823,7 +856,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
       0.0,
       (sum, item) => sum + (item.deal.discountedPrice * item.quantity),
     );
-    final double finalTotal = (subtotal - _discountAmount).clamp(0.0, 999999.0);
+    final double finalTotal = (subtotal + _deliveryFee - _discountAmount).clamp(0.0, 999999.0);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -996,7 +1029,140 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                           ),
                         );
                       }),
+                    const SizedBox(height: 16),
 
+                    // ── FULFILLMENT METHOD (Pickup vs Delivery) ─────────────
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Fulfillment Option',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900,
+                              color: AppTheme.charcoal,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(14),
+                                  onTap: () => setState(() => _isDelivery = false),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                                    decoration: BoxDecoration(
+                                      color: !_isDelivery ? AppTheme.lightGreenBg : const Color(0xFFF8FAFC),
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: !_isDelivery ? AppTheme.primaryGreen : Colors.transparent,
+                                        width: 1.8,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Icon(
+                                          Icons.storefront_rounded,
+                                          color: !_isDelivery ? AppTheme.primaryGreen : AppTheme.mutedGrey,
+                                        ),
+                                        const SizedBox(height: 6),
+                                        const Text(
+                                          'Store Pickup',
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                        ),
+                                        const Text(
+                                          'Free',
+                                          style: TextStyle(fontSize: 11, color: AppTheme.primaryGreen, fontWeight: FontWeight.w800),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(14),
+                                  onTap: () => setState(() => _isDelivery = true),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                                    decoration: BoxDecoration(
+                                      color: _isDelivery ? AppTheme.lightGreenBg : const Color(0xFFF8FAFC),
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: _isDelivery ? AppTheme.primaryGreen : Colors.transparent,
+                                        width: 1.8,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Icon(
+                                          Icons.two_wheeler_rounded,
+                                          color: _isDelivery ? AppTheme.primaryGreen : AppTheme.mutedGrey,
+                                        ),
+                                        const SizedBox(height: 6),
+                                        const Text(
+                                          'Rider Delivery',
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                        ),
+                                        Text(
+                                          _appliedPromoCode == 'FREEDEL' ? 'Free (Promo)' : '+GHS 12.00',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: _appliedPromoCode == 'FREEDEL' ? AppTheme.primaryGreen : AppTheme.charcoal,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (_isDelivery) ...[
+                            const SizedBox(height: 14),
+                            const Text(
+                              'Delivery Address in Accra',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.charcoal),
+                            ),
+                            const SizedBox(height: 6),
+                            TextField(
+                              controller: _addressController,
+                              decoration: InputDecoration(
+                                hintText: 'Enter street name, landmark, or house number',
+                                prefixIcon: const Icon(Icons.location_on_outlined, color: AppTheme.primaryGreen, size: 20),
+                                filled: true,
+                                fillColor: const Color(0xFFF8FAFC),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 16),
 
                     // ── PROMO CODE SECTION (Mockup 1 Left) ──────────────────
@@ -1077,7 +1243,13 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                         children: [
                           _buildCostRow('Subtotal for Products', 'GHS ${subtotal.toStringAsFixed(2)}'),
                           const SizedBox(height: 10),
-                          _buildCostRow('Delivery fee', 'Free', isFree: true),
+                          _buildCostRow(
+                            'Delivery fee',
+                            _isDelivery
+                                ? (_deliveryFee == 0 ? 'Free (Voucher applied)' : 'GHS ${_deliveryFee.toStringAsFixed(2)}')
+                                : 'Free (Store Pickup)',
+                            isFree: _deliveryFee == 0,
+                          ),
                           if (_discountAmount > 0) ...[
                             const SizedBox(height: 10),
                             _buildCostRow(

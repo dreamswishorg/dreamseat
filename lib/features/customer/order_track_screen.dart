@@ -42,7 +42,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
 
   late String _riderName;
   final String _riderRating = '4.5(102+)';
-  final String _riderPhone = '+233 24 567 8901';
+  late String _riderPhone;
 
   final List<Map<String, dynamic>> _messages = [
     {
@@ -56,6 +56,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
   void initState() {
     super.initState();
     _riderName = widget.initialRiderName ?? (widget.order?.courierName?.isNotEmpty == true ? widget.order!.courierName! : 'Assigned Courier');
+    _riderPhone = widget.order?.courierPhone?.isNotEmpty == true ? widget.order!.courierPhone! : '+233 24 567 8901';
     _routePoints = [
       _restaurantLoc,
       LatLng(5.5650, -0.1790),
@@ -1054,6 +1055,36 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                         ),
                       ],
                     ),
+                    if (order.deliveryPin.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.key_rounded, color: Color(0xFFD97706), size: 24),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('DELIVERY PIN (GIVE TO RIDER UPON ARRIVAL)',
+                                      style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFFB45309))),
+                                  Text(
+                                    order.deliveryPin,
+                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: 2),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 12),
                   ],
 

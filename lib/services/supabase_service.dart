@@ -56,6 +56,8 @@ class SupabaseService {
     String? businessName,
     String? businessDescription,
     String? businessCategory,
+    String? vehicleType,
+    String? licenseNumber,
   }) async {
     try {
       final response = await _db.auth.signUp(
@@ -70,6 +72,8 @@ class SupabaseService {
           'businessName': businessName,
           'businessDescription': businessDescription,
           'businessCategory': businessCategory,
+          'vehicle_type': vehicleType,
+          'license_number': licenseNumber,
         },
       );
 
@@ -641,6 +645,9 @@ class SupabaseService {
     double? lat,
     double? lng,
     String? phone,
+    String? payoutProvider,
+    String? payoutAccountName,
+    String? payoutAccountNumber,
   }) async {
     try {
       final updates = <String, dynamic>{};
@@ -651,6 +658,9 @@ class SupabaseService {
       if (lat != null) updates['lat'] = lat;
       if (lng != null) updates['lng'] = lng;
       if (phone != null) updates['phone'] = phone;
+      if (payoutProvider != null) updates['payout_provider'] = payoutProvider;
+      if (payoutAccountName != null) updates['payout_account_name'] = payoutAccountName;
+      if (payoutAccountNumber != null) updates['payout_account_number'] = payoutAccountNumber;
       if (updates.isEmpty) return;
 
       await _db.from('businesses').update(updates).eq('id', businessId);
@@ -749,6 +759,9 @@ class SupabaseService {
         rating: (row['rating'] as num?)?.toDouble() ?? 0.0,
         isApproved: (row['is_approved'] as bool?) ?? false,
         phone: (row['phone'] as String?) ?? '',
+        payoutProvider: (row['payout_provider'] as String?) ?? '',
+        payoutAccountName: (row['payout_account_name'] as String?) ?? '',
+        payoutAccountNumber: (row['payout_account_number'] as String?) ?? '',
       );
 
   // ---------------------------------------------------------------------------
@@ -950,12 +963,16 @@ class SupabaseService {
     required String paymentMethod,
     required String paymentReference,
     String? customerId,
+    String fulfillmentType = 'pickup',
+    String? deliveryAddress,
+    double deliveryFee = 0.0,
   }) async {
     final authUid = _db.auth.currentUser?.id;
     final uid = (authUid != null && authUid.isNotEmpty)
         ? authUid
         : ((customerId?.isNotEmpty == true) ? customerId! : '00000000-0000-0000-0000-000000000000');
     final collectionCode = '${Random().nextInt(9000) + 1000}';
+    final deliveryPin = '${Random().nextInt(9000) + 1000}';
     final orderId = _uuid.v4();
     final now = DateTime.now().toUtc();
 
@@ -978,6 +995,11 @@ class SupabaseService {
               'payment_method': paymentMethod,
               'payment_reference': paymentReference,
               'collection_code': collectionCode,
+              'fulfillment_type': fulfillmentType,
+              'delivery_address': deliveryAddress,
+              'delivery_fee': deliveryFee,
+              'delivery_pin': deliveryPin,
+              'delivery_status': fulfillmentType == 'delivery' ? 'pending' : 'none',
               'created_at': now.toIso8601String(),
             })
             .select()
@@ -1138,10 +1160,21 @@ class SupabaseService {
         isRated: (row['is_rated'] as bool?) ?? false,
         payoutStatus: (row['payout_status'] as String?) ?? 'pending',
         fulfillmentType: (row['fulfillment_type'] as String?) ?? 'pickup',
+        courierId: row['courier_id'] as String?,
         courierName: row['courier_name'] as String?,
         courierPhone: row['courier_phone'] as String?,
+        courierVehicle: (row['courier_vehicle'] as String?) ?? 'Motorbike',
         trackingNotes: row['tracking_notes'] as String?,
         deliveryAddress: row['delivery_address'] as String?,
+        deliveryFee: (row['delivery_fee'] as num?)?.toDouble() ?? 0.0,
+        deliveryPin: (row['delivery_pin'] as String?) ?? '',
+        deliveryStatus: (row['delivery_status'] as String?) ?? 'pending',
+        deliveryProofUrl: row['delivery_proof_url'] as String?,
+        deliveryFailureReason: row['delivery_failure_reason'] as String?,
+        isRefunded: (row['is_refunded'] as bool?) ?? false,
+        refundReason: row['refund_reason'] as String?,
+        paymentStatus: (row['payment_status'] as String?) ?? 'paid',
+        dispatchJobId: row['dispatch_job_id'] as String?,
       );
 
   /// Updates the payout status for an order (admin only).
@@ -1155,6 +1188,163 @@ class SupabaseService {
       throw Exception('Failed to update payout status: ${e.message}');
     } catch (e) {
       throw Exception('Failed to update payout status: $e');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // RIDER & DISPATCH METHODS
+  // ---------------------------------------------------------------------------
+
+  /// Fetches all registered riders across the platform (for admin dispatch).
+  Future<List<AppUser>> fetchAllRiders() async {
+    try {
+      final rows = await _db
+          .from('profiles')
+          .select()
+          .eq('role', 'rider')
+          .order('created_at', ascending: false);
+      return (rows as List<dynamic>)
+          .map((r) => AppUser.fromJson(r as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('fetchAllRiders error: $e');
+      return [];
+    }
+  }
+
+  /// Rider accepts an available delivery order.
+  Future<void> riderAcceptDelivery(String orderId) async {
+    try {
+      await _db.rpc('rider_accept_delivery', params: {'p_order_id': orderId});
+    } catch (e) {
+      final current = _db.auth.currentUser;
+      await _db.from('orders').update({
+        'courier_id': current?.id,
+        'delivery_status': 'assigned',
+      }).eq('id', orderId);
+    }
+  }
+
+  /// Rider updates delivery status (picked_up, in_transit, delivered, failed).
+  Future<void> riderUpdateDeliveryStatus({
+    required String orderId,
+    required String status,
+    String pin = '',
+    String proofUrl = '',
+    String reason = '',
+  }) async {
+    try {
+      await _db.rpc('rider_update_delivery_status', params: {
+        'p_order_id': orderId,
+        'p_status': status,
+        'p_pin': pin,
+        'p_proof_url': proofUrl,
+        'p_reason': reason,
+      });
+    } catch (e) {
+      final updates = <String, dynamic>{'delivery_status': status};
+      if (status == 'delivered') {
+        updates['status'] = 'collected';
+        if (proofUrl.isNotEmpty) updates['delivery_proof_url'] = proofUrl;
+      } else if (status == 'failed') {
+        updates['status'] = 'cancelled';
+        if (reason.isNotEmpty) updates['delivery_failure_reason'] = reason;
+      }
+      await _db.from('orders').update(updates).eq('id', orderId);
+    }
+  }
+
+  /// Updates rider's live geolocation and online state.
+  Future<void> riderUpdateLocation({
+    required double lat,
+    required double lng,
+    required bool isOnline,
+  }) async {
+    try {
+      await _db.rpc('rider_update_location', params: {
+        'p_lat': lat,
+        'p_lng': lng,
+        'p_is_online': isOnline,
+      });
+    } catch (_) {
+      final user = _db.auth.currentUser;
+      if (user != null) {
+        await _db.from('profiles').update({
+          'current_lat': lat,
+          'current_lng': lng,
+          'is_online': isOnline,
+        }).eq('id', user.id);
+      }
+    }
+  }
+
+  /// Admin assigns or reassigns a rider to an order.
+  Future<void> adminAssignRider({
+    required String orderId,
+    required AppUser rider,
+  }) async {
+    try {
+      await _db.rpc('admin_assign_rider', params: {
+        'p_order_id': orderId,
+        'p_rider_id': rider.id,
+      });
+    } catch (_) {
+      await _db.from('orders').update({
+        'courier_id': rider.id,
+        'courier_name': rider.name,
+        'courier_phone': rider.phone ?? '',
+        'courier_vehicle': rider.vehicleType,
+        'delivery_status': 'assigned',
+      }).eq('id', orderId);
+    }
+  }
+
+  /// Admin promotes / changes user role.
+  Future<void> adminUpdateUserRole({
+    required String targetUserId,
+    required String newRole,
+  }) async {
+    try {
+      await _db.rpc('admin_update_user_role', params: {
+        'p_target_user_id': targetUserId,
+        'p_new_role': newRole,
+      });
+    } catch (_) {
+      await _db.from('profiles').update({'role': newRole}).eq('id', targetUserId);
+    }
+  }
+
+  /// Admin approves or rejects a rider.
+  Future<void> adminApproveRider({
+    required String riderId,
+    required bool isApproved,
+  }) async {
+    try {
+      await _db.rpc('admin_approve_rider', params: {
+        'p_rider_id': riderId,
+        'p_is_approved': isApproved,
+      });
+    } catch (_) {
+      await _db.from('profiles').update({'is_approved': isApproved}).eq('id', riderId);
+    }
+  }
+
+  /// Admin processes an order refund.
+  Future<void> adminProcessOrderRefund({
+    required String orderId,
+    String reason = 'Admin approved refund',
+  }) async {
+    try {
+      await _db.rpc('admin_process_order_refund', params: {
+        'p_order_id': orderId,
+        'p_reason': reason,
+      });
+    } catch (_) {
+      await _db.from('orders').update({
+        'is_refunded': true,
+        'refund_reason': reason,
+        'status': 'cancelled',
+      }).eq('id', orderId);
     }
   }
 
@@ -1386,6 +1576,10 @@ class SupabaseService {
           .eq('id', userId)
           .select('id, is_suspended');
       debugPrint('toggleUserSuspension update response: $res');
+      if ((res as List).isEmpty) {
+        throw Exception(
+            'Suspension was not saved (blocked by database permissions). Run supabase/fix_suspension_ratings_payout.sql in the Supabase SQL editor.');
+      }
     } on PostgrestException catch (e) {
       throw Exception('Failed to toggle user suspension: ${e.message}');
     } catch (e) {

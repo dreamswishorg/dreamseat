@@ -79,4 +79,6 @@ app.*.map.json
 !.env.example
 scratch/
 supabase/reset_*.sql
+supabase/.temp/
 .github/
+

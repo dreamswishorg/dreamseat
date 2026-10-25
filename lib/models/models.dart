@@ -2,7 +2,7 @@ class AppUser {
   final String id;
   final String email;
   final String name;
-  final String role; // 'customer', 'merchant', 'admin', 'super_admin'
+  final String role; // 'customer', 'merchant', 'admin', 'super_admin', 'rider'
   final String? phone;
   final String? avatarUrl;
   final bool isSuspended;
@@ -11,6 +11,15 @@ class AppUser {
   final double referralCredit;
   final String referralCode;
   final DateTime createdAt;
+
+  // Rider-specific fields
+  final String vehicleType; // 'Motorbike', 'Bicycle', 'Scooter', 'Car'
+  final String licenseNumber;
+  final bool isOnline;
+  final double currentLat;
+  final double currentLng;
+  final int totalDeliveries;
+  final double rating;
 
   AppUser({
     required this.id,
@@ -25,6 +34,13 @@ class AppUser {
     this.referralCredit = 0.0,
     this.referralCode = '',
     required this.createdAt,
+    this.vehicleType = 'Motorbike',
+    this.licenseNumber = '',
+    this.isOnline = false,
+    this.currentLat = 5.6037,
+    this.currentLng = -0.1870,
+    this.totalDeliveries = 0,
+    this.rating = 5.0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -40,13 +56,20 @@ class AppUser {
         'referralCredit': referralCredit,
         'referralCode': referralCode,
         'created_at': createdAt.toIso8601String(),
+        'vehicle_type': vehicleType,
+        'license_number': licenseNumber,
+        'is_online': isOnline,
+        'current_lat': currentLat,
+        'current_lng': currentLng,
+        'total_deliveries': totalDeliveries,
+        'rating': rating,
       };
 
   factory AppUser.fromJson(Map<String, dynamic> json) => AppUser(
         id: json['id'],
-        email: json['email'],
-        name: json['name'],
-        role: json['role'],
+        email: json['email'] ?? '',
+        name: json['name'] ?? '',
+        role: json['role'] ?? 'customer',
         phone: json['phone'],
         avatarUrl: json['avatarUrl'] as String?,
         isSuspended: json['isSuspended'] ?? false,
@@ -55,6 +78,13 @@ class AppUser {
         referralCredit: (json['referralCredit'] as num?)?.toDouble() ?? 0.0,
         referralCode: json['referralCode'] ?? '',
         createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
+        vehicleType: json['vehicle_type'] ?? json['vehicleType'] ?? 'Motorbike',
+        licenseNumber: json['license_number'] ?? json['licenseNumber'] ?? '',
+        isOnline: json['is_online'] ?? json['isOnline'] ?? false,
+        currentLat: (json['current_lat'] as num?)?.toDouble() ?? (json['currentLat'] as num?)?.toDouble() ?? 5.6037,
+        currentLng: (json['current_lng'] as num?)?.toDouble() ?? (json['currentLng'] as num?)?.toDouble() ?? -0.1870,
+        totalDeliveries: json['total_deliveries'] ?? json['totalDeliveries'] ?? 0,
+        rating: (json['rating'] as num?)?.toDouble() ?? 5.0,
       );
 
   AppUser copyWith({
@@ -71,6 +101,13 @@ class AppUser {
     double? referralCredit,
     String? referralCode,
     DateTime? createdAt,
+    String? vehicleType,
+    String? licenseNumber,
+    bool? isOnline,
+    double? currentLat,
+    double? currentLng,
+    int? totalDeliveries,
+    double? rating,
   }) {
     return AppUser(
       id: id ?? this.id,
@@ -85,6 +122,13 @@ class AppUser {
       referralCredit: referralCredit ?? this.referralCredit,
       referralCode: referralCode ?? this.referralCode,
       createdAt: createdAt ?? this.createdAt,
+      vehicleType: vehicleType ?? this.vehicleType,
+      licenseNumber: licenseNumber ?? this.licenseNumber,
+      isOnline: isOnline ?? this.isOnline,
+      currentLat: currentLat ?? this.currentLat,
+      currentLng: currentLng ?? this.currentLng,
+      totalDeliveries: totalDeliveries ?? this.totalDeliveries,
+      rating: rating ?? this.rating,
     );
   }
 }
@@ -104,6 +148,11 @@ class BusinessProfile {
   final double rating;
   final bool isApproved;
   final String phone;
+  final String payoutProvider;
+  final String payoutAccountName;
+  final String payoutAccountNumber;
+
+  bool get hasPayoutAccount => payoutAccountNumber.isNotEmpty;
 
   BusinessProfile({
     required this.id,
@@ -120,6 +169,9 @@ class BusinessProfile {
     required this.rating,
     this.isApproved = false,
     this.phone = '',
+    this.payoutProvider = '',
+    this.payoutAccountName = '',
+    this.payoutAccountNumber = '',
   });
 
   Map<String, dynamic> toJson() => {
@@ -137,6 +189,9 @@ class BusinessProfile {
         'rating': rating,
         'isApproved': isApproved,
         'phone': phone,
+        'payoutProvider': payoutProvider,
+        'payoutAccountName': payoutAccountName,
+        'payoutAccountNumber': payoutAccountNumber,
       };
 
   factory BusinessProfile.fromJson(Map<String, dynamic> json) => BusinessProfile(
@@ -154,6 +209,9 @@ class BusinessProfile {
         rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
         isApproved: json['isApproved'] ?? false,
         phone: json['phone'] ?? '',
+        payoutProvider: json['payoutProvider'] ?? json['payout_provider'] ?? '',
+        payoutAccountName: json['payoutAccountName'] ?? json['payout_account_name'] ?? '',
+        payoutAccountNumber: json['payoutAccountNumber'] ?? json['payout_account_number'] ?? '',
       );
 
   BusinessProfile copyWith({
@@ -171,6 +229,9 @@ class BusinessProfile {
     double? rating,
     bool? isApproved,
     String? phone,
+    String? payoutProvider,
+    String? payoutAccountName,
+    String? payoutAccountNumber,
   }) {
     return BusinessProfile(
       id: id ?? this.id,
@@ -187,6 +248,9 @@ class BusinessProfile {
       rating: rating ?? this.rating,
       isApproved: isApproved ?? this.isApproved,
       phone: phone ?? this.phone,
+      payoutProvider: payoutProvider ?? this.payoutProvider,
+      payoutAccountName: payoutAccountName ?? this.payoutAccountName,
+      payoutAccountNumber: payoutAccountNumber ?? this.payoutAccountNumber,
     );
   }
 }
@@ -322,10 +386,21 @@ class Order {
   final String payoutStatus;
 
   final String fulfillmentType; // 'pickup' | 'delivery'
+  final String? courierId;
   final String? courierName;
   final String? courierPhone;
+  final String? courierVehicle;
   final String? trackingNotes;
   final String? deliveryAddress;
+  final double deliveryFee;
+  final String deliveryPin;
+  final String deliveryStatus; // 'pending', 'assigned', 'picked_up', 'in_transit', 'delivered', 'failed'
+  final String? deliveryProofUrl;
+  final String? deliveryFailureReason;
+  final bool isRefunded;
+  final String? refundReason;
+  final String paymentStatus; // 'pending', 'paid', 'refunded', 'failed'
+  final String? dispatchJobId;
 
   Order({
     required this.id,
@@ -346,10 +421,21 @@ class Order {
     this.isRated = false,
     this.payoutStatus = 'pending',
     this.fulfillmentType = 'pickup',
+    this.courierId,
     this.courierName,
     this.courierPhone,
+    this.courierVehicle = 'Motorbike',
     this.trackingNotes,
     this.deliveryAddress,
+    this.deliveryFee = 0.0,
+    this.deliveryPin = '',
+    this.deliveryStatus = 'pending',
+    this.deliveryProofUrl,
+    this.deliveryFailureReason,
+    this.isRefunded = false,
+    this.refundReason,
+    this.paymentStatus = 'paid',
+    this.dispatchJobId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -371,35 +457,59 @@ class Order {
         'isRated': isRated,
         'payoutStatus': payoutStatus,
         'fulfillmentType': fulfillmentType,
+        'courierId': courierId,
         'courierName': courierName,
         'courierPhone': courierPhone,
+        'courierVehicle': courierVehicle,
         'trackingNotes': trackingNotes,
         'deliveryAddress': deliveryAddress,
+        'deliveryFee': deliveryFee,
+        'deliveryPin': deliveryPin,
+        'deliveryStatus': deliveryStatus,
+        'deliveryProofUrl': deliveryProofUrl,
+        'deliveryFailureReason': deliveryFailureReason,
+        'isRefunded': isRefunded,
+        'refundReason': refundReason,
+        'paymentStatus': paymentStatus,
+        'dispatchJobId': dispatchJobId,
       };
 
   factory Order.fromJson(Map<String, dynamic> json) => Order(
         id: json['id'],
-        dealId: json['dealId'] ?? '',
-        dealTitle: json['dealTitle'] ?? '',
-        businessId: json['businessId'] ?? '',
-        businessName: json['businessName'] ?? '',
-        customerId: json['customerId'] ?? '',
-        customerName: json['customerName'] ?? '',
+        dealId: json['dealId'] ?? json['deal_id'] ?? '',
+        dealTitle: json['dealTitle'] ?? json['deal_title'] ?? '',
+        businessId: json['businessId'] ?? json['business_id'] ?? '',
+        businessName: json['businessName'] ?? json['business_name'] ?? '',
+        customerId: json['customerId'] ?? json['customer_id'] ?? '',
+        customerName: json['customerName'] ?? json['customer_name'] ?? '',
         price: (json['price'] as num).toDouble(),
-        originalPrice: (json['originalPrice'] as num?)?.toDouble() ?? (json['price'] as num).toDouble(),
+        originalPrice: (json['originalPrice'] as num?)?.toDouble() ??
+            (json['original_price'] as num?)?.toDouble() ??
+            (json['price'] as num).toDouble(),
         category: json['category'] ?? 'Food Rescue',
-        status: json['status'],
-        timestamp: DateTime.parse(json['timestamp']),
-        paymentMethod: json['paymentMethod'],
-        paymentReference: json['paymentReference'] ?? '',
-        collectionCode: json['collectionCode'],
-        isRated: json['isRated'] ?? false,
-        payoutStatus: json['payoutStatus'] ?? 'pending',
+        status: json['status'] ?? 'reserved',
+        timestamp: DateTime.parse(json['timestamp'] ?? json['created_at'] ?? DateTime.now().toIso8601String()),
+        paymentMethod: json['paymentMethod'] ?? json['payment_method'] ?? 'cash',
+        paymentReference: json['paymentReference'] ?? json['payment_reference'] ?? '',
+        collectionCode: json['collectionCode'] ?? json['collection_code'] ?? '',
+        isRated: json['isRated'] ?? json['is_rated'] ?? false,
+        payoutStatus: json['payoutStatus'] ?? json['payout_status'] ?? 'pending',
         fulfillmentType: json['fulfillmentType'] ?? json['fulfillment_type'] ?? 'pickup',
+        courierId: json['courierId'] ?? json['courier_id'],
         courierName: json['courierName'] ?? json['courier_name'],
         courierPhone: json['courierPhone'] ?? json['courier_phone'],
+        courierVehicle: json['courierVehicle'] ?? json['courier_vehicle'] ?? 'Motorbike',
         trackingNotes: json['trackingNotes'] ?? json['tracking_notes'],
         deliveryAddress: json['deliveryAddress'] ?? json['delivery_address'],
+        deliveryFee: (json['deliveryFee'] as num?)?.toDouble() ?? (json['delivery_fee'] as num?)?.toDouble() ?? 0.0,
+        deliveryPin: json['deliveryPin'] ?? json['delivery_pin'] ?? '',
+        deliveryStatus: json['deliveryStatus'] ?? json['delivery_status'] ?? 'pending',
+        deliveryProofUrl: json['deliveryProofUrl'] ?? json['delivery_proof_url'],
+        deliveryFailureReason: json['deliveryFailureReason'] ?? json['delivery_failure_reason'],
+        isRefunded: json['isRefunded'] ?? json['is_refunded'] ?? false,
+        refundReason: json['refundReason'] ?? json['refund_reason'],
+        paymentStatus: json['paymentStatus'] ?? json['payment_status'] ?? 'paid',
+        dispatchJobId: json['dispatchJobId'] ?? json['dispatch_job_id'],
       );
 
   Order copyWith({
@@ -421,10 +531,21 @@ class Order {
     bool? isRated,
     String? payoutStatus,
     String? fulfillmentType,
+    String? courierId,
     String? courierName,
     String? courierPhone,
+    String? courierVehicle,
     String? trackingNotes,
     String? deliveryAddress,
+    double? deliveryFee,
+    String? deliveryPin,
+    String? deliveryStatus,
+    String? deliveryProofUrl,
+    String? deliveryFailureReason,
+    bool? isRefunded,
+    String? refundReason,
+    String? paymentStatus,
+    String? dispatchJobId,
   }) {
     return Order(
       id: id ?? this.id,
@@ -445,12 +566,76 @@ class Order {
       isRated: isRated ?? this.isRated,
       payoutStatus: payoutStatus ?? this.payoutStatus,
       fulfillmentType: fulfillmentType ?? this.fulfillmentType,
+      courierId: courierId ?? this.courierId,
       courierName: courierName ?? this.courierName,
       courierPhone: courierPhone ?? this.courierPhone,
+      courierVehicle: courierVehicle ?? this.courierVehicle,
       trackingNotes: trackingNotes ?? this.trackingNotes,
       deliveryAddress: deliveryAddress ?? this.deliveryAddress,
+      deliveryFee: deliveryFee ?? this.deliveryFee,
+      deliveryPin: deliveryPin ?? this.deliveryPin,
+      deliveryStatus: deliveryStatus ?? this.deliveryStatus,
+      deliveryProofUrl: deliveryProofUrl ?? this.deliveryProofUrl,
+      deliveryFailureReason: deliveryFailureReason ?? this.deliveryFailureReason,
+      isRefunded: isRefunded ?? this.isRefunded,
+      refundReason: refundReason ?? this.refundReason,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+      dispatchJobId: dispatchJobId ?? this.dispatchJobId,
     );
   }
+}
+
+/// Server-validated delivery quote to prevent price tampering
+class DeliveryQuote {
+  final String id;
+  final String customerId;
+  final String businessId;
+  final String pickupAddress;
+  final String dropoffAddress;
+  final double distanceKm;
+  final int durationMins;
+  final double deliveryFee;
+  final String currency;
+  final DateTime expiresAt;
+  final bool isConsumed;
+
+  DeliveryQuote({
+    required this.id,
+    required this.customerId,
+    required this.businessId,
+    required this.pickupAddress,
+    required this.dropoffAddress,
+    required this.distanceKm,
+    required this.durationMins,
+    required this.deliveryFee,
+    this.currency = 'GHS',
+    required this.expiresAt,
+    this.isConsumed = false,
+  });
+
+  bool get isExpired => DateTime.now().isAfter(expiresAt);
+
+  factory DeliveryQuote.fromJson(Map<String, dynamic> json) => DeliveryQuote(
+        id: json['id'] ?? '',
+        customerId: json['customer_id'] ?? json['customerId'] ?? '',
+        businessId: json['business_id'] ?? json['businessId'] ?? '',
+        pickupAddress: json['pickup_address'] ?? json['pickupAddress'] ?? '',
+        dropoffAddress: json['dropoff_address'] ?? json['dropoffAddress'] ?? '',
+        distanceKm: (json['distance_km'] as num?)?.toDouble() ??
+            (json['distanceKm'] as num?)?.toDouble() ??
+            0.0,
+        durationMins: json['duration_mins'] ?? json['durationMins'] ?? 15,
+        deliveryFee: (json['delivery_fee'] as num?)?.toDouble() ??
+            (json['deliveryFee'] as num?)?.toDouble() ??
+            0.0,
+        currency: json['currency'] ?? 'GHS',
+        expiresAt: DateTime.parse(
+          json['expires_at'] ??
+              json['expiresAt'] ??
+              DateTime.now().add(const Duration(minutes: 15)).toIso8601String(),
+        ),
+        isConsumed: json['is_consumed'] ?? json['isConsumed'] ?? false,
+      );
 }
 
 class CategoryItem {

@@ -576,6 +576,8 @@ class AppStateManager extends Notifier<AppState> {
     String? businessName,
     String? businessDescription,
     String? businessCategory,
+    String? vehicleType,
+    String? licenseNumber,
   }) async {
     _isManualAuthenticating = true;
     state = state.copyWith(isLoading: true, clearErrorMessage: true);
@@ -590,6 +592,8 @@ class AppStateManager extends Notifier<AppState> {
         businessName: businessName,
         businessDescription: businessDescription,
         businessCategory: businessCategory,
+        vehicleType: vehicleType,
+        licenseNumber: licenseNumber,
       );
       if (error == 'needs_confirmation') {
         state = state.copyWith(isLoading: false);
@@ -827,8 +831,11 @@ class AppStateManager extends Notifier<AppState> {
   Future<Order?> purchase(
     FoodDeal deal,
     String paymentMethod,
-    String paymentReference,
-  ) async {
+    String paymentReference, {
+    String fulfillmentType = 'pickup',
+    String? deliveryAddress,
+    double deliveryFee = 0.0,
+  }) async {
     try {
       // 1. Check if order already exists (e.g. created by webhook)
       final existing = state.orders.where((o) => o.paymentReference == paymentReference);
@@ -847,6 +854,9 @@ class AppStateManager extends Notifier<AppState> {
         category: deal.category,
         paymentMethod: paymentMethod,
         paymentReference: paymentReference,
+        fulfillmentType: fulfillmentType,
+        deliveryAddress: deliveryAddress,
+        deliveryFee: deliveryFee,
       );
 
 
@@ -1486,6 +1496,9 @@ class AppStateManager extends Notifier<AppState> {
     String? phone,
     double? lat,
     double? lng,
+    String? payoutProvider,
+    String? payoutAccountName,
+    String? payoutAccountNumber,
   }) async {
     await _supa.updateBusinessProfile(
       businessId,
@@ -1496,6 +1509,9 @@ class AppStateManager extends Notifier<AppState> {
       phone: phone,
       lat: lat,
       lng: lng,
+      payoutProvider: payoutProvider,
+      payoutAccountName: payoutAccountName,
+      payoutAccountNumber: payoutAccountNumber,
     );
     final businesses = await _supa.fetchBusinesses();
     state = state.copyWith(businesses: businesses);
@@ -1948,6 +1964,132 @@ class AppStateManager extends Notifier<AppState> {
     } catch (_) {
       // Suppress background errors
     }
+  }
+
+  // ── RIDER FLEET METHODS ───────────────────────────────────────────────
+
+  /// Toggle rider online/offline status and update GPS
+  Future<void> setRiderOnline(bool isOnline, {double lat = 5.6037, double lng = -0.1870}) async {
+    final current = state.currentUser;
+    if (current == null) return;
+    final updated = current.copyWith(
+      isOnline: isOnline,
+      currentLat: lat,
+      currentLng: lng,
+    );
+    state = state.copyWith(currentUser: updated);
+    await _supa.riderUpdateLocation(lat: lat, lng: lng, isOnline: isOnline);
+  }
+
+  /// Rider claims a delivery
+  Future<void> riderAcceptDelivery(String orderId) async {
+    await _supa.riderAcceptDelivery(orderId);
+    final current = state.currentUser;
+    final updatedOrders = state.orders.map((o) {
+      if (o.id == orderId) {
+        return o.copyWith(
+          courierId: current?.id,
+          courierName: current?.name ?? 'Assigned Courier',
+          courierPhone: current?.phone ?? '',
+          courierVehicle: current?.vehicleType ?? 'Motorbike',
+          deliveryStatus: 'assigned',
+        );
+      }
+      return o;
+    }).toList();
+    state = state.copyWith(orders: updatedOrders);
+  }
+
+  /// Rider updates delivery progress (picked_up, in_transit, delivered, failed)
+  Future<void> riderUpdateDeliveryStatus({
+    required String orderId,
+    required String status,
+    String pin = '',
+    String proofUrl = '',
+    String reason = '',
+  }) async {
+    await _supa.riderUpdateDeliveryStatus(
+      orderId: orderId,
+      status: status,
+      pin: pin,
+      proofUrl: proofUrl,
+      reason: reason,
+    );
+    final updatedOrders = state.orders.map((o) {
+      if (o.id == orderId) {
+        return o.copyWith(
+          deliveryStatus: status,
+          status: status == 'delivered' ? 'collected' : (status == 'failed' ? 'cancelled' : o.status),
+          deliveryProofUrl: proofUrl.isNotEmpty ? proofUrl : o.deliveryProofUrl,
+          deliveryFailureReason: reason.isNotEmpty ? reason : o.deliveryFailureReason,
+        );
+      }
+      return o;
+    }).toList();
+    state = state.copyWith(orders: updatedOrders);
+  }
+
+  // ── ADMIN FLEET & ROLE METHODS ──────────────────────────────────────────
+
+  /// Admin manually dispatches a rider to an order
+  Future<void> adminAssignRider({
+    required String orderId,
+    required AppUser rider,
+  }) async {
+    await _supa.adminAssignRider(orderId: orderId, rider: rider);
+    final updatedOrders = state.orders.map((o) {
+      if (o.id == orderId) {
+        return o.copyWith(
+          courierId: rider.id,
+          courierName: rider.name,
+          courierPhone: rider.phone,
+          courierVehicle: rider.vehicleType,
+          deliveryStatus: 'assigned',
+        );
+      }
+      return o;
+    }).toList();
+    state = state.copyWith(orders: updatedOrders);
+  }
+
+  /// Admin alters a user's role (customer, merchant, rider, admin, super_admin)
+  Future<void> adminUpdateUserRole(String targetUserId, String newRole) async {
+    await _supa.adminUpdateUserRole(targetUserId: targetUserId, newRole: newRole);
+    final updatedUsers = state.users.map((u) {
+      if (u.id == targetUserId) {
+        return u.copyWith(role: newRole);
+      }
+      return u;
+    }).toList();
+    state = state.copyWith(users: updatedUsers);
+  }
+
+  /// Admin approves or rejects a rider
+  Future<void> adminApproveRider(String riderId, bool isApproved) async {
+    await _supa.adminApproveRider(riderId: riderId, isApproved: isApproved);
+    final updatedUsers = state.users.map((u) {
+      if (u.id == riderId) {
+        return u.copyWith(isApproved: isApproved);
+      }
+      return u;
+    }).toList();
+    state = state.copyWith(users: updatedUsers);
+  }
+
+  /// Admin marks an order as refunded
+  Future<void> adminProcessOrderRefund(String orderId, {String reason = 'Admin approved refund'}) async {
+    await _supa.adminProcessOrderRefund(orderId: orderId, reason: reason);
+    final updatedOrders = state.orders.map((o) {
+      if (o.id == orderId) {
+        return o.copyWith(
+          isRefunded: true,
+          refundReason: reason,
+          status: 'cancelled',
+        );
+      }
+      return o;
+    }).toList();
+    state = state.copyWith(orders: updatedOrders);
   }
 
   Future<bool> deleteAccount() async {

@@ -308,6 +308,31 @@ class _DisputeCard extends ConsumerWidget {
                   ),
                 );
                 final dividerCell = Container(width: 1, height: 26, color: const Color(0xFFE2E8F0));
+                final refundButton = OutlinedButton.icon(
+                  onPressed: () async {
+                    if (dispute.orderId.isNotEmpty) {
+                      await ref.read(appStateProvider.notifier).adminProcessOrderRefund(
+                        dispute.orderId,
+                        reason: 'Dispute refund authorized: ${dispute.issueDescription}',
+                      );
+                    }
+                    await ref.read(appStateProvider.notifier).resolveDispute(dispute.id);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Refund authorized and dispute resolved!'), backgroundColor: AppTheme.primaryGreen),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.currency_exchange_rounded, size: 14),
+                  label: const Text("Issue Refund", style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.orange.shade800,
+                    side: BorderSide(color: Colors.orange.shade800),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                );
+
                 final resolveButton = ElevatedButton.icon(
                   onPressed: () => ref.read(appStateProvider.notifier).resolveDispute(dispute.id),
                   icon: const Icon(Icons.done_all_rounded, size: 14),
@@ -321,7 +346,7 @@ class _DisputeCard extends ConsumerWidget {
                   ),
                 );
 
-                if (isOpen && constraints.maxWidth < 480) {
+                if (isOpen && constraints.maxWidth < 600) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -335,7 +360,13 @@ class _DisputeCard extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      resolveButton,
+                      Row(
+                        children: [
+                          Expanded(child: refundButton),
+                          const SizedBox(width: 8),
+                          Expanded(child: resolveButton),
+                        ],
+                      ),
                     ],
                   );
                 }
@@ -348,7 +379,9 @@ class _DisputeCard extends ConsumerWidget {
                     const SizedBox(width: 14),
                     defendantCell,
                     if (isOpen) ...[
-                      const SizedBox(width: 14),
+                      const SizedBox(width: 12),
+                      refundButton,
+                      const SizedBox(width: 8),
                       resolveButton,
                     ],
                   ],

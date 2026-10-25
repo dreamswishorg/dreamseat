@@ -997,7 +997,42 @@ class _UserDetailDrawer extends ConsumerWidget {
           _detailRow("Wallet Balance", "GH₵ ${currentUser.referralCredit.toStringAsFixed(2)}", Icons.account_balance_wallet_rounded),
 
           if (!isSelf) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.manage_accounts_rounded, size: 18, color: Color(0xFF64748B)),
+                  const SizedBox(width: 10),
+                  const Text("Role Permission:", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.charcoal)),
+                  const Spacer(),
+                  DropdownButton<String>(
+                    value: ['customer', 'merchant', 'rider', 'admin', 'super_admin'].contains(currentUser.role) ? currentUser.role : 'customer',
+                    underline: const SizedBox.shrink(),
+                    style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.primaryGreen, fontSize: 12.5),
+                    items: ['customer', 'merchant', 'rider', 'admin', 'super_admin'].map((r) {
+                      return DropdownMenuItem(value: r, child: Text(r.toUpperCase()));
+                    }).toList(),
+                    onChanged: (newRole) async {
+                      if (newRole != null && newRole != currentUser.role) {
+                        await ref.read(appStateProvider.notifier).adminUpdateUserRole(currentUser.id, newRole);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("User role successfully updated to ${newRole.toUpperCase()}"), backgroundColor: AppTheme.primaryGreen),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(

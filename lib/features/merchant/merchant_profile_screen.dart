@@ -325,7 +325,7 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
                                     border: Border.all(color: _category == c ? MK.brand : MK.line, width: _category == c ? 1.5 : 1),
                                   ),
                                   child: Text(
-                                    '$categoryEmoji $c',
+                                    '${categoryEmoji(c)} $c',
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w800,
@@ -382,6 +382,45 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
                         style: const TextStyle(fontSize: 10.5, color: MK.brand, fontWeight: FontWeight.w800),
                       ),
                     ],
+                  ],
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          MReveal(
+            delay: 80,
+            child: MCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  MSectionHeader(
+                    title: 'Payout account',
+                    subtitle: 'Where DreamEats sends your earnings',
+                    icon: Icons.account_balance_wallet_outlined,
+                    iconColor: MK.grape,
+                    trailing: MButton(
+                      business.hasPayoutAccount ? 'Change' : 'Add',
+                      icon: Icons.edit_outlined,
+                      kind: MKind.soft,
+                      height: 38,
+                      onPressed: () => showMSheet<void>(
+                        context,
+                        title: 'Payout account',
+                        child: _PayoutAccountForm(business: business),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  _InfoLine(
+                    icon: Icons.account_balance_outlined,
+                    label: 'Provider',
+                    value: business.payoutProvider.isEmpty ? 'Not set — payouts cannot be sent' : business.payoutProvider,
+                    valueColor: business.payoutProvider.isEmpty ? MK.danger : MK.ink,
+                  ),
+                  if (business.hasPayoutAccount) ...[
+                    _InfoLine(icon: Icons.person_outline_rounded, label: 'Account name', value: business.payoutAccountName),
+                    _InfoLine(icon: Icons.tag_rounded, label: 'Account / wallet number', value: business.payoutAccountNumber),
                   ],
                 ],
               ),
@@ -987,6 +1026,128 @@ class _DocumentUploadState extends ConsumerState<_DocumentUpload> {
               Expanded(child: MButton('Cancel', kind: MKind.ghost, onPressed: _busy ? null : () => Navigator.pop(context))),
               const SizedBox(width: 10),
               Expanded(flex: 2, child: MButton('Send for review', icon: Icons.send_rounded, loading: _busy, onPressed: _busy ? null : _submit)),
+            ],
+          ),
+        ],
+      );
+}
+
+/// Edits the account DreamEats pays the merchant's earnings into.
+class _PayoutAccountForm extends ConsumerStatefulWidget {
+  final BusinessProfile business;
+  const _PayoutAccountForm({required this.business});
+
+  @override
+  ConsumerState<_PayoutAccountForm> createState() => _PayoutAccountFormState();
+}
+
+class _PayoutAccountFormState extends ConsumerState<_PayoutAccountForm> {
+  static const _providers = ['MTN Mobile Money', 'Telecel Cash', 'AirtelTigo Money', 'Bank account'];
+
+  late String _provider = _providers.contains(widget.business.payoutProvider)
+      ? widget.business.payoutProvider
+      : _providers.first;
+  late final _name = TextEditingController(text: widget.business.payoutAccountName);
+  late final _number = TextEditingController(text: widget.business.payoutAccountNumber);
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _number.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final name = _name.text.trim();
+    final number = _number.text.replaceAll(RegExp(r'\s'), '');
+    if (name.length < 3) {
+      setState(() => _error = 'Enter the name registered on the account.');
+      return;
+    }
+    if (number.length < 8) {
+      setState(() => _error = 'Enter a valid wallet or account number.');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(appStateProvider.notifier).updateBusinessProfile(
+            widget.business.id,
+            payoutProvider: _provider,
+            payoutAccountName: name,
+            payoutAccountNumber: number,
+          );
+      if (!mounted) return;
+      Navigator.pop(context);
+      MToast.ok(context, 'Payout account saved');
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = e.toString().replaceFirst('Exception: ', '');
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Earnings are sent here after the platform commission. Double-check the number \u2014 payouts to a wrong account cannot be reversed.',
+            style: TextStyle(fontSize: 12.5, color: MK.inkSoft, height: 1.5),
+          ),
+          const SizedBox(height: 16),
+          const _MiniLabel('PROVIDER'),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _providers
+                .map((p) => MPressable(
+                      onTap: _busy ? null : () => setState(() => _provider = p),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _provider == p ? MK.brand.withValues(alpha: 0.12) : Colors.white,
+                          borderRadius: BorderRadius.circular(11),
+                          border: Border.all(color: _provider == p ? MK.brand : MK.line, width: _provider == p ? 1.5 : 1),
+                        ),
+                        child: Text(
+                          p,
+                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: _provider == p ? MK.brand : MK.ink),
+                        ),
+                      ),
+                    ))
+                .toList(),
+          ),
+          const SizedBox(height: 14),
+          _Field(label: 'ACCOUNT NAME', controller: _name, icon: Icons.person_outline_rounded, hint: 'Name registered on the account', enabled: !_busy),
+          const SizedBox(height: 14),
+          _Field(
+            label: _provider == 'Bank account' ? 'ACCOUNT NUMBER' : 'WALLET NUMBER',
+            controller: _number,
+            icon: Icons.tag_rounded,
+            keyboardType: TextInputType.number,
+            hint: _provider == 'Bank account' ? 'Bank account number' : 'e.g. 024 412 3456',
+            enabled: !_busy,
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            Text(_error!, style: const TextStyle(fontSize: 11.5, color: MK.danger, fontWeight: FontWeight.w800, height: 1.4)),
+          ],
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(child: MButton('Cancel', kind: MKind.ghost, onPressed: _busy ? null : () => Navigator.pop(context))),
+              const SizedBox(width: 10),
+              Expanded(flex: 2, child: MButton('Save account', icon: Icons.check_rounded, loading: _busy, onPressed: _busy ? null : _save)),
             ],
           ),
         ],

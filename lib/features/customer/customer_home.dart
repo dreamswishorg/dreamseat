@@ -1149,17 +1149,17 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     double distance = 1.5;
     try {
       final biz = businesses.firstWhere((b) => b.id == deal.businessId);
-      if (userLocation.position != null) {
-        distance = Geolocator.distanceBetween(
-              userLocation.position!.latitude,
-              userLocation.position!.longitude,
-              biz.latitude,
-              biz.longitude,
-            ) /
-            1000;
-      } else {
-        distance = biz.distance;
-      }
+      // Fall back to central Accra when the user has not shared a location,
+      // since BusinessProfile.distance is not stored in the database.
+      final fromLat = userLocation.position?.latitude ?? 5.6037;
+      final fromLng = userLocation.position?.longitude ?? -0.1870;
+      distance = Geolocator.distanceBetween(
+            fromLat,
+            fromLng,
+            biz.latitude,
+            biz.longitude,
+          ) /
+          1000;
     } catch (_) {}
     return distance;
   }
@@ -2074,7 +2074,7 @@ class _PartnerCircleCard extends StatelessWidget {
                 const Icon(Icons.star, color: Colors.amber, size: 10),
                 const SizedBox(width: 2),
                 Text(
-                  partner.rating.toStringAsFixed(1),
+                  partner.rating > 0 ? partner.rating.toStringAsFixed(1) : "5.0",
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,

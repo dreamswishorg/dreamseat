@@ -9,9 +9,10 @@ const CORS_HEADERS = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+serve(async (req: any) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: CORS_HEADERS });
+  }
   // Require Authorization or Supabase API key
   const authHeader = req.headers.get("authorization") || req.headers.get("apikey");
   if (!authHeader) {
@@ -101,8 +102,8 @@ serve(async (req) => {
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });
 
-  } catch (error) {
-    return new Response(JSON.stringify({ status: false, message: error.message }), {
+  } catch (error: any) {
+    return new Response(JSON.stringify({ status: false, message: error?.message || "Internal server error" }), {
       status: 500,
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
     });

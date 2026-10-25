@@ -23,13 +23,34 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
     final state = ref.watch(appStateProvider);
     final pending = state.businesses.where((b) => !b.isApproved).toList();
     final active = state.businesses.where((b) => b.isApproved).toList();
-    final allList = _selectedFilter == 0 ? pending : active;
+    final pendingRiders = state.users.where((u) => u.role == 'rider' && !u.isApproved).toList();
+    final activeRiders = state.users.where((u) => u.role == 'rider' && u.isApproved).toList();
 
-    final filteredByQuery = allList.where((b) {
+    final isRiderTab = _selectedFilter >= 2;
+
+    List<dynamic> allList;
+    if (_selectedFilter == 0) {
+      allList = pending;
+    } else if (_selectedFilter == 1) {
+      allList = active;
+    } else if (_selectedFilter == 2) {
+      allList = pendingRiders;
+    } else {
+      allList = activeRiders;
+    }
+
+    final filteredByQuery = allList.where((item) {
       if (_searchQuery.isEmpty) return true;
-      return b.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          b.category.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          b.location.toLowerCase().contains(_searchQuery.toLowerCase());
+      if (item is BusinessProfile) {
+        return item.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            item.category.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            item.location.toLowerCase().contains(_searchQuery.toLowerCase());
+      } else if (item is AppUser) {
+        return item.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            item.email.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            item.vehicleType.toLowerCase().contains(_searchQuery.toLowerCase());
+      }
+      return true;
     }).toList();
 
     // Reset page if filter changes and current page is out of bounds
@@ -65,12 +86,12 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
                 _currentPage = 0;
               }),
               style: const TextStyle(fontSize: 13, color: AppTheme.charcoal, fontWeight: FontWeight.w500),
-              decoration: const InputDecoration(
-                hintText: "Search merchants by name, category, or location...",
-                hintStyle: TextStyle(fontSize: 12.5, color: AppTheme.mutedGrey),
-                prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppTheme.mutedGrey),
+              decoration: InputDecoration(
+                hintText: isRiderTab ? "Search couriers by name, vehicle, or email..." : "Search merchants by name, category, or location...",
+                hintStyle: const TextStyle(fontSize: 12.5, color: AppTheme.mutedGrey),
+                prefixIcon: const Icon(Icons.search_rounded, size: 18, color: AppTheme.mutedGrey),
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(vertical: 11),
+                contentPadding: const EdgeInsets.symmetric(vertical: 11),
               ),
             ),
           ),
@@ -88,9 +109,13 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
               ),
               child: Row(
                 children: [
-                  _filterTab("Pending Queue (${pending.length})", 0),
+                  _filterTab("Pending Vendors (${pending.length})", 0),
                   const SizedBox(width: 4),
-                  _filterTab("Verified Partners (${active.length})", 1),
+                  _filterTab("Active Vendors (${active.length})", 1),
+                  const SizedBox(width: 4),
+                  _filterTab("Pending Riders (${pendingRiders.length})", 2),
+                  const SizedBox(width: 4),
+                  _filterTab("Active Riders (${activeRiders.length})", 3),
                 ],
               ),
             ),
@@ -99,8 +124,10 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
           Expanded(
             child: list.isEmpty
                 ? NoDataState(
-                    icon: _selectedFilter == 0 ? Icons.verified_user_rounded : Icons.storefront_rounded,
-                    msg: _selectedFilter == 0 ? "Application queue is currently empty." : "No verified partners detected in the system.",
+                    icon: isRiderTab ? Icons.two_wheeler_rounded : (_selectedFilter == 0 ? Icons.verified_user_rounded : Icons.storefront_rounded),
+                    msg: isRiderTab
+                        ? (_selectedFilter == 2 ? "No pending courier applications in queue." : "No active couriers found.")
+                        : (_selectedFilter == 0 ? "Application queue is currently empty." : "No verified partners detected in the system."),
                   )
                 : Column(
                     children: [
@@ -108,13 +135,22 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
                         child: ListView.builder(
                           itemCount: list.length,
                           itemBuilder: (context, i) {
-                            final b = list[i];
-                            return _MerchantApprovalCard(
-                              business: b,
-                              onApprove: () => ref.read(appStateProvider.notifier).setMerchantApproval(b.id, true),
-                              onSuspend: () => ref.read(appStateProvider.notifier).setMerchantApproval(b.id, false),
-                              onViewVault: () => _showVault(context, b),
-                            );
+                            final item = list[i];
+                            if (item is BusinessProfile) {
+                              return _MerchantApprovalCard(
+                                business: item,
+                                onApprove: () => ref.read(appStateProvider.notifier).setMerchantApproval(item.id, true),
+                                onSuspend: () => ref.read(appStateProvider.notifier).setMerchantApproval(item.id, false),
+                                onViewVault: () => _showVault(context, item),
+                              );
+                            } else if (item is AppUser) {
+                              return _RiderApprovalCard(
+                                rider: item,
+                                onApprove: () => ref.read(appStateProvider.notifier).adminApproveRider(item.id, true),
+                                onSuspend: () => ref.read(appStateProvider.notifier).adminApproveRider(item.id, false),
+                              );
+                            }
+                            return const SizedBox.shrink();
                           },
                         ),
                       ),
@@ -966,6 +1002,95 @@ class _StatusBadge extends StatelessWidget {
           color: isApproved ? AppTheme.primaryGreen : AppTheme.warningOrange,
           letterSpacing: 0.5,
         ),
+      ),
+    );
+  }
+}
+
+class _RiderApprovalCard extends StatelessWidget {
+  final AppUser rider;
+  final VoidCallback onApprove;
+  final VoidCallback onSuspend;
+
+  const _RiderApprovalCard({
+    required this.rider,
+    required this.onApprove,
+    required this.onSuspend,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.borderColor),
+        boxShadow: context.clientShadow,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppTheme.lightGreenBg,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(Icons.two_wheeler_rounded, color: AppTheme.primaryGreen, size: 26),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      rider.name.isNotEmpty ? rider.name : "Courier Applicant",
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+                    ),
+                    const SizedBox(width: 8),
+                    _StatusBadge(isApproved: rider.isApproved),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "Vehicle: ${rider.vehicleType} • Phone: ${rider.phone ?? 'N/A'}",
+                  style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500),
+                ),
+                if (rider.licenseNumber.isNotEmpty)
+                  Text(
+                    "License / Ghana Card: ${rider.licenseNumber}",
+                    style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          rider.isApproved
+              ? OutlinedButton(
+                  onPressed: onSuspend,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red,
+                    side: const BorderSide(color: Colors.red),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text("Suspend", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                )
+              : ElevatedButton.icon(
+                  onPressed: onApprove,
+                  icon: const Icon(Icons.check_circle_outline, size: 16),
+                  label: const Text("Approve Rider", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryGreen,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+        ],
       ),
     );
   }

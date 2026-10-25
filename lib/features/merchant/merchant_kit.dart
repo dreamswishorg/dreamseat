@@ -1030,6 +1030,7 @@ Future<T?> showMSheet<T>(BuildContext context, {required Widget child, String? t
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
     backgroundColor: Colors.transparent,
     builder: (sheetContext) => _MSheetScaffold(title: title, maxWidth: maxWidth, child: child),
   );
@@ -1045,9 +1046,9 @@ class _MSheetScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final insets = MediaQuery.of(context).viewInsets.bottom;
-    final maxHeight = MediaQuery.of(context).size.height * 0.92;
+    final maxHeight = (MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top) * 0.94;
     return Align(
-      alignment: Alignment.topCenter,
+      alignment: Alignment.bottomCenter,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
         child: Padding(
