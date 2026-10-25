@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../models/models.dart';
 import '../../../providers/app_state.dart';
 import '../merchant_kit.dart';
+import '../services/merchant_export_service.dart';
 
 class MerchantOrdersTab extends ConsumerStatefulWidget {
   final BusinessProfile business;
@@ -308,10 +309,10 @@ class _MerchantOrdersTabState extends ConsumerState<MerchantOrdersTab> {
                   width: 46,
                   child: MIconButton(
                     icon: Icons.upload_file_rounded,
-                    tooltip: 'Export orders CSV',
+                    tooltip: 'Export orders report',
                     color: MK.sky,
                     size: 46,
-                    onPressed: all.isEmpty ? null : () => _exportCsv(all),
+                    onPressed: all.isEmpty ? null : () => _exportOrders(all),
                   ),
                 ),
               ],
@@ -441,25 +442,48 @@ class _MerchantOrdersTabState extends ConsumerState<MerchantOrdersTab> {
         color: const Color(0xFFE2E8F0),
       );
 
-  void _exportCsv(List<Order> orders) {
-    final csv = buildCsv(
-      ['Code', 'Deal', 'Customer', 'Status', 'Fulfilment', 'Price (GHS)', 'Date', 'Payout'],
-      orders.map((o) => [
-        o.collectionCode,
-        o.dealTitle,
-        o.customerName,
-        o.status,
-        o.fulfillmentType,
-        o.price.toStringAsFixed(2),
-        DateFormat('yyyy-MM-dd HH:mm').format(o.timestamp),
-        o.payoutStatus,
-      ]).toList(),
+  void _exportOrders(List<Order> orders) {
+    if (orders.isEmpty) {
+      MToast.info(context, 'No orders available to export');
+      return;
+    }
+    final headers = [
+      'Order ID',
+      'Pickup Code',
+      'Food Deal',
+      'Customer',
+      'Status',
+      'Fulfilment',
+      'Price (GHS)',
+      'Placed Date',
+      'Payout Status',
+    ];
+    final rows = orders.map((o) => [
+      o.id.substring(0, 8).toUpperCase(),
+      o.collectionCode,
+      o.dealTitle,
+      o.customerName,
+      o.status.toUpperCase(),
+      o.fulfillmentType,
+      o.price,
+      o.timestamp,
+      o.payoutStatus.toUpperCase(),
+    ]).toList();
+
+    final dataset = ExportDataset(
+      title: 'Kitchen Orders Master Report',
+      merchantName: widget.business.name,
+      fileNamePrefix: 'kitchen_orders',
+      headers: headers,
+      rows: rows,
+      summaryMetrics: {
+        'Total Orders': '${orders.length}',
+        'Active Pipeline': '${orders.where((o) => o.status == 'reserved' || o.status == 'preparing' || o.status == 'ready').length}',
+        'Handed Over': '${orders.where((o) => o.status == 'collected').length}',
+      },
     );
-    exportCsv(
-      context,
-      csv: csv,
-      fileName: '${widget.business.name.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '_').toLowerCase()}_orders.csv',
-    );
+
+    MerchantExportService.showExportDialog(context, dataset: dataset);
   }
 }
 

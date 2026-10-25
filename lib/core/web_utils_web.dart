@@ -41,10 +41,20 @@ void downloadFile({
 }) {
   try {
     final bytes = const Utf8Encoder().convert(content);
+    downloadBytes(bytes: bytes, fileName: fileName, mimeType: mimeType);
+  } catch (_) {}
+}
+
+/// Triggers a browser file download with raw bytes.
+void downloadBytes({
+  required List<int> bytes,
+  required String fileName,
+  required String mimeType,
+}) {
+  try {
     final blob = html.Blob([bytes], mimeType);
     final url = html.Url.createObjectUrlFromBlob(blob);
-    // ignore: unused_local_variable
-    final anchor = html.AnchorElement(href: url)
+    html.AnchorElement(href: url)
       ..setAttribute("download", fileName)
       ..click();
     html.Url.revokeObjectUrl(url);

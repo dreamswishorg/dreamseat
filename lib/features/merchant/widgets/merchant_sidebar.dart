@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme.dart';
 import '../../../models/models.dart';
 import '../merchant_kit.dart';
+import '../theme/merchant_theme.dart';
 
 class MerchantSidebar extends StatelessWidget {
   final MTab currentTab;
@@ -27,20 +27,20 @@ class MerchantSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = isCollapsed ? 76.0 : 256.0;
+    final width = isCollapsed ? 76.0 : 260.0;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeInOutCubic,
       width: width,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
-        border: const Border(right: BorderSide(color: Color(0xFFE2E8F0))),
+      decoration: const BoxDecoration(
+        color: MerchantTheme.midnightSidebar,
+        border: Border(right: BorderSide(color: MerchantTheme.midnightSidebarBorder, width: 1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 16,
-            offset: const Offset(3, 0),
+            color: Color(0x40000000),
+            blurRadius: 20,
+            offset: Offset(4, 0),
           ),
         ],
       ),
@@ -52,8 +52,8 @@ class MerchantSidebar extends StatelessWidget {
             // ── Header / Brand ──
             _buildHeader(context),
 
-            const Divider(height: 1, color: Color(0xFFF1F5F9)),
-            const SizedBox(height: 10),
+            const Divider(height: 1, color: MerchantTheme.midnightSidebarBorder),
+            const SizedBox(height: 12),
 
             // ── Quick Actions (when expanded) ──
             if (!isCollapsed && (onNewListing != null || onVerifyCode != null))
@@ -72,14 +72,14 @@ class MerchantSidebar extends StatelessWidget {
                             child: Ink(
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [Color(0xFF166534), Color(0xFF1B5E20)],
+                                  colors: [Color(0xFF10B981), Color(0xFF059669)],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF166534).withValues(alpha: 0.28),
+                                    color: const Color(0xFF10B981).withValues(alpha: 0.35),
                                     blurRadius: 10,
                                     offset: const Offset(0, 3),
                                   ),
@@ -90,8 +90,8 @@ class MerchantSidebar extends StatelessWidget {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.add_rounded, color: Colors.white, size: 16),
-                                    SizedBox(width: 5),
+                                    Icon(Icons.add_circle_outline_rounded, color: Colors.white, size: 16),
+                                    SizedBox(width: 6),
                                     Text(
                                       '+ New Pack',
                                       style: TextStyle(
@@ -112,16 +112,22 @@ class MerchantSidebar extends StatelessWidget {
                       const SizedBox(width: 8),
                     if (onVerifyCode != null)
                       Material(
-                        color: const Color(0xFFF1F5F9),
+                        color: MerchantTheme.midnightSidebarSurface,
                         borderRadius: BorderRadius.circular(12),
                         child: InkWell(
                           onTap: onVerifyCode,
                           borderRadius: BorderRadius.circular(12),
-                          child: const Tooltip(
-                            message: 'Verify pickup code',
-                            child: Padding(
-                              padding: EdgeInsets.all(9),
-                              child: Icon(Icons.qr_code_scanner_rounded, size: 17, color: Color(0xFF1E293B)),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: MerchantTheme.midnightSidebarBorder),
+                            ),
+                            child: const Tooltip(
+                              message: 'Verify pickup code or scan QR',
+                              child: Padding(
+                                padding: EdgeInsets.all(9),
+                                child: Icon(Icons.qr_code_scanner_rounded, size: 17, color: Color(0xFF34D399)),
+                              ),
                             ),
                           ),
                         ),
@@ -144,7 +150,7 @@ class MerchantSidebar extends StatelessWidget {
                           tab: MTab.home,
                           icon: Icons.dashboard_outlined,
                           activeIcon: Icons.dashboard_rounded,
-                          label: 'Overview',
+                          label: 'Overview & KPIs',
                         ),
                         _SidebarItem(
                           tab: MTab.orders,
@@ -182,7 +188,7 @@ class MerchantSidebar extends StatelessWidget {
                           tab: MTab.impact,
                           icon: Icons.eco_outlined,
                           activeIcon: Icons.eco_rounded,
-                          label: 'Impact & Rescues',
+                          label: 'Impact & ESG',
                         ),
                         _SidebarItem(
                           tab: MTab.reviews,
@@ -231,14 +237,14 @@ class MerchantSidebar extends StatelessWidget {
               padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
+                  colors: [Color(0xFF10B981), Color(0xFF047857)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryGreen.withValues(alpha: 0.25),
+                    color: const Color(0xFF10B981).withValues(alpha: 0.25),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
@@ -252,7 +258,7 @@ class MerchantSidebar extends StatelessWidget {
             const SizedBox(height: 10),
             if (onToggleCollapse != null)
               IconButton(
-                icon: const Icon(Icons.menu_rounded, size: 20, color: Color(0xFF64748B)),
+                icon: const Icon(Icons.menu_rounded, size: 20, color: Color(0xFF94A3B8)),
                 tooltip: 'Expand sidebar',
                 onPressed: onToggleCollapse,
                 visualDensity: VisualDensity.compact,
@@ -275,14 +281,14 @@ class MerchantSidebar extends StatelessWidget {
                 padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
+                    colors: [Color(0xFF10B981), Color(0xFF047857)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.primaryGreen.withValues(alpha: 0.22),
+                      color: const Color(0xFF10B981).withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -302,7 +308,7 @@ class MerchantSidebar extends StatelessWidget {
                       text: const TextSpan(
                         style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w900, letterSpacing: -0.4),
                         children: [
-                          TextSpan(text: 'Dream', style: TextStyle(color: AppTheme.primaryGreen)),
+                          TextSpan(text: 'Dream', style: TextStyle(color: Color(0xFF34D399))),
                           TextSpan(text: 'Eats', style: TextStyle(color: Color(0xFFF59E0B))),
                         ],
                       ),
@@ -312,7 +318,7 @@ class MerchantSidebar extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF64748B),
+                        color: Color(0xFF94A3B8),
                         letterSpacing: 0.2,
                       ),
                     ),
@@ -321,7 +327,7 @@ class MerchantSidebar extends StatelessWidget {
               ),
               if (onToggleCollapse != null)
                 IconButton(
-                  icon: const Icon(Icons.menu_open_rounded, size: 20, color: Color(0xFF64748B)),
+                  icon: const Icon(Icons.menu_open_rounded, size: 20, color: Color(0xFF94A3B8)),
                   tooltip: 'Collapse sidebar',
                   onPressed: onToggleCollapse,
                   visualDensity: VisualDensity.compact,
@@ -330,26 +336,26 @@ class MerchantSidebar extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // Business Badge Card
+          // Business Badge Card with Midnight Surface
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7.5),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: MerchantTheme.midnightSidebarSurface,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: MerchantTheme.midnightSidebarBorder),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 7,
-                  height: 7,
+                  width: 8,
+                  height: 8,
                   decoration: BoxDecoration(
-                    color: business.isApproved ? AppTheme.primaryGreen : Colors.amber,
+                    color: business.isApproved ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: (business.isApproved ? AppTheme.primaryGreen : Colors.amber).withValues(alpha: 0.4),
-                        blurRadius: 4,
+                        color: (business.isApproved ? const Color(0xFF10B981) : const Color(0xFFF59E0B)).withValues(alpha: 0.5),
+                        blurRadius: 5,
                         spreadRadius: 1,
                       ),
                     ],
@@ -364,22 +370,25 @@ class MerchantSidebar extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
-                      color: AppTheme.charcoal,
+                      color: Colors.white,
                     ),
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: business.isApproved ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
+                    color: business.isApproved ? const Color(0xFF0F382A) : const Color(0xFF452205),
                     borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: business.isApproved ? const Color(0xFF10B981).withValues(alpha: 0.4) : const Color(0xFFF59E0B).withValues(alpha: 0.4),
+                    ),
                   ),
                   child: Text(
                     business.isApproved ? 'LIVE' : 'REVIEW',
                     style: TextStyle(
                       fontSize: 8.5,
                       fontWeight: FontWeight.w900,
-                      color: business.isApproved ? const Color(0xFF15803D) : const Color(0xFFB45309),
+                      color: business.isApproved ? const Color(0xFF34D399) : const Color(0xFFFBBF24),
                       letterSpacing: 0.4,
                     ),
                   ),
@@ -398,13 +407,13 @@ class MerchantSidebar extends StatelessWidget {
       children: [
         if (!isCollapsed)
           Padding(
-            padding: const EdgeInsets.fromLTRB(18, 10, 18, 5),
+            padding: const EdgeInsets.fromLTRB(18, 12, 18, 6),
             child: Text(
               title,
               style: const TextStyle(
                 fontSize: 9.5,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF94A3B8),
+                color: Color(0xFF64748B),
                 letterSpacing: 1.1,
               ),
             ),
@@ -412,7 +421,7 @@ class MerchantSidebar extends StatelessWidget {
         else
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 4),
-            child: Divider(height: 1, color: Color(0xFFF1F5F9)),
+            child: Divider(height: 1, color: MerchantTheme.midnightSidebarBorder),
           ),
         ...items.map((item) => _buildItem(context, item)),
       ],
@@ -429,18 +438,18 @@ class MerchantSidebar extends StatelessWidget {
           message: item.label,
           preferBelow: false,
           child: Material(
-            color: isSelected ? const Color(0xFFE8F5E9) : Colors.transparent,
+            color: isSelected ? MerchantTheme.midnightActiveGlow : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
-              hoverColor: const Color(0xFFF1F5F9),
+              hoverColor: MerchantTheme.midnightHover,
               onTap: () => onSelectTab(item.tab),
               child: Container(
                 height: 44,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  border: isSelected ? Border.all(color: const Color(0xFFC8E6C9), width: 1) : null,
+                  border: isSelected ? Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5), width: 1) : null,
                 ),
                 child: Stack(
                   clipBehavior: Clip.none,
@@ -448,7 +457,7 @@ class MerchantSidebar extends StatelessWidget {
                     Icon(
                       isSelected ? item.activeIcon : item.icon,
                       size: 21,
-                      color: isSelected ? const Color(0xFF166534) : const Color(0xFF64748B),
+                      color: isSelected ? const Color(0xFF34D399) : const Color(0xFF94A3B8),
                     ),
                     if (item.badgeCount > 0)
                       Positioned(
@@ -484,16 +493,18 @@ class MerchantSidebar extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2.5),
       child: Material(
-        color: isSelected ? const Color(0xFFE8F5E9) : Colors.transparent,
+        color: isSelected ? MerchantTheme.midnightActiveGlow : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          hoverColor: const Color(0xFFF8FAFC),
+          hoverColor: MerchantTheme.midnightHover,
           onTap: () => onSelectTab(item.tab),
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              border: isSelected ? Border.all(color: const Color(0xFFC8E6C9), width: 1) : null,
+              border: isSelected
+                  ? Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5), width: 1)
+                  : null,
             ),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(
@@ -501,7 +512,7 @@ class MerchantSidebar extends StatelessWidget {
                 Icon(
                   isSelected ? item.activeIcon : item.icon,
                   size: 19,
-                  color: isSelected ? const Color(0xFF166534) : const Color(0xFF64748B),
+                  color: isSelected ? const Color(0xFF34D399) : const Color(0xFF94A3B8),
                 ),
                 const SizedBox(width: 11),
                 Expanded(
@@ -511,8 +522,8 @@ class MerchantSidebar extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-                      color: isSelected ? const Color(0xFF166534) : const Color(0xFF334155),
+                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                      color: isSelected ? Colors.white : const Color(0xFFCBD5E1),
                       letterSpacing: -0.2,
                     ),
                   ),
@@ -521,7 +532,7 @@ class MerchantSidebar extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF166534) : const Color(0xFFEF4444),
+                      color: const Color(0xFFEF4444),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -549,7 +560,7 @@ class MerchantSidebar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
       decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFF1F5F9))),
+        border: Border(top: BorderSide(color: MerchantTheme.midnightSidebarBorder)),
       ),
       child: Row(
         children: [
@@ -557,11 +568,11 @@ class MerchantSidebar extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+              color: const Color(0xFF10B981).withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: const Center(
-              child: Icon(Icons.storefront_rounded, size: 16, color: AppTheme.primaryGreen),
+              child: Icon(Icons.storefront_rounded, size: 16, color: Color(0xFF34D399)),
             ),
           ),
           const SizedBox(width: 9),
@@ -577,15 +588,15 @@ class MerchantSidebar extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w800,
-                    color: AppTheme.charcoal,
+                    color: Colors.white,
                   ),
                 ),
                 Text(
-                  business.rating > 0 ? '${business.rating.toStringAsFixed(1)} ★ rating' : 'New store',
+                  business.rating > 0 ? '${business.rating.toStringAsFixed(1)} ★ rating' : 'Verified Merchant',
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF64748B),
+                    color: Color(0xFF94A3B8),
                   ),
                 ),
               ],

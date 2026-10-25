@@ -728,13 +728,21 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
             const SizedBox(height: 40),
             Divider(height: 1, color: Colors.white.withValues(alpha: 0.12)),
             const SizedBox(height: 24),
-            Row(
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12,
+              runSpacing: 8,
               children: [
                 Text('© ${DateTime.now().year} DreamEats. All rights reserved.', style: TextStyle(fontSize: 13, color: muted)),
-                const Spacer(),
-                Icon(Icons.verified_outlined, size: 16, color: muted),
-                const SizedBox(width: 6),
-                Text('100% safe & verified pickups', style: TextStyle(fontSize: 13, color: muted)),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.verified_outlined, size: 16, color: muted),
+                    const SizedBox(width: 6),
+                    Text('100% safe & verified pickups', style: TextStyle(fontSize: 13, color: muted)),
+                  ],
+                ),
               ],
             ),
           ],
@@ -824,7 +832,14 @@ class _DealPreviewCard extends StatelessWidget {
                     children: [
                       Icon(Icons.schedule_rounded, size: 16, color: AppTheme.mutedGrey),
                       SizedBox(width: 6),
-                      Text('Pick up today, 18:00 – 19:30', style: TextStyle(fontSize: 13, color: Color(0xFF4B5563))),
+                      Expanded(
+                        child: Text(
+                          'Pick up today, 18:00 – 19:30',
+                          style: TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -832,17 +847,17 @@ class _DealPreviewCard extends StatelessWidget {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      const Text('GHS 25', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: ink)),
-                      const SizedBox(width: 8),
+                      const Text('GHS 25', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: ink)),
+                      const SizedBox(width: 6),
                       const Text(
                         'GHS 80',
-                        style: TextStyle(fontSize: 14, color: AppTheme.mutedGrey, decoration: TextDecoration.lineThrough),
+                        style: TextStyle(fontSize: 13, color: AppTheme.mutedGrey, decoration: TextDecoration.lineThrough),
                       ),
                       const Spacer(),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(color: AppTheme.primaryGreen, borderRadius: BorderRadius.circular(8)),
-                        child: const Text('Reserve', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                        child: const Text('Reserve', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
                       ),
                     ],
                   ),

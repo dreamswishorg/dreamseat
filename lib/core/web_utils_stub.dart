@@ -13,3 +13,10 @@ void downloadFile({
   required String fileName,
   String mimeType = 'text/csv',
 }) {}
+
+/// Stub function to trigger a binary file download.
+void downloadBytes({
+  required List<int> bytes,
+  required String fileName,
+  required String mimeType,
+}) {}

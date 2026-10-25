@@ -3,10 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/theme.dart';
 import '../../../models/models.dart';
 import '../../../providers/app_state.dart';
 import '../merchant_kit.dart';
+import '../services/merchant_export_service.dart';
+import '../theme/merchant_theme.dart';
 
 class MerchantFinancialsTab extends ConsumerStatefulWidget {
   final BusinessProfile business;
@@ -27,23 +28,58 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
     super.dispose();
   }
 
-  void _exportCsv(List<Order> orders, double totalRev, double netPayout) {
-    HapticFeedback.lightImpact();
-    final buffer = StringBuffer();
-    buffer.writeln('Order ID,Date,Customer,Deal,Price (GHS),Net Payout (85%),Payout Status');
-    for (final o in orders) {
-      final dateStr = DateFormat('yyyy-MM-dd HH:mm').format(o.timestamp);
-      final net = (o.price * 0.85).toStringAsFixed(2);
-      buffer.writeln('${o.id},$dateStr,"${o.customerName}","${o.dealTitle}",${o.price.toStringAsFixed(2)},$net,${o.payoutStatus}');
+  void _triggerExport(List<Order> orders, double totalRev, double netPayout, double commissionFee, double settled) {
+    if (orders.isEmpty) {
+      MToast.info(context, 'No transactions available in current filter to export');
+      return;
     }
-    Clipboard.setData(ClipboardData(text: buffer.toString()));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Financial statement copied to clipboard in CSV format!'),
-        backgroundColor: AppTheme.primaryGreen,
-        behavior: SnackBarBehavior.floating,
-      ),
+
+    final headers = [
+      'Order ID',
+      'Date & Time',
+      'Customer Name',
+      'Deal / Food Pack',
+      'Gross Price (GHS)',
+      'Commission 15% (GHS)',
+      'Net Payout 85% (GHS)',
+      'Settlement Status',
+      'Collection PIN',
+    ];
+
+    final rows = orders.map((o) {
+      final gross = o.price;
+      final fee = gross * 0.15;
+      final net = gross * 0.85;
+
+      return [
+        o.id.substring(0, 8).toUpperCase(),
+        o.timestamp,
+        o.customerName,
+        o.dealTitle,
+        gross,
+        fee,
+        net,
+        o.payoutStatus.toUpperCase(),
+        o.collectionCode,
+      ];
+    }).toList();
+
+    final dataset = ExportDataset(
+      title: 'Financial & Settlement Statement',
+      merchantName: widget.business.name,
+      fileNamePrefix: 'financial_statement',
+      headers: headers,
+      rows: rows,
+      summaryMetrics: {
+        'Completed Orders': '${orders.length}',
+        'Gross Revenue': 'GHS ${totalRev.toStringAsFixed(2)}',
+        'Platform Fee (15%)': 'GHS ${commissionFee.toStringAsFixed(2)}',
+        'Net Earnings (85%)': 'GHS ${netPayout.toStringAsFixed(2)}',
+        'Settled to Wallet': 'GHS ${settled.toStringAsFixed(2)}',
+      },
     );
+
+    MerchantExportService.showExportDialog(context, dataset: dataset);
   }
 
   void _requestEarlyPayout(double pendingAmount) {
@@ -52,7 +88,7 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('No pending payout balance available for settlement at this time.'),
-          backgroundColor: Colors.orange,
+          backgroundColor: MerchantTheme.amberWarning,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -62,20 +98,21 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppTheme.lightGreenBg,
+                color: MerchantTheme.emeraldLightBg,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.flash_on_rounded, color: AppTheme.primaryGreen, size: 24),
+              child: const Icon(Icons.flash_on_rounded, color: MerchantTheme.emeraldPrimary, size: 24),
             ),
             const SizedBox(width: 12),
             const Expanded(
-              child: Text('Request Early Payout', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+              child: Text('Request Early Payout', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: MerchantTheme.textDark)),
             ),
           ],
         ),
@@ -85,32 +122,33 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
           children: [
             Text(
               'You have GHS ${pendingAmount.toStringAsFixed(2)} pending settlement.',
-              style: const TextStyle(fontSize: 14, color: AppTheme.charcoal, fontWeight: FontWeight.w600),
+              style: const TextStyle(fontSize: 14, color: MerchantTheme.textDark, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 10),
             const Text(
-              'Standard payouts process automatically every Monday to your registered Mobile Money wallet. Would you like to submit an instant disbursement request to our finance desk?',
-              style: TextStyle(fontSize: 13, color: AppTheme.mutedGrey),
+              'Standard payouts process automatically every Monday directly to your registered Mobile Money wallet. Would you like to submit an instant disbursement request to our finance desk?',
+              style: TextStyle(fontSize: 12.5, color: MerchantTheme.textMuted, height: 1.4),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: AppTheme.mutedGrey)),
+            child: const Text('Cancel', style: TextStyle(color: MerchantTheme.textMuted, fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryGreen,
+              backgroundColor: MerchantTheme.emeraldPrimary,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () {
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Early settlement request for GHS ${pendingAmount.toStringAsFixed(2)} queued! Our finance desk will verify and dispatch within 2 business hours.'),
-                  backgroundColor: AppTheme.primaryGreen,
+                  content: Text('Early settlement request for GHS ${pendingAmount.toStringAsFixed(2)} queued! Verified and dispatched within 2 business hours.'),
+                  backgroundColor: MerchantTheme.emeraldPrimary,
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -130,6 +168,7 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
 
     final double grossRevenue = collectedOrders.fold(0.0, (sum, o) => sum + o.price);
     final double netPayout = grossRevenue * (1 - state.commissionRate);
+    final double commissionFee = grossRevenue * state.commissionRate;
     final double pendingPayout = collectedOrders
         .where((o) => o.payoutStatus != 'paid')
         .fold(0.0, (sum, o) => sum + (o.price * (1 - state.commissionRate)));
@@ -153,26 +192,26 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
     final wide = useSideNav(context);
 
     return ResponsiveCenter(
-      maxWidth: 1100,
+      maxWidth: 1240,
       child: ListView(
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(wide ? 24 : 16, wide ? 20 : 16, wide ? 24 : 16, wide ? 32 : 90),
         children: [
-          // ── Header Card ──
+          // ── Premium Executive Revenue Header ──
           Container(
-            padding: const EdgeInsets.all(22),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF0F2F1E), Color(0xFF144D31)],
+                colors: [Color(0xFF0B1320), Color(0xFF131F33), Color(0xFF0F382A)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.22), width: 1.2),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: const Color(0xFF1E2E48)),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF0F2F1E).withValues(alpha: 0.3),
-                  blurRadius: 18,
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
               ],
@@ -188,37 +227,38 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
+                            color: const Color(0xFF10B981).withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 20),
+                          child: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF34D399), size: 20),
                         ),
                         const SizedBox(width: 10),
                         const Text(
-                          'SETTLEMENTS & PAYOUTS',
+                          'FINANCIAL LEDGER & SETTLEMENTS',
                           style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 11.5,
+                            color: Color(0xFF94A3B8),
+                            fontSize: 11,
                             fontWeight: FontWeight.w900,
-                            letterSpacing: 1.0,
+                            letterSpacing: 1.1,
                           ),
                         ),
                       ],
                     ),
-                    OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: MerchantTheme.emeraldPrimary,
                         foregroundColor: Colors.white,
-                        side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                        elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       ),
-                      onPressed: () => _exportCsv(collectedOrders, grossRevenue, netPayout),
+                      onPressed: () => _triggerExport(filteredOrders, grossRevenue, netPayout, commissionFee, settledPayout),
                       icon: const Icon(Icons.download_rounded, size: 15),
-                      label: const Text('Export CSV', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      label: const Text('Export Statement', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 20),
                 Text(
                   'GHS ${grossRevenue.toStringAsFixed(2)}',
                   style: const TextStyle(
@@ -229,11 +269,11 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                   ),
                 ),
                 const Text(
-                  'Total Gross Rescue Sales',
-                  style: TextStyle(color: Colors.white60, fontSize: 12, fontWeight: FontWeight.w600),
+                  'Total Gross Rescue Sales (Lifetime)',
+                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.w600),
                 ),
-                const SizedBox(height: 20),
-                Divider(color: Colors.white.withValues(alpha: 0.15), height: 1),
+                const SizedBox(height: 22),
+                const Divider(color: Color(0xFF1E2E48), height: 1),
                 const SizedBox(height: 18),
                 Row(
                   children: [
@@ -241,27 +281,27 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                       child: _buildMetricItem(
                         'Net Earnings (85%)',
                         'GHS ${netPayout.toStringAsFixed(2)}',
-                        const Color(0xFF6EE7B7),
+                        const Color(0xFF34D399),
                         Icons.trending_up_rounded,
                       ),
                     ),
-                    Container(width: 1, height: 36, color: Colors.white.withValues(alpha: 0.15)),
+                    Container(width: 1, height: 36, color: const Color(0xFF1E2E48)),
                     const SizedBox(width: 14),
                     Expanded(
                       child: _buildMetricItem(
                         'Settled Out',
                         'GHS ${settledPayout.toStringAsFixed(2)}',
-                        Colors.blue.shade200,
+                        const Color(0xFF60A5FA),
                         Icons.check_circle_outline_rounded,
                       ),
                     ),
-                    Container(width: 1, height: 36, color: Colors.white.withValues(alpha: 0.15)),
+                    Container(width: 1, height: 36, color: const Color(0xFF1E2E48)),
                     const SizedBox(width: 14),
                     Expanded(
                       child: _buildMetricItem(
-                        'Pending Payout',
+                        'Pending Settlement',
                         'GHS ${pendingPayout.toStringAsFixed(2)}',
-                        Colors.amber.shade200,
+                        const Color(0xFFFBBF24),
                         Icons.hourglass_empty_rounded,
                       ),
                     ),
@@ -272,13 +312,13 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
           ),
           const SizedBox(height: 16),
 
-          // ── Quick Action Strip ──
+          // ── Quick Actions ──
           Row(
             children: [
               Expanded(
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryGreen,
+                    backgroundColor: MerchantTheme.emeraldPrimary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
@@ -292,8 +332,8 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
               const SizedBox(width: 12),
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.charcoal,
-                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                  foregroundColor: MerchantTheme.textDark,
+                  side: const BorderSide(color: MerchantTheme.cardBorder),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
@@ -301,13 +341,14 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                   showDialog(
                     context: context,
                     builder: (ctx) => AlertDialog(
+                      backgroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      title: const Text('Disbursement Account', style: TextStyle(fontWeight: FontWeight.bold)),
+                      title: const Text('Disbursement Account', style: TextStyle(fontWeight: FontWeight.w900, color: MerchantTheme.textDark)),
                       content: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Mobile Money & Bank Settlement details:', style: TextStyle(color: AppTheme.mutedGrey, fontSize: 13)),
+                          const Text('Mobile Money & Bank Settlement details:', style: TextStyle(color: MerchantTheme.textMuted, fontSize: 13)),
                           const SizedBox(height: 12),
                           ListTile(
                             contentPadding: EdgeInsets.zero,
@@ -316,10 +357,13 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                               decoration: BoxDecoration(color: Colors.amber.shade100, shape: BoxShape.circle),
                               child: const Icon(Icons.phone_android_rounded, color: Colors.brown, size: 20),
                             ),
-                            title: Text(widget.business.hasPayoutAccount ? widget.business.payoutAccountNumber : 'No payout account set', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            title: Text(
+                              widget.business.hasPayoutAccount ? widget.business.payoutAccountNumber : 'No payout account set',
+                              style: const TextStyle(fontWeight: FontWeight.bold, color: MerchantTheme.textDark),
+                            ),
                             subtitle: Text(widget.business.hasPayoutAccount
-                                ? '${widget.business.payoutProvider} \u00b7 ${widget.business.payoutAccountName}'
-                                : 'Add one under Profile \u2192 Payout account'),
+                                ? '${widget.business.payoutProvider} · ${widget.business.payoutAccountName}'
+                                : 'Add one under Shop Profile → Payout Account'),
                           ),
                         ],
                       ),
@@ -332,14 +376,14 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                     ),
                   );
                 },
-                icon: const Icon(Icons.account_balance_rounded, size: 18, color: AppTheme.primaryGreen),
+                icon: const Icon(Icons.account_balance_rounded, size: 18, color: MerchantTheme.emeraldPrimary),
                 label: const Text('MoMo Wallet', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               ),
             ],
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 20),
 
-          // ── Filter & Search Bar ──
+          // ── Search & Filter Bar ──
           Row(
             children: [
               Expanded(
@@ -347,19 +391,19 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                   controller: _searchCtrl,
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
-                    hintText: 'Search ledger by customer, code or order...',
-                    hintStyle: const TextStyle(fontSize: 13, color: AppTheme.mutedGrey),
-                    prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppTheme.mutedGrey),
+                    hintText: 'Search ledger by customer, code or order ID…',
+                    hintStyle: const TextStyle(fontSize: 13, color: MerchantTheme.textMuted),
+                    prefixIcon: const Icon(Icons.search_rounded, size: 20, color: MerchantTheme.textMuted),
                     filled: true,
                     fillColor: Colors.white,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: MerchantTheme.cardBorder),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: MerchantTheme.cardBorder),
                     ),
                   ),
                 ),
@@ -368,8 +412,8 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: MerchantTheme.cardBorder),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: DropdownButtonHideUnderline(
@@ -396,16 +440,20 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
               padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: MerchantTheme.cardBorder),
               ),
-              child: Column(
+              child: const Column(
                 children: [
-                  Icon(Icons.receipt_long_outlined, size: 48, color: Colors.grey.shade400),
-                  const SizedBox(height: 12),
-                  const Text('No Transactions Found', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 6),
-                  const Text('Completed rescue orders will appear here in your settlement ledger.', style: TextStyle(color: AppTheme.mutedGrey, fontSize: 13), textAlign: TextAlign.center),
+                  Icon(Icons.receipt_long_outlined, size: 48, color: Color(0xFF94A3B8)),
+                  SizedBox(height: 12),
+                  Text('No Transactions Found', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: MerchantTheme.textDark)),
+                  SizedBox(height: 6),
+                  Text(
+                    'Completed rescue orders will appear here in your settlement ledger.',
+                    style: TextStyle(color: MerchantTheme.textMuted, fontSize: 13),
+                    textAlign: TextAlign.center,
+                  ),
                 ],
               ),
             )
@@ -420,15 +468,9 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0xFFF1F5F9)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.02),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: MerchantTheme.cardBorder),
+                  boxShadow: MerchantTheme.cardElevation,
                 ),
                 child: Row(
                   children: [
@@ -436,13 +478,13 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: isPaid ? AppTheme.lightGreenBg : Colors.amber.shade50,
+                        color: isPaid ? MerchantTheme.emeraldLightBg : MerchantTheme.amberLightBg,
                         shape: BoxShape.circle,
                       ),
                       child: Center(
                         child: Icon(
                           isPaid ? Icons.check_circle_rounded : Icons.hourglass_top_rounded,
-                          color: isPaid ? AppTheme.primaryGreen : Colors.amber.shade800,
+                          color: isPaid ? MerchantTheme.emeraldPrimary : MerchantTheme.amberWarning,
                           size: 22,
                         ),
                       ),
@@ -455,37 +497,36 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                           Row(
                             children: [
                               Text(
-                                '#${order.collectionCode}',
-                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: AppTheme.charcoal),
+                                order.customerName,
+                                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: MerchantTheme.textDark),
                               ),
                               const SizedBox(width: 8),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: isPaid ? AppTheme.lightGreenBg : Colors.amber.shade100,
+                                  color: isPaid ? MerchantTheme.emeraldLightBg : MerchantTheme.amberLightBg,
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
                                   isPaid ? 'PAID' : 'PENDING',
                                   style: TextStyle(
-                                    color: isPaid ? AppTheme.primaryGreen : Colors.amber.shade900,
-                                    fontWeight: FontWeight.w900,
                                     fontSize: 9.5,
+                                    fontWeight: FontWeight.w900,
+                                    color: isPaid ? MerchantTheme.emeraldDeep : MerchantTheme.amberWarning,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 3),
+                          const SizedBox(height: 4),
                           Text(
-                            '${order.customerName} • ${order.dealTitle}',
-                            style: const TextStyle(fontSize: 12.5, color: AppTheme.charcoal, fontWeight: FontWeight.w600),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            '${order.dealTitle} · Code: ${order.collectionCode}',
+                            style: const TextStyle(color: MerchantTheme.textMuted, fontSize: 12),
                           ),
+                          const SizedBox(height: 2),
                           Text(
                             dateStr,
-                            style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey),
+                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
                           ),
                         ],
                       ),
@@ -495,11 +536,11 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                       children: [
                         Text(
                           'GHS ${net.toStringAsFixed(2)}',
-                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.primaryGreen),
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: MerchantTheme.emeraldPrimary),
                         ),
                         Text(
-                          'Gross: GHS ${order.price.toStringAsFixed(2)}',
-                          style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey),
+                          'Gross GHS ${order.price.toStringAsFixed(2)}',
+                          style: const TextStyle(fontSize: 10.5, color: MerchantTheme.textMuted),
                         ),
                       ],
                     ),
@@ -512,24 +553,21 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
     );
   }
 
-  Widget _buildMetricItem(String label, String value, Color color, IconData icon) {
+  Widget _buildMetricItem(String title, String value, Color color, IconData icon) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Icon(icon, size: 14, color: color),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: const TextStyle(color: Colors.white70, fontSize: 10.5, fontWeight: FontWeight.bold),
-            ),
+            const SizedBox(width: 5),
+            Text(title, style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold)),
           ],
         ),
         const SizedBox(height: 4),
         Text(
           value,
-          style: TextStyle(color: color, fontSize: 17, fontWeight: FontWeight.w900),
+          style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: -0.3),
         ),
       ],
     );

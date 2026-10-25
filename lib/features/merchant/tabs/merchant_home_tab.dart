@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../models/models.dart';
 import '../../../providers/app_state.dart';
 import '../merchant_kit.dart';
+import '../services/merchant_export_service.dart';
 
 class MerchantHomeTab extends ConsumerWidget {
   final BusinessProfile business;
@@ -141,6 +142,19 @@ class MerchantHomeTab extends ConsumerWidget {
       commissionPct: (notifier.commissionRate * 100),
     );
 
+    final productSales = <String, ({int count, double revenue})>{};
+    for (final o in collected) {
+      final current = productSales[o.dealTitle];
+      if (current == null) {
+        productSales[o.dealTitle] = (count: 1, revenue: o.price);
+      } else {
+        productSales[o.dealTitle] = (count: current.count + 1, revenue: current.revenue + o.price);
+      }
+    }
+    final topProducts = productSales.entries.toList()
+      ..sort((a, b) => b.value.revenue.compareTo(a.value.revenue));
+    final topProductsCard = _TopProductsCard(topProducts: topProducts);
+
     final quickActionsCard = _QuickActions(
       business: business,
       orders: orders,
@@ -235,6 +249,8 @@ class MerchantHomeTab extends ConsumerWidget {
                         const SizedBox(height: 18),
                         impactCard,
                         const SizedBox(height: 18),
+                        topProductsCard,
+                        const SizedBox(height: 18),
                         quickActionsCard,
                       ],
                     ),
@@ -249,9 +265,11 @@ class MerchantHomeTab extends ConsumerWidget {
             const SizedBox(height: 16),
             MReveal(delay: 190, child: impactCard),
             const SizedBox(height: 16),
-            MReveal(delay: 220, child: quickActionsCard),
+            MReveal(delay: 210, child: topProductsCard),
             const SizedBox(height: 16),
-            MReveal(delay: 250, child: activityCard),
+            MReveal(delay: 230, child: quickActionsCard),
+            const SizedBox(height: 16),
+            MReveal(delay: 260, child: activityCard),
           ],
         ],
       ),
@@ -1071,26 +1089,135 @@ class _QuickActions extends ConsumerWidget {
       MToast.info(context, 'Nothing to export yet — you have no orders');
       return;
     }
-    final csv = buildCsv(
-      ['Code', 'Deal', 'Customer', 'Status', 'Fulfilment', 'Paid (GHS)', 'Original (GHS)', 'Placed', 'Payout'],
-      orders
-          .map((o) => [
-                o.collectionCode,
-                o.dealTitle,
-                o.customerName,
-                o.status,
-                o.fulfillmentType,
-                o.price.toStringAsFixed(2),
-                o.originalPrice.toStringAsFixed(2),
-                DateFormat('yyyy-MM-dd HH:mm').format(o.timestamp),
-                o.payoutStatus,
-              ])
-          .toList(),
+    final headers = [
+      'Order ID',
+      'Pickup Code',
+      'Food Deal',
+      'Customer',
+      'Status',
+      'Fulfilment',
+      'Paid Price (GHS)',
+      'Regular (GHS)',
+      'Placed Date',
+      'Payout Status',
+    ];
+    final rows = orders
+        .map((o) => [
+              o.id.substring(0, 8).toUpperCase(),
+              o.collectionCode,
+              o.dealTitle,
+              o.customerName,
+              o.status.toUpperCase(),
+              o.fulfillmentType,
+              o.price,
+              o.originalPrice,
+              o.timestamp,
+              o.payoutStatus.toUpperCase(),
+            ])
+        .toList();
+
+    final dataset = ExportDataset(
+      title: 'Merchant Orders & Handover Report',
+      merchantName: business.name,
+      fileNamePrefix: 'orders_report',
+      headers: headers,
+      rows: rows,
+      summaryMetrics: {
+        'Total Orders': '${orders.length}',
+        'Completed Handed Over': '${orders.where((o) => o.status == 'collected').length}',
+        'Gross Sales': 'GHS ${orders.where((o) => o.status == 'collected').fold<double>(0, (s, o) => s + o.price).toStringAsFixed(2)}',
+      },
     );
-    exportCsv(
-      context,
-      csv: csv,
-      fileName: '${business.name.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '_').toLowerCase()}_orders.csv',
+    MerchantExportService.showExportDialog(context, dataset: dataset);
+  }
+}
+
+class _TopProductsCard extends StatelessWidget {
+  final List<MapEntry<String, ({int count, double revenue})>> topProducts;
+
+  const _TopProductsCard({required this.topProducts});
+
+  @override
+  Widget build(BuildContext context) {
+    return MCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const MSectionHeader(
+            title: 'Top-selling rescue packs',
+            subtitle: 'Ranked by customer orders and revenue generated',
+            icon: Icons.emoji_events_rounded,
+            iconColor: MK.amber,
+          ),
+          const SizedBox(height: 16),
+          if (topProducts.isEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(MK.rSm),
+                border: Border.all(color: MK.line),
+              ),
+              child: const Center(
+                child: Text(
+                  'Your top-selling dishes will rank here automatically as customers rescue meals.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: MK.inkSoft, fontWeight: FontWeight.w600),
+                ),
+              ),
+            )
+          else ...[
+            ...topProducts.take(4).map((entry) {
+              final maxRev = topProducts.first.value.revenue;
+              final ratio = maxRev > 0 ? (entry.value.revenue / maxRev).clamp(0.05, 1.0) : 0.0;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            entry.key,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: MK.ink),
+                          ),
+                        ),
+                        Text(
+                          '${entry.value.count} sold · ${MK.money(entry.value.revenue)}',
+                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: MK.brand),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: Stack(
+                        children: [
+                          Container(height: 6, color: const Color(0xFFEDF2ED)),
+                          FractionallySizedBox(
+                            widthFactor: ratio,
+                            child: Container(
+                              height: 6,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(colors: [MK.brand, MK.brandGlow]),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ],
+      ),
     );
   }
 }

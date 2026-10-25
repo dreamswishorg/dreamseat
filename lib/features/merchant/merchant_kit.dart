@@ -1,9 +1,12 @@
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme.dart';
 import '../../core/web_utils.dart';
@@ -65,7 +68,7 @@ class MK {
       ];
 
   static const LinearGradient heroGradient = LinearGradient(
-    colors: [Color(0xFF0B3D24), Color(0xFF1E7A46), Color(0xFF2E9C5B)],
+    colors: [Color(0xFF0B1320), Color(0xFF131F33), Color(0xFF0F382A)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     stops: [0.0, 0.55, 1.0],
@@ -1420,10 +1423,8 @@ String buildCsv(List<String> headers, List<List<String>> rows) {
   return buffer.toString();
 }
 
-/// Writes [csv] to the browser download stream on web, then confirms honestly
-/// about what happened so the merchant is never told a file exists when it
-/// was not produced.
-void exportCsv(BuildContext context, {required String csv, required String fileName}) {
+/// Writes [csv] to browser download on web, or saves and shares genuine file on mobile.
+void exportCsv(BuildContext context, {required String csv, required String fileName}) async {
   if (kIsWeb) {
     try {
       downloadFile(content: csv, fileName: fileName, mimeType: 'text/csv');
@@ -1434,7 +1435,16 @@ void exportCsv(BuildContext context, {required String csv, required String fileN
       return;
     }
   }
-  showMCsvPreview(context, csv: csv, fileName: fileName);
+  try {
+    final tempDir = await getTemporaryDirectory();
+    final file = File('${tempDir.path}/$fileName');
+    await file.writeAsString(csv);
+    // ignore: deprecated_member_use
+    await Share.shareXFiles([XFile(file.path, mimeType: 'text/csv')], subject: fileName);
+    if (context.mounted) MToast.ok(context, 'File ready: $fileName');
+  } catch (_) {
+    if (context.mounted) showMCsvPreview(context, csv: csv, fileName: fileName);
+  }
 }
 
 /// Mobile has no browser download, so the CSV is shown for copy & paste.
