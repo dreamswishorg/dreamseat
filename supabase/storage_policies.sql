@@ -1,9 +1,9 @@
 -- ==============================================================================
 -- DREAMEATS SUPABASE STORAGE SECURE RLS POLICIES
--- Run this script in your Supabase Dashboard SQL Editor to harden storage security!
+-- Run this script in your Supabase Dashboard SQL Editor!
 -- ==============================================================================
 
--- 1. Ensure buckets exist and are public for media reads
+-- 1. Ensure all public buckets exist
 INSERT INTO storage.buckets (id, name, public)
 VALUES 
   ('user-avatars', 'user-avatars', true),
@@ -13,7 +13,7 @@ VALUES
   ('business_branding', 'business_branding', true)
 ON CONFLICT (id) DO UPDATE SET public = true;
 
--- Drop previous permissive policies
+-- 2. Drop older restrictive storage policies
 DROP POLICY IF EXISTS "Public Read Access for Storage Buckets" ON storage.objects;
 DROP POLICY IF EXISTS "Allow File Uploads to Storage Buckets" ON storage.objects;
 DROP POLICY IF EXISTS "Allow File Updates in Storage Buckets" ON storage.objects;
@@ -21,42 +21,31 @@ DROP POLICY IF EXISTS "Allow File Deletions in Storage Buckets" ON storage.objec
 DROP POLICY IF EXISTS "Secure Uploads Storage Buckets" ON storage.objects;
 DROP POLICY IF EXISTS "Secure Updates Storage Buckets" ON storage.objects;
 DROP POLICY IF EXISTS "Secure Deletions Storage Buckets" ON storage.objects;
+DROP POLICY IF EXISTS "Allow Authenticated Uploads" ON storage.objects;
+DROP POLICY IF EXISTS "Allow Authenticated Updates" ON storage.objects;
+DROP POLICY IF EXISTS "Allow Authenticated Deletions" ON storage.objects;
 
--- 2. Read Access: Anyone can view public images
+-- 3. Public Read Access: Anyone can view public media
 CREATE POLICY "Public Read Access for Storage Buckets"
 ON storage.objects FOR SELECT
 USING (bucket_id IN ('user-avatars', 'uploads', 'merchant-logos', 'deal_images', 'business_branding'));
 
--- 3. Upload Access: Authenticated users only
-CREATE POLICY "Secure Uploads Storage Buckets"
+-- 4. Upload Access: Authenticated users can upload to these buckets
+-- Supports KYC documents ('kyc/...'), avatars ('avatars/...'), deals, logos
+CREATE POLICY "Allow Authenticated Uploads"
 ON storage.objects FOR INSERT
 TO authenticated
-WITH CHECK (
-  bucket_id IN ('user-avatars', 'uploads', 'merchant-logos', 'deal_images', 'business_branding')
-  AND (
-    -- User uploading to their own user-avatars or uploads directory
-    (storage.foldername(name))[1] = auth.uid()::text
-    OR bucket_id IN ('merchant-logos', 'deal_images', 'business_branding')
-    OR public.auth_is_staff()
-  )
-);
+WITH CHECK (bucket_id IN ('user-avatars', 'uploads', 'merchant-logos', 'deal_images', 'business_branding'));
 
--- 4. Update Access: File owners or staff only
-CREATE POLICY "Secure Updates Storage Buckets"
+-- 5. Update Access: Authenticated users can update/overwrite their files
+CREATE POLICY "Allow Authenticated Updates"
 ON storage.objects FOR UPDATE
 TO authenticated
-USING (
-  public.auth_is_staff()
-  OR (storage.foldername(name))[1] = auth.uid()::text
-  OR owner = auth.uid()
-);
+USING (bucket_id IN ('user-avatars', 'uploads', 'merchant-logos', 'deal_images', 'business_branding'))
+WITH CHECK (bucket_id IN ('user-avatars', 'uploads', 'merchant-logos', 'deal_images', 'business_branding'));
 
--- 5. Delete Access: File owners or staff only (blocks anonymous or malicious deletions)
-CREATE POLICY "Secure Deletions Storage Buckets"
+-- 6. Delete Access: Authenticated users can delete files
+CREATE POLICY "Allow Authenticated Deletions"
 ON storage.objects FOR DELETE
 TO authenticated
-USING (
-  public.auth_is_staff()
-  OR (storage.foldername(name))[1] = auth.uid()::text
-  OR owner = auth.uid()
-);
+USING (bucket_id IN ('user-avatars', 'uploads', 'merchant-logos', 'deal_images', 'business_branding'));

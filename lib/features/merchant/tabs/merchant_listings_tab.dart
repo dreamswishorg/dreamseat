@@ -35,17 +35,14 @@ enum _ListingSort {
 }
 
 class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
-  static const _statusFilters = ['all', 'live', 'low', 'paused', 'soldout'];
+  static const _statusFilters = ['all', 'live', 'soldout'];
   static const _statusLabels = [
     'All Items',
     'Live & Selling',
-    'Low Stock',
-    'Paused',
     'Sold Out',
   ];
 
   String _statusFilter = 'all';
-  String _categoryFilter = 'all';
   _ListingSort _sort = _ListingSort.recent;
   bool _isTableView = false;
   final _search = TextEditingController();
@@ -397,14 +394,12 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
     var filtered = deals.where((d) {
       final matchesStatus =
           _statusFilter == 'all' || _bucketOf(d) == _statusFilter;
-      final matchesCategory =
-          _categoryFilter == 'all' || d.category == _categoryFilter;
       final matchesQuery =
           q.isEmpty ||
           d.title.toLowerCase().contains(q) ||
           d.description.toLowerCase().contains(q) ||
           d.category.toLowerCase().contains(q);
-      return matchesStatus && matchesCategory && matchesQuery;
+      return matchesStatus && matchesQuery;
     }).toList();
 
     // Sort
@@ -773,75 +768,6 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
               ),
             ),
 
-            // ── Category Filter Bar ──
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.fromLTRB(
-                isWide ? 24 : 16,
-                0,
-                isWide ? 24 : 16,
-                8,
-              ),
-              child: Row(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: FilterChip(
-                      label: const Text('All Categories'),
-                      selected: _categoryFilter == 'all',
-                      selectedColor: MerchantTheme.navSurface,
-                      backgroundColor: Colors.white,
-                      checkmarkColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: BorderSide(
-                          color: _categoryFilter == 'all'
-                              ? MerchantTheme.navSurface
-                              : MerchantTheme.cardBorder,
-                        ),
-                      ),
-                      labelStyle: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: _categoryFilter == 'all'
-                            ? Colors.white
-                            : MerchantTheme.textMuted,
-                      ),
-                      onSelected: (_) =>
-                          setState(() => _categoryFilter = 'all'),
-                    ),
-                  ),
-                  ...kDealCategories.map((c) {
-                    final isSel = _categoryFilter == c;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: FilterChip(
-                        label: Text('${categoryEmoji(c)} $c'),
-                        selected: isSel,
-                        selectedColor: MerchantTheme.navSurface,
-                        backgroundColor: Colors.white,
-                        checkmarkColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: BorderSide(
-                            color: isSel
-                                ? MerchantTheme.navSurface
-                                : MerchantTheme.cardBorder,
-                          ),
-                        ),
-                        labelStyle: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: isSel ? Colors.white : MerchantTheme.textDark,
-                        ),
-                        onSelected: (_) => setState(() => _categoryFilter = c),
-                      ),
-                    );
-                  }),
-                ],
-              ),
-            ),
-
             // ── Main Content: Grid vs Table ──
             if (state.isLoadingMerchantDeals && deals.isEmpty)
               const SizedBox(
@@ -883,7 +809,6 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                     _search.clear();
                     setState(() {
                       _statusFilter = 'all';
-                      _categoryFilter = 'all';
                     });
                   },
                 ),
@@ -2087,8 +2012,9 @@ class _ListingCard extends StatelessWidget {
 }
 
 /// Curated high-resolution stock photography presets for instant, frictionless listing creation.
-const List<({String title, String category, String url, String emoji})>
-kCuratedPhotoPresets = [
+typedef CuratedPhotoPreset = ({String title, String category, String url, String emoji});
+
+const List<CuratedPhotoPreset> kCuratedPhotoPresets = [
   (
     title: 'Bakery & Pastries',
     category: 'Bakery',
@@ -2156,17 +2082,18 @@ class _DealFormState extends ConsumerState<_DealForm> {
     text:
         widget.existing?.pickupWindow ??
         widget.presetTemplate?['pickupWindow'] ??
-        'Today 17:30 – 19:30',
+        '',
   );
   late final _qty = TextEditingController(
-    text:
-        '${widget.existing?.quantityTotal ?? widget.presetTemplate?['quantity'] ?? 6}',
+    text: widget.existing != null
+        ? '${widget.existing!.quantityTotal}'
+        : (widget.presetTemplate?['quantity']?.toString() ?? ''),
   );
   late String _category =
       widget.existing != null &&
           kDealCategories.contains(widget.existing!.category)
       ? widget.existing!.category
-      : (widget.presetTemplate?['category'] ?? kDealCategories.first);
+      : (widget.presetTemplate?['category'] ?? '');
 
   Uint8List? _bytes;
   String _selectedPresetUrl = '';
@@ -2209,7 +2136,252 @@ class _DealFormState extends ConsumerState<_DealForm> {
     }
   }
 
+  Future<void> _pickPresetPhoto() async {
+    final chosen = await _showUberPicker<CuratedPhotoPreset>(
+      context: context,
+      title: 'Select Photo Preset',
+      items: kCuratedPhotoPresets,
+      selectedItem: kCuratedPhotoPresets.any((p) => p.url == _selectedPresetUrl)
+          ? kCuratedPhotoPresets.firstWhere((p) => p.url == _selectedPresetUrl)
+          : null,
+      labelOf: (p) => '${p.emoji} ${p.title}',
+      subtitleOf: (p) => p.category,
+      leadingOf: (p) => ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(
+          p.url,
+          width: 44,
+          height: 44,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Container(
+            width: 44,
+            height: 44,
+            color: const Color(0xFFF1F5F9),
+            alignment: Alignment.center,
+            child: Text(p.emoji, style: const TextStyle(fontSize: 20)),
+          ),
+        ),
+      ),
+      isSelected: (item, current) => current != null && item.url == current.url,
+    );
+
+    if (chosen != null) {
+      setState(() {
+        _bytes = null;
+        _selectedPresetUrl = chosen.url;
+        if (_category.isEmpty) {
+          _category = chosen.category;
+        }
+      });
+    }
+  }
+
+  Future<void> _pickCategory() async {
+    final chosen = await _showUberPicker<String>(
+      context: context,
+      title: 'Select Category',
+      items: kDealCategories,
+      selectedItem: _category.isNotEmpty ? _category : null,
+      labelOf: (c) => c,
+      leadingOf: (c) => Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        alignment: Alignment.center,
+        child: Text(categoryEmoji(c), style: const TextStyle(fontSize: 18)),
+      ),
+      isSelected: (item, current) => item == current,
+    );
+
+    if (chosen != null) {
+      setState(() => _category = chosen);
+    }
+  }
+
+  Future<void> _pickPickupWindow() async {
+    const timeOptions = [
+      'Today 16:00 – 18:00 (Afternoon rush)',
+      'Today 17:30 – 19:30 (Dinner time)',
+      'Today 18:00 – 20:00 (Evening rush)',
+      'Today 19:00 – 21:00 (Late dinner)',
+      'Tonight 20:00 – 21:30 (Closing rush)',
+      'Tonight 21:00 – 22:30 (Night closing)',
+      'Tomorrow 08:30 – 10:30 (Morning rescue)',
+      'Tomorrow 11:30 – 13:30 (Lunch pickup)',
+      'Tomorrow 14:00 – 16:00 (Afternoon pickup)',
+      'Tomorrow 17:30 – 19:30 (Evening pickup)',
+      'Custom time window…',
+    ];
+
+    final chosen = await _showUberPicker<String>(
+      context: context,
+      title: 'Select Pickup Window',
+      items: timeOptions,
+      selectedItem: timeOptions.firstWhere(
+        (t) => t.startsWith(_window.text) && _window.text.isNotEmpty,
+        orElse: () => _window.text.isNotEmpty ? 'Custom time window…' : '',
+      ),
+      labelOf: (t) => t.contains(' (') ? t.split(' (').first : t,
+      subtitleOf: (t) => t.contains(' (') ? t.split(' (').last.replaceAll(')', '') : null,
+      leadingOf: (t) => Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        alignment: Alignment.center,
+        child: Icon(
+          t.startsWith('Custom') ? Icons.edit_calendar_outlined : Icons.schedule_rounded,
+          size: 18,
+          color: MerchantTheme.brandDeepGreen,
+        ),
+      ),
+      isSelected: (item, current) =>
+          item == current || (_window.text.isNotEmpty && item.startsWith(_window.text)),
+    );
+
+    if (chosen != null) {
+      if (chosen.startsWith('Custom')) {
+        final custom = await _showCustomInputDialog(
+          title: 'Custom Pickup Window',
+          hint: 'e.g. Today 15:00 – 17:00',
+          current: _window.text,
+        );
+        if (custom != null && custom.isNotEmpty) {
+          setState(() => _window.text = custom);
+        }
+      } else {
+        final clean = chosen.contains(' (') ? chosen.split(' (').first : chosen;
+        setState(() => _window.text = clean);
+      }
+    }
+  }
+
+  Future<void> _pickUnitsAvailable() async {
+    final qtyOptions = [
+      1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 75, 100, -1,
+    ];
+
+    final currentQty = int.tryParse(_qty.text.trim());
+
+    final chosen = await _showUberPicker<int>(
+      context: context,
+      title: 'Select Units Available',
+      items: qtyOptions,
+      selectedItem: currentQty,
+      labelOf: (q) => q == -1 ? 'Custom quantity…' : '$q ${q == 1 ? "pack" : "packs"}',
+      subtitleOf: (q) => q == -1
+          ? 'Enter specific surplus count'
+          : (q <= 3 ? 'Small batch' : (q <= 10 ? 'Popular standard size' : 'Bulk surplus batch')),
+      leadingOf: (q) => Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        alignment: Alignment.center,
+        child: Icon(
+          q == -1 ? Icons.dialpad_rounded : Icons.inventory_2_outlined,
+          size: 18,
+          color: MerchantTheme.brandDeepGreen,
+        ),
+      ),
+      isSelected: (item, current) {
+        if (item == -1) return current != null && !qtyOptions.contains(current);
+        return item == current;
+      },
+    );
+
+    if (chosen != null) {
+      if (chosen == -1) {
+        final custom = await _showCustomInputDialog(
+          title: 'Custom Units Available',
+          hint: 'e.g. 18',
+          current: _qty.text,
+          keyboardType: TextInputType.number,
+        );
+        if (custom != null && int.tryParse(custom) != null) {
+          setState(() => _qty.text = custom);
+        }
+      } else {
+        setState(() => _qty.text = '$chosen');
+      }
+    }
+  }
+
+  Future<String?> _showCustomInputDialog({
+    required String title,
+    required String hint,
+    String current = '',
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    final controller = TextEditingController(text: current);
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF111827),
+          ),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: keyboardType,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+          decoration: InputDecoration(
+            hintText: hint,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: MerchantTheme.brandGreen, width: 1.6),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: MerchantTheme.textMuted)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: MerchantTheme.brandGreen,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Confirm', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _submit() async {
+    if (_category.trim().isEmpty) {
+      setState(() => _error = 'Please select a category for this surplus pack');
+      return;
+    }
+    if (_window.text.trim().isEmpty) {
+      setState(() => _error = 'Please select a pickup time window');
+      return;
+    }
+    if (_qty.text.trim().isEmpty) {
+      setState(() => _error = 'Please select the number of units available');
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
     setState(() {
       _busy = true;
@@ -2370,58 +2542,16 @@ class _DealFormState extends ConsumerState<_DealForm> {
           ),
           const SizedBox(height: 8),
 
-          // Preset Photo Chips
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                const Text(
-                  'Quick Presets: ',
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.bold,
-                    color: MerchantTheme.textMuted,
-                  ),
-                ),
-                ...kCuratedPhotoPresets.map((p) {
-                  final isSelected =
-                      _selectedPresetUrl == p.url && _bytes == null;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: ChoiceChip(
-                      label: Text('${p.emoji} ${p.title}'),
-                      selected: isSelected,
-                      selectedColor: MerchantTheme.brandTint,
-                      backgroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: BorderSide(
-                          color: isSelected
-                              ? MerchantTheme.brandGreen
-                              : MerchantTheme.cardBorder,
-                        ),
-                      ),
-                      labelStyle: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: isSelected
-                            ? FontWeight.w800
-                            : FontWeight.w600,
-                        color: isSelected
-                            ? MerchantTheme.brandDeepGreen
-                            : MerchantTheme.textDark,
-                      ),
-                      onSelected: (_) {
-                        setState(() {
-                          _bytes = null;
-                          _selectedPresetUrl = p.url;
-                          _category = p.category;
-                        });
-                      },
-                    ),
-                  );
-                }),
-              ],
-            ),
+          _UberDropdown(
+            label: 'PHOTO QUICK PRESET',
+            hint: 'Choose a photo preset or leave custom',
+            icon: Icons.auto_awesome_rounded,
+            value: _selectedPresetUrl.isNotEmpty
+                ? (kCuratedPhotoPresets.any((p) => p.url == _selectedPresetUrl)
+                    ? '${kCuratedPhotoPresets.firstWhere((p) => p.url == _selectedPresetUrl).emoji} ${kCuratedPhotoPresets.firstWhere((p) => p.url == _selectedPresetUrl).title}'
+                    : 'Preset photo selected')
+                : null,
+            onTap: _pickPresetPhoto,
           ),
 
           const SizedBox(height: 16),
@@ -2453,50 +2583,14 @@ class _DealFormState extends ConsumerState<_DealForm> {
           ),
 
           const SizedBox(height: 14),
-          const _FormLabel('CATEGORY'),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: kDealCategories
-                .map(
-                  (c) => Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => setState(() => _category = c),
-                      borderRadius: BorderRadius.circular(10),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _category == c
-                              ? MerchantTheme.brandTint
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: _category == c
-                                ? MerchantTheme.brandGreen
-                                : MerchantTheme.cardBorder,
-                            width: _category == c ? 1.6 : 1,
-                          ),
-                        ),
-                        child: Text(
-                          '${categoryEmoji(c)} $c',
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w800,
-                            color: _category == c
-                                ? MerchantTheme.brandDeepGreen
-                                : MerchantTheme.textDark,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-                .toList(),
+          _UberDropdown(
+            label: 'CATEGORY',
+            hint: 'Select category',
+            icon: Icons.category_outlined,
+            value: _category.isNotEmpty ? '${categoryEmoji(_category)} $_category' : null,
+            hasError: _category.isEmpty && _error != null,
+            errorText: _category.isEmpty ? 'Category is required' : null,
+            onTap: _pickCategory,
           ),
 
           const SizedBox(height: 16),
@@ -2609,85 +2703,27 @@ class _DealFormState extends ConsumerState<_DealForm> {
           ],
 
           const SizedBox(height: 14),
-          const _FormLabel('PICKUP WINDOW'),
-          TextFormField(
-            controller: _window,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: _field(
-              'e.g. Today 6:00 PM – 8:30 PM',
-              icon: Icons.schedule_rounded,
-            ),
-            validator: (v) => (v == null || v.trim().length < 4)
-                ? 'Specify pickup time window'
-                : null,
-          ),
-          const SizedBox(height: 6),
-
-          // Quick Window Presets
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              _WindowPresetChip(
-                'Today 17:30 – 19:30',
-                onTap: () =>
-                    setState(() => _window.text = 'Today 17:30 – 19:30'),
-              ),
-              _WindowPresetChip(
-                'Tonight 20:00 – 21:30',
-                onTap: () =>
-                    setState(() => _window.text = 'Tonight 20:00 – 21:30'),
-              ),
-              _WindowPresetChip(
-                'Tomorrow 08:30 – 10:30',
-                onTap: () =>
-                    setState(() => _window.text = 'Tomorrow 08:30 – 10:30'),
-              ),
-            ],
+          _UberDropdown(
+            label: 'PICKUP WINDOW',
+            hint: 'Select pickup time window',
+            icon: Icons.schedule_rounded,
+            value: _window.text.isNotEmpty ? _window.text : null,
+            hasError: _window.text.isEmpty && _error != null,
+            errorText: _window.text.isEmpty ? 'Pickup window is required' : null,
+            onTap: _pickPickupWindow,
           ),
 
           const SizedBox(height: 14),
-          const _FormLabel('UNITS AVAILABLE IN SURPLUS'),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _qty,
-                  keyboardType: TextInputType.number,
-                  decoration: _field(
-                    'e.g. 6',
-                    icon: Icons.inventory_2_outlined,
-                  ),
-                  onChanged: (_) => setState(() {}),
-                  validator: (v) {
-                    final n = int.tryParse((v ?? '').trim());
-                    if (n == null || n <= 0) return 'At least one pack';
-                    final sold =
-                        (widget.existing?.quantityTotal ?? 0) -
-                        (widget.existing?.quantityRemaining ?? 0);
-                    if (n < sold)
-                      return 'Total cannot be below $sold units already sold';
-                    return null;
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              _QuickQtyButton(
-                '+5',
-                onTap: () {
-                  final current = int.tryParse(_qty.text.trim()) ?? 0;
-                  setState(() => _qty.text = '${current + 5}');
-                },
-              ),
-              const SizedBox(width: 6),
-              _QuickQtyButton(
-                '+10',
-                onTap: () {
-                  final current = int.tryParse(_qty.text.trim()) ?? 0;
-                  setState(() => _qty.text = '${current + 10}');
-                },
-              ),
-            ],
+          _UberDropdown(
+            label: 'UNITS AVAILABLE IN SURPLUS',
+            hint: 'Select available packs',
+            icon: Icons.inventory_2_outlined,
+            value: _qty.text.isNotEmpty
+                ? '${_qty.text} ${_qty.text == "1" ? "pack" : "packs"} available'
+                : null,
+            hasError: _qty.text.isEmpty && _error != null,
+            errorText: _qty.text.isEmpty ? 'Units available is required' : null,
+            onTap: _pickUnitsAvailable,
           ),
 
           if (_error != null) ...[
@@ -2777,62 +2813,282 @@ class _DealFormState extends ConsumerState<_DealForm> {
   }
 }
 
-class _WindowPresetChip extends StatelessWidget {
+class _UberDropdown extends StatelessWidget {
   final String label;
+  final String? value;
+  final String hint;
+  final IconData? icon;
   final VoidCallback onTap;
+  final bool hasError;
+  final String? errorText;
 
-  const _WindowPresetChip(this.label, {required this.onTap});
+  const _UberDropdown({
+    required this.label,
+    required this.hint,
+    required this.onTap,
+    this.value,
+    this.icon,
+    this.hasError = false,
+    this.errorText,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: MK.lineSoft,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: MK.line),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 10,
-            color: MerchantTheme.textDark,
-            fontWeight: FontWeight.bold,
+    final hasVal = value != null && value!.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _FormLabel(label),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(12),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: hasError
+                      ? MerchantTheme.roseDanger
+                      : (hasVal
+                          ? MerchantTheme.brandGreen.withValues(alpha: 0.6)
+                          : MerchantTheme.cardBorder),
+                  width: hasVal ? 1.4 : 1.0,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  if (icon != null) ...[
+                    Icon(
+                      icon,
+                      size: 20,
+                      color: hasVal
+                          ? MerchantTheme.brandDeepGreen
+                          : MerchantTheme.textMuted,
+                    ),
+                    const SizedBox(width: 10),
+                  ],
+                  Expanded(
+                    child: Text(
+                      hasVal ? value! : hint,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: hasVal ? FontWeight.w700 : FontWeight.w500,
+                        color: hasVal
+                            ? MerchantTheme.textDark
+                            : MerchantTheme.textMuted,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F4F6),
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    child: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 18,
+                      color: Color(0xFF4B5563),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
-      ),
+        if (hasError && errorText != null) ...[
+          const SizedBox(height: 5),
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Text(
+              errorText!,
+              style: const TextStyle(
+                fontSize: 11,
+                color: MerchantTheme.roseDanger,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
 
-class _QuickQtyButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-
-  const _QuickQtyButton(this.label, {required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton(
-      style: OutlinedButton.styleFrom(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        side: const BorderSide(color: MerchantTheme.cardBorder),
-      ),
-      onPressed: onTap,
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontWeight: FontWeight.w900,
-          fontSize: 12,
-          color: MerchantTheme.brandDeepGreen,
+Future<T?> _showUberPicker<T>({
+  required BuildContext context,
+  required String title,
+  required List<T> items,
+  required T? selectedItem,
+  required String Function(T) labelOf,
+  Widget Function(T)? leadingOf,
+  String? Function(T)? subtitleOf,
+  bool Function(T item, T? current)? isSelected,
+}) {
+  return showModalBottomSheet<T>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (ctx) {
+      return Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(ctx).size.height * 0.72,
         ),
-      ),
-    );
-  }
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                width: 44,
+                height: 4.5,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 14, 16, 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF111827),
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () => Navigator.pop(ctx),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF3F4F6),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close_rounded,
+                          size: 18,
+                          color: Color(0xFF4B5563),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  itemCount: items.length,
+                  separatorBuilder: (context, index) => const Divider(
+                    height: 1,
+                    thickness: 1,
+                    indent: 16,
+                    endIndent: 16,
+                    color: Color(0xFFF8FAFC),
+                  ),
+                  itemBuilder: (ctx, i) {
+                    final item = items[i];
+                    final sel = isSelected != null
+                        ? isSelected(item, selectedItem)
+                        : item == selectedItem;
+                    final leading = leadingOf?.call(item);
+                    final sub = subtitleOf?.call(item);
+
+                    return InkWell(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        Navigator.pop(ctx, item);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 13,
+                        ),
+                        color: sel
+                            ? MerchantTheme.brandTint.withValues(alpha: 0.35)
+                            : Colors.transparent,
+                        child: Row(
+                          children: [
+                            if (leading != null) ...[
+                              leading,
+                              const SizedBox(width: 14),
+                            ],
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    labelOf(item),
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight:
+                                          sel ? FontWeight.w800 : FontWeight.w600,
+                                      color: sel
+                                          ? MerchantTheme.brandDeepGreen
+                                          : const Color(0xFF1F2937),
+                                    ),
+                                  ),
+                                  if (sub != null && sub.isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      sub,
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        color: Color(0xFF6B7280),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            if (sel)
+                              const Icon(
+                                Icons.check_circle_rounded,
+                                color: MerchantTheme.brandGreen,
+                                size: 20,
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }
 
 /// Instant 1-tap quick template sheet for common surplus packs.

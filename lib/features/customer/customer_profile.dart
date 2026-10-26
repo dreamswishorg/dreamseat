@@ -71,7 +71,7 @@ class _CustomerProfileScreenState
         if (lower.contains('bucket not found')) {
           errMsg = "⚠️ Supabase Bucket Missing:\nIn your Supabase Dashboard, go to Storage -> New Bucket -> Name it 'user-avatars' and toggle Public.";
         } else if (lower.contains('violates row-level security') || lower.contains('403') || lower.contains('unauthorized')) {
-          errMsg = "🔒 Supabase Storage RLS Policy Blocked Upload:\nPlease open your Supabase Dashboard SQL Editor and run the script located at 'supabase/storage_policies.sql' to allow file uploads.";
+          errMsg = "🔒 Supabase Storage RLS Policy Blocked Upload:\nPlease open your Supabase Dashboard SQL Editor and run the script located at 'supabase/FIX_ALL_DATABASE_AND_STORAGE_ERRORS.sql' to allow file uploads.";
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
@@ -84,7 +84,7 @@ class _CustomerProfileScreenState
                 ],
               ),
               content: const Text(
-                "Your Supabase database has Row Level Security (RLS) enabled on Storage, blocking profile picture uploads (Status 403).\n\nTo fix this permanently:\n1. Open your Supabase Dashboard -> SQL Editor.\n2. Copy and execute the script inside 'supabase/storage_policies.sql'.",
+                "Your Supabase database has Row Level Security (RLS) enabled on Storage, blocking profile picture uploads (Status 403).\n\nTo fix this permanently:\n1. Open your Supabase Dashboard -> SQL Editor.\n2. Copy and execute the script inside 'supabase/FIX_ALL_DATABASE_AND_STORAGE_ERRORS.sql'.",
                 style: TextStyle(height: 1.4, fontSize: 13.5),
               ),
               actions: [

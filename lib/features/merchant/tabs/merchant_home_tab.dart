@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import '../../../models/models.dart';
 import '../../../providers/app_state.dart';
 import '../merchant_kit.dart';
-import '../services/merchant_export_service.dart';
 
 class MerchantHomeTab extends ConsumerWidget {
   final BusinessProfile business;
@@ -155,18 +154,10 @@ class MerchantHomeTab extends ConsumerWidget {
       ..sort((a, b) => b.value.revenue.compareTo(a.value.revenue));
     final topProductsCard = _TopProductsCard(topProducts: topProducts);
 
-    final quickActionsCard = _QuickActions(
-      business: business,
-      orders: orders,
-      onVerify: () => navigate(tab: MTab.verify),
-      onListing: () => navigate(tab: MTab.listings, compose: true),
-      onProfile: () => navigate(tab: MTab.shop),
-      onOrders: () => navigate(tab: MTab.orders),
-    );
-
     return ResponsiveCenter(
       maxWidth: 1320,
       child: ListView(
+        cacheExtent: 2000,
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(wide ? 24 : 16, wide ? 20 : 14, wide ? 24 : 16, wide ? 32 : 110),
         children: [
@@ -250,8 +241,6 @@ class MerchantHomeTab extends ConsumerWidget {
                         impactCard,
                         const SizedBox(height: 18),
                         topProductsCard,
-                        const SizedBox(height: 18),
-                        quickActionsCard,
                       ],
                     ),
                   ),
@@ -266,8 +255,6 @@ class MerchantHomeTab extends ConsumerWidget {
             MReveal(delay: 190, child: impactCard),
             const SizedBox(height: 16),
             MReveal(delay: 210, child: topProductsCard),
-            const SizedBox(height: 16),
-            MReveal(delay: 230, child: quickActionsCard),
             const SizedBox(height: 16),
             MReveal(delay: 260, child: activityCard),
           ],
@@ -1034,111 +1021,6 @@ class _MoneyLine extends StatelessWidget {
       );
 }
 
-class _QuickActions extends ConsumerWidget {
-  final BusinessProfile business;
-  final List<Order> orders;
-  final VoidCallback onVerify;
-  final VoidCallback onListing;
-  final VoidCallback onProfile;
-  final VoidCallback onOrders;
-
-  const _QuickActions({
-    required this.business,
-    required this.orders,
-    required this.onVerify,
-    required this.onListing,
-    required this.onProfile,
-    required this.onOrders,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return MCard(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const MSectionHeader(title: 'Quick actions', icon: Icons.flash_on_rounded, iconColor: MK.amber),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _ActionChip(icon: Icons.add_circle_outline_rounded, label: 'New pack', color: MK.brand, onTap: onListing),
-              _ActionChip(icon: Icons.qr_code_scanner_rounded, label: 'Verify code', color: MK.brandDeep, onTap: onVerify),
-              _ActionChip(
-                icon: Icons.upload_file_rounded,
-                label: 'Export orders',
-                color: MK.sky,
-                onTap: () => _export(context, ref),
-              ),
-              _ActionChip(icon: Icons.storefront_rounded, label: 'Shop profile', color: MK.gold, onTap: onProfile),
-              _ActionChip(
-                icon: Icons.refresh_rounded,
-                label: 'Sync data',
-                color: MK.inkSoft,
-                onTap: () async {
-                  final spinner = ref.read(appStateProvider.notifier);
-                  await spinner.refreshOrders();
-                  await spinner.loadMerchantDeals();
-                  if (context.mounted) MToast.ok(context, 'Orders and listings up to date');
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-        ],
-      ),
-    );
-  }
-
-  void _export(BuildContext context, WidgetRef ref) {
-    if (orders.isEmpty) {
-      MToast.info(context, 'Nothing to export yet — you have no orders');
-      return;
-    }
-    final headers = [
-      'Order ID',
-      'Pickup Code',
-      'Food Deal',
-      'Customer',
-      'Status',
-      'Fulfilment',
-      'Paid Price (GHS)',
-      'Regular (GHS)',
-      'Placed Date',
-      'Payout Status',
-    ];
-    final rows = orders
-        .map((o) => [
-              o.id.substring(0, 8).toUpperCase(),
-              o.collectionCode,
-              o.dealTitle,
-              o.customerName,
-              o.status.toUpperCase(),
-              o.fulfillmentType,
-              o.price,
-              o.originalPrice,
-              o.timestamp,
-              o.payoutStatus.toUpperCase(),
-            ])
-        .toList();
-
-    final dataset = ExportDataset(
-      title: 'Merchant Orders & Handover Report',
-      merchantName: business.name,
-      fileNamePrefix: 'orders_report',
-      headers: headers,
-      rows: rows,
-      summaryMetrics: {
-        'Total Orders': '${orders.length}',
-        'Completed Handed Over': '${orders.where((o) => o.status == 'collected').length}',
-        'Gross Sales': 'GHS ${orders.where((o) => o.status == 'collected').fold<double>(0, (s, o) => s + o.price).toStringAsFixed(2)}',
-      },
-    );
-    MerchantExportService.showExportDialog(context, dataset: dataset);
-  }
-}
 
 class _TopProductsCard extends StatelessWidget {
   final List<MapEntry<String, ({int count, double revenue})>> topProducts;
@@ -1230,35 +1112,7 @@ class _TopProductsCard extends StatelessWidget {
   }
 }
 
-class _ActionChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
 
-  const _ActionChip({required this.icon, required this.label, required this.color, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) => MPressable(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.09),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: color.withValues(alpha: 0.24)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 17, color: color),
-              const SizedBox(width: 8),
-              Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: color)),
-            ],
-          ),
-        ),
-      );
-}
 
 class _ActivityRow extends StatelessWidget {
   final Order order;

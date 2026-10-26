@@ -208,8 +208,8 @@ class OrderStatuses {
 // Motion
 // ─────────────────────────────────────────────────────────────
 
-/// Fades and slides its child in once, [delay] ms after it is built.
-class MReveal extends StatefulWidget {
+/// Displays child immediately and stably without re-triggering fade animations on scroll.
+class MReveal extends StatelessWidget {
   final Widget child;
   final int delay;
   final Duration duration;
@@ -224,36 +224,7 @@ class MReveal extends StatefulWidget {
   });
 
   @override
-  State<MReveal> createState() => _MRevealState();
-}
-
-class _MRevealState extends State<MReveal> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(vsync: this, duration: widget.duration);
-  late final Animation<double> _fade = CurvedAnimation(parent: _c, curve: Curves.easeOut);
-  late final Animation<Offset> _slide = Tween<Offset>(begin: widget.offset, end: Offset.zero)
-      .animate(CurvedAnimation(parent: _c, curve: Curves.easeOutCubic));
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.delay == 0) {
-      _c.forward();
-    } else {
-      Future.delayed(Duration(milliseconds: widget.delay), () {
-        if (mounted) _c.forward();
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) =>
-      FadeTransition(opacity: _fade, child: SlideTransition(position: _slide, child: widget.child));
+  Widget build(BuildContext context) => child;
 }
 
 /// Counts from 0 to [value] with an easing curve.

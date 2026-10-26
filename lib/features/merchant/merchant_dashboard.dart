@@ -126,7 +126,12 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
           onVerifyCode: () => _go(tab: MTab.verify),
           isWide: isWide,
         ),
-        Expanded(child: tabs[selectedIndex]),
+        Expanded(
+          child: IndexedStack(
+            index: selectedIndex,
+            children: tabs,
+          ),
+        ),
       ],
     );
 
@@ -160,6 +165,16 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
               ),
             )
           : null,
+      bottomNavigationBar: isPhone
+          ? _BottomNav(
+              selectedIndex: phoneSelectedIndex,
+              orderBadge: openCount,
+              items: phoneNavItems,
+              onTap: (idx) {
+                _go(tab: kPhoneBottomTabs[idx]);
+              },
+            )
+          : null,
       body: isWide
           ? Row(
               children: [
@@ -176,27 +191,9 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
                 Expanded(child: body),
               ],
             )
-          : Stack(
-              children: [
-                Positioned.fill(
-                  child: SafeArea(
-                    bottom: false,
-                    child: Padding(
-                      padding: EdgeInsets.only(bottom: isPhone ? 80 : 0),
-                      child: body,
-                    ),
-                  ),
-                ),
-                if (isPhone)
-                  _BottomNav(
-                    selectedIndex: phoneSelectedIndex,
-                    orderBadge: openCount,
-                    items: phoneNavItems,
-                    onTap: (idx) {
-                      _go(tab: kPhoneBottomTabs[idx]);
-                    },
-                  ),
-              ],
+          : SafeArea(
+              bottom: false,
+              child: body,
             ),
     );
   }
@@ -554,26 +551,24 @@ class _BottomNav extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => Positioned(
-        left: 18,
-        right: 18,
-        bottom: 12,
-        child: Container(
-          height: 64,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(36),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.10),
-                blurRadius: 24,
-                offset: const Offset(0, 6),
-              ),
-            ],
+  Widget build(BuildContext context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
           ),
-          child: SafeArea(
-            top: false,
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x0A000000),
+              blurRadius: 10,
+              offset: Offset(0, -3),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 58,
             child: Row(
               children: List.generate(items.length, (i) {
                 final selected = i == selectedIndex;
@@ -581,89 +576,63 @@ class _BottomNav extends StatelessWidget {
                 final showBadge = i == kPhoneBottomTabs.indexOf(MTab.orders) && orderBadge > 0;
 
                 return Expanded(
-                  child: MPressable(
+                  child: InkWell(
                     onTap: () {
                       HapticFeedback.selectionClick();
                       onTap(i);
                     },
-                    child: SizedBox.expand(
-                      child: Center(
-                        child: selected
-                            ? Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 4),
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 220),
-                                    curve: Curves.easeOutCubic,
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    splashColor: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                    highlightColor: Colors.transparent,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Icon(
+                                selected ? item.$2 : item.$1,
+                                size: 22,
+                                color: selected ? AppTheme.primaryGreen : const Color(0xFF64748B),
+                              ),
+                              if (showBadge)
+                                Positioned(
+                                  top: -3,
+                                  right: -8,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                    constraints: const BoxConstraints(minWidth: 15, minHeight: 15),
                                     decoration: BoxDecoration(
-                                      color: AppTheme.primaryGreen,
-                                      borderRadius: BorderRadius.circular(22),
+                                      color: AppTheme.errorRed,
+                                      borderRadius: BorderRadius.circular(9),
                                     ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(item.$2, color: Colors.white, size: 17),
-                                        const SizedBox(width: 5),
-                                        Text(
-                                          item.$3,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w800,
-                                            fontSize: 12.5,
-                                          ),
-                                        ),
-                                      ],
+                                    child: Text(
+                                      '$orderBadge',
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 8.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              )
-                            : Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Stack(
-                                    clipBehavior: Clip.none,
-                                    children: [
-                                      Icon(item.$1, size: 21, color: AppTheme.mutedGrey),
-                                      if (showBadge)
-                                        Positioned(
-                                          top: -4,
-                                          right: -9,
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                            constraints: const BoxConstraints(minWidth: 15, minHeight: 15),
-                                            decoration: BoxDecoration(
-                                              color: AppTheme.errorRed,
-                                              borderRadius: BorderRadius.circular(9),
-                                            ),
-                                            child: Text(
-                                              '$orderBadge',
-                                              textAlign: TextAlign.center,
-                                              style: const TextStyle(
-                                                fontSize: 8.5,
-                                                fontWeight: FontWeight.w800,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    item.$3,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppTheme.mutedGrey,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            item.$3,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                              color: selected ? AppTheme.primaryGreen : const Color(0xFF64748B),
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

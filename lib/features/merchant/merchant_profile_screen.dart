@@ -215,10 +215,11 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
       maxWidth: 1140,
       child: ListView(
         physics: const BouncingScrollPhysics(),
+        cacheExtent: 2000,
         padding: EdgeInsets.fromLTRB(wide ? 24 : 16, wide ? 20 : 14, wide ? 24 : 16, wide ? 28 : 110),
         children: [
           MReveal(child: _ShopHeader(business: business, busy: _busy, onLogo: () => _uploadImage(cover: false), onCover: () => _uploadImage(cover: true))),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
           MReveal(
             delay: 60,
             child: MCard(
@@ -262,6 +263,7 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
                       icon: Icons.star_outline_rounded,
                       label: 'Rating',
                       value: business.rating <= 0 ? 'Not rated yet' : '${business.rating.toStringAsFixed(1)} / 5.0',
+                      showDivider: false,
                     ),
                     if (business.description.isNotEmpty) ...[
                       const SizedBox(height: 12),
@@ -387,7 +389,7 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
           MReveal(
             delay: 80,
             child: MCard(
@@ -417,16 +419,17 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
                     label: 'Provider',
                     value: business.payoutProvider.isEmpty ? 'Not set — payouts cannot be sent' : business.payoutProvider,
                     valueColor: business.payoutProvider.isEmpty ? MK.danger : MK.ink,
+                    showDivider: business.hasPayoutAccount,
                   ),
                   if (business.hasPayoutAccount) ...[
                     _InfoLine(icon: Icons.person_outline_rounded, label: 'Account name', value: business.payoutAccountName),
-                    _InfoLine(icon: Icons.tag_rounded, label: 'Account / wallet number', value: business.payoutAccountNumber),
+                    _InfoLine(icon: Icons.tag_rounded, label: 'Number', value: business.payoutAccountNumber, showDivider: false),
                   ],
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
           MReveal(
             delay: 100,
             child: MCard(
@@ -467,7 +470,7 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
           MReveal(
             delay: 140,
             child: MCard(
@@ -493,7 +496,7 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
           MReveal(
             delay: 180,
             child: MCard(
@@ -663,24 +666,60 @@ class _InfoLine extends StatelessWidget {
   final String value;
   final Color? valueColor;
   final Widget? action;
+  final bool showDivider;
 
-  const _InfoLine({required this.icon, required this.label, required this.value, this.valueColor, this.action});
+  const _InfoLine({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.valueColor,
+    this.action,
+    this.showDivider = true,
+  });
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 7),
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          border: showDivider
+              ? const Border(
+                  bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1),
+                )
+              : null,
+        ),
         child: Row(
           children: [
-            Icon(icon, size: 16, color: MK.inkSoft),
-            const SizedBox(width: 10),
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+              ),
+              child: Icon(icon, size: 15, color: MK.inkSoft),
+            ),
+            const SizedBox(width: 12),
             SizedBox(
-              width: 78,
-              child: Text(label, style: const TextStyle(fontSize: 11.5, color: MK.inkSoft, fontWeight: FontWeight.w700)),
+              width: 110,
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: MK.inkSoft,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.1,
+                ),
+              ),
             ),
             Expanded(
               child: Text(
                 value,
-                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: valueColor ?? MK.ink),
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w800,
+                  color: valueColor ?? MK.ink,
+                ),
               ),
             ),
             if (action != null) ...[const SizedBox(width: 8), action!],
@@ -1067,7 +1106,7 @@ class _PayoutAccountFormState extends ConsumerState<_PayoutAccountForm> {
       return;
     }
     if (number.length < 8) {
-      setState(() => _error = 'Enter a valid wallet or account number.');
+      setState(() => _error = 'Enter a valid number.');
       return;
     }
     setState(() {
@@ -1131,7 +1170,7 @@ class _PayoutAccountFormState extends ConsumerState<_PayoutAccountForm> {
           _Field(label: 'ACCOUNT NAME', controller: _name, icon: Icons.person_outline_rounded, hint: 'Name registered on the account', enabled: !_busy),
           const SizedBox(height: 14),
           _Field(
-            label: _provider == 'Bank account' ? 'ACCOUNT NUMBER' : 'WALLET NUMBER',
+            label: 'NUMBER',
             controller: _number,
             icon: Icons.tag_rounded,
             keyboardType: TextInputType.number,

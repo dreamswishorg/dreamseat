@@ -446,10 +446,10 @@ class SupabaseService {
     } catch (e) {
       final errStr = e.toString().toLowerCase();
       if (errStr.contains('bucket not found') || errStr.contains('resource was not found') || errStr.contains('400') || errStr.contains('bad request')) {
-        throw Exception("Storage Bucket '$bucket' not found or blocked (Error 400). Please copy and execute the script 'supabase/storage_policies.sql' in your Supabase Dashboard SQL Editor to create public buckets!");
+        throw Exception("Storage Bucket '$bucket' not found or blocked (Error 400). Please copy and execute the script 'supabase/FIX_ALL_DATABASE_AND_STORAGE_ERRORS.sql' in your Supabase Dashboard SQL Editor to create public buckets!");
       }
       if (errStr.contains('violates row-level security') || errStr.contains('403') || errStr.contains('unauthorized')) {
-        throw Exception("Storage permission error (403): Row Level Security policy blocked image upload. Please execute 'supabase/storage_policies.sql' in your Supabase Dashboard SQL Editor.");
+        throw Exception("Storage permission error (403): Row Level Security policy blocked image upload. Please execute 'supabase/FIX_ALL_DATABASE_AND_STORAGE_ERRORS.sql' in your Supabase Dashboard SQL Editor.");
       }
       throw Exception('Failed to upload image: $e');
     }
@@ -556,10 +556,10 @@ class SupabaseService {
     } catch (e) {
       final errStr = e.toString().toLowerCase();
       if (errStr.contains('bucket not found') || errStr.contains('resource was not found') || errStr.contains('400') || errStr.contains('bad request')) {
-        throw Exception("Storage Bucket 'user-avatars' not found or blocked (Error 400). Please copy and execute the script 'supabase/storage_policies.sql' in your Supabase Dashboard SQL Editor to create public buckets!");
+        throw Exception("Storage Bucket 'user-avatars' not found or blocked (Error 400). Please copy and execute the script 'supabase/FIX_ALL_DATABASE_AND_STORAGE_ERRORS.sql' in your Supabase Dashboard SQL Editor to create public buckets!");
       }
       if (errStr.contains('violates row-level security') || errStr.contains('403') || errStr.contains('unauthorized')) {
-        throw Exception("Storage permission error (403): Row Level Security policy blocked image upload. Please execute 'supabase/storage_policies.sql' in your Supabase Dashboard SQL Editor.");
+        throw Exception("Storage permission error (403): Row Level Security policy blocked image upload. Please execute 'supabase/FIX_ALL_DATABASE_AND_STORAGE_ERRORS.sql' in your Supabase Dashboard SQL Editor.");
       }
       rethrow;
     }
@@ -649,8 +649,8 @@ class SupabaseService {
     String? payoutAccountName,
     String? payoutAccountNumber,
   }) async {
+    final updates = <String, dynamic>{};
     try {
-      final updates = <String, dynamic>{};
       if (name != null) updates['name'] = name;
       if (description != null) updates['description'] = description;
       if (category != null) updates['category'] = category;
@@ -665,6 +665,25 @@ class SupabaseService {
 
       await _db.from('businesses').update(updates).eq('id', businessId);
     } on PostgrestException catch (e) {
+      if (e.message.contains('payout_account_name') ||
+          e.message.contains('payout_provider') ||
+          e.message.contains('payout_account_number') ||
+          e.message.contains('phone')) {
+        // Attempt fallback update without payout/phone fields if user modified other fields
+        final basicUpdates = Map<String, dynamic>.from(updates)
+          ..remove('payout_account_name')
+          ..remove('payout_provider')
+          ..remove('payout_account_number')
+          ..remove('phone');
+        if (basicUpdates.isNotEmpty) {
+          try {
+            await _db.from('businesses').update(basicUpdates).eq('id', businessId);
+          } catch (_) {}
+        }
+        throw Exception(
+          'Could not find payout columns in the database. Please execute "supabase/FIX_ALL_DATABASE_AND_STORAGE_ERRORS.sql" in your Supabase Dashboard SQL Editor.',
+        );
+      }
       throw Exception('Failed to update business profile: ${e.message}');
     } catch (e) {
       throw Exception('Failed to update business profile: $e');
@@ -1123,14 +1142,25 @@ class SupabaseService {
       }
     } on PostgrestException catch (e) {
       debugPrint('SUPABASE UPDATE ORDER STATUS ERROR: ${e.message} (code: ${e.code})');
-      if (e.code == '23514') {
+      if (e.message.contains('does not exist') || e.message.contains('column')) {
+        // Fallback: If tracking columns are missing in DB, try updating just the status
+        if (updates.length > 1) {
+          try {
+            final fallbackRows = await _db
+                .from('orders')
+                .update({'status': status})
+                .eq('id', orderId)
+                .select('id');
+            if (fallbackRows.isNotEmpty) return;
+          } catch (_) {}
+        }
         throw Exception(
-          'The database still rejects the "$status" status. Run supabase/fix_merchant_order_status_tracking.sql once to widen the order status list.',
+          'Missing order columns in the database. Run supabase/FIX_ALL_DATABASE_AND_STORAGE_ERRORS.sql once.',
         );
       }
-      if (e.message.contains('does not exist') || e.message.contains('column')) {
+      if (e.code == '23514') {
         throw Exception(
-          'Missing order columns in the database. Run supabase/fix_merchant_order_status_tracking.sql once.',
+          'The database still rejects the "$status" status. Run supabase/FIX_ALL_DATABASE_AND_STORAGE_ERRORS.sql once to widen the order status list.',
         );
       }
       throw Exception('Failed to update order status: ${e.message}');
@@ -1578,7 +1608,7 @@ class SupabaseService {
       debugPrint('toggleUserSuspension update response: $res');
       if ((res as List).isEmpty) {
         throw Exception(
-            'Suspension was not saved (blocked by database permissions). Run supabase/fix_suspension_ratings_payout.sql in the Supabase SQL editor.');
+            'Suspension was not saved (blocked by database permissions). Run supabase/FIX_ALL_DATABASE_AND_STORAGE_ERRORS.sql in the Supabase SQL editor.');
       }
     } on PostgrestException catch (e) {
       throw Exception('Failed to toggle user suspension: ${e.message}');
