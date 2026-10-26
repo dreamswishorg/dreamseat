@@ -123,7 +123,7 @@ class MerchantExportService {
             pw.Container(
               padding: const pw.EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: pw.BoxDecoration(
-                color: PdfColor.fromHex('#0B1320'),
+                color: PdfColor.fromHex('#2E7D32'),
                 borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
               ),
               child: pw.Row(
@@ -135,7 +135,7 @@ class MerchantExportService {
                       pw.Text(
                         'DREAMEATS MERCHANT PORTAL',
                         style: pw.TextStyle(
-                          color: PdfColor.fromHex('#34D399'),
+                          color: PdfColors.white,
                           fontSize: 10,
                           fontWeight: pw.FontWeight.bold,
                         ),
@@ -166,7 +166,7 @@ class MerchantExportService {
                       pw.Text(
                         'Generated: $nowStr',
                         style: pw.TextStyle(
-                          color: PdfColor.fromHex('#94A3B8'),
+                          color: PdfColor.fromHex('#E8F5E9'),
                           fontSize: 9,
                         ),
                       ),
@@ -196,7 +196,7 @@ class MerchantExportService {
                           style: pw.TextStyle(
                             fontSize: 13,
                             fontWeight: pw.FontWeight.bold,
-                            color: PdfColor.fromHex('#0F172A'),
+                            color: PdfColor.fromHex('#1E293B'),
                           ),
                         ),
                         pw.SizedBox(height: 2),
@@ -232,7 +232,7 @@ class MerchantExportService {
                 fontSize: 8.5,
               ),
               headerDecoration: pw.BoxDecoration(
-                color: PdfColor.fromHex('#10B981'),
+                color: PdfColor.fromHex('#2E7D32'),
               ),
               rowDecoration: const pw.BoxDecoration(color: PdfColors.white),
               oddRowDecoration: pw.BoxDecoration(
@@ -253,11 +253,11 @@ class MerchantExportService {
               children: [
                 pw.Text(
                   'Confidential financial report for ${dataset.merchantName}',
-                  style: pw.TextStyle(fontSize: 8, color: PdfColor.fromHex('#94A3B8')),
+                  style: pw.TextStyle(fontSize: 8, color: PdfColor.fromHex('#64748B')),
                 ),
                 pw.Text(
                   'DreamEats Surplus Food Rescue Platform',
-                  style: pw.TextStyle(fontSize: 8, color: PdfColor.fromHex('#94A3B8')),
+                  style: pw.TextStyle(fontSize: 8, color: PdfColor.fromHex('#64748B')),
                 ),
               ],
             ),
@@ -423,7 +423,7 @@ class _ExportModalContentState extends State<_ExportModalContent> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: const Color(0xFFCBD5E1),
+                color: MerchantTheme.navBorder,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -433,10 +433,10 @@ class _ExportModalContentState extends State<_ExportModalContent> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: MerchantTheme.emeraldLightBg,
+                  color: MerchantTheme.brandTint,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.file_download_outlined, color: MerchantTheme.emeraldPrimary, size: 22),
+                child: const Icon(Icons.file_download_outlined, color: MerchantTheme.brandGreen, size: 22),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -477,7 +477,7 @@ class _ExportModalContentState extends State<_ExportModalContent> {
             title: 'Excel Workbook (.xlsx)',
             subtitle: 'Rich spreadsheet with formatted headers and summary metrics',
             icon: Icons.table_chart_rounded,
-            color: const Color(0xFF16A34A),
+            color: MerchantTheme.brandGreen,
           ),
           const SizedBox(height: 10),
           _buildFormatOption(
@@ -485,7 +485,7 @@ class _ExportModalContentState extends State<_ExportModalContent> {
             title: 'PDF Document (.pdf)',
             subtitle: 'Print-ready formatted document with store header & page layout',
             icon: Icons.picture_as_pdf_rounded,
-            color: const Color(0xFFDC2626),
+            color: MerchantTheme.roseDanger,
           ),
           const SizedBox(height: 10),
           _buildFormatOption(
@@ -493,7 +493,7 @@ class _ExportModalContentState extends State<_ExportModalContent> {
             title: 'CSV Data File (.csv)',
             subtitle: 'Standard comma-delimited data with UTF-8 BOM encoding',
             icon: Icons.data_array_rounded,
-            color: const Color(0xFF2563EB),
+            color: MerchantTheme.skyInfo,
           ),
 
           const SizedBox(height: 20),
@@ -503,7 +503,7 @@ class _ExportModalContentState extends State<_ExportModalContent> {
             height: 48,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: MerchantTheme.emeraldPrimary,
+                backgroundColor: MerchantTheme.brandGreen,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -621,7 +621,7 @@ class _ExportModalContentState extends State<_ExportModalContent> {
                   shape: BoxShape.circle,
                   color: isSelected ? color : Colors.transparent,
                   border: Border.all(
-                    color: isSelected ? color : const Color(0xFF94A3B8),
+                    color: isSelected ? color : MerchantTheme.textTertiary,
                     width: 2,
                   ),
                 ),

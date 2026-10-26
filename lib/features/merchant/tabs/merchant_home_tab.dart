@@ -73,9 +73,9 @@ class MerchantHomeTab extends ConsumerWidget {
           const SizedBox(height: 18),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F1),
-              borderRadius: BorderRadius.circular(MK.rSm),
+            decoration: const BoxDecoration(
+              color: MK.lineSoft,
+              borderRadius: BorderRadius.all(Radius.circular(MK.rSm)),
             ),
             child: Row(
               children: [
@@ -207,13 +207,13 @@ class MerchantHomeTab extends ConsumerWidget {
             delay: 80,
             child: _StatGrid(
               tiles: [
-                _Tile('New orders', newOrders.length.toDouble(), MK.coral, Icons.inbox_rounded, 'needs action',
+                _Tile('New orders', newOrders.length.toDouble(), MK.gold, Icons.inbox_rounded, 'needs action',
                     () => navigate(tab: MTab.orders, filter: 'reserved')),
                 _Tile('In kitchen', preparing.length.toDouble(), MK.amber, Icons.soup_kitchen_rounded, 'being packed',
                     () => navigate(tab: MTab.orders, filter: 'preparing')),
                 _Tile('Ready for pickup', ready.length.toDouble(), MK.brand, Icons.shopping_bag_rounded, 'at the counter',
                     () => navigate(tab: MTab.orders, filter: 'ready')),
-                _Tile('Revenue · 7 days', revenue7d, MK.grape, Icons.trending_up_rounded, 'collected orders',
+                _Tile('Revenue · 7 days', revenue7d, MK.brandDeep, Icons.trending_up_rounded, 'collected orders',
                     () => navigate(tab: MTab.orders, filter: 'collected'), money: true),
               ],
             ),
@@ -378,11 +378,9 @@ class _HeroCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: MK.heroGradient,
-        borderRadius: BorderRadius.circular(MK.rLg),
+        borderRadius: BorderRadius.circular(MK.rHero),
         border: Border.all(color: Colors.white.withValues(alpha: 0.22), width: 1.2),
-        boxShadow: [
-          BoxShadow(color: MK.brandDeep.withValues(alpha: 0.32), blurRadius: 30, offset: const Offset(0, 14)),
-        ],
+        boxShadow: MK.brandShadow(),
       ),
       child: Stack(
         children: [
@@ -417,7 +415,7 @@ class _HeroCard extends StatelessWidget {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    MPulseDot(color: business.isApproved ? MK.brandGlow : MK.amber, size: 6.5),
+                                    MPulseDot(color: business.isApproved ? Colors.white : MK.amber, size: 6.5),
                                     const SizedBox(width: 6),
                                     Text(
                                       business.isApproved ? 'VERIFIED STORE' : 'IN REVIEW',
@@ -732,10 +730,10 @@ class _QueueStrip extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
                   decoration: BoxDecoration(
-                    color: stages[i].count > 0 ? stages[i].color.withValues(alpha: 0.08) : const Color(0xFFF8FAFC),
+                    color: stages[i].count > 0 ? stages[i].color.withValues(alpha: 0.08) : MK.surfaceAlt,
                     borderRadius: BorderRadius.circular(MK.rSm),
                     border: Border.all(
-                      color: stages[i].count > 0 ? stages[i].color.withValues(alpha: 0.38) : const Color(0xFFE2E8F0),
+                      color: stages[i].count > 0 ? stages[i].color.withValues(alpha: 0.38) : MK.line,
                       width: stages[i].count > 0 ? 1.5 : 1,
                     ),
                   ),
@@ -781,7 +779,7 @@ class _QueueStrip extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 3),
                 padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
                 decoration: BoxDecoration(
-                  color: stages[i].count > 0 ? stages[i].color.withValues(alpha: 0.09) : const Color(0xFFF7F9F7),
+                  color: stages[i].count > 0 ? stages[i].color.withValues(alpha: 0.09) : const Color(0xFFF5F7F6),
                   borderRadius: BorderRadius.circular(MK.rSm),
                   border: Border.all(
                     color: stages[i].count > 0 ? stages[i].color.withValues(alpha: 0.32) : MK.line,
@@ -836,7 +834,7 @@ class _RevenueCard extends StatelessWidget {
             title: 'Last 7 days',
             subtitle: maxValue == 0 ? 'No completed orders collected yet' : MK.money(weekTotal),
             icon: Icons.bar_chart_rounded,
-            iconColor: MK.grape,
+            iconColor: MK.brandDeep,
           ),
           const SizedBox(height: 18),
           SizedBox(
@@ -844,7 +842,7 @@ class _RevenueCard extends StatelessWidget {
             child: maxValue == 0
                 ? Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF7F9F7),
+                      color: const Color(0xFFF5F7F6),
                       borderRadius: BorderRadius.circular(MK.rSm),
                     ),
                     child: const Center(
@@ -986,9 +984,9 @@ class _ImpactCard extends StatelessWidget {
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F1),
-              borderRadius: BorderRadius.circular(10),
+            decoration: const BoxDecoration(
+              color: MK.lineSoft,
+              borderRadius: BorderRadius.all(Radius.circular(10)),
             ),
             child: Text(
               'Payout figures are your order totals less the ${commissionPct.toStringAsFixed(0)}% platform commission. '
@@ -1057,14 +1055,14 @@ class _QuickActions extends ConsumerWidget {
             runSpacing: 10,
             children: [
               _ActionChip(icon: Icons.add_circle_outline_rounded, label: 'New pack', color: MK.brand, onTap: onListing),
-              _ActionChip(icon: Icons.qr_code_scanner_rounded, label: 'Verify code', color: MK.grape, onTap: onVerify),
+              _ActionChip(icon: Icons.qr_code_scanner_rounded, label: 'Verify code', color: MK.brandDeep, onTap: onVerify),
               _ActionChip(
                 icon: Icons.upload_file_rounded,
                 label: 'Export orders',
                 color: MK.sky,
                 onTap: () => _export(context, ref),
               ),
-              _ActionChip(icon: Icons.storefront_rounded, label: 'Shop profile', color: MK.coral, onTap: onProfile),
+              _ActionChip(icon: Icons.storefront_rounded, label: 'Shop profile', color: MK.gold, onTap: onProfile),
               _ActionChip(
                 icon: Icons.refresh_rounded,
                 label: 'Sync data',
@@ -1154,7 +1152,7 @@ class _TopProductsCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: MK.surfaceAlt,
                 borderRadius: BorderRadius.circular(MK.rSm),
                 border: Border.all(color: MK.line),
               ),
@@ -1197,7 +1195,7 @@ class _TopProductsCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                       child: Stack(
                         children: [
-                          Container(height: 6, color: const Color(0xFFEDF2ED)),
+                          Container(height: 6, color: const Color(0xFFF5F7F6)),
                           FractionallySizedBox(
                             widthFactor: ratio,
                             child: Container(
@@ -1381,7 +1379,7 @@ class _SetupCard extends StatelessWidget {
             title: 'Get shop ready',
             subtitle: '$done of 5 steps done',
             icon: Icons.checklist_rounded,
-            iconColor: MK.coral,
+            iconColor: MK.gold,
             trailing: SizedBox(
               width: 74,
               child: MGauge(
@@ -1406,10 +1404,10 @@ class _SetupCard extends StatelessWidget {
                     height: 32,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: MK.coral.withValues(alpha: 0.1),
+                      color: MK.gold.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(item.icon, size: 16, color: MK.coral),
+                    child: Icon(item.icon, size: 16, color: MK.gold),
                   ),
                   const SizedBox(width: 12),
                   Expanded(

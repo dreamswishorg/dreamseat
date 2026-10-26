@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme.dart';
 import '../../core/ui_utils.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
@@ -130,9 +131,9 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
       backgroundColor: MerchantTheme.canvasBg,
       drawer: !isWide
           ? Drawer(
-              width: 280,
+              width: 240,
               backgroundColor: Colors.white,
-              elevation: 16,
+              elevation: 12,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.horizontal(right: Radius.circular(20)),
               ),
@@ -246,17 +247,10 @@ class _TopBar extends ConsumerWidget {
     final (title, subtitle) = _getMeta();
 
     return Container(
-      padding: EdgeInsets.fromLTRB(isWide ? 24 : 12, isWide ? 12 : 8, isWide ? 20 : 10, isWide ? 12 : 8),
+      padding: EdgeInsets.fromLTRB(isWide ? 24 : 12, isWide ? 14 : 10, isWide ? 20 : 10, isWide ? 14 : 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.92),
-        border: const Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x06000000),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.05))),
       ),
       child: Row(
         children: [
@@ -286,10 +280,10 @@ class _TopBar extends ConsumerWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: isWide ? 18.5 : 16,
-                        fontWeight: FontWeight.w900,
+                        fontSize: isWide ? 21 : 17.5,
+                        fontWeight: FontWeight.w800,
                         color: MK.ink,
-                        letterSpacing: -0.4,
+                        letterSpacing: -0.5,
                       ),
                     ),
                     if (isWide) ...[
@@ -299,13 +293,12 @@ class _TopBar extends ConsumerWidget {
                           HapticFeedback.mediumImpact();
                           MToast.ok(context, 'Storefront is active & discoverable on customer map');
                         },
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(10),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF0FDF4),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFFBBF7D0)),
+                            color: AppTheme.lightGreenBg,
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -314,7 +307,7 @@ class _TopBar extends ConsumerWidget {
                                 width: 7,
                                 height: 7,
                                 decoration: const BoxDecoration(
-                                  color: Color(0xFF16A34A),
+                                  color: AppTheme.primaryGreen,
                                   shape: BoxShape.circle,
                                 ),
                               ),
@@ -322,9 +315,9 @@ class _TopBar extends ConsumerWidget {
                               const Text(
                                 'STORE ONLINE',
                                 style: TextStyle(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF15803D),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.primaryGreen,
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -335,15 +328,16 @@ class _TopBar extends ConsumerWidget {
                     ],
                   ],
                 ),
-                const SizedBox(height: 1),
+                const SizedBox(height: 2),
                 Text(
                   isWide ? subtitle : business.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 11.5,
-                    color: Color(0xFF64748B),
+                    fontSize: 12.5,
+                    color: AppTheme.mutedGrey,
                     fontWeight: FontWeight.w600,
+                    height: 1.4,
                   ),
                 ),
               ],
@@ -400,23 +394,23 @@ class _TopBar extends ConsumerWidget {
                       height: 36,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF16A34A), Color(0xFF15803D)],
+                          colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF16A34A).withValues(alpha: 0.25),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
+                            color: AppTheme.primaryGreen.withValues(alpha: 0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
                       child: Center(
                         child: Text(
                           initial,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14),
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14),
                         ),
                       ),
                     ),
@@ -429,17 +423,17 @@ class _TopBar extends ConsumerWidget {
                             user?.name ?? 'Merchant',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: MK.ink),
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: MK.ink),
                           ),
                           Text(
                             business.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 10, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                            style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey, fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
-                      const Icon(Icons.arrow_drop_down_rounded, color: Color(0xFF64748B), size: 20),
+                      const Icon(Icons.arrow_drop_down_rounded, color: AppTheme.mutedGrey, size: 22),
                     ],
                   ],
                 ),
@@ -468,7 +462,7 @@ class _TopBar extends ConsumerWidget {
                             user?.email ?? '',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                            style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey),
                           ),
                         ],
                       ),
@@ -556,98 +550,122 @@ class _BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Positioned(
-        left: 12,
-        right: 12,
+        left: 18,
+        right: 18,
         bottom: 12,
         child: Container(
+          height: 64,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: MerchantTheme.midnightSidebar,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: MerchantTheme.midnightSidebarBorder, width: 1.2),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(36),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.35),
+                color: Colors.black.withValues(alpha: 0.10),
                 blurRadius: 24,
-                offset: const Offset(0, 8),
+                offset: const Offset(0, 6),
               ),
             ],
           ),
           child: SafeArea(
             top: false,
-            child: SizedBox(
-              height: 64,
-              child: Row(
-                children: List.generate(items.length, (i) {
-                  final selected = i == selectedIndex;
-                  final item = items[i];
-                  final showBadge = i == kPhoneBottomTabs.indexOf(MTab.orders) && orderBadge > 0;
-                  return Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: List.generate(items.length, (i) {
+                final selected = i == selectedIndex;
+                final item = items[i];
+                final showBadge = i == kPhoneBottomTabs.indexOf(MTab.orders) && orderBadge > 0;
+
+                if (selected) {
+                  final tight = MediaQuery.sizeOf(context).width < 380;
+                  return Flexible(
                     child: MPressable(
                       onTap: () {
                         HapticFeedback.selectionClick();
                         onTap(i);
                       },
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 220),
-                                curve: Curves.easeOutCubic,
-                                width: 50,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: selected ? MerchantTheme.midnightActiveGlow : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: selected
-                                      ? Border.all(color: MerchantTheme.emeraldPrimary.withValues(alpha: 0.6), width: 1)
-                                      : null,
-                                ),
-                                child: Icon(
-                                  selected ? item.$2 : item.$1,
-                                  size: 20,
-                                  color: selected ? MerchantTheme.emeraldGlow : const Color(0xFF94A3B8),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeOutCubic,
+                        padding: EdgeInsets.symmetric(horizontal: tight ? 11 : 16, vertical: 9),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryGreen,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(item.$2, color: Colors.white, size: 18),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                item.$3,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12.5,
                                 ),
                               ),
-                              if (showBadge)
-                                Positioned(
-                                  top: -2,
-                                  right: 2,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                                    constraints: const BoxConstraints(minWidth: 16),
-                                    decoration: BoxDecoration(
-                                      color: MerchantTheme.roseDanger,
-                                      borderRadius: BorderRadius.circular(9),
-                                      border: Border.all(color: MerchantTheme.midnightSidebar, width: 1.5),
-                                    ),
-                                    child: Text(
-                                      '$orderBadge',
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.w900, color: Colors.white),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            item.$3,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
-                              color: selected ? Colors.white : const Color(0xFF94A3B8),
-                              letterSpacing: selected ? -0.1 : 0,
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   );
-                }),
-              ),
+                }
+
+                return Expanded(
+                  child: MPressable(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      onTap(i);
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Icon(item.$1, size: 22, color: AppTheme.mutedGrey),
+                            if (showBadge)
+                              Positioned(
+                                top: -3,
+                                right: -8,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                  constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.errorRed,
+                                    borderRadius: BorderRadius.circular(9),
+                                  ),
+                                  child: Text(
+                                    '$orderBadge',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          item.$3,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.mutedGrey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
             ),
           ),
         ),

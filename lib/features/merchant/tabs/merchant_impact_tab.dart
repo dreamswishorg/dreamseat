@@ -36,15 +36,15 @@ class MerchantImpactTab extends ConsumerWidget {
             padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF064E3B), Color(0xFF047857)],
+                colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(26),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF064E3B).withValues(alpha: 0.3),
-                  blurRadius: 18,
+                  color: AppTheme.primaryGreen.withValues(alpha: 0.30),
+                  blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
               ],
@@ -89,7 +89,7 @@ class MerchantImpactTab extends ConsumerWidget {
                         children: [
                           const Text('Waste Diverted', style: TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 4),
-                          Text('${wasteReducedKg.toStringAsFixed(1)} kg', style: const TextStyle(color: Color(0xFF6EE7B7), fontSize: 18, fontWeight: FontWeight.w900)),
+                          Text('${wasteReducedKg.toStringAsFixed(1)} kg', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
                         ],
                       ),
                     ),
@@ -109,7 +109,7 @@ class MerchantImpactTab extends ConsumerWidget {
                         children: [
                           const Text('Water Saved', style: TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 4),
-                          Text('${(waterSavedLitres / 1000).toStringAsFixed(1)}k L', style: const TextStyle(color: Colors.blueAccent, fontSize: 18, fontWeight: FontWeight.w900)),
+                          Text('${(waterSavedLitres / 1000).toStringAsFixed(1)}k L', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
                         ],
                       ),
                     ),

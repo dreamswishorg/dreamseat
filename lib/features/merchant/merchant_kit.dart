@@ -21,57 +21,54 @@ enum MTab { home, orders, listings, verify, financials, impact, shop, reviews, s
 const List<MTab> kMerchantNavTabs = [MTab.home, MTab.orders, MTab.listings, MTab.verify, MTab.shop];
 
 /// Design tokens and building blocks for the DreamEats merchant portal.
+/// Every value is sourced from the customer portal theme (AppTheme).
 class MK {
   MK._();
 
-  static Color get canvas => kIsWeb ? Colors.transparent : const Color(0xFFF8FAFC).withValues(alpha: 0.94);
-  static const Color ink = AppTheme.charcoal;
-  static const Color inkSoft = AppTheme.mutedGrey;
+  static Color get canvas => kIsWeb ? Colors.transparent : AppTheme.lightGrey;
+  static const Color ink = AppTheme.charcoal; // #1E293B
+  static const Color inkSoft = AppTheme.mutedGrey; // #64748B
+  static const Color inkFaint = Color(0xFF94A3B8);
   static const Color line = Color(0xFFE2E8F0);
-  static const Color brand = AppTheme.primaryGreen;
-  static const Color brandDeep = Color(0xFF166534);
-  static const Color brandGlow = Color(0xFF34D399);
-  static const Color amber = Color(0xFFFFB300);
-  static const Color coral = Color(0xFFFF6B4A);
-  static const Color sky = Color(0xFF2563EB);
-  static const Color grape = Color(0xFF7C3AED);
-  static const Color danger = AppTheme.errorRed;
+  static const Color lineSoft = Color(0xFFF1F5F9);
+  static const Color surface = Colors.white;
+  static const Color surfaceAlt = Color(0xFFF8FAFC);
+  static const Color brand = AppTheme.primaryGreen; // #2E7D32
+  static const Color brandDeep = Color(0xFF1B5E20);
+  static const Color brandGlow = AppTheme.secondaryGreen; // #4CAF50
+  static const Color brandTint = AppTheme.lightGreenBg; // #E8F5E9
+  static const Color amber = AppTheme.warningOrange; // #F59E0B
+  static const Color amberTint = Color(0xFFFFF8E1);
+  static const Color gold = AppTheme.goldAccent; // #D97706
+  static const Color goldTint = Color(0xFFFEF3C7);
+  static const Color sky = Color(0xFF3B82F6);
+  static const Color skyTint = Color(0xFFEFF6FF);
+  static const Color danger = AppTheme.errorRed; // #EF4444
+  static const Color dangerTint = Color(0xFFFEF2F2);
 
-  static const double rLg = 26;
-  static const double rMd = 20;
-  static const double rSm = 14;
+  static const double rHero = 26;
+  static const double rLg = 22;
+  static const double rMd = 16;
+  static const double rSm = 12;
+  static const double rXs = 8;
 
-  static List<BoxShadow> get shadow => [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.04),
-          blurRadius: 18,
-          offset: const Offset(0, 6),
-        ),
-        BoxShadow(
-          color: brand.withValues(alpha: 0.03),
-          blurRadius: 26,
-          offset: const Offset(0, 10),
-        ),
-      ];
+  static List<BoxShadow> get shadow => AppTheme.clientCardShadow;
 
-  static List<BoxShadow> get shadowLift => [
+  static List<BoxShadow> get shadowLift => AppTheme.clientElevatedShadow;
+
+  static List<BoxShadow> brandShadow({double alpha = 0.30}) => [
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.08),
-          blurRadius: 26,
-          offset: const Offset(0, 10),
-        ),
-        BoxShadow(
-          color: brand.withValues(alpha: 0.10),
-          blurRadius: 36,
-          offset: const Offset(0, 14),
+          color: brand.withValues(alpha: alpha),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
         ),
       ];
 
+  /// Same hero treatment as the customer portal banners.
   static const LinearGradient heroGradient = LinearGradient(
-    colors: [Color(0xFF0B1320), Color(0xFF131F33), Color(0xFF0F382A)],
+    colors: [brand, brandDeep],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    stops: [0.0, 0.55, 1.0],
   );
 
   static String money(num value) => 'GHS ${AppTheme.formatPrice(value)}';
@@ -124,7 +121,7 @@ class OrderStatuses {
       label: 'Order received',
       shortLabel: 'New',
       emoji: '🧾',
-      color: Color(0xFFF97316),
+      color: MK.amber,
       icon: Icons.inbox_rounded,
       next: 'preparing',
       nextLabel: 'Start preparing',
@@ -134,7 +131,7 @@ class OrderStatuses {
       label: 'In the kitchen',
       shortLabel: 'Preparing',
       emoji: '🍳',
-      color: Color(0xFFD97706),
+      color: MK.gold,
       icon: Icons.soup_kitchen_rounded,
       next: 'ready',
       nextLabel: 'Mark ready',
@@ -164,7 +161,7 @@ class OrderStatuses {
       label: 'Completed',
       shortLabel: 'Done',
       emoji: '✅',
-      color: Color(0xFF0F766E),
+      color: MK.brandDeep,
       icon: Icons.check_circle_rounded,
     ),
     'cancelled': OrderStatusMeta(
@@ -445,13 +442,11 @@ class MCard extends StatelessWidget {
     final card = Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: color ?? Colors.white.withValues(alpha: 0.92),
+        color: color ?? MK.surface,
         borderRadius: BorderRadius.circular(r),
         border: Border.all(
-          color: glow
-              ? MK.brand.withValues(alpha: 0.40)
-              : const Color(0xFFE2E8F0).withValues(alpha: 0.90),
-          width: glow ? 1.4 : 1.1,
+          color: glow ? MK.brand.withValues(alpha: 0.45) : MK.line,
+          width: glow ? 1.4 : 0.9,
         ),
         boxShadow: glow ? MK.shadowLift : MK.shadow,
       ),
@@ -486,13 +481,13 @@ class MSectionHeader extends StatelessWidget {
       children: [
         if (icon != null) ...[
           Container(
-            width: 34,
-            height: 34,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              color: tint.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(11),
+              color: tint == MK.brand ? MK.brandTint : tint.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(MK.rSm),
             ),
-            child: Icon(icon, size: 18, color: tint),
+            child: Icon(icon, size: 19, color: tint),
           ),
           const SizedBox(width: 11),
         ],
@@ -503,17 +498,17 @@ class MSectionHeader extends StatelessWidget {
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 15.5,
-                  fontWeight: FontWeight.w900,
+                  fontSize: 16.5,
+                  fontWeight: FontWeight.w800,
                   color: MK.ink,
-                  letterSpacing: -0.2,
+                  letterSpacing: -0.3,
                 ),
               ),
               if (subtitle != null) ...[
                 const SizedBox(height: 2),
                 Text(
                   subtitle!,
-                  style: const TextStyle(fontSize: 11.5, color: MK.inkSoft, fontWeight: FontWeight.w600),
+                  style: const TextStyle(fontSize: 12.5, color: MK.inkSoft, fontWeight: FontWeight.w600, height: 1.4),
                 ),
               ],
             ],
@@ -549,9 +544,9 @@ class MPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: solid ? color : color.withValues(alpha: 0.11),
-        borderRadius: BorderRadius.circular(9),
-        border: Border.all(color: color.withValues(alpha: solid ? 1 : 0.28), width: 0.9),
+        color: solid ? color : color.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(MK.rXs),
+        border: Border.all(color: color.withValues(alpha: solid ? 1 : 0.22), width: 0.8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -638,7 +633,7 @@ class MChipRow extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                       decoration: BoxDecoration(
-                        color: selected ? Colors.white.withValues(alpha: 0.24) : const Color(0xFFF1F5F1),
+                        color: selected ? Colors.white.withValues(alpha: 0.24) : MK.lineSoft,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -697,19 +692,13 @@ class MStatTile extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    colors: [
-                      color.withValues(alpha: 0.22),
-                      color.withValues(alpha: 0.08),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(MK.rSm),
                 ),
-                child: Icon(icon, size: 18, color: color),
+                child: Icon(icon, size: 19, color: color),
               ),
               const Spacer(),
               if (caption.isNotEmpty)
@@ -717,13 +706,12 @@ class MStatTile extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: color.withValues(alpha: 0.25)),
+                    borderRadius: BorderRadius.circular(MK.rXs),
                   ),
                   child: Text(
                     caption,
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 10.5,
                       fontWeight: FontWeight.w800,
                       color: color,
                     ),
@@ -738,8 +726,8 @@ class MStatTile extends StatelessWidget {
             prefix: prefix,
             suffix: suffix,
             style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
               color: MK.ink,
               letterSpacing: -0.6,
               fontFamily: Theme.of(context).textTheme.bodyLarge?.fontFamily,
@@ -751,8 +739,8 @@ class MStatTile extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
               color: MK.inkSoft,
               letterSpacing: -0.2,
             ),
@@ -896,12 +884,12 @@ class MButton extends StatelessWidget {
     final enabled = onPressed != null && !loading;
     final bg = switch (kind) {
       MKind.primary => MK.brand,
-      MKind.soft => MK.brand.withValues(alpha: 0.10),
+      MKind.soft => MK.brandTint,
       MKind.ghost => Colors.transparent,
       MKind.danger => MK.danger.withValues(alpha: 0.08),
     };
     final border = switch (kind) {
-      MKind.soft => MK.brand.withValues(alpha: 0.28),
+      MKind.soft => MK.brand.withValues(alpha: 0.24),
       MKind.danger => MK.danger.withValues(alpha: 0.3),
       MKind.ghost => MK.line,
       MKind.primary => Colors.transparent,
@@ -913,15 +901,13 @@ class MButton extends StatelessWidget {
         duration: const Duration(milliseconds: 160),
         height: height,
         width: expanded ? double.infinity : null,
-        padding: EdgeInsets.symmetric(horizontal: expanded ? 16 : 18),
+        padding: EdgeInsets.symmetric(horizontal: expanded ? 18 : 20),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: enabled ? bg : bg.withValues(alpha: 0.45),
-          borderRadius: BorderRadius.circular(MK.rSm),
+          borderRadius: BorderRadius.circular(MK.rMd),
           border: Border.all(color: border, width: 1.1),
-          boxShadow: kind == MKind.primary && enabled
-              ? [BoxShadow(color: MK.brand.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))]
-              : const [],
+          boxShadow: kind == MKind.primary && enabled ? MK.brandShadow(alpha: 0.26) : const [],
         ),
         child: loading
             ? SizedBox(
@@ -1358,7 +1344,7 @@ class MThumb extends StatelessWidget {
               width: size,
               height: size,
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F1),
+                color: MK.lineSoft,
                 borderRadius: BorderRadius.circular(radius),
                 border: Border.all(color: MK.line),
               ),
@@ -1465,7 +1451,7 @@ Future<void> showMCsvPreview(BuildContext context, {required String csv, require
           constraints: const BoxConstraints(maxHeight: 260),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F1),
+            color: MK.lineSoft,
             borderRadius: BorderRadius.circular(MK.rSm),
             border: Border.all(color: MK.line),
           ),

@@ -163,7 +163,7 @@ class _MerchantOrdersTabState extends ConsumerState<MerchantOrdersTab> {
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.92),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: MK.line),
                   boxShadow: [
                     BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 2)),
                   ],
@@ -173,13 +173,13 @@ class _MerchantOrdersTabState extends ConsumerState<MerchantOrdersTab> {
                     _OrderKpiItem(
                       label: 'NEEDS ACTION',
                       count: all.where((o) => o.status == 'reserved').length,
-                      color: const Color(0xFFF97316),
+                      color: OrderStatuses.of('reserved').color,
                     ),
                     _vDivider(),
                     _OrderKpiItem(
                       label: 'IN KITCHEN',
                       count: all.where((o) => o.status == 'preparing').length,
-                      color: const Color(0xFFD97706),
+                      color: OrderStatuses.of('preparing').color,
                     ),
                     _vDivider(),
                     _OrderKpiItem(
@@ -242,7 +242,7 @@ class _MerchantOrdersTabState extends ConsumerState<MerchantOrdersTab> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: MK.line),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -261,12 +261,12 @@ class _MerchantOrdersTabState extends ConsumerState<MerchantOrdersTab> {
                               child: Icon(
                                 Icons.grid_view_rounded,
                                 size: 18,
-                                color: !_kanbanMode ? MK.brandDeep : const Color(0xFF64748B),
+                                color: !_kanbanMode ? MK.brandDeep : MK.inkSoft,
                               ),
                             ),
                           ),
                         ),
-                        Container(width: 1, height: 24, color: const Color(0xFFE2E8F0)),
+                        Container(width: 1, height: 24, color: MK.line),
                         Tooltip(
                           message: 'Kitchen Kanban (KDS)',
                           child: InkWell(
@@ -284,7 +284,7 @@ class _MerchantOrdersTabState extends ConsumerState<MerchantOrdersTab> {
                                   Icon(
                                     Icons.view_kanban_rounded,
                                     size: 18,
-                                    color: _kanbanMode ? MK.brandDeep : const Color(0xFF64748B),
+                                    color: _kanbanMode ? MK.brandDeep : MK.inkSoft,
                                   ),
                                   const SizedBox(width: 5),
                                   Text(
@@ -292,7 +292,7 @@ class _MerchantOrdersTabState extends ConsumerState<MerchantOrdersTab> {
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w900,
-                                      color: _kanbanMode ? MK.brandDeep : const Color(0xFF64748B),
+                                      color: _kanbanMode ? MK.brandDeep : MK.inkSoft,
                                     ),
                                   ),
                                 ],
@@ -439,7 +439,7 @@ class _MerchantOrdersTabState extends ConsumerState<MerchantOrdersTab> {
         height: 28,
         width: 1,
         margin: const EdgeInsets.symmetric(horizontal: 16),
-        color: const Color(0xFFE2E8F0),
+        color: MK.line,
       );
 
   void _exportOrders(List<Order> orders) {
@@ -571,9 +571,9 @@ class _OrderCard extends StatelessWidget {
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F1),
-              borderRadius: BorderRadius.circular(12),
+            decoration: const BoxDecoration(
+              color: MK.lineSoft,
+              borderRadius: BorderRadius.all(Radius.circular(12)),
             ),
             child: Row(
               children: [
@@ -623,7 +623,7 @@ class _OrderCard extends StatelessWidget {
               const SizedBox(width: 8),
               MIconButton(icon: Icons.notifications_active_outlined, onPressed: busy ? null : onRemind, color: MK.amber, tooltip: 'Remind customer'),
               const SizedBox(width: 8),
-              MIconButton(icon: Icons.info_outline_rounded, onPressed: busy ? null : onDetails, color: MK.grape, tooltip: 'Details'),
+              MIconButton(icon: Icons.info_outline_rounded, onPressed: busy ? null : onDetails, color: MK.brandDeep, tooltip: 'Details'),
               const Spacer(),
               if (!closed)
                 MButton(
@@ -1019,7 +1019,7 @@ class _OrderKpiItem extends StatelessWidget {
           style: const TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF64748B),
+            color: MK.inkSoft,
             letterSpacing: 0.5,
           ),
         ),
@@ -1059,7 +1059,7 @@ class _OrdersKanbanBoard extends StatelessWidget {
             child: _KanbanColumn(
               title: 'New Orders',
               count: reserved.length,
-              color: const Color(0xFFF97316),
+              color: OrderStatuses.of('reserved').color,
               icon: Icons.inbox_rounded,
               orders: reserved,
               busy: busy,
@@ -1073,7 +1073,7 @@ class _OrdersKanbanBoard extends StatelessWidget {
             child: _KanbanColumn(
               title: 'In Kitchen',
               count: preparing.length,
-              color: const Color(0xFFD97706),
+              color: OrderStatuses.of('preparing').color,
               icon: Icons.soup_kitchen_rounded,
               orders: preparing,
               busy: busy,
@@ -1143,9 +1143,9 @@ class _KanbanColumn extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: MK.surfaceAlt,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: MK.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1205,7 +1205,7 @@ class _KanbanColumn extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFF94A3B8),
+                          color: MK.inkSoft,
                         ),
                       ),
                     ),
@@ -1225,7 +1225,7 @@ class _KanbanColumn extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: MK.line),
                           boxShadow: const [
                             BoxShadow(color: Color(0x04000000), blurRadius: 4, offset: Offset(0, 1)),
                           ],
@@ -1255,7 +1255,7 @@ class _KanbanColumn extends StatelessWidget {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: isDelivery ? const Color(0xFFEFF6FF) : const Color(0xFFF1F5F9),
+                                    color: isDelivery ? MK.skyTint : MK.lineSoft,
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
@@ -1263,7 +1263,7 @@ class _KanbanColumn extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: 8.5,
                                       fontWeight: FontWeight.w900,
-                                      color: isDelivery ? const Color(0xFF2563EB) : const Color(0xFF475569),
+                                      color: isDelivery ? MK.sky : MK.inkSoft,
                                     ),
                                   ),
                                 ),
@@ -1286,7 +1286,7 @@ class _KanbanColumn extends StatelessWidget {
                               '${o.customerName} · ${MK.ago(o.timestamp)}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                              style: const TextStyle(fontSize: 11, color: MK.inkSoft, fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: 10),
                             Row(
@@ -1296,11 +1296,11 @@ class _KanbanColumn extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(8),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF1F5F9),
-                                      borderRadius: BorderRadius.circular(8),
+                                    decoration: const BoxDecoration(
+                                      color: MK.lineSoft,
+                                      borderRadius: BorderRadius.all(Radius.circular(8)),
                                     ),
-                                    child: const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFF475569)),
+                                    child: const Icon(Icons.info_outline_rounded, size: 16, color: MK.inkSoft),
                                   ),
                                 ),
                                 const Spacer(),

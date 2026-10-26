@@ -398,7 +398,7 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
                     title: 'Payout account',
                     subtitle: 'Where DreamEats sends your earnings',
                     icon: Icons.account_balance_wallet_outlined,
-                    iconColor: MK.grape,
+                    iconColor: MK.brandDeep,
                     trailing: MButton(
                       business.hasPayoutAccount ? 'Change' : 'Add',
                       icon: Icons.edit_outlined,
@@ -474,7 +474,7 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const MSectionHeader(title: 'Shop at a glance', icon: Icons.insights_rounded, iconColor: MK.grape),
+                  const MSectionHeader(title: 'Shop at a glance', icon: Icons.insights_rounded, iconColor: MK.brandDeep),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -484,7 +484,7 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
                         child: _MiniStat(
                           MK.money(orders.fold<double>(0, (s, o) => s + o.price)),
                           'lifetime sales',
-                          MK.grape,
+                          MK.brandDeep,
                         ),
                       ),
                     ],
@@ -975,7 +975,7 @@ class _DocumentUploadState extends ConsumerState<_DocumentUpload> {
             child: Container(
               height: 116,
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F1),
+                color: MK.lineSoft,
                 borderRadius: BorderRadius.circular(MK.rMd),
                 border: Border.all(color: _bytes == null ? MK.line : MK.brand.withValues(alpha: 0.4)),
               ),

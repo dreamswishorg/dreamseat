@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme.dart';
 import '../../../models/models.dart';
 import '../merchant_kit.dart';
-import '../theme/merchant_theme.dart';
 
+/// Merchant navigation rail, built on the customer portal's side nav language:
+/// white surface, hairline edge, forest-green tinted active pill.
 class MerchantSidebar extends StatelessWidget {
   final MTab currentTab;
   final ValueChanged<MTab> onSelectTab;
@@ -25,109 +27,79 @@ class MerchantSidebar extends StatelessWidget {
     this.onVerifyCode,
   });
 
+  static const Color _accent = AppTheme.primaryGreen;
+  static const Color _muted = AppTheme.mutedGrey;
+  static const Color _hairline = Color(0x14000000);
+
   @override
   Widget build(BuildContext context) {
-    final width = isCollapsed ? 76.0 : 260.0;
+    final width = isCollapsed ? 74.0 : 240.0;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeInOutCubic,
       width: width,
       decoration: const BoxDecoration(
-        color: MerchantTheme.midnightSidebar,
-        border: Border(right: BorderSide(color: MerchantTheme.midnightSidebarBorder, width: 1)),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x40000000),
-            blurRadius: 20,
-            offset: Offset(4, 0),
-          ),
-        ],
+        color: Colors.white,
+        border: Border(right: BorderSide(color: _hairline, width: 1)),
       ),
       child: SafeArea(
         right: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ── Header / Brand ──
             _buildHeader(context),
 
-            const Divider(height: 1, color: MerchantTheme.midnightSidebarBorder),
-            const SizedBox(height: 12),
+            const Divider(height: 1, color: _hairline),
 
-            // ── Quick Actions (when expanded) ──
             if (!isCollapsed && (onNewListing != null || onVerifyCode != null))
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
                 child: Row(
                   children: [
                     if (onNewListing != null)
                       Expanded(
                         child: Material(
-                          color: Colors.transparent,
+                          color: _accent,
                           borderRadius: BorderRadius.circular(12),
                           child: InkWell(
                             onTap: onNewListing,
                             borderRadius: BorderRadius.circular(12),
-                            child: Ink(
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFF10B981), Color(0xFF059669)],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF10B981).withValues(alpha: 0.35),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 3),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 11),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.add_rounded, color: Colors.white, size: 17),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'New Pack',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 13,
+                                      letterSpacing: -0.2,
+                                    ),
                                   ),
                                 ],
-                              ),
-                              child: const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 9.5),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.add_circle_outline_rounded, color: Colors.white, size: 16),
-                                    SizedBox(width: 6),
-                                    Text(
-                                      '+ New Pack',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 12,
-                                        letterSpacing: -0.2,
-                                      ),
-                                    ),
-                                  ],
-                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                    if (onNewListing != null && onVerifyCode != null)
-                      const SizedBox(width: 8),
+                    if (onNewListing != null && onVerifyCode != null) const SizedBox(width: 8),
                     if (onVerifyCode != null)
                       Material(
-                        color: MerchantTheme.midnightSidebarSurface,
+                        color: AppTheme.lightGreenBg,
                         borderRadius: BorderRadius.circular(12),
                         child: InkWell(
                           onTap: onVerifyCode,
                           borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: MerchantTheme.midnightSidebarBorder),
-                            ),
-                            child: const Tooltip(
-                              message: 'Verify pickup code or scan QR',
-                              child: Padding(
-                                padding: EdgeInsets.all(9),
-                                child: Icon(Icons.qr_code_scanner_rounded, size: 17, color: Color(0xFF34D399)),
-                              ),
+                          child: const Tooltip(
+                            message: 'Verify pickup code or scan QR',
+                            child: Padding(
+                              padding: EdgeInsets.all(10),
+                              child: Icon(Icons.qr_code_scanner_rounded, size: 18, color: _accent),
                             ),
                           ),
                         ),
@@ -136,21 +108,21 @@ class MerchantSidebar extends StatelessWidget {
                 ),
               ),
 
-            // ── Navigation Sections ──
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildSection(
-                      context,
-                      title: 'OPERATIONS',
+                      title: 'Operations',
                       items: [
                         _SidebarItem(
                           tab: MTab.home,
                           icon: Icons.dashboard_outlined,
                           activeIcon: Icons.dashboard_rounded,
-                          label: 'Overview & KPIs',
+                          label: 'Overview',
                         ),
                         _SidebarItem(
                           tab: MTab.orders,
@@ -173,35 +145,31 @@ class MerchantSidebar extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
                     _buildSection(
-                      context,
-                      title: 'FINANCES & GROWTH',
+                      title: 'Finances & Growth',
                       items: [
                         _SidebarItem(
                           tab: MTab.financials,
                           icon: Icons.account_balance_wallet_outlined,
                           activeIcon: Icons.account_balance_wallet_rounded,
-                          label: 'Payouts & Ledger',
+                          label: 'Payouts',
                         ),
                         _SidebarItem(
                           tab: MTab.impact,
                           icon: Icons.eco_outlined,
                           activeIcon: Icons.eco_rounded,
-                          label: 'Impact & ESG',
+                          label: 'Impact',
                         ),
                         _SidebarItem(
                           tab: MTab.reviews,
                           icon: Icons.star_outline_rounded,
                           activeIcon: Icons.star_rounded,
-                          label: 'Store Reviews',
+                          label: 'Reviews',
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
                     _buildSection(
-                      context,
-                      title: 'STOREFRONT',
+                      title: 'Storefront',
                       items: [
                         _SidebarItem(
                           tab: MTab.shop,
@@ -211,13 +179,11 @@ class MerchantSidebar extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 14),
                   ],
                 ),
               ),
             ),
 
-            // ── Footer ──
             _buildFooter(context),
           ],
         ),
@@ -228,37 +194,14 @@ class MerchantSidebar extends StatelessWidget {
   Widget _buildHeader(BuildContext context) {
     if (isCollapsed) {
       return Padding(
-        padding: const EdgeInsets.fromLTRB(8, 14, 8, 12),
+        padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
         child: Column(
           children: [
-            Container(
-              width: 38,
-              height: 38,
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF10B981), Color(0xFF047857)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.25),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.asset('assets/images/logo.jpg', fit: BoxFit.cover),
-              ),
-            ),
-            const SizedBox(height: 10),
+            const _BrandMark(size: 38),
+            const SizedBox(height: 8),
             if (onToggleCollapse != null)
               IconButton(
-                icon: const Icon(Icons.menu_rounded, size: 20, color: Color(0xFF94A3B8)),
+                icon: const Icon(Icons.menu_rounded, size: 22, color: _muted),
                 tooltip: 'Expand sidebar',
                 onPressed: onToggleCollapse,
                 visualDensity: VisualDensity.compact,
@@ -269,65 +212,16 @@ class MerchantSidebar extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 12, 12),
+      padding: const EdgeInsets.fromLTRB(16, 16, 8, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                width: 36,
-                height: 36,
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF10B981), Color(0xFF047857)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.asset('assets/images/logo.jpg', fit: BoxFit.cover),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RichText(
-                      text: const TextSpan(
-                        style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w900, letterSpacing: -0.4),
-                        children: [
-                          TextSpan(text: 'Dream', style: TextStyle(color: Color(0xFF34D399))),
-                          TextSpan(text: 'Eats', style: TextStyle(color: Color(0xFFF59E0B))),
-                        ],
-                      ),
-                    ),
-                    const Text(
-                      'Merchant Portal',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF94A3B8),
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              const Expanded(child: _BrandLockup()),
               if (onToggleCollapse != null)
                 IconButton(
-                  icon: const Icon(Icons.menu_open_rounded, size: 20, color: Color(0xFF94A3B8)),
+                  icon: const Icon(Icons.menu_open_rounded, size: 22, color: _muted),
                   tooltip: 'Collapse sidebar',
                   onPressed: onToggleCollapse,
                   visualDensity: VisualDensity.compact,
@@ -335,149 +229,81 @@ class MerchantSidebar extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-
-          // Business Badge Card with Midnight Surface
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7.5),
-            decoration: BoxDecoration(
-              color: MerchantTheme.midnightSidebarSurface,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: MerchantTheme.midnightSidebarBorder),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: business.isApproved ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: (business.isApproved ? const Color(0xFF10B981) : const Color(0xFFF59E0B)).withValues(alpha: 0.5),
-                        blurRadius: 5,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    business.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: business.isApproved ? const Color(0xFF0F382A) : const Color(0xFF452205),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: business.isApproved ? const Color(0xFF10B981).withValues(alpha: 0.4) : const Color(0xFFF59E0B).withValues(alpha: 0.4),
-                    ),
-                  ),
-                  child: Text(
-                    business.isApproved ? 'LIVE' : 'REVIEW',
-                    style: TextStyle(
-                      fontSize: 8.5,
-                      fontWeight: FontWeight.w900,
-                      color: business.isApproved ? const Color(0xFF34D399) : const Color(0xFFFBBF24),
-                      letterSpacing: 0.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          _BusinessBadge(business: business),
         ],
       ),
     );
   }
 
-  Widget _buildSection(BuildContext context, {required String title, required List<_SidebarItem> items}) {
+  Widget _buildSection({required String title, required List<_SidebarItem> items}) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (!isCollapsed)
           Padding(
-            padding: const EdgeInsets.fromLTRB(18, 12, 18, 6),
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
             child: Text(
-              title,
+              title.toUpperCase(),
               style: const TextStyle(
-                fontSize: 9.5,
+                fontSize: 10,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF64748B),
+                color: _muted,
                 letterSpacing: 1.1,
               ),
             ),
           )
         else
           const Padding(
-            padding: EdgeInsets.symmetric(vertical: 4),
-            child: Divider(height: 1, color: MerchantTheme.midnightSidebarBorder),
+            padding: EdgeInsets.symmetric(vertical: 6),
+            child: Divider(height: 1, color: _hairline),
           ),
-        ...items.map((item) => _buildItem(context, item)),
+        ...items.map(_buildItem),
       ],
     );
   }
 
-  Widget _buildItem(BuildContext context, _SidebarItem item) {
-    final isSelected = currentTab == item.tab;
+  Widget _buildItem(_SidebarItem item) {
+    final selected = currentTab == item.tab;
 
     if (isCollapsed) {
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        padding: const EdgeInsets.only(top: 3, bottom: 6),
         child: Tooltip(
           message: item.label,
           preferBelow: false,
           child: Material(
-            color: isSelected ? MerchantTheme.midnightActiveGlow : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            color: selected ? _accent.withValues(alpha: 0.12) : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
             child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              hoverColor: MerchantTheme.midnightHover,
+              borderRadius: BorderRadius.circular(14),
+              hoverColor: _accent.withValues(alpha: 0.08),
               onTap: () => onSelectTab(item.tab),
               child: Container(
-                height: 44,
+                height: 48,
                 alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: isSelected ? Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5), width: 1) : null,
-                ),
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
                     Icon(
-                      isSelected ? item.activeIcon : item.icon,
-                      size: 21,
-                      color: isSelected ? const Color(0xFF34D399) : const Color(0xFF94A3B8),
+                      selected ? item.activeIcon : item.icon,
+                      size: 24,
+                      color: selected ? _accent : _muted,
                     ),
                     if (item.badgeCount > 0)
                       Positioned(
-                        top: -4,
-                        right: -8,
+                        top: -2,
+                        right: -6,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEF4444),
+                            color: AppTheme.errorRed,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                           child: Text(
                             '${item.badgeCount}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                            ),
                             textAlign: TextAlign.center,
+                            style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
@@ -491,57 +317,47 @@ class MerchantSidebar extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2.5),
+      padding: const EdgeInsets.only(bottom: 6),
       child: Material(
-        color: isSelected ? MerchantTheme.midnightActiveGlow : Colors.transparent,
+        color: selected ? _accent.withValues(alpha: 0.10) : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          hoverColor: MerchantTheme.midnightHover,
+          hoverColor: _accent.withValues(alpha: 0.06),
           onTap: () => onSelectTab(item.tab),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: isSelected
-                  ? Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5), width: 1)
-                  : null,
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
               children: [
                 Icon(
-                  isSelected ? item.activeIcon : item.icon,
-                  size: 19,
-                  color: isSelected ? const Color(0xFF34D399) : const Color(0xFF94A3B8),
+                  selected ? item.activeIcon : item.icon,
+                  size: 21,
+                  color: selected ? _accent : _muted,
                 ),
-                const SizedBox(width: 11),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Text(
                     item.label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                      color: isSelected ? Colors.white : const Color(0xFFCBD5E1),
+                      fontSize: 14,
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                      color: selected ? AppTheme.charcoal : _muted,
                       letterSpacing: -0.2,
                     ),
                   ),
                 ),
                 if (item.badgeCount > 0)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEF4444),
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppTheme.errorRed,
+                      borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       '${item.badgeCount}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
                     ),
                   ),
               ],
@@ -553,29 +369,20 @@ class MerchantSidebar extends StatelessWidget {
   }
 
   Widget _buildFooter(BuildContext context) {
-    if (isCollapsed) {
-      return const SizedBox(height: 12);
-    }
+    if (isCollapsed) return const SizedBox(height: 12);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: MerchantTheme.midnightSidebarBorder)),
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+      decoration: const BoxDecoration(border: Border(top: BorderSide(color: _hairline))),
       child: Row(
         children: [
           Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: const Color(0xFF10B981).withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: const Center(
-              child: Icon(Icons.storefront_rounded, size: 16, color: Color(0xFF34D399)),
-            ),
+            width: 34,
+            height: 34,
+            decoration: const BoxDecoration(color: AppTheme.lightGreenBg, shape: BoxShape.circle),
+            child: const Center(child: Icon(Icons.storefront_rounded, size: 17, color: _accent)),
           ),
-          const SizedBox(width: 9),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -585,22 +392,115 @@ class MerchantSidebar extends StatelessWidget {
                   business.category,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
+                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppTheme.charcoal),
                 ),
                 Text(
                   business.rating > 0 ? '${business.rating.toStringAsFixed(1)} ★ rating' : 'Verified Merchant',
-                  style: const TextStyle(
-                    fontSize: 10,
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _muted),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BrandMark extends StatelessWidget {
+  final double size;
+  const _BrandMark({required this.size});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: size,
+        height: size,
+        padding: const EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          color: AppTheme.lightGreenBg,
+          borderRadius: BorderRadius.circular(size * 0.27),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(size * 0.21),
+          child: Image.asset('assets/images/logo.jpg', fit: BoxFit.cover),
+        ),
+      );
+}
+
+class _BrandLockup extends StatelessWidget {
+  const _BrandLockup();
+
+  @override
+  Widget build(BuildContext context) => Row(
+        children: [
+          const _BrandMark(size: 34),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RichText(
+                  text: const TextSpan(
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                    children: [
+                      TextSpan(text: 'DREAM', style: TextStyle(color: AppTheme.primaryGreen)),
+                      TextSpan(text: 'EATS', style: TextStyle(color: Color(0xFFFFB300))),
+                    ],
+                  ),
+                ),
+                const Text(
+                  'Merchant Portal',
+                  style: TextStyle(
+                    fontSize: 10.5,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF94A3B8),
+                    color: AppTheme.mutedGrey,
+                    letterSpacing: 0.2,
                   ),
                 ),
               ],
             ),
+          ),
+        ],
+      );
+}
+
+class _BusinessBadge extends StatelessWidget {
+  final BusinessProfile business;
+  const _BusinessBadge({required this.business});
+
+  @override
+  Widget build(BuildContext context) {
+    final live = business.isApproved;
+    final dot = live ? AppTheme.primaryGreen : AppTheme.warningOrange;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: live ? AppTheme.lightGreenBg : const Color(0xFFFFF8E1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: dot,
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(color: dot.withValues(alpha: 0.40), blurRadius: 6, spreadRadius: 1)],
+            ),
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              business.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppTheme.charcoal),
+            ),
+          ),
+          Text(
+            live ? 'LIVE' : 'REVIEW',
+            style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w900, letterSpacing: 0.4, color: dot),
           ),
         ],
       ),

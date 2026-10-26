@@ -105,10 +105,10 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: MerchantTheme.emeraldLightBg,
+                color: MerchantTheme.brandTint,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.flash_on_rounded, color: MerchantTheme.emeraldPrimary, size: 24),
+              child: const Icon(Icons.flash_on_rounded, color: MerchantTheme.brandGreen, size: 24),
             ),
             const SizedBox(width: 12),
             const Expanded(
@@ -138,7 +138,7 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: MerchantTheme.emeraldPrimary,
+              backgroundColor: MerchantTheme.brandGreen,
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -148,7 +148,7 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Early settlement request for GHS ${pendingAmount.toStringAsFixed(2)} queued! Verified and dispatched within 2 business hours.'),
-                  backgroundColor: MerchantTheme.emeraldPrimary,
+                  backgroundColor: MerchantTheme.brandGreen,
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -202,15 +202,14 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF0B1320), Color(0xFF131F33), Color(0xFF0F382A)],
+                colors: [MK.brand, MK.brandDeep],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFF1E2E48)),
+              borderRadius: BorderRadius.circular(26),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
+                  color: MK.brand.withValues(alpha: 0.30),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -227,16 +226,16 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                            color: Colors.white.withValues(alpha: 0.20),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF34D399), size: 20),
+                          child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 20),
                         ),
                         const SizedBox(width: 10),
                         const Text(
                           'FINANCIAL LEDGER & SETTLEMENTS',
                           style: TextStyle(
-                            color: Color(0xFF94A3B8),
+                            color: Colors.white70,
                             fontSize: 11,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 1.1,
@@ -246,8 +245,8 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: MerchantTheme.emeraldPrimary,
-                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.white,
+                        foregroundColor: MK.brand,
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -270,10 +269,10 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                 ),
                 const Text(
                   'Total Gross Rescue Sales (Lifetime)',
-                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.w600),
+                  style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 22),
-                const Divider(color: Color(0xFF1E2E48), height: 1),
+                const Divider(color: Color(0x26FFFFFF), height: 1),
                 const SizedBox(height: 18),
                 Row(
                   children: [
@@ -281,27 +280,24 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                       child: _buildMetricItem(
                         'Net Earnings (85%)',
                         'GHS ${netPayout.toStringAsFixed(2)}',
-                        const Color(0xFF34D399),
                         Icons.trending_up_rounded,
                       ),
                     ),
-                    Container(width: 1, height: 36, color: const Color(0xFF1E2E48)),
+                    Container(width: 1, height: 36, color: Colors.white.withValues(alpha: 0.20)),
                     const SizedBox(width: 14),
                     Expanded(
                       child: _buildMetricItem(
                         'Settled Out',
                         'GHS ${settledPayout.toStringAsFixed(2)}',
-                        const Color(0xFF60A5FA),
                         Icons.check_circle_outline_rounded,
                       ),
                     ),
-                    Container(width: 1, height: 36, color: const Color(0xFF1E2E48)),
+                    Container(width: 1, height: 36, color: Colors.white.withValues(alpha: 0.20)),
                     const SizedBox(width: 14),
                     Expanded(
                       child: _buildMetricItem(
                         'Pending Settlement',
                         'GHS ${pendingPayout.toStringAsFixed(2)}',
-                        const Color(0xFFFBBF24),
                         Icons.hourglass_empty_rounded,
                       ),
                     ),
@@ -318,7 +314,7 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
               Expanded(
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: MerchantTheme.emeraldPrimary,
+                    backgroundColor: MerchantTheme.brandGreen,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
@@ -376,7 +372,7 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                     ),
                   );
                 },
-                icon: const Icon(Icons.account_balance_rounded, size: 18, color: MerchantTheme.emeraldPrimary),
+                icon: const Icon(Icons.account_balance_rounded, size: 18, color: MerchantTheme.brandGreen),
                 label: const Text('MoMo Wallet', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               ),
             ],
@@ -478,13 +474,13 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: isPaid ? MerchantTheme.emeraldLightBg : MerchantTheme.amberLightBg,
+                        color: isPaid ? MerchantTheme.brandTint : MerchantTheme.amberLightBg,
                         shape: BoxShape.circle,
                       ),
                       child: Center(
                         child: Icon(
                           isPaid ? Icons.check_circle_rounded : Icons.hourglass_top_rounded,
-                          color: isPaid ? MerchantTheme.emeraldPrimary : MerchantTheme.amberWarning,
+                          color: isPaid ? MerchantTheme.brandGreen : MerchantTheme.amberWarning,
                           size: 22,
                         ),
                       ),
@@ -504,7 +500,7 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: isPaid ? MerchantTheme.emeraldLightBg : MerchantTheme.amberLightBg,
+                                  color: isPaid ? MerchantTheme.brandTint : MerchantTheme.amberLightBg,
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
@@ -512,7 +508,7 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                                   style: TextStyle(
                                     fontSize: 9.5,
                                     fontWeight: FontWeight.w900,
-                                    color: isPaid ? MerchantTheme.emeraldDeep : MerchantTheme.amberWarning,
+                                    color: isPaid ? MerchantTheme.brandDeepGreen : MerchantTheme.amberWarning,
                                   ),
                                 ),
                               ),
@@ -536,7 +532,7 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                       children: [
                         Text(
                           'GHS ${net.toStringAsFixed(2)}',
-                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: MerchantTheme.emeraldPrimary),
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: MerchantTheme.brandGreen),
                         ),
                         Text(
                           'Gross GHS ${order.price.toStringAsFixed(2)}',
@@ -553,21 +549,21 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
     );
   }
 
-  Widget _buildMetricItem(String title, String value, Color color, IconData icon) {
+  Widget _buildMetricItem(String title, String value, IconData icon) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(icon, size: 14, color: color),
+            Icon(icon, size: 14, color: Colors.white70),
             const SizedBox(width: 5),
-            Text(title, style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold)),
+            Text(title, style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
           ],
         ),
         const SizedBox(height: 4),
         Text(
           value,
-          style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: -0.3),
+          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: -0.3),
         ),
       ],
     );

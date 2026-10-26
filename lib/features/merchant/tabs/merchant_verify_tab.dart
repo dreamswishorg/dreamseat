@@ -189,7 +189,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
                 width: 240,
                 height: 240,
                 decoration: BoxDecoration(
-                  border: Border.all(color: MerchantTheme.emeraldGlow, width: 3),
+                  border: Border.all(color: MerchantTheme.brandSoftGreen, width: 3),
                   borderRadius: BorderRadius.circular(24),
                 ),
               ),
@@ -267,7 +267,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: MK.lineSoft,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 padding: const EdgeInsets.all(4),
@@ -392,7 +392,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
             value: '$awaitingCount',
             subtext: awaitingCount == 0 ? 'Queue clear' : 'Orders waiting collection',
             icon: Icons.timer_outlined,
-            color: awaitingCount > 0 ? MerchantTheme.amberWarning : MerchantTheme.emeraldPrimary,
+            color: awaitingCount > 0 ? MerchantTheme.amberWarning : MerchantTheme.brandGreen,
           ),
           _buildKpiCard(
             label: 'Ready on Counter',
@@ -406,7 +406,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
             value: '$verifiedTodayCount',
             subtext: 'Completed redemptions',
             icon: Icons.check_circle_outline_rounded,
-            color: MerchantTheme.emeraldPrimary,
+            color: MerchantTheme.brandGreen,
           ),
         ];
 
@@ -504,10 +504,10 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: MerchantTheme.emeraldLightBg,
+                  color: MerchantTheme.brandTint,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.qr_code_scanner_rounded, color: MerchantTheme.emeraldPrimary, size: 20),
+                child: const Icon(Icons.qr_code_scanner_rounded, color: MerchantTheme.brandGreen, size: 20),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -526,7 +526,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.camera_alt_outlined, color: MerchantTheme.emeraldPrimary),
+                icon: const Icon(Icons.camera_alt_outlined, color: MerchantTheme.brandGreen),
                 tooltip: 'Scan QR Camera',
                 onPressed: _scan,
               ),
@@ -538,7 +538,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: MK.surfaceAlt,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: _error != null ? MerchantTheme.roseDanger : MerchantTheme.cardBorder,
@@ -563,7 +563,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 2.0,
-                        color: Color(0xFF94A3B8),
+                        color: MK.inkSoft,
                       ),
                       border: InputBorder.none,
                     ),
@@ -582,7 +582,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
                   ),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: MerchantTheme.emeraldPrimary,
+                    backgroundColor: MerchantTheme.brandGreen,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -626,7 +626,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: MK.surfaceAlt,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: MerchantTheme.cardBorder),
               ),
@@ -653,9 +653,9 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: MerchantTheme.emeraldLightBg,
+        color: MerchantTheme.brandTint,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: MerchantTheme.emeraldPrimary.withValues(alpha: 0.4)),
+        border: Border.all(color: MerchantTheme.brandGreen.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -665,7 +665,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: const BoxDecoration(
-                  color: MerchantTheme.emeraldPrimary,
+                  color: MerchantTheme.brandGreen,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.check_rounded, color: Colors.white, size: 16),
@@ -677,11 +677,11 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
                   children: [
                     Text(
                       order.customerName,
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: MerchantTheme.emeraldDeep),
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: MerchantTheme.brandDeepGreen),
                     ),
                     Text(
                       'Order #${order.id.substring(0, 8).toUpperCase()} · Code: ${order.collectionCode}',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: MerchantTheme.emeraldDeep),
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: MerchantTheme.brandDeepGreen),
                     ),
                   ],
                 ),
@@ -695,22 +695,22 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.verified_rounded, size: 12, color: MerchantTheme.emeraldPrimary),
+                    Icon(Icons.verified_rounded, size: 12, color: MerchantTheme.brandGreen),
                     SizedBox(width: 4),
-                    Text('PAID', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: MerchantTheme.emeraldPrimary)),
+                    Text('PAID', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: MerchantTheme.brandGreen)),
                   ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFC6F6D5)),
+          const Divider(height: 1, color: MK.brandTint),
           const SizedBox(height: 10),
 
           // Items summary
           Row(
             children: [
-              const Icon(Icons.inventory_2_outlined, size: 16, color: MerchantTheme.emeraldDeep),
+              const Icon(Icons.inventory_2_outlined, size: 16, color: MerchantTheme.brandDeepGreen),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -720,7 +720,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
               ),
               Text(
                 'GHS ${order.price.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: MerchantTheme.emeraldDeep),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: MerchantTheme.brandDeepGreen),
               ),
             ],
           ),
@@ -732,7 +732,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
             height: 48,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: MerchantTheme.emeraldPrimary,
+                backgroundColor: MerchantTheme.brandGreen,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -757,7 +757,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: MK.surfaceAlt,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: MerchantTheme.cardBorder),
       ),
@@ -801,7 +801,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
       child: Padding(
         padding: const EdgeInsets.all(4),
         child: Material(
-          color: isAction ? const Color(0xFFEDF2F7) : Colors.white,
+          color: isAction ? MK.surfaceAlt : Colors.white,
           borderRadius: BorderRadius.circular(10),
           child: InkWell(
             onTap: onTap ?? () => _tap(label),
@@ -810,7 +810,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
               height: 48,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: MK.line),
               ),
               child: Center(
                 child: Text(
@@ -884,7 +884,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
                 prefixIcon: const Icon(Icons.search_rounded, size: 18, color: MerchantTheme.textMuted),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 filled: true,
-                fillColor: const Color(0xFFF8FAFC),
+                fillColor: MK.surfaceAlt,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: MerchantTheme.cardBorder)),
                 enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: MerchantTheme.cardBorder)),
               ),
@@ -907,10 +907,10 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
                           Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: MerchantTheme.emeraldLightBg,
+                              color: MerchantTheme.brandTint,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.task_alt_rounded, size: 32, color: MerchantTheme.emeraldPrimary),
+                            child: const Icon(Icons.task_alt_rounded, size: 32, color: MerchantTheme.brandGreen),
                           ),
                           const SizedBox(height: 12),
                           const Text(
@@ -945,10 +945,10 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
                             duration: const Duration(milliseconds: 180),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: isSelected ? MerchantTheme.emeraldLightBg : const Color(0xFFF8FAFC),
+                              color: isSelected ? MerchantTheme.brandTint : MK.surfaceAlt,
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: isSelected ? MerchantTheme.emeraldPrimary : MerchantTheme.cardBorder,
+                                color: isSelected ? MerchantTheme.brandGreen : MerchantTheme.cardBorder,
                                 width: isSelected ? 1.6 : 1.0,
                               ),
                             ),
@@ -959,7 +959,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
                                   height: 38,
                                   decoration: BoxDecoration(
                                     color: isReady
-                                        ? MerchantTheme.emeraldPrimary.withValues(alpha: 0.12)
+                                        ? MerchantTheme.brandGreen.withValues(alpha: 0.12)
                                         : MerchantTheme.amberWarning.withValues(alpha: 0.12),
                                     shape: BoxShape.circle,
                                   ),
@@ -967,7 +967,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
                                     child: Icon(
                                       isReady ? Icons.shopping_bag_rounded : Icons.soup_kitchen_rounded,
                                       size: 18,
-                                      color: isReady ? MerchantTheme.emeraldPrimary : MerchantTheme.amberWarning,
+                                      color: isReady ? MerchantTheme.brandGreen : MerchantTheme.amberWarning,
                                     ),
                                   ),
                                 ),
@@ -989,7 +989,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                             decoration: BoxDecoration(
-                                              color: isReady ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
+                                              color: isReady ? MK.brandTint : MK.goldTint,
                                               borderRadius: BorderRadius.circular(6),
                                             ),
                                             child: Text(
@@ -997,7 +997,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
                                               style: TextStyle(
                                                 fontSize: 9,
                                                 fontWeight: FontWeight.w900,
-                                                color: isReady ? const Color(0xFF15803D) : const Color(0xFFB45309),
+                                                color: isReady ? MK.brand : MK.gold,
                                               ),
                                             ),
                                           ),
@@ -1016,7 +1016,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFFE2E8F0),
+                                              color: MK.line,
                                               borderRadius: BorderRadius.circular(4),
                                             ),
                                             child: Text(

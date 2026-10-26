@@ -373,18 +373,18 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFFBEB),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFDE68A)),
+                  color: MK.amberTint,
+                  borderRadius: BorderRadius.circular(MK.rSm),
+                  border: Border.all(color: const Color(0xFFFFE082)),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.verified_user_outlined, size: 18, color: Color(0xFFD97706)),
+                    const Icon(Icons.verified_user_outlined, size: 18, color: MK.gold),
                     const SizedBox(width: 10),
                     const Expanded(
                       child: Text(
                         'Compliance Status: Document Verification in Review · You have full access to create, edit, restock and manage your surplus packs. Items will be visible to nearby rescuers as soon as verification completes.',
-                        style: TextStyle(fontSize: 11.5, color: Color(0xFF92400E), fontWeight: FontWeight.w600, height: 1.35),
+                        style: TextStyle(fontSize: 11.5, color: MK.gold, fontWeight: FontWeight.w600, height: 1.35),
                       ),
                     ),
                   ],
@@ -478,7 +478,7 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                             icon: Icon(
                               Icons.grid_view_rounded,
                               size: 19,
-                              color: !_isTableView ? MerchantTheme.emeraldPrimary : MerchantTheme.textMuted,
+                              color: !_isTableView ? MerchantTheme.brandGreen : MerchantTheme.textMuted,
                             ),
                             tooltip: 'Cards View',
                             onPressed: () => setState(() => _isTableView = false),
@@ -489,7 +489,7 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                             icon: Icon(
                               Icons.table_rows_rounded,
                               size: 19,
-                              color: _isTableView ? MerchantTheme.emeraldPrimary : MerchantTheme.textMuted,
+                              color: _isTableView ? MerchantTheme.brandGreen : MerchantTheme.textMuted,
                             ),
                             tooltip: 'Table View',
                             onPressed: () => setState(() => _isTableView = true),
@@ -542,7 +542,7 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                               width: 6,
                               height: 6,
                               decoration: const BoxDecoration(
-                                color: Color(0xFF10B981),
+                                color: MK.brand,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -553,7 +553,7 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                             decoration: BoxDecoration(
-                              color: isSel ? MerchantTheme.emeraldPrimary : const Color(0xFFE2E8F0),
+                              color: isSel ? MK.brand : MK.line,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
@@ -568,18 +568,18 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                         ],
                       ),
                       selected: isSel,
-                      selectedColor: MerchantTheme.emeraldLightBg,
+                      selectedColor: MerchantTheme.brandTint,
                       backgroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                         side: BorderSide(
-                          color: isSel ? MerchantTheme.emeraldPrimary : MerchantTheme.cardBorder,
+                          color: isSel ? MerchantTheme.brandGreen : MerchantTheme.cardBorder,
                         ),
                       ),
                       labelStyle: TextStyle(
                         fontSize: 12,
                         fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                        color: isSel ? MerchantTheme.emeraldDeep : MerchantTheme.textMuted,
+                        color: isSel ? MerchantTheme.brandDeepGreen : MerchantTheme.textMuted,
                       ),
                       onSelected: (_) => setState(() => _statusFilter = key),
                     ),
@@ -600,13 +600,13 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                   child: FilterChip(
                     label: const Text('All Categories'),
                     selected: _categoryFilter == 'all',
-                    selectedColor: MerchantTheme.midnightSidebar,
+                    selectedColor: MerchantTheme.navSurface,
                     backgroundColor: Colors.white,
                     checkmarkColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                       side: BorderSide(
-                        color: _categoryFilter == 'all' ? MerchantTheme.midnightSidebar : MerchantTheme.cardBorder,
+                        color: _categoryFilter == 'all' ? MerchantTheme.navSurface : MerchantTheme.cardBorder,
                       ),
                     ),
                     labelStyle: TextStyle(
@@ -624,13 +624,13 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                     child: FilterChip(
                       label: Text('${categoryEmoji(c)} $c'),
                       selected: isSel,
-                      selectedColor: MerchantTheme.midnightSidebar,
+                      selectedColor: MerchantTheme.navSurface,
                       backgroundColor: Colors.white,
                       checkmarkColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                         side: BorderSide(
-                          color: isSel ? MerchantTheme.midnightSidebar : MerchantTheme.cardBorder,
+                          color: isSel ? MerchantTheme.navSurface : MerchantTheme.cardBorder,
                         ),
                       ),
                       labelStyle: TextStyle(
@@ -649,10 +649,10 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
           // ── Main Content: Grid vs Table ──
           Expanded(
             child: RefreshIndicator(
-              color: MerchantTheme.emeraldPrimary,
+              color: MerchantTheme.brandGreen,
               onRefresh: () => notifier.loadMerchantDeals(),
               child: state.isLoadingMerchantDeals && deals.isEmpty
-                  ? const Center(child: CircularProgressIndicator(color: MerchantTheme.emeraldPrimary))
+                  ? const Center(child: CircularProgressIndicator(color: MerchantTheme.brandGreen))
                   : deals.isEmpty
                       ? ListView(
                           physics: const AlwaysScrollableScrollPhysics(),
@@ -741,7 +741,7 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
             headingRowHeight: 46,
             dataRowMaxHeight: 68,
             dataRowMinHeight: 64,
-            headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
+            headingRowColor: WidgetStateProperty.all(MK.surfaceAlt),
             columns: const [
               DataColumn(label: Text('Item', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
               DataColumn(label: Text('Category', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
@@ -766,14 +766,14 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                           child: Container(
                             width: 44,
                             height: 44,
-                            color: const Color(0xFFF1F5F9),
+                            color: MK.lineSoft,
                             child: deal.imageUrl.isNotEmpty
                                 ? Image.network(
                                     deal.imageUrl,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, err, stack) => const Icon(Icons.restaurant_rounded, size: 20, color: MerchantTheme.emeraldPrimary),
+                                    errorBuilder: (_, err, stack) => const Icon(Icons.restaurant_rounded, size: 20, color: MerchantTheme.brandGreen),
                                   )
-                                : const Icon(Icons.restaurant_rounded, size: 20, color: MerchantTheme.emeraldPrimary),
+                                : const Icon(Icons.restaurant_rounded, size: 20, color: MerchantTheme.brandGreen),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -808,7 +808,7 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
+                        color: MK.lineSoft,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -826,7 +826,7 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                       children: [
                         Text(
                           'GHS ${deal.discountedPrice.toStringAsFixed(2)}',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: MerchantTheme.emeraldPrimary),
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: MerchantTheme.brandGreen),
                         ),
                         Text(
                           'GHS ${deal.originalPrice.toStringAsFixed(2)}',
@@ -862,7 +862,7 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                         IconButton(
                           icon: const Icon(Icons.add_circle_outline_rounded, size: 16),
                           visualDensity: VisualDensity.compact,
-                          color: MerchantTheme.emeraldPrimary,
+                          color: MerchantTheme.brandGreen,
                           onPressed: () => _quickStockAdjust(deal, 1),
                         ),
                       ],
@@ -903,7 +903,7 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.edit_outlined, size: 17, color: MerchantTheme.violetAccent),
+                          icon: const Icon(Icons.edit_outlined, size: 17, color: MerchantTheme.goldAccent),
                           tooltip: 'Edit listing',
                           onPressed: () => _compose(deal),
                         ),
@@ -916,7 +916,7 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                           icon: Icon(
                             deal.isActive ? Icons.pause_circle_outline_rounded : Icons.play_circle_outline_rounded,
                             size: 18,
-                            color: deal.isActive ? MerchantTheme.amberWarning : MerchantTheme.emeraldPrimary,
+                            color: deal.isActive ? MerchantTheme.amberWarning : MerchantTheme.brandGreen,
                           ),
                           tooltip: deal.isActive ? 'Pause' : 'Go Live',
                           onPressed: () => _toggle(deal, !deal.isActive),
@@ -939,7 +939,7 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
   }
 }
 
-/// Executive Dark Obsidian Hero Command Header with live pulse, stats and quick action triggers.
+/// Executive green hero command header (customer portal gradient) with live pulse, stats and quick action triggers.
 class _SurplusHeroHeader extends StatelessWidget {
   final BusinessProfile business;
   final List<FoodDeal> deals;
@@ -978,24 +978,9 @@ class _SurplusHeroHeader extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF0B1320),
-            Color(0xFF0F1E2E),
-            Color(0xFF0A2E23),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF1E2E48), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.28),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        gradient: MK.heroGradient,
+        borderRadius: BorderRadius.circular(MK.rHero),
+        boxShadow: MK.brandShadow(),
       ),
       padding: EdgeInsets.fromLTRB(isWide ? 22 : 16, 18, isWide ? 22 : 16, 16),
       child: Column(
@@ -1014,9 +999,9 @@ class _SurplusHeroHeader extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: MerchantTheme.midnightActiveGlow,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: MerchantTheme.emeraldPrimary.withValues(alpha: 0.4)),
+                            color: Colors.white.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(MK.rXs),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
@@ -1026,7 +1011,7 @@ class _SurplusHeroHeader extends StatelessWidget {
                               Text(
                                 'SURPLUS ENGINE ACTIVE',
                                 style: TextStyle(
-                                  color: MerchantTheme.emeraldGlow,
+                                  color: Colors.white,
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 0.6,
@@ -1051,7 +1036,7 @@ class _SurplusHeroHeader extends StatelessWidget {
                     const Text(
                       'Turn daily kitchen excess into immediate revenue & zero food waste.',
                       style: TextStyle(
-                        color: Color(0xFF94A3B8),
+                        color: Colors.white70,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -1068,22 +1053,22 @@ class _SurplusHeroHeader extends StatelessWidget {
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
-                      backgroundColor: const Color(0xFF16253D),
-                      side: const BorderSide(color: Color(0xFF2A3F60)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      backgroundColor: Colors.white.withValues(alpha: 0.10),
+                      side: const BorderSide(color: Colors.white38),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(MK.rSm)),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
                     ),
-                    icon: const Icon(Icons.bolt_rounded, size: 16, color: Color(0xFFFBBF24)),
+                    icon: const Icon(Icons.bolt_rounded, size: 16, color: MK.amber),
                     label: const Text('Templates', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
                     onPressed: onQuickTemplates,
                   ),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: MerchantTheme.emeraldPrimary,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.white,
+                      foregroundColor: MK.brand,
                       elevation: 4,
-                      shadowColor: MerchantTheme.emeraldPrimary.withValues(alpha: 0.5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shadowColor: Colors.black.withValues(alpha: 0.25),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(MK.rSm)),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
                     ),
                     icon: const Icon(Icons.add_rounded, size: 18),
@@ -1096,7 +1081,7 @@ class _SurplusHeroHeader extends StatelessWidget {
           ),
 
           const SizedBox(height: 16),
-          const Divider(height: 1, color: Color(0xFF1E2E48)),
+          Divider(height: 1, color: Colors.white.withValues(alpha: 0.16)),
           const SizedBox(height: 12),
 
           // Bottom Metric Strip
@@ -1104,11 +1089,11 @@ class _SurplusHeroHeader extends StatelessWidget {
             builder: (context, c) {
               final isNarrow = c.maxWidth < 620;
               final stats = [
-                _HeroStatItem(label: 'Live Packs', value: '$live', color: MerchantTheme.emeraldGlow, icon: Icons.storefront_rounded),
-                _HeroStatItem(label: 'Low Stock', value: '$low', color: MerchantTheme.amberWarning, icon: Icons.warning_amber_rounded),
-                _HeroStatItem(label: 'Kitchen Stock', value: '$unitsLeft', color: MerchantTheme.skyInfo, icon: Icons.inventory_2_outlined),
-                _HeroStatItem(label: 'Units Rescued', value: '$rescued', color: MerchantTheme.tealSuccess, icon: Icons.eco_outlined),
-                _HeroStatItem(label: 'Value Saved', value: 'GHS ${rescuedValue.toStringAsFixed(0)}', color: MerchantTheme.violetAccent, icon: Icons.savings_outlined),
+                _HeroStatItem(label: 'Live Packs', value: '$live', color: MK.brandTint, icon: Icons.storefront_rounded),
+                _HeroStatItem(label: 'Low Stock', value: '$low', color: const Color(0xFFFFE082), icon: Icons.warning_amber_rounded),
+                _HeroStatItem(label: 'Kitchen Stock', value: '$unitsLeft', color: const Color(0xFF93C5FD), icon: Icons.inventory_2_outlined),
+                _HeroStatItem(label: 'Units Rescued', value: '$rescued', color: const Color(0xFFC8E6C9), icon: Icons.eco_outlined),
+                _HeroStatItem(label: 'Value Saved', value: 'GHS ${rescuedValue.toStringAsFixed(0)}', color: MK.goldTint, icon: Icons.savings_outlined),
               ];
 
               if (isNarrow) {
@@ -1157,11 +1142,11 @@ class _PulsingDotState extends State<_PulsingDot> with SingleTickerProviderState
         width: 7,
         height: 7,
         decoration: BoxDecoration(
-          color: MerchantTheme.emeraldGlow,
+          color: Colors.white,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: MerchantTheme.emeraldGlow.withValues(alpha: 0.3 + 0.6 * _ctrl.value),
+              color: Colors.white.withValues(alpha: 0.3 + 0.6 * _ctrl.value),
               blurRadius: 4 + 4 * _ctrl.value,
               spreadRadius: 1 * _ctrl.value,
             ),
@@ -1218,7 +1203,7 @@ class _HeroStatItem extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: Color(0xFF94A3B8),
+                    color: Colors.white70,
                     fontSize: 9.5,
                     fontWeight: FontWeight.w600,
                   ),
@@ -1255,7 +1240,7 @@ class _ListingCard extends StatelessWidget {
   });
 
   static const _bucketMeta = {
-    'live': (label: 'LIVE', color: MerchantTheme.emeraldPrimary),
+    'live': (label: 'LIVE', color: MerchantTheme.brandGreen),
     'paused': (label: 'PAUSED', color: MerchantTheme.textMuted),
     'low': (label: 'LOW STOCK', color: MerchantTheme.amberWarning),
     'soldout': (label: 'SOLD OUT', color: MerchantTheme.roseDanger),
@@ -1277,7 +1262,7 @@ class _ListingCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: deal.isActive ? MerchantTheme.cardBorder : const Color(0xFFE2E8F0),
+          color: deal.isActive ? MerchantTheme.cardBorder : MK.line,
           width: 1.1,
         ),
         boxShadow: MerchantTheme.cardElevation,
@@ -1294,14 +1279,14 @@ class _ListingCard extends StatelessWidget {
                 child: Container(
                   width: 54,
                   height: 54,
-                  color: const Color(0xFFF1F5F9),
+                  color: MK.lineSoft,
                   child: deal.imageUrl.isNotEmpty
                       ? Image.network(
                           deal.imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, err, stack) => const Icon(Icons.restaurant_rounded, size: 24, color: MerchantTheme.emeraldPrimary),
+                          errorBuilder: (_, err, stack) => const Icon(Icons.restaurant_rounded, size: 24, color: MerchantTheme.brandGreen),
                         )
-                      : const Icon(Icons.restaurant_rounded, size: 24, color: MerchantTheme.emeraldPrimary),
+                      : const Icon(Icons.restaurant_rounded, size: 24, color: MerchantTheme.brandGreen),
                 ),
               ),
               const SizedBox(width: 12),
@@ -1329,7 +1314,7 @@ class _ListingCard extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                             decoration: BoxDecoration(
-                              color: MerchantTheme.violetLightBg,
+                              color: MerchantTheme.goldLightBg,
                               borderRadius: BorderRadius.circular(5),
                             ),
                             child: Text(
@@ -1337,7 +1322,7 @@ class _ListingCard extends StatelessWidget {
                               style: const TextStyle(
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.w900,
-                                color: MerchantTheme.violetAccent,
+                                color: MerchantTheme.goldAccent,
                               ),
                             ),
                           ),
@@ -1385,7 +1370,7 @@ class _ListingCard extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
-                          color: MerchantTheme.emeraldPrimary,
+                          color: MerchantTheme.brandGreen,
                           letterSpacing: -0.4,
                         ),
                       ),
@@ -1404,7 +1389,7 @@ class _ListingCard extends StatelessWidget {
                   if (savings > 0)
                     Text(
                       'Save GHS ${savings.toStringAsFixed(2)}',
-                      style: const TextStyle(fontSize: 10, color: Color(0xFF16A34A), fontWeight: FontWeight.w700),
+                      style: const TextStyle(fontSize: 10, color: MK.brandGlow, fontWeight: FontWeight.w700),
                     ),
                 ],
               ),
@@ -1413,7 +1398,7 @@ class _ListingCard extends StatelessWidget {
               // Quick Stepper (- / +)
               Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: MK.surfaceAlt,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: MerchantTheme.cardBorder),
                 ),
@@ -1444,7 +1429,7 @@ class _ListingCard extends StatelessWidget {
                       borderRadius: const BorderRadius.horizontal(right: Radius.circular(10)),
                       child: const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-                        child: Icon(Icons.add_rounded, size: 15, color: MerchantTheme.emeraldPrimary),
+                        child: Icon(Icons.add_rounded, size: 15, color: MerchantTheme.brandGreen),
                       ),
                     ),
                   ],
@@ -1461,7 +1446,7 @@ class _ListingCard extends StatelessWidget {
             child: LayoutBuilder(
               builder: (context, c) => Stack(
                 children: [
-                  Container(height: 6, color: const Color(0xFFF1F5F9)),
+                  Container(height: 6, color: MK.lineSoft),
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 500),
                     curve: Curves.easeOutCubic,
@@ -1495,7 +1480,7 @@ class _ListingCard extends StatelessWidget {
               if (sold > 0)
                 Text(
                   '$sold rescued',
-                  style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: MerchantTheme.emeraldPrimary),
+                  style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: MerchantTheme.brandGreen),
                 ),
             ],
           ),
@@ -1506,7 +1491,7 @@ class _ListingCard extends StatelessWidget {
           Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.edit_outlined, size: 17, color: MerchantTheme.violetAccent),
+                icon: const Icon(Icons.edit_outlined, size: 17, color: MerchantTheme.goldAccent),
                 tooltip: 'Edit listing',
                 onPressed: onEdit,
                 visualDensity: VisualDensity.compact,
@@ -1529,7 +1514,7 @@ class _ListingCard extends StatelessWidget {
                 height: 32,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: deal.isActive ? const Color(0xFFF1F5F9) : MerchantTheme.emeraldPrimary,
+                    backgroundColor: deal.isActive ? MK.lineSoft : MerchantTheme.brandGreen,
                     foregroundColor: deal.isActive ? MerchantTheme.textDark : Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -1749,7 +1734,7 @@ class _DealFormState extends ConsumerState<_DealForm> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: MerchantTheme.emeraldPrimary, width: 1.6),
+          borderSide: const BorderSide(color: MerchantTheme.brandGreen, width: 1.6),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       );
@@ -1781,7 +1766,7 @@ class _DealFormState extends ConsumerState<_DealForm> {
               child: Container(
                 height: 140,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: MK.surfaceAlt,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: MerchantTheme.cardBorder),
                 ),
@@ -1813,16 +1798,16 @@ class _DealFormState extends ConsumerState<_DealForm> {
                     child: ChoiceChip(
                       label: Text('${p.emoji} ${p.title}'),
                       selected: isSelected,
-                      selectedColor: MerchantTheme.emeraldLightBg,
+                      selectedColor: MerchantTheme.brandTint,
                       backgroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
-                        side: BorderSide(color: isSelected ? MerchantTheme.emeraldPrimary : MerchantTheme.cardBorder),
+                        side: BorderSide(color: isSelected ? MerchantTheme.brandGreen : MerchantTheme.cardBorder),
                       ),
                       labelStyle: TextStyle(
                         fontSize: 10.5,
                         fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                        color: isSelected ? MerchantTheme.emeraldDeep : MerchantTheme.textDark,
+                        color: isSelected ? MerchantTheme.brandDeepGreen : MerchantTheme.textDark,
                       ),
                       onSelected: (_) {
                         setState(() {
@@ -1873,10 +1858,10 @@ class _DealFormState extends ConsumerState<_DealForm> {
                         duration: const Duration(milliseconds: 180),
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: _category == c ? MerchantTheme.emeraldLightBg : Colors.white,
+                          color: _category == c ? MerchantTheme.brandTint : Colors.white,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: _category == c ? MerchantTheme.emeraldPrimary : MerchantTheme.cardBorder,
+                            color: _category == c ? MerchantTheme.brandGreen : MerchantTheme.cardBorder,
                             width: _category == c ? 1.6 : 1,
                           ),
                         ),
@@ -1885,7 +1870,7 @@ class _DealFormState extends ConsumerState<_DealForm> {
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w800,
-                            color: _category == c ? MerchantTheme.emeraldDeep : MerchantTheme.textDark,
+                            color: _category == c ? MerchantTheme.brandDeepGreen : MerchantTheme.textDark,
                           ),
                         ),
                       ),
@@ -1947,19 +1932,19 @@ class _DealFormState extends ConsumerState<_DealForm> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFF0FDF4),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFBBF7D0)),
+                color: MK.brandTint,
+                borderRadius: BorderRadius.circular(MK.rSm),
+                border: Border.all(color: const Color(0xFFC8E6C9)),
               ),
               child: Column(
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.insights_rounded, size: 16, color: Color(0xFF16A34A)),
+                      const Icon(Icons.insights_rounded, size: 16, color: MK.brandGlow),
                       const SizedBox(width: 8),
                       Text(
                         '$pct% DISCOUNT · Rescuer saves GHS ${savingsPerPack.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF15803D)),
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: MK.brand),
                       ),
                     ],
                   ),
@@ -1969,11 +1954,11 @@ class _DealFormState extends ConsumerState<_DealForm> {
                     children: [
                       Text(
                         'Net Payout / Pack: GHS ${merchantNetPerPack.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 11, color: Color(0xFF166534), fontWeight: FontWeight.w700),
+                        style: const TextStyle(fontSize: 11, color: MK.brandDeep, fontWeight: FontWeight.w700),
                       ),
                       Text(
                         'Batch Total: GHS ${totalNetRevenue.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 11, color: Color(0xFF166534), fontWeight: FontWeight.w900),
+                        style: const TextStyle(fontSize: 11, color: MK.brandDeep, fontWeight: FontWeight.w900),
                       ),
                     ],
                   ),
@@ -2067,7 +2052,7 @@ class _DealFormState extends ConsumerState<_DealForm> {
                 flex: 2,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: MerchantTheme.emeraldPrimary,
+                    backgroundColor: MerchantTheme.brandGreen,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -2105,9 +2090,9 @@ class _WindowPresetChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: const Color(0xFFF1F5F9),
+          color: MK.lineSoft,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: MK.line),
         ),
         child: Text(label, style: const TextStyle(fontSize: 10, color: MerchantTheme.textDark, fontWeight: FontWeight.bold)),
       ),
@@ -2130,7 +2115,7 @@ class _QuickQtyButton extends StatelessWidget {
         side: const BorderSide(color: MerchantTheme.cardBorder),
       ),
       onPressed: onTap,
-      child: Text(label, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: MerchantTheme.emeraldDeep)),
+      child: Text(label, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: MerchantTheme.brandDeepGreen)),
     );
   }
 }
@@ -2204,13 +2189,13 @@ class _QuickTemplatesSheet extends StatelessWidget {
             child: Container(
               width: 36,
               height: 4,
-              decoration: BoxDecoration(color: const Color(0xFFCBD5E1), borderRadius: BorderRadius.circular(2)),
+              decoration: BoxDecoration(color: MK.inkFaint, borderRadius: BorderRadius.circular(2)),
             ),
           ),
           const SizedBox(height: 16),
           const Row(
             children: [
-              Icon(Icons.bolt_rounded, color: Color(0xFFF59E0B), size: 22),
+              Icon(Icons.bolt_rounded, color: MK.amber, size: 22),
               SizedBox(width: 8),
               Text(
                 '1-Tap Surplus Pack Templates',
@@ -2227,7 +2212,7 @@ class _QuickTemplatesSheet extends StatelessWidget {
           ..._templates.map((tpl) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Material(
-                  color: const Color(0xFFF8FAFC),
+                  color: MK.surfaceAlt,
                   borderRadius: BorderRadius.circular(14),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(14),
@@ -2267,7 +2252,7 @@ class _QuickTemplatesSheet extends StatelessWidget {
                             children: [
                               Text(
                                 'GHS ${(tpl['discountedPrice'] as double).toStringAsFixed(2)}',
-                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: MerchantTheme.emeraldPrimary),
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: MerchantTheme.brandGreen),
                               ),
                               Text(
                                 'GHS ${(tpl['originalPrice'] as double).toStringAsFixed(2)}',
@@ -2294,7 +2279,7 @@ class _PhotoPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.add_a_photo_outlined, size: 28, color: MerchantTheme.emeraldPrimary),
+          const Icon(Icons.add_a_photo_outlined, size: 28, color: MerchantTheme.brandGreen),
           const SizedBox(height: 8),
           const Text('Tap to upload dish photo or pick preset below',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: MerchantTheme.textMuted)),
@@ -2353,7 +2338,7 @@ Future<String?> askNumber(
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: MerchantTheme.emeraldPrimary,
+              backgroundColor: MerchantTheme.brandGreen,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
