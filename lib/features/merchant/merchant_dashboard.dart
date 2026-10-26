@@ -15,6 +15,7 @@ import 'tabs/merchant_listings_tab.dart';
 import 'tabs/merchant_orders_tab.dart';
 import 'tabs/merchant_reviews_tab.dart';
 import 'tabs/merchant_verify_tab.dart';
+import 'theme/merchant_theme.dart';
 import 'widgets/merchant_sidebar.dart';
 
 /// All available destinations in the merchant portal.
@@ -126,7 +127,7 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
     );
 
     return Scaffold(
-      backgroundColor: MK.canvas,
+      backgroundColor: MerchantTheme.canvasBg,
       drawer: !isWide
           ? Drawer(
               width: 280,
@@ -176,7 +177,10 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
                 Positioned.fill(
                   child: SafeArea(
                     bottom: false,
-                    child: body,
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: isPhone ? 80 : 0),
+                      child: body,
+                    ),
                   ),
                 ),
                 if (isPhone)
@@ -290,35 +294,42 @@ class _TopBar extends ConsumerWidget {
                     ),
                     if (isWide) ...[
                       const SizedBox(width: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF0FDF4),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFBBF7D0)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF16A34A),
-                                shape: BoxShape.circle,
+                      InkWell(
+                        onTap: () {
+                          HapticFeedback.mediumImpact();
+                          MToast.ok(context, 'Storefront is active & discoverable on customer map');
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0FDF4),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFBBF7D0)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 7,
+                                height: 7,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF16A34A),
+                                  shape: BoxShape.circle,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            const Text(
-                              'STORE ONLINE',
-                              style: TextStyle(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w900,
-                                color: Color(0xFF15803D),
-                                letterSpacing: 0.5,
+                              const SizedBox(width: 6),
+                              const Text(
+                                'STORE ONLINE',
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF15803D),
+                                  letterSpacing: 0.5,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -550,21 +561,21 @@ class _BottomNav extends StatelessWidget {
         bottom: 12,
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.94),
+            color: MerchantTheme.midnightSidebar,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: MerchantTheme.midnightSidebarBorder, width: 1.2),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.10),
-                blurRadius: 20,
-                offset: const Offset(0, 6),
+                color: Colors.black.withValues(alpha: 0.35),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
           child: SafeArea(
             top: false,
             child: SizedBox(
-              height: 62,
+              height: 64,
               child: Row(
                 children: List.generate(items.length, (i) {
                   final selected = i == selectedIndex;
@@ -584,18 +595,20 @@ class _BottomNav extends StatelessWidget {
                             children: [
                               AnimatedContainer(
                                 duration: const Duration(milliseconds: 220),
-                                curve: Curves.easeOut,
-                                width: 48,
-                                height: 30,
+                                curve: Curves.easeOutCubic,
+                                width: 50,
+                                height: 32,
                                 decoration: BoxDecoration(
-                                  color: selected ? const Color(0xFFE8F5E9) : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(15),
-                                  border: selected ? Border.all(color: const Color(0xFFC8E6C9), width: 1) : null,
+                                  color: selected ? MerchantTheme.midnightActiveGlow : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: selected
+                                      ? Border.all(color: MerchantTheme.emeraldPrimary.withValues(alpha: 0.6), width: 1)
+                                      : null,
                                 ),
                                 child: Icon(
                                   selected ? item.$2 : item.$1,
-                                  size: 19,
-                                  color: selected ? const Color(0xFF166534) : MK.inkSoft,
+                                  size: 20,
+                                  color: selected ? MerchantTheme.emeraldGlow : const Color(0xFF94A3B8),
                                 ),
                               ),
                               if (showBadge)
@@ -603,12 +616,12 @@ class _BottomNav extends StatelessWidget {
                                   top: -2,
                                   right: 2,
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                                     constraints: const BoxConstraints(minWidth: 16),
                                     decoration: BoxDecoration(
-                                      color: MK.coral,
+                                      color: MerchantTheme.roseDanger,
                                       borderRadius: BorderRadius.circular(9),
-                                      border: Border.all(color: Colors.white, width: 1.4),
+                                      border: Border.all(color: MerchantTheme.midnightSidebar, width: 1.5),
                                     ),
                                     child: Text(
                                       '$orderBadge',
@@ -623,9 +636,10 @@ class _BottomNav extends StatelessWidget {
                           Text(
                             item.$3,
                             style: TextStyle(
-                              fontSize: 9.5,
-                              fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
-                              color: selected ? const Color(0xFF166534) : MK.inkSoft,
+                              fontSize: 10,
+                              fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
+                              color: selected ? Colors.white : const Color(0xFF94A3B8),
+                              letterSpacing: selected ? -0.1 : 0,
                             ),
                           ),
                         ],

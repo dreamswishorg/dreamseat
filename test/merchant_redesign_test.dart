@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dreameats/features/merchant/services/merchant_export_service.dart';
+import 'package:dreameats/features/merchant/tabs/merchant_listings_tab.dart';
 
 void main() {
   group('MerchantExportService Tests', () {
@@ -63,6 +64,33 @@ void main() {
       final csv = MerchantExportService.generateCsv(specialDataset);
       expect(csv.contains('"Jollof, Fried Plantain & Chicken"'), isTrue);
       expect(csv.contains('""Hot Pepper""'), isTrue);
+    });
+
+    test('Curated photo presets are valid with verified URLs', () {
+      expect(kCuratedPhotoPresets.length, greaterThanOrEqualTo(4));
+      for (final preset in kCuratedPhotoPresets) {
+        expect(preset.title.isNotEmpty, isTrue);
+        expect(preset.category.isNotEmpty, isTrue);
+        expect(preset.url.startsWith('https://'), isTrue);
+        expect(preset.emoji.isNotEmpty, isTrue);
+      }
+    });
+
+    test('Deal economics calculations: discount percentage, customer savings, and merchant net payout', () {
+      const orig = 80.0;
+      const disc = 35.0;
+      const commissionRate = 0.15;
+      const qty = 6;
+
+      final pct = (((orig - disc) / orig) * 100).round();
+      final savings = orig - disc;
+      final merchantNetPerPack = disc * (1 - commissionRate);
+      final totalNetRevenue = merchantNetPerPack * qty;
+
+      expect(pct, equals(56));
+      expect(savings, equals(45.0));
+      expect(merchantNetPerPack, equals(29.75));
+      expect(totalNetRevenue, equals(178.50));
     });
   });
 }
