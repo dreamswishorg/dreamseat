@@ -224,11 +224,6 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
     final state = ref.watch(appStateProvider);
     final allMerchantOrders = state.orders.where((o) => o.businessId == widget.business.id).toList();
 
-    final now = DateTime.now();
-    final verifiedToday = allMerchantOrders
-        .where((o) => o.status == 'collected' && DateUtils.isSameDay(o.timestamp, now))
-        .length;
-
     // Active queue: Orders ready or reserved/preparing for pickup
     final waitingQueue = allMerchantOrders
         .where((o) => o.status == 'ready' || o.status == 'reserved' || o.status == 'preparing')
@@ -251,16 +246,6 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Top Executive Operational Strip ──
-          Padding(
-            padding: EdgeInsets.fromLTRB(isWide ? 24 : 16, 14, isWide ? 24 : 16, 12),
-            child: _buildOperationalMetricsStrip(
-              awaitingCount: waitingQueue.length,
-              verifiedTodayCount: verifiedToday,
-              readyCount: waitingQueue.where((o) => o.status == 'ready').length,
-            ),
-          ),
-
           // ── Mobile Sub-tabs (when on small screen) ──
           if (!isWide)
             Padding(
@@ -371,115 +356,6 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                         child: _buildWaitingQueueCard(filteredQueue, totalCount: waitingQueue.length),
                       )),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Executive Operational Metrics Strip ──
-  Widget _buildOperationalMetricsStrip({
-    required int awaitingCount,
-    required int verifiedTodayCount,
-    required int readyCount,
-  }) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isCompact = constraints.maxWidth < 640;
-        final items = [
-          _buildKpiCard(
-            label: 'Awaiting Handover',
-            value: '$awaitingCount',
-            subtext: awaitingCount == 0 ? 'Queue clear' : 'Orders waiting collection',
-            icon: Icons.timer_outlined,
-            color: awaitingCount > 0 ? MerchantTheme.amberWarning : MerchantTheme.brandGreen,
-          ),
-          _buildKpiCard(
-            label: 'Ready on Counter',
-            value: '$readyCount',
-            subtext: 'Packed & ready for pickup',
-            icon: Icons.shopping_bag_outlined,
-            color: MerchantTheme.skyInfo,
-          ),
-          _buildKpiCard(
-            label: 'Verified Today',
-            value: '$verifiedTodayCount',
-            subtext: 'Completed redemptions',
-            icon: Icons.check_circle_outline_rounded,
-            color: MerchantTheme.brandGreen,
-          ),
-        ];
-
-        if (isCompact) {
-          return Column(
-            children: items.map((item) => Padding(padding: const EdgeInsets.only(bottom: 8), child: item)).toList(),
-          );
-        }
-
-        return Row(
-          children: items
-              .map((item) => Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: item,
-                    ),
-                  ))
-              .toList(),
-        );
-      },
-    );
-  }
-
-  Widget _buildKpiCard({
-    required String label,
-    required String value,
-    required String subtext,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: MerchantTheme.cardBorder),
-        boxShadow: MerchantTheme.cardElevation,
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 20, color: color),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: MerchantTheme.textDark,
-                    letterSpacing: -0.6,
-                  ),
-                ),
-                Text(
-                  label,
-                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: MerchantTheme.textDark),
-                ),
-                Text(
-                  subtext,
-                  style: const TextStyle(fontSize: 10, color: MerchantTheme.textMuted),
-                ),
-              ],
-            ),
           ),
         ],
       ),

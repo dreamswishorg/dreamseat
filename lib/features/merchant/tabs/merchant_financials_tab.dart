@@ -221,39 +221,50 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.20),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 20),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: const Text(
+                              'FINANCIAL LEDGER & SETTLEMENTS',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.1,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Tooltip(
+                      message: 'Export statement',
+                      child: MPressable(
+                        onTap: () =>
+                            _triggerExport(filteredOrders, grossRevenue, netPayout, commissionFee, settledPayout),
+                        child: Container(
+                          width: 38,
+                          height: 38,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.20),
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 20),
+                          child: const Icon(Icons.download_rounded, size: 19, color: MK.brand),
                         ),
-                        const SizedBox(width: 10),
-                        const Text(
-                          'FINANCIAL LEDGER & SETTLEMENTS',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.1,
-                          ),
-                        ),
-                      ],
-                    ),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: MK.brand,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       ),
-                      onPressed: () => _triggerExport(filteredOrders, grossRevenue, netPayout, commissionFee, settledPayout),
-                      icon: const Icon(Icons.download_rounded, size: 15),
-                      label: const Text('Export Statement', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),

@@ -400,9 +400,13 @@ class _HeroCard extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Text(
-                                _greeting,
-                                style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 12.5, fontWeight: FontWeight.w700),
+                              Flexible(
+                                child: Text(
+                                  _greeting,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 12.5, fontWeight: FontWeight.w700),
+                                ),
                               ),
                               const SizedBox(width: 8),
                               Container(
@@ -598,16 +602,22 @@ class _HeroButton extends StatelessWidget {
             border: Border.all(color: Colors.white.withValues(alpha: soft ? 0.3 : 1)),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: 17, color: soft ? Colors.white : MK.brandDeep),
               const SizedBox(width: 7),
-              Text(
-                label,
-                style: TextStyle(
-                  color: soft ? Colors.white : MK.brandDeep,
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w900,
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: soft ? Colors.white : MK.brandDeep,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
             ],

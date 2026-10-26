@@ -108,6 +108,14 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
     final selectedIndex = kAllMerchantTabs.indexOf(_tab).clamp(0, kAllMerchantTabs.length - 1);
     final phoneSelectedIndex = kPhoneBottomTabs.indexOf(_tab);
 
+    // Only the visible tab is built. Building all eight up front (IndexedStack)
+    // laid out every screen on each rebuild and made taps feel dead on phones.
+    if (_composeListing) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _composeListing) setState(() => _composeListing = false);
+      });
+    }
+
     final body = Column(
       children: [
         _TopBar(
@@ -118,12 +126,7 @@ class _MerchantDashboardScreenState extends ConsumerState<MerchantDashboardScree
           onVerifyCode: () => _go(tab: MTab.verify),
           isWide: isWide,
         ),
-        Expanded(
-          child: IndexedStack(
-            index: selectedIndex,
-            children: tabs,
-          ),
-        ),
+        Expanded(child: tabs[selectedIndex]),
       ],
     );
 
@@ -275,15 +278,17 @@ class _TopBar extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: isWide ? 21 : 17.5,
-                        fontWeight: FontWeight.w800,
-                        color: MK.ink,
-                        letterSpacing: -0.5,
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: isWide ? 21 : 17.5,
+                          fontWeight: FontWeight.w800,
+                          color: MK.ink,
+                          letterSpacing: -0.5,
+                        ),
                       ),
                     ),
                     if (isWide) ...[
@@ -570,51 +575,10 @@ class _BottomNav extends StatelessWidget {
           child: SafeArea(
             top: false,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: List.generate(items.length, (i) {
                 final selected = i == selectedIndex;
                 final item = items[i];
                 final showBadge = i == kPhoneBottomTabs.indexOf(MTab.orders) && orderBadge > 0;
-
-                if (selected) {
-                  final tight = MediaQuery.sizeOf(context).width < 380;
-                  return Flexible(
-                    child: MPressable(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        onTap(i);
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 220),
-                        curve: Curves.easeOutCubic,
-                        padding: EdgeInsets.symmetric(horizontal: tight ? 11 : 16, vertical: 9),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryGreen,
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(item.$2, color: Colors.white, size: 18),
-                            const SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                item.$3,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12.5,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }
 
                 return Expanded(
                   child: MPressable(
@@ -622,46 +586,85 @@ class _BottomNav extends StatelessWidget {
                       HapticFeedback.selectionClick();
                       onTap(i);
                     },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Icon(item.$1, size: 22, color: AppTheme.mutedGrey),
-                            if (showBadge)
-                              Positioned(
-                                top: -3,
-                                right: -8,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                  constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.errorRed,
-                                    borderRadius: BorderRadius.circular(9),
-                                  ),
-                                  child: Text(
-                                    '$orderBadge',
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Colors.white),
+                    child: SizedBox.expand(
+                      child: Center(
+                        child: selected
+                            ? Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 220),
+                                    curve: Curves.easeOutCubic,
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primaryGreen,
+                                      borderRadius: BorderRadius.circular(22),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(item.$2, color: Colors.white, size: 17),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          item.$3,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 12.5,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
+                              )
+                            : Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Stack(
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      Icon(item.$1, size: 21, color: AppTheme.mutedGrey),
+                                      if (showBadge)
+                                        Positioned(
+                                          top: -4,
+                                          right: -9,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                            constraints: const BoxConstraints(minWidth: 15, minHeight: 15),
+                                            decoration: BoxDecoration(
+                                              color: AppTheme.errorRed,
+                                              borderRadius: BorderRadius.circular(9),
+                                            ),
+                                            child: Text(
+                                              '$orderBadge',
+                                              textAlign: TextAlign.center,
+                                              style: const TextStyle(
+                                                fontSize: 8.5,
+                                                fontWeight: FontWeight.w800,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    item.$3,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppTheme.mutedGrey,
+                                    ),
+                                  ),
+                                ],
                               ),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          item.$3,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.mutedGrey,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 );

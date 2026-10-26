@@ -915,22 +915,22 @@ class MButton extends StatelessWidget {
                 height: 18,
                 child: CircularProgressIndicator(strokeWidth: 2.2, color: _fg),
               )
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (icon != null) ...[
-                    Icon(icon, size: 17, color: _fg),
-                    const SizedBox(width: 7),
-                  ],
-                  Flexible(
-                    child: Text(
+            : FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (icon != null) ...[
+                      Icon(icon, size: 17, color: _fg),
+                      const SizedBox(width: 7),
+                    ],
+                    Text(
                       label,
                       maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(color: _fg, fontSize: 13.5, fontWeight: FontWeight.w900),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
       ),
     );

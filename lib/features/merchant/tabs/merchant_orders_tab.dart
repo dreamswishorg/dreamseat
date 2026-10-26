@@ -194,21 +194,28 @@ class _MerchantOrdersTabState extends ConsumerState<MerchantOrdersTab> {
                       color: MK.ink,
                     ),
                     const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: MK.brand.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.payments_outlined, size: 16, color: MK.brandDeep),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Collected today: ${MK.money(todayRevenue)}',
-                            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: MK.brandDeep),
-                          ),
-                        ],
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: MK.brand.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.payments_outlined, size: 16, color: MK.brandDeep),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                'Collected today: ${MK.money(todayRevenue)}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: MK.brandDeep),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -626,29 +633,37 @@ class _OrderCard extends StatelessWidget {
               MIconButton(icon: Icons.info_outline_rounded, onPressed: busy ? null : onDetails, color: MK.brandDeep, tooltip: 'Details'),
               const Spacer(),
               if (!closed)
-                MButton(
-                  order.status == 'ready' || order.status == 'out_for_delivery' ? 'Hand over' : meta.nextLabel,
-                  icon: order.status == 'ready' || order.status == 'out_for_delivery'
-                      ? Icons.check_circle_rounded
-                      : meta.next == 'collected'
-                          ? Icons.check_rounded
-                          : Icons.arrow_forward_rounded,
-                  loading: busy,
-                  height: 40,
-                  onPressed: busy
-                      ? null
-                      : (order.status == 'ready' || order.status == 'out_for_delivery')
-                          ? onCollect
-                          : onAdvance,
+                Expanded(
+                  child: MButton(
+                    order.status == 'ready' || order.status == 'out_for_delivery' ? 'Hand over' : meta.nextLabel,
+                    icon: order.status == 'ready' || order.status == 'out_for_delivery'
+                        ? Icons.check_circle_rounded
+                        : meta.next == 'collected'
+                            ? Icons.check_rounded
+                            : Icons.arrow_forward_rounded,
+                    loading: busy,
+                    expanded: true,
+                    height: 40,
+                    onPressed: busy
+                        ? null
+                        : (order.status == 'ready' || order.status == 'out_for_delivery')
+                            ? onCollect
+                            : onAdvance,
+                  ),
                 )
               else
-                Text(
-                  order.payoutStatus == 'paid' ? 'SETTLED' : 'PAYOUT PENDING',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.6,
-                    color: order.payoutStatus == 'paid' ? MK.brand : MK.amber,
+                Expanded(
+                  child: Text(
+                    order.payoutStatus == 'paid' ? 'SETTLED' : 'PAYOUT PENDING',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.6,
+                      color: order.payoutStatus == 'paid' ? MK.brand : MK.amber,
+                    ),
                   ),
                 ),
             ],

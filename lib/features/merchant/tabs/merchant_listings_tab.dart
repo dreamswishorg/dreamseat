@@ -14,10 +14,15 @@ class MerchantListingsTab extends ConsumerStatefulWidget {
   final BusinessProfile business;
   final bool composeNew;
 
-  const MerchantListingsTab({super.key, required this.business, this.composeNew = false});
+  const MerchantListingsTab({
+    super.key,
+    required this.business,
+    this.composeNew = false,
+  });
 
   @override
-  ConsumerState<MerchantListingsTab> createState() => _MerchantListingsTabState();
+  ConsumerState<MerchantListingsTab> createState() =>
+      _MerchantListingsTabState();
 }
 
 enum _ListingSort {
@@ -31,7 +36,13 @@ enum _ListingSort {
 
 class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
   static const _statusFilters = ['all', 'live', 'low', 'paused', 'soldout'];
-  static const _statusLabels = ['All Items', 'Live & Selling', 'Low Stock', 'Paused', 'Sold Out'];
+  static const _statusLabels = [
+    'All Items',
+    'Live & Selling',
+    'Low Stock',
+    'Paused',
+    'Sold Out',
+  ];
 
   String _statusFilter = 'all';
   String _categoryFilter = 'all';
@@ -66,10 +77,15 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
     return 'live';
   }
 
-  Future<void> _compose([FoodDeal? existing, Map<String, dynamic>? template]) async {
+  Future<void> _compose([
+    FoodDeal? existing,
+    Map<String, dynamic>? template,
+  ]) async {
     await showMSheet<void>(
       context,
-      title: existing == null ? (template != null ? 'Use Pack Template' : 'Publish a Surplus Pack') : 'Edit Listing',
+      title: existing == null
+          ? (template != null ? 'Use Pack Template' : 'Publish a Surplus Pack')
+          : 'Edit Listing',
       maxWidth: 680,
       child: _DealForm(
         business: widget.business,
@@ -97,23 +113,37 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
   Future<void> _toggle(FoodDeal deal, bool activate) async {
     HapticFeedback.lightImpact();
     try {
-      await ref.read(appStateProvider.notifier).toggleDealStatus(deal.id, activate);
+      await ref
+          .read(appStateProvider.notifier)
+          .toggleDealStatus(deal.id, activate);
       if (mounted) {
-        MToast.ok(context, '“${deal.title}” is now ${activate ? 'live & discoverable' : 'paused'}');
+        MToast.ok(
+          context,
+          '“${deal.title}” is now ${activate ? 'live & discoverable' : 'paused'}',
+        );
       }
     } catch (e) {
-      if (mounted) MToast.err(context, 'Could not update: ${e.toString().replaceFirst('Exception: ', '')}');
+      if (mounted)
+        MToast.err(
+          context,
+          'Could not update: ${e.toString().replaceFirst('Exception: ', '')}',
+        );
     }
   }
 
   Future<void> _quickStockAdjust(FoodDeal deal, int delta) async {
     final newRemaining = (deal.quantityRemaining + delta).clamp(0, 999);
-    final newTotal = (deal.quantityTotal + (delta > 0 ? delta : 0)).clamp(newRemaining, 999);
+    final newTotal = (deal.quantityTotal + (delta > 0 ? delta : 0)).clamp(
+      newRemaining,
+      999,
+    );
     if (newRemaining == deal.quantityRemaining) return;
 
     HapticFeedback.mediumImpact();
     try {
-      await ref.read(appStateProvider.notifier).updateDeal(
+      await ref
+          .read(appStateProvider.notifier)
+          .updateDeal(
             dealId: deal.id,
             title: deal.title,
             description: deal.description,
@@ -163,13 +193,16 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
       validate: (v) {
         final n = int.tryParse(v.trim());
         if (n == null || n <= 0) return 'Enter a number above zero';
-        if (n < deal.quantityTotal - deal.quantityRemaining) return 'Total cannot be below units already sold';
+        if (n < deal.quantityTotal - deal.quantityRemaining)
+          return 'Total cannot be below units already sold';
         return null;
       },
     );
     if (qty == null) return;
     try {
-      await ref.read(appStateProvider.notifier).updateDeal(
+      await ref
+          .read(appStateProvider.notifier)
+          .updateDeal(
             dealId: deal.id,
             title: deal.title,
             description: deal.description,
@@ -180,9 +213,14 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
             quantity: int.parse(qty),
             imageUrl: deal.imageUrl,
           );
-      if (mounted) MToast.ok(context, 'Stock updated to $qty units · visible immediately');
+      if (mounted)
+        MToast.ok(context, 'Stock updated to $qty units · visible immediately');
     } catch (e) {
-      if (mounted) MToast.err(context, 'Restock failed: ${e.toString().replaceFirst('Exception: ', '')}');
+      if (mounted)
+        MToast.err(
+          context,
+          'Restock failed: ${e.toString().replaceFirst('Exception: ', '')}',
+        );
     }
   }
 
@@ -204,18 +242,30 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                   color: MerchantTheme.roseLightBg,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.delete_outline_rounded, size: 28, color: MerchantTheme.roseDanger),
+                child: const Icon(
+                  Icons.delete_outline_rounded,
+                  size: 28,
+                  color: MerchantTheme.roseDanger,
+                ),
               ),
               const SizedBox(height: 16),
               const Text(
                 'Delete this listing?',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: MerchantTheme.textDark),
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                  color: MerchantTheme.textDark,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 '“${deal.title}” will immediately be removed from consumer discovery. Existing customer orders for this item remain safe in your Orders tab.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12.5, color: MerchantTheme.textMuted, height: 1.45),
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: MerchantTheme.textMuted,
+                  height: 1.45,
+                ),
               ),
               const SizedBox(height: 20),
               Row(
@@ -223,11 +273,19 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                   Expanded(
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       onPressed: () => Navigator.pop(ctx, false),
-                      child: const Text('Keep Listing', style: TextStyle(color: MerchantTheme.textDark, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Keep Listing',
+                        style: TextStyle(
+                          color: MerchantTheme.textDark,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -237,11 +295,16 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                         backgroundColor: MerchantTheme.roseDanger,
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       onPressed: () => Navigator.pop(ctx, true),
-                      child: const Text('Delete', style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Delete',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
                 ],
@@ -256,7 +319,11 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
       await ref.read(appStateProvider.notifier).deleteDeal(deal.id);
       if (mounted) MToast.ok(context, 'Listing removed successfully');
     } catch (e) {
-      if (mounted) MToast.err(context, 'Delete failed: ${e.toString().replaceFirst('Exception: ', '')}');
+      if (mounted)
+        MToast.err(
+          context,
+          'Delete failed: ${e.toString().replaceFirst('Exception: ', '')}',
+        );
     }
   }
 
@@ -328,9 +395,12 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
 
     final q = _search.text.trim().toLowerCase();
     var filtered = deals.where((d) {
-      final matchesStatus = _statusFilter == 'all' || _bucketOf(d) == _statusFilter;
-      final matchesCategory = _categoryFilter == 'all' || d.category == _categoryFilter;
-      final matchesQuery = q.isEmpty ||
+      final matchesStatus =
+          _statusFilter == 'all' || _bucketOf(d) == _statusFilter;
+      final matchesCategory =
+          _categoryFilter == 'all' || d.category == _categoryFilter;
+      final matchesQuery =
+          q.isEmpty ||
           d.title.toLowerCase().contains(q) ||
           d.description.toLowerCase().contains(q) ||
           d.category.toLowerCase().contains(q);
@@ -340,7 +410,9 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
     // Sort
     switch (_sort) {
       case _ListingSort.recent:
-        filtered.sort((a, b) => (b.isActive ? 1 : 0).compareTo(a.isActive ? 1 : 0));
+        filtered.sort(
+          (a, b) => (b.isActive ? 1 : 0).compareTo(a.isActive ? 1 : 0),
+        );
         break;
       case _ListingSort.priceAsc:
         filtered.sort((a, b) => a.discountedPrice.compareTo(b.discountedPrice));
@@ -349,10 +421,14 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
         filtered.sort((a, b) => b.discountedPrice.compareTo(a.discountedPrice));
         break;
       case _ListingSort.stockAsc:
-        filtered.sort((a, b) => a.quantityRemaining.compareTo(b.quantityRemaining));
+        filtered.sort(
+          (a, b) => a.quantityRemaining.compareTo(b.quantityRemaining),
+        );
         break;
       case _ListingSort.stockDesc:
-        filtered.sort((a, b) => b.quantityRemaining.compareTo(a.quantityRemaining));
+        filtered.sort(
+          (a, b) => b.quantityRemaining.compareTo(a.quantityRemaining),
+        );
         break;
       case _ListingSort.discountDesc:
         filtered.sort((a, b) => b.percentageSaved.compareTo(a.percentageSaved));
@@ -361,347 +437,472 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
 
     final isWide = useSideNav(context);
 
+    // Everything scrolls as one page: a fixed Column chrome used to consume the
+    // whole phone viewport and squeeze the listing grid out of view.
     return ResponsiveCenter(
       maxWidth: 1320,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // ── Non-blocking Verification Review Notice ──
-          if (!widget.business.isApproved)
-            Padding(
-              padding: EdgeInsets.fromLTRB(isWide ? 24 : 16, 12, isWide ? 24 : 16, 0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: MK.amberTint,
-                  borderRadius: BorderRadius.circular(MK.rSm),
-                  border: Border.all(color: const Color(0xFFFFE082)),
+      child: RefreshIndicator(
+        color: MerchantTheme.brandGreen,
+        onRefresh: () => notifier.loadMerchantDeals(),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(0, 0, 0, isWide ? 24 : 96),
+          children: [
+            // ── Non-blocking Verification Review Notice ──
+            if (!widget.business.isApproved)
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  isWide ? 24 : 16,
+                  12,
+                  isWide ? 24 : 16,
+                  0,
                 ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.verified_user_outlined, size: 18, color: MK.gold),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: Text(
-                        'Compliance Status: Document Verification in Review · You have full access to create, edit, restock and manage your surplus packs. Items will be visible to nearby rescuers as soon as verification completes.',
-                        style: TextStyle(fontSize: 11.5, color: MK.gold, fontWeight: FontWeight.w600, height: 1.35),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: MK.amberTint,
+                    borderRadius: BorderRadius.circular(MK.rSm),
+                    border: Border.all(color: const Color(0xFFFFE082)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.verified_user_outlined,
+                        size: 18,
+                        color: MK.gold,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          'Compliance Status: Document Verification in Review · You have full access to create, edit, restock and manage your surplus packs. Items will be visible to nearby rescuers as soon as verification completes.',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: MK.gold,
+                            fontWeight: FontWeight.w600,
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+              ),
+
+            // ── Executive Hero Command Banner ──
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                isWide ? 24 : 16,
+                12,
+                isWide ? 24 : 16,
+                4,
+              ),
+              child: _SurplusHeroHeader(
+                business: widget.business,
+                deals: deals,
+                onNewPack: () => _compose(),
+                onQuickTemplates: _openTemplates,
+                isWide: isWide,
               ),
             ),
 
-          // ── Executive Hero Command Banner ──
-          Padding(
-            padding: EdgeInsets.fromLTRB(isWide ? 24 : 16, 12, isWide ? 24 : 16, 4),
-            child: _SurplusHeroHeader(
-              business: widget.business,
-              deals: deals,
-              onNewPack: () => _compose(),
-              onQuickTemplates: _openTemplates,
-              onExport: () => _triggerExport(deals),
-              isWide: isWide,
-            ),
-          ),
-
-          // ── Search & Filter Controls ──
-          Padding(
-            padding: EdgeInsets.fromLTRB(isWide ? 24 : 16, 8, isWide ? 24 : 16, 4),
-            child: Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                // Search Input
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: isWide ? 380 : double.infinity),
-                  child: MSearchField(
-                    controller: _search,
-                    hint: 'Search pack title, dishes, category…',
-                    onChanged: (_) => setState(() {}),
-                    onClear: _search.text.isEmpty
-                        ? null
-                        : () {
-                            _search.clear();
-                            setState(() {});
-                          },
+            // ── Search & Filter Controls ──
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                isWide ? 24 : 16,
+                8,
+                isWide ? 24 : 16,
+                4,
+              ),
+              child: Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  // Search Input
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: isWide ? 380 : double.infinity,
+                    ),
+                    child: MSearchField(
+                      controller: _search,
+                      hint: 'Search pack title, dishes, category…',
+                      onChanged: (_) => setState(() {}),
+                      onClear: _search.text.isEmpty
+                          ? null
+                          : () {
+                              _search.clear();
+                              setState(() {});
+                            },
+                    ),
                   ),
-                ),
 
-                // Controls: Sort, View Switcher, Export
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    // Sort Dropdown
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: MerchantTheme.cardBorder),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<_ListingSort>(
-                          value: _sort,
-                          icon: const Icon(Icons.sort_rounded, size: 18, color: MerchantTheme.textMuted),
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: MerchantTheme.textDark),
-                          items: const [
-                            DropdownMenuItem(value: _ListingSort.recent, child: Text('Sort: Default')),
-                            DropdownMenuItem(value: _ListingSort.priceAsc, child: Text('Price: Low to High')),
-                            DropdownMenuItem(value: _ListingSort.priceDesc, child: Text('Price: High to Low')),
-                            DropdownMenuItem(value: _ListingSort.stockAsc, child: Text('Stock: Lowest First')),
-                            DropdownMenuItem(value: _ListingSort.stockDesc, child: Text('Stock: Highest First')),
-                            DropdownMenuItem(value: _ListingSort.discountDesc, child: Text('Discount: High to Low')),
-                          ],
-                          onChanged: (v) {
-                            if (v != null) setState(() => _sort = v);
-                          },
+                  // Controls: Sort, View Switcher, Export
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      // Sort Dropdown
+                      SizedBox(
+                        width: 168,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: MerchantTheme.cardBorder),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<_ListingSort>(
+                              value: _sort,
+                              isExpanded: true,
+                              icon: const Icon(
+                                Icons.sort_rounded,
+                                size: 18,
+                                color: MerchantTheme.textMuted,
+                              ),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: MerchantTheme.textDark,
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: _ListingSort.recent,
+                                  child: Text('Sort: Default'),
+                                ),
+                                DropdownMenuItem(
+                                  value: _ListingSort.priceAsc,
+                                  child: Text('Price: Low to High'),
+                                ),
+                                DropdownMenuItem(
+                                  value: _ListingSort.priceDesc,
+                                  child: Text('Price: High to Low'),
+                                ),
+                                DropdownMenuItem(
+                                  value: _ListingSort.stockAsc,
+                                  child: Text('Stock: Lowest First'),
+                                ),
+                                DropdownMenuItem(
+                                  value: _ListingSort.stockDesc,
+                                  child: Text('Stock: Highest First'),
+                                ),
+                                DropdownMenuItem(
+                                  value: _ListingSort.discountDesc,
+                                  child: Text('Discount: High to Low'),
+                                ),
+                              ],
+                              onChanged: (v) {
+                                if (v != null) setState(() => _sort = v);
+                              },
+                            ),
+                          ),
                         ),
                       ),
-                    ),
 
-                    // Grid / Table Switcher
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: MerchantTheme.cardBorder),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              Icons.grid_view_rounded,
-                              size: 19,
-                              color: !_isTableView ? MerchantTheme.brandGreen : MerchantTheme.textMuted,
+                      // Grid / Table Switcher
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: MerchantTheme.cardBorder),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.grid_view_rounded,
+                                size: 19,
+                                color: !_isTableView
+                                    ? MerchantTheme.brandGreen
+                                    : MerchantTheme.textMuted,
+                              ),
+                              tooltip: 'Cards View',
+                              onPressed: () =>
+                                  setState(() => _isTableView = false),
+                              visualDensity: VisualDensity.compact,
                             ),
-                            tooltip: 'Cards View',
-                            onPressed: () => setState(() => _isTableView = false),
-                            visualDensity: VisualDensity.compact,
-                          ),
-                          Container(width: 1, height: 20, color: MerchantTheme.cardBorder),
-                          IconButton(
-                            icon: Icon(
-                              Icons.table_rows_rounded,
-                              size: 19,
-                              color: _isTableView ? MerchantTheme.brandGreen : MerchantTheme.textMuted,
-                            ),
-                            tooltip: 'Table View',
-                            onPressed: () => setState(() => _isTableView = true),
-                            visualDensity: VisualDensity.compact,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Export Button
-                    OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: MerchantTheme.textDark,
-                        side: const BorderSide(color: MerchantTheme.cardBorder),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      ),
-                      icon: const Icon(Icons.file_download_outlined, size: 16, color: MerchantTheme.textMuted),
-                      label: const Text('Export', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                      onPressed: () => _triggerExport(deals),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // ── Status Filter Pills ──
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.fromLTRB(isWide ? 24 : 16, 4, isWide ? 24 : 16, 6),
-            child: Row(
-              children: [
-                ...List.generate(_statusFilters.length, (i) {
-                  final key = _statusFilters[i];
-                  final isSel = _statusFilter == key;
-                  final count = key == 'all'
-                      ? deals.length
-                      : deals.where((d) => _bucketOf(d) == key).length;
-
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (key == 'live') ...[
                             Container(
-                              width: 6,
-                              height: 6,
-                              decoration: const BoxDecoration(
-                                color: MK.brand,
-                                shape: BoxShape.circle,
-                              ),
+                              width: 1,
+                              height: 20,
+                              color: MerchantTheme.cardBorder,
                             ),
-                            const SizedBox(width: 5),
+                            IconButton(
+                              icon: Icon(
+                                Icons.table_rows_rounded,
+                                size: 19,
+                                color: _isTableView
+                                    ? MerchantTheme.brandGreen
+                                    : MerchantTheme.textMuted,
+                              ),
+                              tooltip: 'Table View',
+                              onPressed: () =>
+                                  setState(() => _isTableView = true),
+                              visualDensity: VisualDensity.compact,
+                            ),
                           ],
-                          Text(_statusLabels[i]),
-                          const SizedBox(width: 5),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: isSel ? MK.brand : MK.line,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              '$count',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: isSel ? Colors.white : MerchantTheme.textMuted,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      selected: isSel,
-                      selectedColor: MerchantTheme.brandTint,
-                      backgroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(
-                          color: isSel ? MerchantTheme.brandGreen : MerchantTheme.cardBorder,
                         ),
                       ),
-                      labelStyle: TextStyle(
-                        fontSize: 12,
-                        fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                        color: isSel ? MerchantTheme.brandDeepGreen : MerchantTheme.textMuted,
-                      ),
-                      onSelected: (_) => setState(() => _statusFilter = key),
-                    ),
-                  );
-                }),
-              ],
-            ),
-          ),
 
-          // ── Category Filter Bar ──
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.fromLTRB(isWide ? 24 : 16, 0, isWide ? 24 : 16, 8),
-            child: Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: FilterChip(
-                    label: const Text('All Categories'),
-                    selected: _categoryFilter == 'all',
-                    selectedColor: MerchantTheme.navSurface,
-                    backgroundColor: Colors.white,
-                    checkmarkColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      side: BorderSide(
-                        color: _categoryFilter == 'all' ? MerchantTheme.navSurface : MerchantTheme.cardBorder,
+                      // Export Button
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: MerchantTheme.textDark,
+                          side: const BorderSide(
+                            color: MerchantTheme.cardBorder,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                        ),
+                        icon: const Icon(
+                          Icons.file_download_outlined,
+                          size: 16,
+                          color: MerchantTheme.textMuted,
+                        ),
+                        label: const Text(
+                          'Export',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        onPressed: () => _triggerExport(deals),
                       ),
-                    ),
-                    labelStyle: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: _categoryFilter == 'all' ? Colors.white : MerchantTheme.textMuted,
-                    ),
-                    onSelected: (_) => setState(() => _categoryFilter = 'all'),
+                    ],
                   ),
-                ),
-                ...kDealCategories.map((c) {
-                  final isSel = _categoryFilter == c;
-                  return Padding(
+                ],
+              ),
+            ),
+
+            // ── Status Filter Pills ──
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.fromLTRB(
+                isWide ? 24 : 16,
+                4,
+                isWide ? 24 : 16,
+                6,
+              ),
+              child: Row(
+                children: [
+                  ...List.generate(_statusFilters.length, (i) {
+                    final key = _statusFilters[i];
+                    final isSel = _statusFilter == key;
+                    final count = key == 'all'
+                        ? deals.length
+                        : deals.where((d) => _bucketOf(d) == key).length;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (key == 'live') ...[
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: const BoxDecoration(
+                                  color: MK.brand,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                            ],
+                            Text(_statusLabels[i]),
+                            const SizedBox(width: 5),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSel ? MK.brand : MK.line,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '$count',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSel
+                                      ? Colors.white
+                                      : MerchantTheme.textMuted,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        selected: isSel,
+                        selectedColor: MerchantTheme.brandTint,
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          side: BorderSide(
+                            color: isSel
+                                ? MerchantTheme.brandGreen
+                                : MerchantTheme.cardBorder,
+                          ),
+                        ),
+                        labelStyle: TextStyle(
+                          fontSize: 12,
+                          fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                          color: isSel
+                              ? MerchantTheme.brandDeepGreen
+                              : MerchantTheme.textMuted,
+                        ),
+                        onSelected: (_) => setState(() => _statusFilter = key),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+
+            // ── Category Filter Bar ──
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.fromLTRB(
+                isWide ? 24 : 16,
+                0,
+                isWide ? 24 : 16,
+                8,
+              ),
+              child: Row(
+                children: [
+                  Padding(
                     padding: const EdgeInsets.only(right: 6),
                     child: FilterChip(
-                      label: Text('${categoryEmoji(c)} $c'),
-                      selected: isSel,
+                      label: const Text('All Categories'),
+                      selected: _categoryFilter == 'all',
                       selectedColor: MerchantTheme.navSurface,
                       backgroundColor: Colors.white,
                       checkmarkColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                         side: BorderSide(
-                          color: isSel ? MerchantTheme.navSurface : MerchantTheme.cardBorder,
+                          color: _categoryFilter == 'all'
+                              ? MerchantTheme.navSurface
+                              : MerchantTheme.cardBorder,
                         ),
                       ),
                       labelStyle: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: isSel ? Colors.white : MerchantTheme.textDark,
+                        color: _categoryFilter == 'all'
+                            ? Colors.white
+                            : MerchantTheme.textMuted,
                       ),
-                      onSelected: (_) => setState(() => _categoryFilter = c),
+                      onSelected: (_) =>
+                          setState(() => _categoryFilter = 'all'),
                     ),
-                  );
-                }),
-              ],
+                  ),
+                  ...kDealCategories.map((c) {
+                    final isSel = _categoryFilter == c;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: FilterChip(
+                        label: Text('${categoryEmoji(c)} $c'),
+                        selected: isSel,
+                        selectedColor: MerchantTheme.navSurface,
+                        backgroundColor: Colors.white,
+                        checkmarkColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(
+                            color: isSel
+                                ? MerchantTheme.navSurface
+                                : MerchantTheme.cardBorder,
+                          ),
+                        ),
+                        labelStyle: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: isSel ? Colors.white : MerchantTheme.textDark,
+                        ),
+                        onSelected: (_) => setState(() => _categoryFilter = c),
+                      ),
+                    );
+                  }),
+                ],
+              ),
             ),
-          ),
 
-          // ── Main Content: Grid vs Table ──
-          Expanded(
-            child: RefreshIndicator(
-              color: MerchantTheme.brandGreen,
-              onRefresh: () => notifier.loadMerchantDeals(),
-              child: state.isLoadingMerchantDeals && deals.isEmpty
-                  ? const Center(child: CircularProgressIndicator(color: MerchantTheme.brandGreen))
-                  : deals.isEmpty
-                      ? ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-                          children: [
-                            MFeedbackBlock(
-                              icon: Icons.storefront_outlined,
-                              title: 'No surplus packs published yet',
-                              message:
-                                  'Start rescuing food and turning potential kitchen loss into high-margin revenue. Publish your first pack in 60 seconds.',
-                              actionLabel: 'Publish First Deal',
-                              onAction: () => _compose(),
-                            ),
-                          ],
-                        )
-                      : filtered.isEmpty
-                          ? ListView(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-                              children: [
-                                MFeedbackBlock(
-                                  icon: Icons.filter_alt_off_rounded,
-                                  title: 'No listings match criteria',
-                                  message: 'Try clearing your search query or choosing another category or status pill.',
-                                  actionLabel: 'Reset Filters',
-                                  onAction: () {
-                                    _search.clear();
-                                    setState(() {
-                                      _statusFilter = 'all';
-                                      _categoryFilter = 'all';
-                                    });
-                                  },
-                                ),
-                              ],
-                            )
-                          : _isTableView
-                              ? _buildTableView(filtered, isWide)
-                              : _buildGridView(filtered, isWide),
-            ),
-          ),
-        ],
+            // ── Main Content: Grid vs Table ──
+            if (state.isLoadingMerchantDeals && deals.isEmpty)
+              const SizedBox(
+                height: 220,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: MerchantTheme.brandGreen,
+                  ),
+                ),
+              )
+            else if (deals.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 40,
+                  horizontal: 20,
+                ),
+                child: MFeedbackBlock(
+                  icon: Icons.storefront_outlined,
+                  title: 'No surplus packs published yet',
+                  message:
+                      'Start rescuing food and turning potential kitchen loss into high-margin revenue. Publish your first pack in 60 seconds.',
+                  actionLabel: 'Publish First Deal',
+                  onAction: () => _compose(),
+                ),
+              )
+            else if (filtered.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 40,
+                  horizontal: 20,
+                ),
+                child: MFeedbackBlock(
+                  icon: Icons.filter_alt_off_rounded,
+                  title: 'No listings match criteria',
+                  message:
+                      'Try clearing your search query or choosing another category or status pill.',
+                  actionLabel: 'Reset Filters',
+                  onAction: () {
+                    _search.clear();
+                    setState(() {
+                      _statusFilter = 'all';
+                      _categoryFilter = 'all';
+                    });
+                  },
+                ),
+              )
+            else if (_isTableView)
+              _buildTableView(filtered, isWide)
+            else
+              _buildGridView(filtered, isWide),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildGridView(List<FoodDeal> visible, bool isWide) {
     return GridView.builder(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(isWide ? 24 : 16, 6, isWide ? 24 : 16, 110),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(isWide ? 24 : 16, 6, isWide ? 24 : 16, 8),
       gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: isWide ? 440 : 390,
         mainAxisExtent: 280,
@@ -724,9 +925,10 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
 
   Widget _buildTableView(List<FoodDeal> visible, bool isWide) {
     return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(isWide ? 24 : 16, 6, isWide ? 24 : 16, 110),
+      scrollDirection: Axis.horizontal,
+      padding: EdgeInsets.fromLTRB(isWide ? 24 : 16, 6, isWide ? 24 : 16, 8),
       child: Container(
+        constraints: const BoxConstraints(minWidth: 720),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -743,13 +945,48 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
             dataRowMinHeight: 64,
             headingRowColor: WidgetStateProperty.all(MK.surfaceAlt),
             columns: const [
-              DataColumn(label: Text('Item', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-              DataColumn(label: Text('Category', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-              DataColumn(label: Text('Price', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-              DataColumn(label: Text('Stock', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-              DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-              DataColumn(label: Text('Pickup Window', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-              DataColumn(label: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+              DataColumn(
+                label: Text(
+                  'Item',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+              ),
+              DataColumn(
+                label: Text(
+                  'Category',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+              ),
+              DataColumn(
+                label: Text(
+                  'Price',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+              ),
+              DataColumn(
+                label: Text(
+                  'Stock',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+              ),
+              DataColumn(
+                label: Text(
+                  'Status',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+              ),
+              DataColumn(
+                label: Text(
+                  'Pickup Window',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+              ),
+              DataColumn(
+                label: Text(
+                  'Actions',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+              ),
             ],
             rows: visible.map((deal) {
               final bucket = _bucketOf(deal);
@@ -771,9 +1008,17 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                                 ? Image.network(
                                     deal.imageUrl,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, err, stack) => const Icon(Icons.restaurant_rounded, size: 20, color: MerchantTheme.brandGreen),
+                                    errorBuilder: (_, err, stack) => const Icon(
+                                      Icons.restaurant_rounded,
+                                      size: 20,
+                                      color: MerchantTheme.brandGreen,
+                                    ),
                                   )
-                                : const Icon(Icons.restaurant_rounded, size: 20, color: MerchantTheme.brandGreen),
+                                : const Icon(
+                                    Icons.restaurant_rounded,
+                                    size: 20,
+                                    color: MerchantTheme.brandGreen,
+                                  ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -787,14 +1032,21 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                                 deal.title,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: MerchantTheme.textDark),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 13,
+                                  color: MerchantTheme.textDark,
+                                ),
                               ),
                               if (deal.description.isNotEmpty)
                                 Text(
                                   deal.description,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontSize: 11, color: MerchantTheme.textMuted),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: MerchantTheme.textMuted,
+                                  ),
                                 ),
                             ],
                           ),
@@ -806,14 +1058,21 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                   // Category
                   DataCell(
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: MK.lineSoft,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         '${categoryEmoji(deal.category)} ${deal.category}',
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: MerchantTheme.textDark),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: MerchantTheme.textDark,
+                        ),
                       ),
                     ),
                   ),
@@ -826,7 +1085,11 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                       children: [
                         Text(
                           'GHS ${deal.discountedPrice.toStringAsFixed(2)}',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: MerchantTheme.brandGreen),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                            color: MerchantTheme.brandGreen,
+                          ),
                         ),
                         Text(
                           'GHS ${deal.originalPrice.toStringAsFixed(2)}',
@@ -846,7 +1109,10 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.remove_circle_outline_rounded, size: 16),
+                          icon: const Icon(
+                            Icons.remove_circle_outline_rounded,
+                            size: 16,
+                          ),
                           visualDensity: VisualDensity.compact,
                           color: MerchantTheme.textMuted,
                           onPressed: () => _quickStockAdjust(deal, -1),
@@ -860,7 +1126,10 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.add_circle_outline_rounded, size: 16),
+                          icon: const Icon(
+                            Icons.add_circle_outline_rounded,
+                            size: 16,
+                          ),
                           visualDensity: VisualDensity.compact,
                           color: MerchantTheme.brandGreen,
                           onPressed: () => _quickStockAdjust(deal, 1),
@@ -872,7 +1141,10 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                   // Status
                   DataCell(
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: meta.color.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
@@ -893,7 +1165,10 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                   DataCell(
                     Text(
                       deal.pickupWindow.isEmpty ? 'Not set' : deal.pickupWindow,
-                      style: const TextStyle(fontSize: 11.5, color: MerchantTheme.textMuted),
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: MerchantTheme.textMuted,
+                      ),
                     ),
                   ),
 
@@ -903,26 +1178,42 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.edit_outlined, size: 17, color: MerchantTheme.goldAccent),
+                          icon: const Icon(
+                            Icons.edit_outlined,
+                            size: 17,
+                            color: MerchantTheme.goldAccent,
+                          ),
                           tooltip: 'Edit listing',
                           onPressed: () => _compose(deal),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.copy_rounded, size: 16, color: MerchantTheme.skyInfo),
+                          icon: const Icon(
+                            Icons.copy_rounded,
+                            size: 16,
+                            color: MerchantTheme.skyInfo,
+                          ),
                           tooltip: 'Duplicate deal',
                           onPressed: () => _duplicateDeal(deal),
                         ),
                         IconButton(
                           icon: Icon(
-                            deal.isActive ? Icons.pause_circle_outline_rounded : Icons.play_circle_outline_rounded,
+                            deal.isActive
+                                ? Icons.pause_circle_outline_rounded
+                                : Icons.play_circle_outline_rounded,
                             size: 18,
-                            color: deal.isActive ? MerchantTheme.amberWarning : MerchantTheme.brandGreen,
+                            color: deal.isActive
+                                ? MerchantTheme.amberWarning
+                                : MerchantTheme.brandGreen,
                           ),
                           tooltip: deal.isActive ? 'Pause' : 'Go Live',
                           onPressed: () => _toggle(deal, !deal.isActive),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, size: 17, color: MerchantTheme.roseDanger),
+                          icon: const Icon(
+                            Icons.delete_outline_rounded,
+                            size: 17,
+                            color: MerchantTheme.roseDanger,
+                          ),
                           tooltip: 'Delete',
                           onPressed: () => _delete(deal),
                         ),
@@ -945,7 +1236,6 @@ class _SurplusHeroHeader extends StatelessWidget {
   final List<FoodDeal> deals;
   final VoidCallback onNewPack;
   final VoidCallback onQuickTemplates;
-  final VoidCallback onExport;
   final bool isWide;
 
   const _SurplusHeroHeader({
@@ -953,7 +1243,6 @@ class _SurplusHeroHeader extends StatelessWidget {
     required this.deals,
     required this.onNewPack,
     required this.onQuickTemplates,
-    required this.onExport,
     required this.isWide,
   });
 
@@ -976,13 +1265,70 @@ class _SurplusHeroHeader extends StatelessWidget {
       rescuedValue += (packRescued * d.discountedPrice);
     }
 
+    final heroDecoration = BoxDecoration(
+      gradient: MK.heroGradient,
+      borderRadius: BorderRadius.circular(MK.rHero),
+      boxShadow: MK.brandShadow(),
+    );
+
+    // Phone: one compact bar so the listing grid keeps the screen.
+    if (!isWide) {
+      return Container(
+        decoration: heroDecoration,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Surplus Inventory',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$live live · $low low stock · $unitsLeft units left',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            _HeroIconButton(
+              icon: Icons.bolt_rounded,
+              tooltip: 'Pack templates',
+              onTap: onQuickTemplates,
+            ),
+            const SizedBox(width: 8),
+            _HeroIconButton(
+              icon: Icons.add_rounded,
+              tooltip: 'New surplus pack',
+              onTap: onNewPack,
+              filled: true,
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
-      decoration: BoxDecoration(
-        gradient: MK.heroGradient,
-        borderRadius: BorderRadius.circular(MK.rHero),
-        boxShadow: MK.brandShadow(),
-      ),
-      padding: EdgeInsets.fromLTRB(isWide ? 22 : 16, 18, isWide ? 22 : 16, 16),
+      decoration: heroDecoration,
+      padding: const EdgeInsets.fromLTRB(22, 18, 22, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -997,11 +1343,16 @@ class _SurplusHeroHeader extends StatelessWidget {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.14),
                             borderRadius: BorderRadius.circular(MK.rXs),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.35),
+                            ),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
@@ -1055,11 +1406,26 @@ class _SurplusHeroHeader extends StatelessWidget {
                       foregroundColor: Colors.white,
                       backgroundColor: Colors.white.withValues(alpha: 0.10),
                       side: const BorderSide(color: Colors.white38),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(MK.rSm)),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(MK.rSm),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 11,
+                      ),
                     ),
-                    icon: const Icon(Icons.bolt_rounded, size: 16, color: MK.amber),
-                    label: const Text('Templates', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                    icon: const Icon(
+                      Icons.bolt_rounded,
+                      size: 16,
+                      color: MK.amber,
+                    ),
+                    label: const Text(
+                      'Templates',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                     onPressed: onQuickTemplates,
                   ),
                   ElevatedButton.icon(
@@ -1068,11 +1434,22 @@ class _SurplusHeroHeader extends StatelessWidget {
                       foregroundColor: MK.brand,
                       elevation: 4,
                       shadowColor: Colors.black.withValues(alpha: 0.25),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(MK.rSm)),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(MK.rSm),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 11,
+                      ),
                     ),
                     icon: const Icon(Icons.add_rounded, size: 18),
-                    label: const Text('+ New Pack', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900)),
+                    label: const Text(
+                      '+ New Pack',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
                     onPressed: onNewPack,
                   ),
                 ],
@@ -1089,18 +1466,47 @@ class _SurplusHeroHeader extends StatelessWidget {
             builder: (context, c) {
               final isNarrow = c.maxWidth < 620;
               final stats = [
-                _HeroStatItem(label: 'Live Packs', value: '$live', color: MK.brandTint, icon: Icons.storefront_rounded),
-                _HeroStatItem(label: 'Low Stock', value: '$low', color: const Color(0xFFFFE082), icon: Icons.warning_amber_rounded),
-                _HeroStatItem(label: 'Kitchen Stock', value: '$unitsLeft', color: const Color(0xFF93C5FD), icon: Icons.inventory_2_outlined),
-                _HeroStatItem(label: 'Units Rescued', value: '$rescued', color: const Color(0xFFC8E6C9), icon: Icons.eco_outlined),
-                _HeroStatItem(label: 'Value Saved', value: 'GHS ${rescuedValue.toStringAsFixed(0)}', color: MK.goldTint, icon: Icons.savings_outlined),
+                _HeroStatItem(
+                  label: 'Live Packs',
+                  value: '$live',
+                  color: MK.brandTint,
+                  icon: Icons.storefront_rounded,
+                ),
+                _HeroStatItem(
+                  label: 'Low Stock',
+                  value: '$low',
+                  color: const Color(0xFFFFE082),
+                  icon: Icons.warning_amber_rounded,
+                ),
+                _HeroStatItem(
+                  label: 'Kitchen Stock',
+                  value: '$unitsLeft',
+                  color: const Color(0xFF93C5FD),
+                  icon: Icons.inventory_2_outlined,
+                ),
+                _HeroStatItem(
+                  label: 'Units Rescued',
+                  value: '$rescued',
+                  color: const Color(0xFFC8E6C9),
+                  icon: Icons.eco_outlined,
+                ),
+                _HeroStatItem(
+                  label: 'Value Saved',
+                  value: 'GHS ${rescuedValue.toStringAsFixed(0)}',
+                  color: MK.goldTint,
+                  icon: Icons.savings_outlined,
+                ),
               ];
 
               if (isNarrow) {
                 return Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: stats.map((s) => SizedBox(width: (c.maxWidth - 8) / 2, child: s)).toList(),
+                  children: stats
+                      .map(
+                        (s) => SizedBox(width: (c.maxWidth - 8) / 2, child: s),
+                      )
+                      .toList(),
                 );
               }
 
@@ -1115,6 +1521,38 @@ class _SurplusHeroHeader extends StatelessWidget {
   }
 }
 
+class _HeroIconButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  final bool filled;
+
+  const _HeroIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+    this.filled = false,
+  });
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+    message: tooltip,
+    child: MPressable(
+      onTap: onTap,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: filled ? Colors.white : Colors.white.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(MK.rSm),
+          border: filled ? null : Border.all(color: Colors.white38),
+        ),
+        child: Icon(icon, size: 19, color: filled ? MK.brand : Colors.white),
+      ),
+    ),
+  );
+}
+
 class _PulsingDot extends StatefulWidget {
   const _PulsingDot();
 
@@ -1122,7 +1560,8 @@ class _PulsingDot extends StatefulWidget {
   State<_PulsingDot> createState() => _PulsingDotState();
 }
 
-class _PulsingDotState extends State<_PulsingDot> with SingleTickerProviderStateMixin {
+class _PulsingDotState extends State<_PulsingDot>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1400),
@@ -1250,11 +1689,18 @@ class _ListingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final meta = _bucketMeta[bucket]!;
     final pct = deal.originalPrice > 0
-        ? (((deal.originalPrice - deal.discountedPrice) / deal.originalPrice) * 100).round()
+        ? (((deal.originalPrice - deal.discountedPrice) / deal.originalPrice) *
+                  100)
+              .round()
         : 0;
     final sold = deal.quantityTotal - deal.quantityRemaining;
-    final fill = deal.quantityTotal == 0 ? 0.0 : (deal.quantityRemaining / deal.quantityTotal).clamp(0.0, 1.0);
-    final savings = (deal.originalPrice - deal.discountedPrice).clamp(0.0, 9999.0);
+    final fill = deal.quantityTotal == 0
+        ? 0.0
+        : (deal.quantityRemaining / deal.quantityTotal).clamp(0.0, 1.0);
+    final savings = (deal.originalPrice - deal.discountedPrice).clamp(
+      0.0,
+      9999.0,
+    );
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -1284,9 +1730,17 @@ class _ListingCard extends StatelessWidget {
                       ? Image.network(
                           deal.imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, err, stack) => const Icon(Icons.restaurant_rounded, size: 24, color: MerchantTheme.brandGreen),
+                          errorBuilder: (_, err, stack) => const Icon(
+                            Icons.restaurant_rounded,
+                            size: 24,
+                            color: MerchantTheme.brandGreen,
+                          ),
                         )
-                      : const Icon(Icons.restaurant_rounded, size: 24, color: MerchantTheme.brandGreen),
+                      : const Icon(
+                          Icons.restaurant_rounded,
+                          size: 24,
+                          color: MerchantTheme.brandGreen,
+                        ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -1298,21 +1752,34 @@ class _ListingCard extends StatelessWidget {
                       deal.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w900, color: MerchantTheme.textDark),
+                      style: const TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w900,
+                        color: MerchantTheme.textDark,
+                      ),
                     ),
                     const SizedBox(height: 3),
                     Row(
                       children: [
-                        Text(
-                          '${categoryEmoji(deal.category)} ${deal.category}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 10.5, color: MerchantTheme.textMuted, fontWeight: FontWeight.w700),
+                        Expanded(
+                          child: Text(
+                            '${categoryEmoji(deal.category)} ${deal.category}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              color: MerchantTheme.textMuted,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
                         if (pct > 0) ...[
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 5,
+                              vertical: 1.5,
+                            ),
                             decoration: BoxDecoration(
                               color: MerchantTheme.goldLightBg,
                               borderRadius: BorderRadius.circular(5),
@@ -1358,42 +1825,54 @@ class _ListingCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(
-                        'GHS ${deal.discountedPrice.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w900,
-                          color: MerchantTheme.brandGreen,
-                          letterSpacing: -0.4,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          'GHS ${deal.discountedPrice.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w900,
+                            color: MerchantTheme.brandGreen,
+                            letterSpacing: -0.4,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'GHS ${deal.originalPrice.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: MerchantTheme.textMuted,
-                          decoration: TextDecoration.lineThrough,
-                          fontWeight: FontWeight.w600,
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            'GHS ${deal.originalPrice.toStringAsFixed(2)}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: MerchantTheme.textMuted,
+                              decoration: TextDecoration.lineThrough,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  if (savings > 0)
-                    Text(
-                      'Save GHS ${savings.toStringAsFixed(2)}',
-                      style: const TextStyle(fontSize: 10, color: MK.brandGlow, fontWeight: FontWeight.w700),
+                      ],
                     ),
-                ],
+                    if (savings > 0)
+                      Text(
+                        'Save GHS ${savings.toStringAsFixed(2)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: MK.brandGlow,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                  ],
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
 
               // Quick Stepper (- / +)
               Container(
@@ -1407,10 +1886,19 @@ class _ListingCard extends StatelessWidget {
                   children: [
                     InkWell(
                       onTap: () => onQuickAdjust(-1),
-                      borderRadius: const BorderRadius.horizontal(left: Radius.circular(10)),
+                      borderRadius: const BorderRadius.horizontal(
+                        left: Radius.circular(10),
+                      ),
                       child: const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-                        child: Icon(Icons.remove_rounded, size: 15, color: MerchantTheme.textMuted),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 4,
+                        ),
+                        child: Icon(
+                          Icons.remove_rounded,
+                          size: 15,
+                          color: MerchantTheme.textMuted,
+                        ),
                       ),
                     ),
                     Padding(
@@ -1426,10 +1914,19 @@ class _ListingCard extends StatelessWidget {
                     ),
                     InkWell(
                       onTap: () => onQuickAdjust(1),
-                      borderRadius: const BorderRadius.horizontal(right: Radius.circular(10)),
+                      borderRadius: const BorderRadius.horizontal(
+                        right: Radius.circular(10),
+                      ),
                       child: const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-                        child: Icon(Icons.add_rounded, size: 15, color: MerchantTheme.brandGreen),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 4,
+                        ),
+                        child: Icon(
+                          Icons.add_rounded,
+                          size: 15,
+                          color: MerchantTheme.brandGreen,
+                        ),
                       ),
                     ),
                   ],
@@ -1453,7 +1950,9 @@ class _ListingCard extends StatelessWidget {
                     height: 6,
                     width: c.maxWidth * fill,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: [meta.color.withValues(alpha: 0.7), meta.color]),
+                      gradient: LinearGradient(
+                        colors: [meta.color.withValues(alpha: 0.7), meta.color],
+                      ),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -1467,20 +1966,34 @@ class _ListingCard extends StatelessWidget {
           // Pickup window & units sold
           Row(
             children: [
-              const Icon(Icons.schedule_rounded, size: 13, color: MerchantTheme.textMuted),
+              const Icon(
+                Icons.schedule_rounded,
+                size: 13,
+                color: MerchantTheme.textMuted,
+              ),
               const SizedBox(width: 5),
               Expanded(
                 child: Text(
-                  deal.pickupWindow.isEmpty ? 'Pickup window not set' : deal.pickupWindow,
+                  deal.pickupWindow.isEmpty
+                      ? 'Pickup window not set'
+                      : deal.pickupWindow,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 10.5, color: MerchantTheme.textMuted, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 10.5,
+                    color: MerchantTheme.textMuted,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               if (sold > 0)
                 Text(
                   '$sold rescued',
-                  style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: MerchantTheme.brandGreen),
+                  style: const TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                    color: MerchantTheme.brandGreen,
+                  ),
                 ),
             ],
           ),
@@ -1491,19 +2004,31 @@ class _ListingCard extends StatelessWidget {
           Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.edit_outlined, size: 17, color: MerchantTheme.goldAccent),
+                icon: const Icon(
+                  Icons.edit_outlined,
+                  size: 17,
+                  color: MerchantTheme.goldAccent,
+                ),
                 tooltip: 'Edit listing',
                 onPressed: onEdit,
                 visualDensity: VisualDensity.compact,
               ),
               IconButton(
-                icon: const Icon(Icons.copy_rounded, size: 16, color: MerchantTheme.skyInfo),
+                icon: const Icon(
+                  Icons.copy_rounded,
+                  size: 16,
+                  color: MerchantTheme.skyInfo,
+                ),
                 tooltip: 'Duplicate deal',
                 onPressed: onDuplicate,
                 visualDensity: VisualDensity.compact,
               ),
               IconButton(
-                icon: const Icon(Icons.add_box_outlined, size: 17, color: MerchantTheme.amberWarning),
+                icon: const Icon(
+                  Icons.add_box_outlined,
+                  size: 17,
+                  color: MerchantTheme.amberWarning,
+                ),
                 tooltip: 'Restock units',
                 onPressed: onRestock,
                 visualDensity: VisualDensity.compact,
@@ -1514,26 +2039,41 @@ class _ListingCard extends StatelessWidget {
                 height: 32,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: deal.isActive ? MK.lineSoft : MerchantTheme.brandGreen,
-                    foregroundColor: deal.isActive ? MerchantTheme.textDark : Colors.white,
+                    backgroundColor: deal.isActive
+                        ? MK.lineSoft
+                        : MerchantTheme.brandGreen,
+                    foregroundColor: deal.isActive
+                        ? MerchantTheme.textDark
+                        : Colors.white,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                   ),
                   icon: Icon(
-                    deal.isActive ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                    deal.isActive
+                        ? Icons.pause_rounded
+                        : Icons.play_arrow_rounded,
                     size: 14,
                   ),
                   label: Text(
                     deal.isActive ? 'Pause' : 'Go Live',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   onPressed: onToggle,
                 ),
               ),
               const SizedBox(width: 4),
               IconButton(
-                icon: const Icon(Icons.delete_outline_rounded, size: 17, color: MerchantTheme.roseDanger),
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  size: 17,
+                  color: MerchantTheme.roseDanger,
+                ),
                 tooltip: 'Delete listing',
                 onPressed: onDelete,
                 visualDensity: VisualDensity.compact,
@@ -1547,29 +2087,34 @@ class _ListingCard extends StatelessWidget {
 }
 
 /// Curated high-resolution stock photography presets for instant, frictionless listing creation.
-const List<({String title, String category, String url, String emoji})> kCuratedPhotoPresets = [
+const List<({String title, String category, String url, String emoji})>
+kCuratedPhotoPresets = [
   (
     title: 'Bakery & Pastries',
     category: 'Bakery',
-    url: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&auto=format&fit=crop&q=80',
+    url:
+        'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&auto=format&fit=crop&q=80',
     emoji: '🥐',
   ),
   (
     title: 'Hot Kitchen Meal',
     category: 'Restaurant Meal',
-    url: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80',
+    url:
+        'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80',
     emoji: '🍲',
   ),
   (
     title: 'Farm Fresh Produce',
     category: 'Produce',
-    url: 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=800&auto=format&fit=crop&q=80',
+    url:
+        'https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=800&auto=format&fit=crop&q=80',
     emoji: '🥗',
   ),
   (
     title: 'Desserts & Cakes',
     category: 'Desserts',
-    url: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&auto=format&fit=crop&q=80',
+    url:
+        'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&auto=format&fit=crop&q=80',
     emoji: '🍰',
   ),
 ];
@@ -1588,21 +2133,38 @@ class _DealForm extends ConsumerStatefulWidget {
 
 class _DealFormState extends ConsumerState<_DealForm> {
   final _formKey = GlobalKey<FormState>();
-  late final _title = TextEditingController(text: widget.existing?.title ?? widget.presetTemplate?['title'] ?? '');
-  late final _desc = TextEditingController(text: widget.existing?.description ?? widget.presetTemplate?['description'] ?? '');
+  late final _title = TextEditingController(
+    text: widget.existing?.title ?? widget.presetTemplate?['title'] ?? '',
+  );
+  late final _desc = TextEditingController(
+    text:
+        widget.existing?.description ??
+        widget.presetTemplate?['description'] ??
+        '',
+  );
   late final _orig = TextEditingController(
-      text: widget.existing != null
-          ? widget.existing!.originalPrice.toStringAsFixed(0)
-          : (widget.presetTemplate?['originalPrice']?.toString() ?? ''));
+    text: widget.existing != null
+        ? widget.existing!.originalPrice.toStringAsFixed(0)
+        : (widget.presetTemplate?['originalPrice']?.toString() ?? ''),
+  );
   late final _disc = TextEditingController(
-      text: widget.existing != null
-          ? widget.existing!.discountedPrice.toStringAsFixed(0)
-          : (widget.presetTemplate?['discountedPrice']?.toString() ?? ''));
+    text: widget.existing != null
+        ? widget.existing!.discountedPrice.toStringAsFixed(0)
+        : (widget.presetTemplate?['discountedPrice']?.toString() ?? ''),
+  );
   late final _window = TextEditingController(
-      text: widget.existing?.pickupWindow ?? widget.presetTemplate?['pickupWindow'] ?? 'Today 17:30 – 19:30');
+    text:
+        widget.existing?.pickupWindow ??
+        widget.presetTemplate?['pickupWindow'] ??
+        'Today 17:30 – 19:30',
+  );
   late final _qty = TextEditingController(
-      text: '${widget.existing?.quantityTotal ?? widget.presetTemplate?['quantity'] ?? 6}');
-  late String _category = widget.existing != null && kDealCategories.contains(widget.existing!.category)
+    text:
+        '${widget.existing?.quantityTotal ?? widget.presetTemplate?['quantity'] ?? 6}',
+  );
+  late String _category =
+      widget.existing != null &&
+          kDealCategories.contains(widget.existing!.category)
       ? widget.existing!.category
       : (widget.presetTemplate?['category'] ?? kDealCategories.first);
 
@@ -1633,7 +2195,11 @@ class _DealFormState extends ConsumerState<_DealForm> {
   }
 
   Future<void> _pick() async {
-    final file = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 78, maxWidth: 1200);
+    final file = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 78,
+      maxWidth: 1200,
+    );
     if (file == null) return;
     final bytes = await file.readAsBytes();
     if (mounted) {
@@ -1658,26 +2224,31 @@ class _DealFormState extends ConsumerState<_DealForm> {
         try {
           final uploaded = await SupabaseService().uploadImage(
             bucket: 'uploads',
-            path: '${widget.business.id}/deal_${DateTime.now().millisecondsSinceEpoch}.jpg',
+            path:
+                '${widget.business.id}/deal_${DateTime.now().millisecondsSinceEpoch}.jpg',
             fileBytes: _bytes!,
           );
           if (uploaded.isNotEmpty) finalImageUrl = uploaded;
         } catch (_) {
           // Graceful fallback to category preset image
           if (finalImageUrl.isEmpty) {
-            finalImageUrl = kCuratedPhotoPresets.firstWhere(
-              (p) => p.category == _category,
-              orElse: () => kCuratedPhotoPresets.first,
-            ).url;
+            finalImageUrl = kCuratedPhotoPresets
+                .firstWhere(
+                  (p) => p.category == _category,
+                  orElse: () => kCuratedPhotoPresets.first,
+                )
+                .url;
           }
         }
       }
 
       if (finalImageUrl.isEmpty) {
-        finalImageUrl = kCuratedPhotoPresets.firstWhere(
-          (p) => p.category == _category,
-          orElse: () => kCuratedPhotoPresets.first,
-        ).url;
+        finalImageUrl = kCuratedPhotoPresets
+            .firstWhere(
+              (p) => p.category == _category,
+              orElse: () => kCuratedPhotoPresets.first,
+            )
+            .url;
       }
 
       final notifier = ref.read(appStateProvider.notifier);
@@ -1712,7 +2283,12 @@ class _DealFormState extends ConsumerState<_DealForm> {
 
       if (!mounted) return;
       Navigator.pop(context);
-      MToast.ok(context, widget.existing == null ? '“${_title.text.trim()}” is now live' : 'Listing updated');
+      MToast.ok(
+        context,
+        widget.existing == null
+            ? '“${_title.text.trim()}” is now live'
+            : 'Listing updated',
+      );
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -1723,28 +2299,36 @@ class _DealFormState extends ConsumerState<_DealForm> {
     }
   }
 
-  InputDecoration _field(String label, {String? hint, IconData? icon}) => InputDecoration(
-        labelText: label,
-        hintText: hint,
-        prefixIcon: icon == null ? null : Icon(icon, size: 19, color: MerchantTheme.textMuted),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: MerchantTheme.cardBorder),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: MerchantTheme.brandGreen, width: 1.6),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-      );
+  InputDecoration _field(
+    String label, {
+    String? hint,
+    IconData? icon,
+  }) => InputDecoration(
+    labelText: label,
+    hintText: hint,
+    prefixIcon: icon == null
+        ? null
+        : Icon(icon, size: 19, color: MerchantTheme.textMuted),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: MerchantTheme.cardBorder),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: MerchantTheme.brandGreen, width: 1.6),
+    ),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+  );
 
   @override
   Widget build(BuildContext context) {
     final orig = double.tryParse(_orig.text.trim()) ?? 0;
     final disc = double.tryParse(_disc.text.trim()) ?? 0;
     final qty = int.tryParse(_qty.text.trim()) ?? 1;
-    final pct = orig > 0 && disc > 0 && disc < orig ? (((orig - disc) / orig) * 100).round() : 0;
+    final pct = orig > 0 && disc > 0 && disc < orig
+        ? (((orig - disc) / orig) * 100).round()
+        : 0;
     final savingsPerPack = (orig - disc).clamp(0.0, 9999.0);
     final commissionRate = ref.watch(appStateProvider).commissionRate;
     final merchantNetPerPack = (disc * (1 - commissionRate)).clamp(0.0, 9999.0);
@@ -1774,12 +2358,13 @@ class _DealFormState extends ConsumerState<_DealForm> {
                 child: _bytes != null
                     ? Image.memory(_bytes!, fit: BoxFit.cover)
                     : (_selectedPresetUrl.isNotEmpty
-                        ? Image.network(
-                            _selectedPresetUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => const _PhotoPlaceholder(),
-                          )
-                        : const _PhotoPlaceholder()),
+                          ? Image.network(
+                              _selectedPresetUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const _PhotoPlaceholder(),
+                            )
+                          : const _PhotoPlaceholder()),
               ),
             ),
           ),
@@ -1790,9 +2375,17 @@ class _DealFormState extends ConsumerState<_DealForm> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                const Text('Quick Presets: ', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: MerchantTheme.textMuted)),
+                const Text(
+                  'Quick Presets: ',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.bold,
+                    color: MerchantTheme.textMuted,
+                  ),
+                ),
                 ...kCuratedPhotoPresets.map((p) {
-                  final isSelected = _selectedPresetUrl == p.url && _bytes == null;
+                  final isSelected =
+                      _selectedPresetUrl == p.url && _bytes == null;
                   return Padding(
                     padding: const EdgeInsets.only(right: 6),
                     child: ChoiceChip(
@@ -1802,12 +2395,20 @@ class _DealFormState extends ConsumerState<_DealForm> {
                       backgroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
-                        side: BorderSide(color: isSelected ? MerchantTheme.brandGreen : MerchantTheme.cardBorder),
+                        side: BorderSide(
+                          color: isSelected
+                              ? MerchantTheme.brandGreen
+                              : MerchantTheme.cardBorder,
+                        ),
                       ),
                       labelStyle: TextStyle(
                         fontSize: 10.5,
-                        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                        color: isSelected ? MerchantTheme.brandDeepGreen : MerchantTheme.textDark,
+                        fontWeight: isSelected
+                            ? FontWeight.w800
+                            : FontWeight.w600,
+                        color: isSelected
+                            ? MerchantTheme.brandDeepGreen
+                            : MerchantTheme.textDark,
                       ),
                       onSelected: (_) {
                         setState(() {
@@ -1828,8 +2429,13 @@ class _DealFormState extends ConsumerState<_DealForm> {
           TextFormField(
             controller: _title,
             textCapitalization: TextCapitalization.sentences,
-            decoration: _field('e.g. Pastry & Sourdough Surplus Box', icon: Icons.restaurant_rounded),
-            validator: (v) => (v == null || v.trim().length < 4) ? 'Give the pack a descriptive title' : null,
+            decoration: _field(
+              'e.g. Pastry & Sourdough Surplus Box',
+              icon: Icons.restaurant_rounded,
+            ),
+            validator: (v) => (v == null || v.trim().length < 4)
+                ? 'Give the pack a descriptive title'
+                : null,
           ),
 
           const SizedBox(height: 14),
@@ -1838,8 +2444,12 @@ class _DealFormState extends ConsumerState<_DealForm> {
             controller: _desc,
             maxLines: 2,
             textCapitalization: TextCapitalization.sentences,
-            decoration: _field('Freshness, ingredients, portions, allergy advisories…'),
-            validator: (v) => (v == null || v.trim().length < 10) ? 'Describe the contents (10+ characters)' : null,
+            decoration: _field(
+              'Freshness, ingredients, portions, allergy advisories…',
+            ),
+            validator: (v) => (v == null || v.trim().length < 10)
+                ? 'Describe the contents (10+ characters)'
+                : null,
           ),
 
           const SizedBox(height: 14),
@@ -1856,12 +2466,19 @@ class _DealFormState extends ConsumerState<_DealForm> {
                       borderRadius: BorderRadius.circular(10),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 180),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
-                          color: _category == c ? MerchantTheme.brandTint : Colors.white,
+                          color: _category == c
+                              ? MerchantTheme.brandTint
+                              : Colors.white,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: _category == c ? MerchantTheme.brandGreen : MerchantTheme.cardBorder,
+                            color: _category == c
+                                ? MerchantTheme.brandGreen
+                                : MerchantTheme.cardBorder,
                             width: _category == c ? 1.6 : 1,
                           ),
                         ),
@@ -1870,7 +2487,9 @@ class _DealFormState extends ConsumerState<_DealForm> {
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w800,
-                            color: _category == c ? MerchantTheme.brandDeepGreen : MerchantTheme.textDark,
+                            color: _category == c
+                                ? MerchantTheme.brandDeepGreen
+                                : MerchantTheme.textDark,
                           ),
                         ),
                       ),
@@ -1895,7 +2514,9 @@ class _DealFormState extends ConsumerState<_DealForm> {
                       onChanged: (_) => setState(() {}),
                       validator: (v) {
                         final n = double.tryParse((v ?? '').trim());
-                        return (n == null || n <= 0) ? 'Enter regular value' : null;
+                        return (n == null || n <= 0)
+                            ? 'Enter regular value'
+                            : null;
                       },
                     ),
                   ],
@@ -1910,13 +2531,17 @@ class _DealFormState extends ConsumerState<_DealForm> {
                     TextFormField(
                       controller: _disc,
                       keyboardType: TextInputType.number,
-                      decoration: _field('GHS 0.00', icon: Icons.local_offer_outlined),
+                      decoration: _field(
+                        'GHS 0.00',
+                        icon: Icons.local_offer_outlined,
+                      ),
                       onChanged: (_) => setState(() {}),
                       validator: (v) {
                         final n = double.tryParse((v ?? '').trim());
                         if (n == null || n <= 0) return 'Enter rescue price';
                         final o = double.tryParse(_orig.text.trim()) ?? 0;
-                        if (o > 0 && n >= o) return 'Must be below regular value';
+                        if (o > 0 && n >= o)
+                          return 'Must be below regular value';
                         return null;
                       },
                     ),
@@ -1940,11 +2565,19 @@ class _DealFormState extends ConsumerState<_DealForm> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.insights_rounded, size: 16, color: MK.brandGlow),
+                      const Icon(
+                        Icons.insights_rounded,
+                        size: 16,
+                        color: MK.brandGlow,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         '$pct% DISCOUNT · Rescuer saves GHS ${savingsPerPack.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: MK.brand),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: MK.brand,
+                        ),
                       ),
                     ],
                   ),
@@ -1954,11 +2587,19 @@ class _DealFormState extends ConsumerState<_DealForm> {
                     children: [
                       Text(
                         'Net Payout / Pack: GHS ${merchantNetPerPack.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 11, color: MK.brandDeep, fontWeight: FontWeight.w700),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: MK.brandDeep,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       Text(
                         'Batch Total: GHS ${totalNetRevenue.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 11, color: MK.brandDeep, fontWeight: FontWeight.w900),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: MK.brandDeep,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                     ],
                   ),
@@ -1972,8 +2613,13 @@ class _DealFormState extends ConsumerState<_DealForm> {
           TextFormField(
             controller: _window,
             textCapitalization: TextCapitalization.sentences,
-            decoration: _field('e.g. Today 6:00 PM – 8:30 PM', icon: Icons.schedule_rounded),
-            validator: (v) => (v == null || v.trim().length < 4) ? 'Specify pickup time window' : null,
+            decoration: _field(
+              'e.g. Today 6:00 PM – 8:30 PM',
+              icon: Icons.schedule_rounded,
+            ),
+            validator: (v) => (v == null || v.trim().length < 4)
+                ? 'Specify pickup time window'
+                : null,
           ),
           const SizedBox(height: 6),
 
@@ -1982,9 +2628,21 @@ class _DealFormState extends ConsumerState<_DealForm> {
             spacing: 6,
             runSpacing: 6,
             children: [
-              _WindowPresetChip('Today 17:30 – 19:30', onTap: () => setState(() => _window.text = 'Today 17:30 – 19:30')),
-              _WindowPresetChip('Tonight 20:00 – 21:30', onTap: () => setState(() => _window.text = 'Tonight 20:00 – 21:30')),
-              _WindowPresetChip('Tomorrow 08:30 – 10:30', onTap: () => setState(() => _window.text = 'Tomorrow 08:30 – 10:30')),
+              _WindowPresetChip(
+                'Today 17:30 – 19:30',
+                onTap: () =>
+                    setState(() => _window.text = 'Today 17:30 – 19:30'),
+              ),
+              _WindowPresetChip(
+                'Tonight 20:00 – 21:30',
+                onTap: () =>
+                    setState(() => _window.text = 'Tonight 20:00 – 21:30'),
+              ),
+              _WindowPresetChip(
+                'Tomorrow 08:30 – 10:30',
+                onTap: () =>
+                    setState(() => _window.text = 'Tomorrow 08:30 – 10:30'),
+              ),
             ],
           ),
 
@@ -1996,27 +2654,39 @@ class _DealFormState extends ConsumerState<_DealForm> {
                 child: TextFormField(
                   controller: _qty,
                   keyboardType: TextInputType.number,
-                  decoration: _field('e.g. 6', icon: Icons.inventory_2_outlined),
+                  decoration: _field(
+                    'e.g. 6',
+                    icon: Icons.inventory_2_outlined,
+                  ),
                   onChanged: (_) => setState(() {}),
                   validator: (v) {
                     final n = int.tryParse((v ?? '').trim());
                     if (n == null || n <= 0) return 'At least one pack';
-                    final sold = (widget.existing?.quantityTotal ?? 0) - (widget.existing?.quantityRemaining ?? 0);
-                    if (n < sold) return 'Total cannot be below $sold units already sold';
+                    final sold =
+                        (widget.existing?.quantityTotal ?? 0) -
+                        (widget.existing?.quantityRemaining ?? 0);
+                    if (n < sold)
+                      return 'Total cannot be below $sold units already sold';
                     return null;
                   },
                 ),
               ),
               const SizedBox(width: 8),
-              _QuickQtyButton('+5', onTap: () {
-                final current = int.tryParse(_qty.text.trim()) ?? 0;
-                setState(() => _qty.text = '${current + 5}');
-              }),
+              _QuickQtyButton(
+                '+5',
+                onTap: () {
+                  final current = int.tryParse(_qty.text.trim()) ?? 0;
+                  setState(() => _qty.text = '${current + 5}');
+                },
+              ),
               const SizedBox(width: 6),
-              _QuickQtyButton('+10', onTap: () {
-                final current = int.tryParse(_qty.text.trim()) ?? 0;
-                setState(() => _qty.text = '${current + 10}');
-              }),
+              _QuickQtyButton(
+                '+10',
+                onTap: () {
+                  final current = int.tryParse(_qty.text.trim()) ?? 0;
+                  setState(() => _qty.text = '${current + 10}');
+                },
+              ),
             ],
           ),
 
@@ -2025,10 +2695,22 @@ class _DealFormState extends ConsumerState<_DealForm> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.error_outline_rounded, size: 16, color: MerchantTheme.roseDanger),
+                const Icon(
+                  Icons.error_outline_rounded,
+                  size: 16,
+                  color: MerchantTheme.roseDanger,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(_error!, style: const TextStyle(fontSize: 11.5, color: MerchantTheme.roseDanger, fontWeight: FontWeight.w800, height: 1.4)),
+                  child: Text(
+                    _error!,
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      color: MerchantTheme.roseDanger,
+                      fontWeight: FontWeight.w800,
+                      height: 1.4,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -2040,11 +2722,19 @@ class _DealFormState extends ConsumerState<_DealForm> {
               Expanded(
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   onPressed: _busy ? null : () => Navigator.pop(context),
-                  child: const Text('Cancel', style: TextStyle(color: MerchantTheme.textMuted, fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: MerchantTheme.textMuted,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -2055,14 +2745,25 @@ class _DealFormState extends ConsumerState<_DealForm> {
                     backgroundColor: MerchantTheme.brandGreen,
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   icon: _busy
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
                       : const Icon(Icons.bolt_rounded, size: 18),
                   label: Text(
-                    widget.existing == null ? 'Publish Surplus Pack' : 'Save Changes',
+                    widget.existing == null
+                        ? 'Publish Surplus Pack'
+                        : 'Save Changes',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   onPressed: _busy ? null : _submit,
@@ -2094,7 +2795,14 @@ class _WindowPresetChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(6),
           border: Border.all(color: MK.line),
         ),
-        child: Text(label, style: const TextStyle(fontSize: 10, color: MerchantTheme.textDark, fontWeight: FontWeight.bold)),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            color: MerchantTheme.textDark,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }
@@ -2115,7 +2823,14 @@ class _QuickQtyButton extends StatelessWidget {
         side: const BorderSide(color: MerchantTheme.cardBorder),
       ),
       onPressed: onTap,
-      child: Text(label, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: MerchantTheme.brandDeepGreen)),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontWeight: FontWeight.w900,
+          fontSize: 12,
+          color: MerchantTheme.brandDeepGreen,
+        ),
+      ),
     );
   }
 }
@@ -2129,46 +2844,54 @@ class _QuickTemplatesSheet extends StatelessWidget {
   static const _templates = [
     {
       'title': 'Bakery Surprise Mystery Bag',
-      'description': 'Assorted fresh artisanal sourdough, butter croissants, baguettes & daily rolls baked this morning.',
+      'description':
+          'Assorted fresh artisanal sourdough, butter croissants, baguettes & daily rolls baked this morning.',
       'category': 'Bakery',
       'originalPrice': 75.0,
       'discountedPrice': 28.0,
       'quantity': 6,
       'pickupWindow': 'Today 17:00 – 19:30',
-      'imageUrl': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&auto=format&fit=crop&q=80',
+      'imageUrl':
+          'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&auto=format&fit=crop&q=80',
       'icon': '🥐',
     },
     {
       'title': "Chef's Hot Dinner Surplus Box",
-      'description': "Generous portions of today's hot kitchen specials, gourmet sides, proteins and sauces packed fresh.",
+      'description':
+          "Generous portions of today's hot kitchen specials, gourmet sides, proteins and sauces packed fresh.",
       'category': 'Restaurant Meal',
       'originalPrice': 110.0,
       'discountedPrice': 48.0,
       'quantity': 8,
       'pickupWindow': 'Tonight 20:30 – 22:00',
-      'imageUrl': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80',
+      'imageUrl':
+          'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop&q=80',
       'icon': '🍲',
     },
     {
       'title': 'Farm Fresh Market Produce Basket',
-      'description': 'Crisp organic seasonal fruits, leafy greens, root vegetables and herbs directly from our pantry.',
+      'description':
+          'Crisp organic seasonal fruits, leafy greens, root vegetables and herbs directly from our pantry.',
       'category': 'Produce',
       'originalPrice': 60.0,
       'discountedPrice': 25.0,
       'quantity': 5,
       'pickupWindow': 'Today 16:00 – 18:30',
-      'imageUrl': 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=800&auto=format&fit=crop&q=80',
+      'imageUrl':
+          'https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=800&auto=format&fit=crop&q=80',
       'icon': '🥗',
     },
     {
       'title': 'Gourmet Pastry & Cafe Delights',
-      'description': 'Slices of artisan cakes, sweet tarts, cookies and afternoon bakery treats from the counter.',
+      'description':
+          'Slices of artisan cakes, sweet tarts, cookies and afternoon bakery treats from the counter.',
       'category': 'Desserts',
       'originalPrice': 55.0,
       'discountedPrice': 22.0,
       'quantity': 10,
       'pickupWindow': 'Today 18:00 – 20:00',
-      'imageUrl': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&auto=format&fit=crop&q=80',
+      'imageUrl':
+          'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&auto=format&fit=crop&q=80',
       'icon': '🍰',
     },
   ];
@@ -2189,7 +2912,10 @@ class _QuickTemplatesSheet extends StatelessWidget {
             child: Container(
               width: 36,
               height: 4,
-              decoration: BoxDecoration(color: MK.inkFaint, borderRadius: BorderRadius.circular(2)),
+              decoration: BoxDecoration(
+                color: MK.inkFaint,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -2199,7 +2925,11 @@ class _QuickTemplatesSheet extends StatelessWidget {
               SizedBox(width: 8),
               Text(
                 '1-Tap Surplus Pack Templates',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: MerchantTheme.textDark),
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                  color: MerchantTheme.textDark,
+                ),
               ),
             ],
           ),
@@ -2209,63 +2939,81 @@ class _QuickTemplatesSheet extends StatelessWidget {
             style: TextStyle(fontSize: 12, color: MerchantTheme.textMuted),
           ),
           const SizedBox(height: 16),
-          ..._templates.map((tpl) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Material(
-                  color: MK.surfaceAlt,
+          ..._templates.map(
+            (tpl) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Material(
+                color: MK.surfaceAlt,
+                borderRadius: BorderRadius.circular(14),
+                child: InkWell(
                   borderRadius: BorderRadius.circular(14),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(14),
-                    onTap: () => onSelect(tpl),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.network(
-                              tpl['imageUrl'] as String,
-                              width: 52,
-                              height: 52,
-                              fit: BoxFit.cover,
-                            ),
+                  onTap: () => onSelect(tpl),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.network(
+                            tpl['imageUrl'] as String,
+                            width: 52,
+                            height: 52,
+                            fit: BoxFit.cover,
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  tpl['title'] as String,
-                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900, color: MerchantTheme.textDark),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '${tpl['category']} · ${tpl['quantity']} units · ${tpl['pickupWindow']}',
-                                  style: const TextStyle(fontSize: 11, color: MerchantTheme.textMuted, fontWeight: FontWeight.w600),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'GHS ${(tpl['discountedPrice'] as double).toStringAsFixed(2)}',
-                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: MerchantTheme.brandGreen),
+                                tpl['title'] as String,
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w900,
+                                  color: MerchantTheme.textDark,
+                                ),
                               ),
+                              const SizedBox(height: 2),
                               Text(
-                                'GHS ${(tpl['originalPrice'] as double).toStringAsFixed(2)}',
-                                style: const TextStyle(fontSize: 10.5, color: MerchantTheme.textMuted, decoration: TextDecoration.lineThrough),
+                                '${tpl['category']} · ${tpl['quantity']} units · ${tpl['pickupWindow']}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: MerchantTheme.textMuted,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'GHS ${(tpl['discountedPrice'] as double).toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w900,
+                                color: MerchantTheme.brandGreen,
+                              ),
+                            ),
+                            Text(
+                              'GHS ${(tpl['originalPrice'] as double).toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 10.5,
+                                color: MerchantTheme.textMuted,
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              )),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -2277,14 +3025,24 @@ class _PhotoPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.add_a_photo_outlined, size: 28, color: MerchantTheme.brandGreen),
-          const SizedBox(height: 8),
-          const Text('Tap to upload dish photo or pick preset below',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: MerchantTheme.textMuted)),
-        ],
-      );
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      const Icon(
+        Icons.add_a_photo_outlined,
+        size: 28,
+        color: MerchantTheme.brandGreen,
+      ),
+      const SizedBox(height: 8),
+      const Text(
+        'Tap to upload dish photo or pick preset below',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          color: MerchantTheme.textMuted,
+        ),
+      ),
+    ],
+  );
 }
 
 class _FormLabel extends StatelessWidget {
@@ -2293,12 +3051,17 @@ class _FormLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Text(
-          text,
-          style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w900, color: MerchantTheme.textMuted, letterSpacing: 0.9),
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Text(
+      text,
+      style: const TextStyle(
+        fontSize: 9.5,
+        fontWeight: FontWeight.w900,
+        color: MerchantTheme.textMuted,
+        letterSpacing: 0.9,
+      ),
+    ),
+  );
 }
 
 /// Small numeric prompt used by restock.
@@ -2317,7 +3080,14 @@ Future<String?> askNumber(
       builder: (context, setDlg) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        title: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: MerchantTheme.textDark)),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w900,
+            color: MerchantTheme.textDark,
+          ),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -2328,19 +3098,26 @@ Future<String?> askNumber(
               decoration: InputDecoration(
                 labelText: hint,
                 errorText: error,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               onChanged: (_) => setDlg(() => error = null),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: MerchantTheme.brandGreen,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: () {
               final msg = validate?.call(ctrl.text);
@@ -2350,7 +3127,10 @@ Future<String?> askNumber(
               }
               Navigator.pop(ctx, ctrl.text.trim());
             },
-            child: const Text('Save Stock', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Save Stock',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
