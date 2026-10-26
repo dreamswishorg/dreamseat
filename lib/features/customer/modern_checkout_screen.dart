@@ -1,14 +1,18 @@
+import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_paystack_plus/flutter_paystack_plus.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../core/config.dart';
 import '../../core/theme.dart';
 import '../../core/responsive.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
 import '../../services/supabase_service.dart';
+import '../../services/location_service.dart';
+import 'customer_home.dart' show userLocationProvider;
 import 'order_confirmation_screen.dart';
 
 class ModernCheckoutScreen extends ConsumerStatefulWidget {
@@ -22,11 +26,24 @@ class ModernCheckoutScreen extends ConsumerStatefulWidget {
 
 class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
   final TextEditingController _promoController = TextEditingController();
-  final TextEditingController _addressController = TextEditingController(text: 'Accra Central, Greater Accra, Ghana');
+  final TextEditingController _addressController = TextEditingController();
+  final FocusNode _addressFocusNode = FocusNode();
+
   bool _isDelivery = false;
   String _appliedPromoCode = '';
   double _discountAmount = 0.0;
   bool _isProcessing = false;
+
+  // Delivery address & location state
+  Position? _deliveryPosition;
+  bool _isLocating = false;
+  bool _isSearchingAddress = false;
+  List<PredictedAddress> _addressSuggestions = [];
+  Timer? _debounceTimer;
+  String? _addressValidationError;
+  bool _hasSavedAddressAvailable = false;
+  String? _savedProfileAddress;
+  Position? _savedProfilePosition;
 
   double get _deliveryFee => _isDelivery ? (_appliedPromoCode == 'FREEDEL' ? 0.0 : 12.0) : 0.0;
 
@@ -37,9 +54,40 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkSavedAddress();
+    });
+  }
+
+  void _checkSavedAddress() {
+    try {
+      final userLoc = ref.read(userLocationProvider);
+      if (userLoc.isDefaultSet &&
+          userLoc.address.trim().isNotEmpty &&
+          userLoc.address != 'Current Location' &&
+          userLoc.address != 'Accra, Ghana') {
+        setState(() {
+          _hasSavedAddressAvailable = true;
+          _savedProfileAddress = userLoc.address.trim();
+          _savedProfilePosition = userLoc.position;
+          // Only prefill if user hasn't typed anything yet
+          if (_addressController.text.trim().isEmpty) {
+            _addressController.text = _savedProfileAddress!;
+            _deliveryPosition = _savedProfilePosition;
+          }
+        });
+      }
+    } catch (_) {}
+  }
+
+  @override
   void dispose() {
+    _debounceTimer?.cancel();
     _promoController.dispose();
     _addressController.dispose();
+    _addressFocusNode.dispose();
     super.dispose();
   }
 
@@ -90,13 +138,209 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
     }
   }
 
-  void _onCheckoutPressed(double finalTotal, List<BasketItem> items) {
+  Future<void> _fetchCurrentDeviceLocation() async {
+    setState(() {
+      _isLocating = true;
+      _addressValidationError = null;
+    });
+    try {
+      final locService = LocationService();
+      final result = await locService.getPositionWithStatus();
+      if (!mounted) return;
+
+      if (result.status == 'permission_denied') {
+        _showLocationFeedback(
+          'Location permission was denied. You can enter your delivery address manually.',
+          isWarning: true,
+        );
+      } else if (result.status == 'permission_denied_forever') {
+        _showLocationFeedback(
+          'Location access is blocked in settings. Please enter your address manually.',
+          isWarning: true,
+        );
+      } else if (result.status == 'gps_disabled') {
+        _showLocationFeedback(
+          'Device GPS is turned off. Please enable location services or enter address manually.',
+          isWarning: true,
+        );
+      } else if (result.status == 'error' || result.position == null) {
+        _showLocationFeedback(
+          'Could not detect current position. Please enter your address manually.',
+          isWarning: true,
+        );
+      } else {
+        final pos = result.position!;
+        _deliveryPosition = pos;
+        final readableAddr = await locService.getAddressFromLatLng(pos);
+        if (!mounted) return;
+
+        final finalAddr = (readableAddr != null && readableAddr.trim().isNotEmpty)
+            ? readableAddr.trim()
+            : 'Lat: ${pos.latitude.toStringAsFixed(4)}, Lng: ${pos.longitude.toStringAsFixed(4)}';
+
+        setState(() {
+          _addressController.text = finalAddr;
+          _addressSuggestions = [];
+          _addressValidationError = null;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: AppTheme.charcoal,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            content: Row(
+              children: [
+                const Icon(Icons.my_location_rounded, color: AppTheme.primaryGreen, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Location set: $finalAddr',
+                    style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        _showLocationFeedback('Could not detect location. Please enter manually.', isWarning: true);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLocating = false);
+      }
+    }
+  }
+
+  void _showLocationFeedback(String message, {bool isWarning = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: isWarning ? const Color(0xFFF59E0B) : AppTheme.charcoal,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        content: Row(
+          children: [
+            Icon(
+              isWarning ? Icons.warning_amber_rounded : Icons.info_outline_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+              ),
+            ),
+          ],
+        ),
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
+  void _onAddressChanged(String query) {
+    setState(() {
+      _addressValidationError = null;
+    });
+    _debounceTimer?.cancel();
+    final trimmed = query.trim();
+    if (trimmed.length < 3) {
+      if (_addressSuggestions.isNotEmpty) {
+        setState(() {
+          _addressSuggestions = [];
+          _isSearchingAddress = false;
+        });
+      }
+      return;
+    }
+
+    _debounceTimer = Timer(const Duration(milliseconds: 350), () async {
+      if (!mounted) return;
+      setState(() => _isSearchingAddress = true);
+      try {
+        final results = await LocationService().searchPredictiveAddresses(trimmed);
+        if (!mounted) return;
+        setState(() {
+          _addressSuggestions = results;
+          _isSearchingAddress = false;
+        });
+      } catch (_) {
+        if (mounted) {
+          setState(() => _isSearchingAddress = false);
+        }
+      }
+    });
+  }
+
+  void _selectSuggestedAddress(PredictedAddress suggestion) {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _addressController.text = suggestion.shortDisplay;
+      _deliveryPosition = suggestion.toPosition();
+      _addressSuggestions = [];
+      _isSearchingAddress = false;
+      _addressValidationError = null;
+    });
+  }
+
+  Future<void> _onCheckoutPressed(double finalTotal, List<BasketItem> items) async {
     if (items.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Your basket is empty')),
       );
       return;
     }
+
+    // Delivery validation
+    if (_isDelivery) {
+      final addr = _addressController.text.trim();
+      if (addr.isEmpty) {
+        setState(() {
+          _addressValidationError = 'Please enter a delivery address or use your current location.';
+        });
+        _addressFocusNode.requestFocus();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: AppTheme.errorRed,
+            content: Text('Delivery address is required for rider delivery.'),
+          ),
+        );
+        return;
+      }
+
+      if (addr.length < 5) {
+        setState(() {
+          _addressValidationError = 'Please provide a more specific street, landmark, or house number.';
+        });
+        _addressFocusNode.requestFocus();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: AppTheme.errorRed,
+            content: Text('Please enter a specific street, landmark, or house number.'),
+          ),
+        );
+        return;
+      }
+
+      // Check if coordinates need resolving
+      if (_deliveryPosition == null) {
+        try {
+          final resolved = await LocationService().getLatLngFromAddress(addr);
+          if (resolved != null) {
+            _deliveryPosition = resolved;
+          }
+        } catch (_) {}
+      }
+    }
+
+    if (!mounted) return;
 
     // Show Payment Provider Selection Sheet
     showModalBottomSheet(
@@ -1135,30 +1379,323 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                             ],
                           ),
                           if (_isDelivery) ...[
+                            const SizedBox(height: 16),
+                            const Divider(height: 1, color: Color(0xFFF1F5F9)),
                             const SizedBox(height: 14),
-                            const Text(
-                              'Delivery Address in Accra',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.charcoal),
+
+                            // Header row with "Use My Location" button
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Row(
+                                  children: [
+                                    Icon(Icons.pin_drop_rounded, size: 16, color: AppTheme.primaryGreen),
+                                    SizedBox(width: 6),
+                                    Text(
+                                      'Delivery Address',
+                                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppTheme.charcoal),
+                                    ),
+                                  ],
+                                ),
+                                InkWell(
+                                  onTap: _isLocating ? null : _fetchCurrentDeviceLocation,
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.25)),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (_isLocating) ...[
+                                          const SizedBox(
+                                            width: 12,
+                                            height: 12,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryGreen),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          const Text(
+                                            'Detecting...',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppTheme.primaryGreen,
+                                            ),
+                                          ),
+                                        ] else ...[
+                                          const Icon(Icons.my_location_rounded, size: 13, color: AppTheme.primaryGreen),
+                                          const SizedBox(width: 5),
+                                          const Text(
+                                            'Use My Location',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w800,
+                                              color: AppTheme.primaryGreen,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 6),
+
+                            // Saved profile address chip if available
+                            if (_hasSavedAddressAvailable && _savedProfileAddress != null) ...[
+                              const SizedBox(height: 8),
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _addressController.text = _savedProfileAddress!;
+                                    _deliveryPosition = _savedProfilePosition;
+                                    _addressSuggestions = [];
+                                    _addressValidationError = null;
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: _addressController.text == _savedProfileAddress
+                                          ? AppTheme.primaryGreen.withValues(alpha: 0.5)
+                                          : Colors.transparent,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.bookmark_rounded,
+                                        size: 14,
+                                        color: _addressController.text == _savedProfileAddress
+                                            ? AppTheme.primaryGreen
+                                            : AppTheme.mutedGrey,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          'Saved Address: $_savedProfileAddress',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: _addressController.text == _savedProfileAddress
+                                                ? FontWeight.bold
+                                                : FontWeight.w500,
+                                            color: _addressController.text == _savedProfileAddress
+                                                ? AppTheme.charcoal
+                                                : AppTheme.mutedGrey,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (_addressController.text == _savedProfileAddress)
+                                        const Icon(Icons.check_circle_rounded, size: 14, color: AppTheme.primaryGreen)
+                                      else
+                                        const Text(
+                                          'Tap to use',
+                                          style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+
+                            const SizedBox(height: 8),
+
+                            // Address input field
                             TextField(
                               controller: _addressController,
+                              focusNode: _addressFocusNode,
+                              onChanged: _onAddressChanged,
+                              style: const TextStyle(fontSize: 13.5, color: AppTheme.charcoal, fontWeight: FontWeight.w500),
                               decoration: InputDecoration(
-                                hintText: 'Enter street name, landmark, or house number',
-                                prefixIcon: const Icon(Icons.location_on_outlined, color: AppTheme.primaryGreen, size: 20),
+                                hintText: 'Enter street name, landmark, or house number...',
+                                hintStyle: const TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
+                                prefixIcon: const Icon(Icons.location_on_rounded, color: AppTheme.primaryGreen, size: 20),
+                                suffixIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (_isSearchingAddress)
+                                      const Padding(
+                                        padding: EdgeInsets.all(12),
+                                        child: SizedBox(
+                                          width: 14,
+                                          height: 14,
+                                          child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryGreen),
+                                        ),
+                                      ),
+                                    if (_addressController.text.isNotEmpty)
+                                      IconButton(
+                                        icon: const Icon(Icons.cancel_rounded, size: 18, color: Color(0xFF94A3B8)),
+                                        tooltip: 'Clear address',
+                                        onPressed: () {
+                                          setState(() {
+                                            _addressController.clear();
+                                            _deliveryPosition = null;
+                                            _addressSuggestions = [];
+                                            _addressValidationError = null;
+                                          });
+                                        },
+                                      ),
+                                  ],
+                                ),
                                 filled: true,
                                 fillColor: const Color(0xFFF8FAFC),
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                  borderSide: BorderSide(
+                                    color: _addressValidationError != null ? AppTheme.errorRed : const Color(0xFFE2E8F0),
+                                  ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                  borderSide: BorderSide(
+                                    color: _addressValidationError != null ? AppTheme.errorRed : const Color(0xFFE2E8F0),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: _addressValidationError != null ? AppTheme.errorRed : AppTheme.primaryGreen,
+                                    width: 1.5,
+                                  ),
                                 ),
                               ),
                             ),
+
+                            // Validation error message if present
+                            if (_addressValidationError != null) ...[
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  const Icon(Icons.error_outline_rounded, size: 13, color: AppTheme.errorRed),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      _addressValidationError!,
+                                      style: const TextStyle(fontSize: 11, color: AppTheme.errorRed, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+
+                            // Autocomplete Dropdown List
+                            if (_addressSuggestions.isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Container(
+                                constraints: const BoxConstraints(maxHeight: 220),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.08),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: ListView.separated(
+                                    shrinkWrap: true,
+                                    padding: EdgeInsets.zero,
+                                    itemCount: _addressSuggestions.length,
+                                    separatorBuilder: (_, _) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                                    itemBuilder: (ctx, index) {
+                                      final suggestion = _addressSuggestions[index];
+                                      return InkWell(
+                                        onTap: () => _selectSuggestedAddress(suggestion),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.all(6),
+                                                decoration: BoxDecoration(
+                                                  color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(Icons.place_rounded, size: 14, color: AppTheme.primaryGreen),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      suggestion.primaryText ?? suggestion.shortDisplay,
+                                                      style: const TextStyle(
+                                                        fontSize: 12.5,
+                                                        fontWeight: FontWeight.w700,
+                                                        color: AppTheme.charcoal,
+                                                      ),
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                    if (suggestion.secondaryText != null &&
+                                                        suggestion.secondaryText!.isNotEmpty)
+                                                      Text(
+                                                        suggestion.secondaryText!,
+                                                        style: const TextStyle(
+                                                          fontSize: 11,
+                                                          color: AppTheme.mutedGrey,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                  ],
+                                                ),
+                                              ),
+                                              const Icon(Icons.arrow_forward_ios_rounded, size: 11, color: Color(0xFF94A3B8)),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+
+                            // Verified location status badge
+                            if (_deliveryPosition != null && _addressValidationError == null && _addressSuggestions.isEmpty) ...[
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryGreen.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.gps_fixed_rounded, size: 12, color: AppTheme.primaryGreen),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      'GPS verified (${_deliveryPosition!.latitude.toStringAsFixed(3)}, ${_deliveryPosition!.longitude.toStringAsFixed(3)})',
+                                      style: const TextStyle(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.primaryGreen,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
                         ],
                       ),

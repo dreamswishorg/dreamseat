@@ -93,9 +93,45 @@ class LocationService {
           return parts.take(2).join(", ");
         }
       }
-    } catch (e) {
-      return null;
+    } catch (_) {
+      // Fallback to HTTP reverse geocoding on Web or platform plugin failure
     }
+
+    // HTTP reverse geocoding fallback
+    return await _reverseGeocodeHttp(position);
+  }
+
+  Future<String?> _reverseGeocodeHttp(Position position) async {
+    try {
+      final url = Uri.parse(
+        'https://nominatim.openstreetmap.org/reverse?lat=${position.latitude}&lon=${position.longitude}&format=json&addressdetails=1',
+      );
+      final response = await http.get(url, headers: {
+        'User-Agent': 'DreamsEatsApp/1.0 (support@dreamseatapp.com)',
+      }).timeout(const Duration(seconds: 4));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final addr = data['address'] as Map<String, dynamic>?;
+        if (addr != null) {
+          List<String> parts = [];
+          final road = addr['road'] ?? addr['suburb'] ?? addr['neighbourhood'] ?? addr['residential'] ?? addr['commercial'];
+          if (road != null && road.toString().trim().isNotEmpty) {
+            parts.add(road.toString().trim());
+          }
+          final city = addr['city'] ?? addr['town'] ?? addr['suburb'] ?? addr['city_district'] ?? addr['state'];
+          if (city != null && city.toString().trim().isNotEmpty && !parts.contains(city.toString().trim())) {
+            parts.add(city.toString().trim());
+          }
+          if (parts.isNotEmpty) {
+            return parts.take(2).join(', ');
+          }
+        }
+        final displayName = data['display_name'] as String?;
+        if (displayName != null && displayName.isNotEmpty) {
+          return displayName.split(',').map((s) => s.trim()).take(3).join(', ');
+        }
+      }
+    } catch (_) {}
     return null;
   }
 
@@ -117,26 +153,64 @@ class LocationService {
           speedAccuracy: 0,
         );
       }
-    } catch (e) {
-      return null;
-    }
+    } catch (_) {}
+
+    // Fallback to Nominatim search
+    try {
+      final url = Uri.parse(
+        'https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(address)}&format=json&limit=1&countrycodes=gh',
+      );
+      final response = await http.get(url, headers: {
+        'User-Agent': 'DreamsEatsApp/1.0 (support@dreamseatapp.com)',
+      }).timeout(const Duration(seconds: 4));
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        if (data.isNotEmpty) {
+          final lat = double.tryParse(data[0]['lat']?.toString() ?? '');
+          final lon = double.tryParse(data[0]['lon']?.toString() ?? '');
+          if (lat != null && lon != null) {
+            return Position(
+              latitude: lat,
+              longitude: lon,
+              timestamp: DateTime.now(),
+              accuracy: 0,
+              altitude: 0,
+              altitudeAccuracy: 0,
+              heading: 0,
+              headingAccuracy: 0,
+              speed: 0,
+              speedAccuracy: 0,
+            );
+          }
+        }
+      }
+    } catch (_) {}
+
     return null;
   }
 
   Future<List<PredictedAddress>> searchPredictiveAddresses(String query) async {
     if (query.trim().length < 3) return [];
     try {
+      // Prioritize Ghana delivery addresses via &countrycodes=gh
       final url = Uri.parse(
-        'https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(query)}&format=json&limit=5&addressdetails=1',
+        'https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(query)}&format=json&limit=6&addressdetails=1&countrycodes=gh',
       );
       final response = await http.get(url, headers: {
-        'User-Agent': 'DreamseatApp/1.0 (contact@dreamseat.com)',
-      });
+        'User-Agent': 'DreamsEatsApp/1.0 (support@dreamseatapp.com)',
+      }).timeout(const Duration(seconds: 4));
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         return data.map((item) {
+          final rawDisplay = item['display_name'] as String? ?? '';
+          final segments = rawDisplay.split(',').map((s) => s.trim()).toList();
+          final primary = segments.isNotEmpty ? segments.first : query;
+          final secondary = segments.length > 1 ? segments.sublist(1).take(3).join(', ') : 'Ghana';
+
           return PredictedAddress(
-            displayName: item['display_name'] as String? ?? '',
+            displayName: rawDisplay,
+            primaryText: primary,
+            secondaryText: secondary,
             latitude: double.tryParse(item['lat']?.toString() ?? '') ?? 5.6037,
             longitude: double.tryParse(item['lon']?.toString() ?? '') ?? -0.1870,
           );
@@ -149,6 +223,8 @@ class LocationService {
           return locations.take(3).map((loc) {
             return PredictedAddress(
               displayName: query,
+              primaryText: query,
+              secondaryText: 'Ghana',
               latitude: loc.latitude,
               longitude: loc.longitude,
             );
@@ -169,14 +245,28 @@ class LocationStatusResult {
 
 class PredictedAddress {
   final String displayName;
+  final String? primaryText;
+  final String? secondaryText;
   final double latitude;
   final double longitude;
 
   PredictedAddress({
     required this.displayName,
+    this.primaryText,
+    this.secondaryText,
     required this.latitude,
     required this.longitude,
   });
+
+  String get shortDisplay {
+    if (primaryText != null && primaryText!.isNotEmpty) {
+      if (secondaryText != null && secondaryText!.isNotEmpty) {
+        return '$primaryText, $secondaryText';
+      }
+      return primaryText!;
+    }
+    return displayName.split(',').take(2).join(', ');
+  }
 
   Position toPosition() => Position(
         latitude: latitude,

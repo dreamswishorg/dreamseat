@@ -8,7 +8,6 @@ import '../../core/responsive.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
 import '../../services/location_service.dart';
-import 'checkout_screen.dart';
 import 'basket_screen.dart';
 import 'merchant_storefront.dart';
 
@@ -508,29 +507,8 @@ class DealDetailScreen extends ConsumerWidget {
                       ),
                     );
                   },
-                  icon: const Icon(Icons.shopping_basket_rounded, size: 18),
-                  label: const Text('Add', style: TextStyle(fontWeight: FontWeight.bold)),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 52),
-                    side: const BorderSide(color: AppTheme.primaryGreen, width: 2),
-                    foregroundColor: AppTheme.primaryGreen,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => CheckoutScreen(deal: deal),
-                    ),
-                  ),
-                  icon: const Icon(Icons.bolt_rounded, size: 18),
-                  label: Text('GHS ${deal.discountedPrice.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  icon: const Icon(Icons.shopping_basket_rounded, size: 20),
+                  label: const Text('Add to Basket', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 52),
                     backgroundColor: AppTheme.primaryGreen,
