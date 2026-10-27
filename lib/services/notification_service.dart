@@ -28,47 +28,51 @@ class NotificationService {
 
   /// Call this in main() after Supabase.initialize() and Firebase.initializeApp().
   Future<void> initialize(GlobalKey<NavigatorState> navigatorKey) async {
-    // 1. Local notifications setup
-    await _setupLocalNotifications();
+    try {
+      // 1. Local notifications setup
+      await _setupLocalNotifications();
 
-    // 2. Request permission (iOS/Android 13+)
-    await _requestPermission();
+      // 2. Request permission (iOS/Android 13+)
+      await _requestPermission();
 
-    // 3. Get FCM token and store it
-    await _refreshToken();
+      // 3. Get FCM token and store it
+      await _refreshToken();
 
-    // 4. Listen for token refreshes
-    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
-      _fcmToken = newToken;
-      _saveTokenToSupabase(newToken);
-    });
-
-    // 5. Foreground message handler → show local notification
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      _handleForegroundMessage(message);
-    });
-
-    // 6. Tap on notification when app is in background (opened from notification)
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      _handleNotificationTap(message.data, navigatorKey);
-    });
-
-    // 7. Check if app was opened via a notification (terminated state)
-    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-    if (initialMessage != null) {
-      // Small delay to let the app fully load first
-      Future.delayed(const Duration(seconds: 1), () {
-        _handleNotificationTap(initialMessage.data, navigatorKey);
+      // 4. Listen for token refreshes
+      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+        _fcmToken = newToken;
+        _saveTokenToSupabase(newToken);
       });
-    }
 
-    // 8. Subscribe to global topics
-    if (!kIsWeb) {
-      try {
-        await FirebaseMessaging.instance.subscribeToTopic('all_users');
-      } catch (e) {
-        debugPrint('NotificationService: subscribeToTopic(all_users) skipped: $e');
+      // 5. Foreground message handler → show local notification
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        _handleForegroundMessage(message);
+      });
+
+      // 6. Tap on notification when app is in background (opened from notification)
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        _handleNotificationTap(message.data, navigatorKey);
+      });
+
+      // 7. Check if app was opened via a notification (terminated state)
+      final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+      if (initialMessage != null) {
+        // Small delay to let the app fully load first
+        Future.delayed(const Duration(seconds: 1), () {
+          _handleNotificationTap(initialMessage.data, navigatorKey);
+        });
       }
+
+      // 8. Subscribe to global topics
+      if (!kIsWeb) {
+        try {
+          await FirebaseMessaging.instance.subscribeToTopic('all_users');
+        } catch (e) {
+          debugPrint('NotificationService: subscribeToTopic(all_users) skipped: $e');
+        }
+      }
+    } catch (e) {
+      debugPrint('NotificationService.initialize error: $e');
     }
   }
 
@@ -163,7 +167,10 @@ class NotificationService {
         // Suppress token request if user/browser has blocked notifications
         return;
       }
-      _fcmToken = await FirebaseMessaging.instance.getToken();
+      _fcmToken = await FirebaseMessaging.instance.getToken().timeout(
+        const Duration(seconds: 4),
+        onTimeout: () => null,
+      );
       if (_fcmToken != null) {
         await _saveTokenToSupabase(_fcmToken!);
         debugPrint('NotificationService: FCM token obtained');

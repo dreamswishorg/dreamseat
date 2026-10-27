@@ -10,6 +10,7 @@ import '../../providers/app_state.dart';
 import '../../services/location_service.dart';
 import '../../services/supabase_service.dart';
 import '../common/help_support_screen.dart';
+import '../../core/ui_utils.dart';
 import 'merchant_kit.dart';
 
 /// Shop profile tab: identity, contact, location and compliance documents.
@@ -522,6 +523,13 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
                     detail: 'End this session',
                     danger: true,
                     onTap: () => ref.read(appStateProvider.notifier).signOut(),
+                  ),
+                  _LinkRow(
+                    icon: Icons.delete_forever_rounded,
+                    label: 'Delete account',
+                    detail: 'Permanently remove your account and shop',
+                    danger: true,
+                    onTap: () => showModernDeleteAccountConfirmDialog(context, ref),
                   ),
                 ],
               ),

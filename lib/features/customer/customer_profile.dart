@@ -540,14 +540,28 @@ class _CustomerProfileScreenState
                 border: Border.all(
                     color: AppTheme.charcoal.withValues(alpha: 0.05)),
               ),
-              child: _ProfileTile(
-                icon: Icons.logout_rounded,
-                label: 'Log Out',
-                subtitle: 'Sign out of your DreamEats account',
-                color: AppTheme.errorRed,
-                onTap: () {
-                  showModernLogoutConfirmDialog(context, () => ref.read(appStateProvider.notifier).signOut());
-                },
+              child: Column(
+                children: [
+                  _ProfileTile(
+                    icon: Icons.logout_rounded,
+                    label: 'Log Out',
+                    subtitle: 'Sign out of your DreamEats account',
+                    color: AppTheme.errorRed,
+                    onTap: () {
+                      showModernLogoutConfirmDialog(context, () => ref.read(appStateProvider.notifier).signOut());
+                    },
+                  ),
+                  _Divider(),
+                  _ProfileTile(
+                    icon: Icons.delete_forever_rounded,
+                    label: 'Delete Account',
+                    subtitle: 'Permanently remove your account and data',
+                    color: AppTheme.errorRed,
+                    onTap: () {
+                      showModernDeleteAccountConfirmDialog(context, ref);
+                    },
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 32),

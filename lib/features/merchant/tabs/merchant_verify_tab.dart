@@ -272,6 +272,8 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
                           child: const Center(
                             child: Text(
                               'Verify Console',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: MerchantTheme.textDark),
                             ),
                           ),
@@ -283,35 +285,41 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
                         onTap: () => setState(() => _mobileTab = 1),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 180),
-                          padding: const EdgeInsets.symmetric(vertical: 9),
+                          padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
                           decoration: BoxDecoration(
                             color: _mobileTab == 1 ? Colors.white : Colors.transparent,
                             borderRadius: BorderRadius.circular(10),
                             boxShadow: _mobileTab == 1 ? MerchantTheme.cardElevation : null,
                           ),
                           child: Center(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Text(
-                                  'Waiting Queue',
-                                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: MerchantTheme.textDark),
-                                ),
-                                if (waitingQueue.isNotEmpty) ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                                    decoration: BoxDecoration(
-                                      color: MerchantTheme.amberWarning,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Text(
-                                      '${waitingQueue.length}',
-                                      style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
-                                    ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text(
+                                    'Waiting Queue',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: MerchantTheme.textDark),
                                   ),
+                                  if (waitingQueue.isNotEmpty) ...[
+                                    const SizedBox(width: 5),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                      decoration: BoxDecoration(
+                                        color: MerchantTheme.amberWarning,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        '${waitingQueue.length}',
+                                        style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ],
                                 ],
-                              ],
+                              ),
                             ),
                           ),
                         ),

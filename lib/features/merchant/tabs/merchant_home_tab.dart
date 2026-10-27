@@ -622,7 +622,7 @@ class _StatGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final w = MediaQuery.sizeOf(context).width;
     final int columns = w >= 1050 ? 4 : 2;
-    final double ratio = w >= 1050 ? 1.45 : (w >= 600 ? 1.75 : 1.28);
+    final double ratio = w >= 1050 ? 1.55 : (w >= 600 ? 1.85 : 1.15);
 
     return GridView.builder(
       shrinkWrap: true,
@@ -639,7 +639,7 @@ class _StatGrid extends StatelessWidget {
         return MPressable(
           onTap: t.onTap,
           child: MCard(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -660,21 +660,28 @@ class _StatGrid extends StatelessWidget {
                       ),
                       child: Icon(t.icon, size: 18, color: t.color),
                     ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                      decoration: BoxDecoration(
-                        color: t.color.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: t.color.withValues(alpha: 0.25)),
-                      ),
-                      child: Text(
-                        t.caption.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w900,
-                          color: t.color,
-                          letterSpacing: 0.3,
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                          decoration: BoxDecoration(
+                            color: t.color.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: t.color.withValues(alpha: 0.25)),
+                          ),
+                          child: Text(
+                            t.caption.toUpperCase(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w900,
+                              color: t.color,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
                         ),
                       ),
                     ),

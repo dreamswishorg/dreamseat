@@ -856,6 +856,65 @@ class _CustomerSettingsScreenState
                   ),
                 ),
               ),
+              const SizedBox(height: 14),
+
+              // Danger Zone: Delete Account
+              Container(
+                decoration: BoxDecoration(
+                  color: cardColor,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppTheme.errorRed.withValues(alpha: 0.2)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () {
+                      showModernDeleteAccountConfirmDialog(context, ref);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppTheme.errorRed.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Icon(Icons.delete_forever_rounded, color: AppTheme.errorRed, size: 22),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Delete Account',
+                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.errorRed),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Permanently remove your profile and personal data',
+                                  style: TextStyle(fontSize: 12, color: secondaryTextColor),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.errorRed, size: 14),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               const SizedBox(height: 36),
             ],
           ),

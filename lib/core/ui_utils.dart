@@ -9,6 +9,7 @@ import '../features/customer/order_history_screen.dart';
 import '../features/customer/loyalty_referral_screen.dart';
 import '../features/common/notification_screen.dart';
 import '../features/common/help_support_screen.dart';
+import '../features/auth/welcome_screen.dart';
 
 /// Shared, premium AppBar for all customer tab screens.
 /// Features a leading hamburger menu to open the drawer,
@@ -779,6 +780,164 @@ void showModernLogoutConfirmDialog(BuildContext context, VoidCallback onConfirm)
             ),
           ),
         ),
+      );
+    },
+    transitionBuilder: (context, anim1, anim2, child) {
+      return Transform.scale(
+        scale: CurvedAnimation(parent: anim1, curve: Curves.easeOutBack).value,
+        child: Opacity(
+          opacity: anim1.value,
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
+/// A modern, authoritative confirmation popup for deleting the user's account.
+void showModernDeleteAccountConfirmDialog(BuildContext context, WidgetRef ref) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final dialogBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+  final textColor = isDark ? Colors.white : AppTheme.charcoal;
+  final subtextColor = isDark ? const Color(0xFF94A3B8) : AppTheme.mutedGrey;
+  final cancelBorder = isDark ? Colors.white.withValues(alpha: 0.15) : AppTheme.charcoal.withValues(alpha: 0.15);
+
+  showGeneralDialog(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: 'Dismiss',
+    barrierColor: Colors.black.withValues(alpha: 0.6),
+    transitionDuration: const Duration(milliseconds: 250),
+    pageBuilder: (dialogCtx, anim1, anim2) {
+      bool isDeleting = false;
+      return StatefulBuilder(
+        builder: (ctx, setState) {
+          return Center(
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.88,
+                constraints: const BoxConstraints(maxWidth: 380),
+                padding: const EdgeInsets.all(26),
+                decoration: BoxDecoration(
+                  color: dialogBg,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x33000000),
+                      blurRadius: 36,
+                      offset: Offset(0, 14),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: AppTheme.errorRed.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.delete_forever_rounded, color: AppTheme.errorRed, size: 38),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      "Delete Account",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: textColor,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      "Are you sure you want to permanently delete your DreamEats account? This action cannot be reversed. All your orders, reward points, and profile information will be wiped immediately.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        color: subtextColor,
+                        height: 1.45,
+                      ),
+                    ),
+                    const SizedBox(height: 26),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: isDeleting ? null : () => Navigator.pop(dialogCtx),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              side: BorderSide(color: cancelBorder, width: 1.5),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                            child: Text(
+                              "Cancel",
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: textColor),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: isDeleting
+                                ? null
+                                : () async {
+                                    setState(() => isDeleting = true);
+                                    final messenger = ScaffoldMessenger.of(context);
+                                    final success = await ref.read(appStateProvider.notifier).deleteAccount();
+                                    if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+                                    if (success) {
+                                      if (context.mounted) {
+                                        Navigator.of(context).pushAndRemoveUntil(
+                                          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                                          (route) => false,
+                                        );
+                                      }
+                                      messenger.showSnackBar(
+                                        const SnackBar(
+                                          content: Text("Your account has been deleted successfully."),
+                                          backgroundColor: AppTheme.primaryGreen,
+                                        ),
+                                      );
+                                    } else {
+                                      messenger.showSnackBar(
+                                        const SnackBar(
+                                          content: Text("Could not delete account. Please try again or contact support."),
+                                          backgroundColor: AppTheme.errorRed,
+                                        ),
+                                      );
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.errorRed,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                            child: isDeleting
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white),
+                                  )
+                                : const Text(
+                                    "Delete",
+                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       );
     },
     transitionBuilder: (context, anim1, anim2, child) {

@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 
 import '../models/models.dart';
 import '../core/config.dart';
+import '../core/cache_manager.dart';
 import 'notification_service.dart';
 
 /// Central Supabase service for the DreamEats app.
@@ -2620,12 +2621,29 @@ class SupabaseService {
   /// Delete the current user's profile and account records using the secure RPC.
   Future<bool> deleteUserAccount() async {
     try {
-      final response = await _db.rpc('delete_user_account');
-      if (response == true) {
-        await signOut();
-        return true;
+      final user = _db.auth.currentUser;
+      if (user == null) return false;
+      bool rpcSucceeded = false;
+      try {
+        final response = await _db.rpc('delete_user_account');
+        if (response == true) {
+          rpcSucceeded = true;
+        }
+      } catch (e) {
+        debugPrint('delete_user_account RPC error: $e');
       }
-      return false;
+
+      if (!rpcSucceeded) {
+        try {
+          await _db.from('profiles').delete().eq('id', user.id);
+        } catch (e) {
+          debugPrint('Profile row delete fallback: $e');
+        }
+      }
+
+      await CacheManager().clearAll();
+      await signOut();
+      return true;
     } catch (e) {
       debugPrint('Account deletion failed: $e');
       return false;

@@ -496,6 +496,15 @@ class _TopBar extends ConsumerWidget {
                         showModernLogoutConfirmDialog(context, () => ref.read(appStateProvider.notifier).signOut());
                       },
                     ),
+                    _MenuTile(
+                      icon: Icons.delete_forever_rounded,
+                      label: 'Delete account',
+                      color: MK.danger,
+                      onTap: () {
+                        menuCtrl.close();
+                        showModernDeleteAccountConfirmDialog(context, ref);
+                      },
+                    ),
                     const SizedBox(height: 6),
                   ],
                 ),
@@ -624,7 +633,7 @@ class _BottomNav extends StatelessWidget {
                           Text(
                             item.$3,
                             maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            overflow: selected ? TextOverflow.visible : TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 10.5,
                               fontWeight: selected ? FontWeight.w800 : FontWeight.w600,

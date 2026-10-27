@@ -150,7 +150,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
     // Fetch fresh profile from Supabase to guarantee suspended users cannot enter from cache
     AppUser? freshUser;
     try {
-      freshUser = await SupabaseService().getCurrentUserProfile();
+      freshUser = await SupabaseService()
+          .getCurrentUserProfile()
+          .timeout(const Duration(seconds: 3));
     } catch (_) {}
 
     final state = ref.read(appStateProvider);
