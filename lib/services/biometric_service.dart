@@ -36,8 +36,9 @@ class BiometricService {
   
   static const String _keyBiometricEnabled = 'biometric_enabled';
   static const String _keyBiometricEmail = 'biometric_email';
-  static const String _keyBiometricPassword = 'biometric_password';
+  static const String _keyBiometricRefreshToken = 'biometric_refresh_token';
   static const String _keyBiometricPrompted = 'biometric_prompted_once';
+  static const String _keyLegacyPassword = 'biometric_password';
 
   /// Check if the user has already made an enrollment choice (accepted or declined)
   static Future<bool> hasPromptedEnrollment() async {
@@ -126,34 +127,40 @@ class BiometricService {
     }
   }
 
-  /// Securely save credentials
-  static Future<void> saveCredentials(String email, String password) async {
+  /// Store what Face ID sign-in needs to restore the session later: the account
+  /// email plus the Supabase refresh token. The account password is never stored.
+  static Future<void> saveUnlockAccount({
+    required String email,
+    required String refreshToken,
+  }) async {
     try {
       await _secureStorage.write(key: _keyBiometricEmail, value: email.trim());
-      await _secureStorage.write(key: _keyBiometricPassword, value: password);
+      await _secureStorage.write(key: _keyBiometricRefreshToken, value: refreshToken);
+      await _secureStorage.delete(key: _keyLegacyPassword);
     } catch (e) {
-      debugPrint("Error saving credentials: $e");
+      debugPrint("Error saving unlock account: $e");
     }
   }
 
-  /// Clear saved credentials
+  /// Clear saved unlock data
   static Future<void> clearSavedCredentials() async {
     try {
       await _secureStorage.delete(key: _keyBiometricEmail);
-      await _secureStorage.delete(key: _keyBiometricPassword);
+      await _secureStorage.delete(key: _keyBiometricRefreshToken);
+      await _secureStorage.delete(key: _keyLegacyPassword);
     } catch (_) {}
   }
 
-  /// Retrieve saved credentials
-  static Future<Map<String, String>?> getSavedCredentials() async {
+  /// Retrieve saved unlock data ({'email', 'refreshToken'})
+  static Future<Map<String, String>?> getSavedUnlock() async {
     try {
       final email = await _secureStorage.read(key: _keyBiometricEmail);
-      final password = await _secureStorage.read(key: _keyBiometricPassword);
-      if (email != null && password != null && email.isNotEmpty && password.isNotEmpty) {
-        return {'email': email, 'password': password};
+      final refreshToken = await _secureStorage.read(key: _keyBiometricRefreshToken);
+      if (email != null && refreshToken != null && email.isNotEmpty && refreshToken.isNotEmpty) {
+        return {'email': email, 'refreshToken': refreshToken};
       }
     } catch (e) {
-      debugPrint("Error reading credentials: $e");
+      debugPrint("Error reading unlock account: $e");
     }
     return null;
   }

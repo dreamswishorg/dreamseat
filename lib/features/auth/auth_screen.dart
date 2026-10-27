@@ -139,9 +139,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
         return;
       }
 
-      final creds = await BiometricService.getSavedCredentials();
-      if (creds == null) {
-        _showSnackBar("Please sign in with your email & password once to link $_biometricLabel.", isError: false);
+      final unlock = await BiometricService.getSavedUnlock();
+      if (unlock == null) {
+        _showSnackBar("$_biometricLabel isn't linked yet. Sign in with your password once, then enable it in Settings.", isError: false);
         return;
       }
 
@@ -152,8 +152,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       // Handle outcomes distinctly
       if (result.isCancelled) {
         // User cancelled Face ID prompt - silently return to form, NO error message
-        if (creds['email'] != null && _emailController.text.isEmpty) {
-          _emailController.text = creds['email']!;
+        if (_emailController.text.isEmpty) {
+          _emailController.text = unlock['email']!;
         }
         return;
       }
@@ -170,10 +170,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       }
 
       setState(() => _isLoading = true);
-      final error = await ref.read(appStateProvider.notifier).signIn(
-            identifier: creds['email']!,
-            password: creds['password']!,
+      var error = await ref.read(appStateProvider.notifier).restoreSessionFromRefreshToken(
+            unlock['refreshToken']!,
           );
+
+      // Expired/revoked refresh token: the stored unlock data is dead, so drop it
+      // and fall back to password sign-in.
+      if (error != null && error.toLowerCase().contains('expired')) {
+        await BiometricService.setBiometricEnabled(false);
+        error = null;
+      }
 
       if (!mounted) return;
       setState(() => _isLoading = false);
@@ -267,27 +273,30 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     }
 
     final email = _emailController.text.trim();
-    final password = _passwordController.text;
 
     // Check if biometric is available and whether it is already enrolled
     final isBioAvailable = await BiometricService.isBiometricAvailable();
     final isBioEnabled = await BiometricService.isBiometricEnabled();
 
     if (isBioAvailable && isBioEnabled) {
-      // User has already enrolled: keep stored credentials synchronized
-      await BiometricService.saveCredentials(email, password);
+      // User has already enrolled: keep the saved unlock session synchronized
+      final refreshToken = Supabase.instance.client.auth.currentSession?.refreshToken;
+      if (refreshToken != null && refreshToken.isNotEmpty) {
+        await BiometricService.saveUnlockAccount(
+          email: email,
+          refreshToken: refreshToken,
+        );
+      }
       _proceedToApp(user);
     } else if (isBioAvailable && !isBioEnabled) {
       // Prompt user to enable Face ID / Biometrics
-      await _offerBiometricEnrollment(email: email, password: password, user: user);
+      await _offerBiometricEnrollment(user: user);
     } else {
       _proceedToApp(user);
     }
   }
 
   Future<void> _offerBiometricEnrollment({
-    required String email,
-    required String password,
     required AppUser user,
   }) async {
     final label = await BiometricService.getBiometricLabel();
@@ -388,8 +397,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       );
 
       if (authResult.isSuccess) {
-        await BiometricService.saveCredentials(email, password);
-        await BiometricService.setBiometricEnabled(true);
+        final refreshToken = Supabase.instance.client.auth.currentSession?.refreshToken;
+        if (refreshToken != null && refreshToken.isNotEmpty) {
+          await BiometricService.saveUnlockAccount(
+            email: user.email,
+            refreshToken: refreshToken,
+          );
+          await BiometricService.setBiometricEnabled(true);
+        }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -568,11 +583,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       final isBioAvailable = await BiometricService.isBiometricAvailable();
       final isBioEnabled = await BiometricService.isBiometricEnabled();
       if (isBioAvailable && !isBioEnabled) {
-        await _offerBiometricEnrollment(
-          email: _suEmailController.text.trim(),
-          password: _suPasswordController.text,
-          user: user,
-        );
+        await _offerBiometricEnrollment(user: user);
         return;
       }
     }

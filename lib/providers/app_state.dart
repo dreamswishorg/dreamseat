@@ -674,6 +674,46 @@ class AppStateManager extends Notifier<AppState> {
     }
   }
 
+  /// Restore a previously saved Supabase session from a refresh token.
+  /// Used by Face ID sign-in so the account password is never needed.
+  /// Returns null on success, error message string on failure.
+  Future<String?> restoreSessionFromRefreshToken(String refreshToken) async {
+    _isManualAuthenticating = true;
+    state = state.copyWith(isLoading: true, clearErrorMessage: true);
+    try {
+      final response = await Supabase.instance.client.auth.setSession(refreshToken);
+      if (response.session == null || response.user == null) {
+        const msg = 'Your saved session has expired. Please sign in with your password.';
+        state = state.copyWith(isLoading: false, errorMessage: msg);
+        return msg;
+      }
+
+      await _hydrate();
+
+      if (state.errorMessage != null && state.errorMessage!.toLowerCase().contains('suspended')) {
+        await signOut(errorMessage: state.errorMessage);
+        return state.errorMessage;
+      }
+
+      if (state.currentUser == null || state.currentUser!.isSuspended) {
+        const suspendedMsg = 'Your account has been suspended by administration. Please contact support.';
+        await signOut(errorMessage: suspendedMsg);
+        return suspendedMsg;
+      }
+
+      state = state.copyWith(isLoading: false);
+      return null;
+    } catch (e) {
+      final msg = e.toString();
+      state = state.copyWith(isLoading: false, errorMessage: msg);
+      return msg;
+    } finally {
+      Future.delayed(const Duration(milliseconds: 2500), () {
+        _isManualAuthenticating = false;
+      });
+    }
+  }
+
   Future<String?> validateCurrentPassword({
     required String email,
     required String password,

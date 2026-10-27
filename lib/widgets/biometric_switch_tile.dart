@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/theme.dart';
-import '../models/models.dart';
 import '../providers/app_state.dart';
 import '../providers/biometric_provider.dart';
 import '../services/biometric_service.dart';
@@ -60,196 +60,29 @@ class _BiometricSwitchTileState extends ConsumerState<BiometricSwitchTile> {
       return;
     }
 
-    final existingCreds = await BiometricService.getSavedCredentials();
-    if (existingCreds != null &&
-        existingCreds['email'] == user.email &&
-        existingCreds['password'] != null &&
-        existingCreds['password']!.isNotEmpty) {
-      await ref.read(biometricStateProvider.notifier).setEnabled(true);
-      if (!mounted) return;
+    // Scan passed: link the current Supabase session to biometrics.
+    // No account password is ever requested or stored.
+    final refreshToken = Supabase.instance.client.auth.currentSession?.refreshToken;
+    if (refreshToken == null || refreshToken.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("✅ $label enabled successfully!"),
-          backgroundColor: AppTheme.primaryGreen,
-        ),
+        const SnackBar(content: Text("Your session has expired. Sign in again, then re-enable biometrics.")),
       );
-    } else {
-      await _promptPasswordAndEnable(user, label);
+      return;
     }
-  }
 
-  Future<void> _promptPasswordAndEnable(AppUser user, String label) async {
-    final passwordCtrl = TextEditingController();
-    bool obscure = true;
-    bool isVerifying = false;
-    String? errorText;
-
-    final confirmed = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            final isDark = Theme.of(context).brightness == Brightness.dark;
-            final bg = isDark ? const Color(0xFF1E293B) : Colors.white;
-            final textCol = isDark ? Colors.white : AppTheme.charcoal;
-
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
-                decoration: BoxDecoration(
-                  color: bg,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: const BoxDecoration(
-                        color: AppTheme.lightGreenBg,
-                        shape: BoxShape.circle,
-                      ),
-                      child: DynamicBiometricIcon(
-                        size: 36,
-                        color: AppTheme.primaryGreen,
-                        biometricLabel: label,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      "Enable $label",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: textCol,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      "Enter your password once to securely link biometric login",
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 13, color: AppTheme.mutedGrey),
-                    ),
-                    const SizedBox(height: 20),
-                    TextField(
-                      controller: passwordCtrl,
-                      obscureText: obscure,
-                      autofocus: true,
-                      style: TextStyle(color: textCol, fontWeight: FontWeight.w600),
-                      decoration: InputDecoration(
-                        labelText: "Account Password",
-                        hintText: "Enter your password",
-                        prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppTheme.primaryGreen),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                            color: AppTheme.mutedGrey,
-                          ),
-                          onPressed: () => setModalState(() => obscure = !obscure),
-                        ),
-                        errorText: errorText,
-                        filled: true,
-                        fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
-                        ),
-                      ),
-                      onSubmitted: (_) {
-                        if (!isVerifying) {
-                          // trigger verification
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: isVerifying
-                          ? null
-                          : () async {
-                              final pwd = passwordCtrl.text;
-                              if (pwd.isEmpty) {
-                                setModalState(() => errorText = "Please enter your password");
-                                return;
-                              }
-
-                              setModalState(() {
-                                isVerifying = true;
-                                errorText = null;
-                              });
-
-                              final err = await ref.read(appStateProvider.notifier).validateCurrentPassword(
-                                    email: user.email,
-                                    password: pwd,
-                                  );
-
-                              if (err != null) {
-                                setModalState(() {
-                                  isVerifying = false;
-                                  errorText = "Incorrect password. Please try again.";
-                                });
-                                return;
-                              }
-
-                              // Biometric scan already succeeded before this sheet opened;
-                              // just store and link the credentials now.
-                              await BiometricService.saveCredentials(user.email, pwd);
-                              await ref.read(biometricStateProvider.notifier).setEnabled(true);
-                              await BiometricService.setPromptedEnrollment(true);
-
-                              if (context.mounted) {
-                                Navigator.pop(ctx, true);
-                              }
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryGreen,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                      child: isVerifying
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Text("Confirm", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                    ),
-                    const SizedBox(height: 10),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
+    await BiometricService.saveUnlockAccount(
+      email: user.email,
+      refreshToken: refreshToken,
     );
-
-    if (confirmed == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("✅ $label enabled successfully!"),
-          backgroundColor: AppTheme.primaryGreen,
-        ),
-      );
-    }
+    await ref.read(biometricStateProvider.notifier).setEnabled(true);
+    await BiometricService.setPromptedEnrollment(true);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("✅ $label enabled successfully!"),
+        backgroundColor: AppTheme.primaryGreen,
+      ),
+    );
   }
 
   @override
