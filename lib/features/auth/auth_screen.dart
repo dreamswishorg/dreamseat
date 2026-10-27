@@ -272,14 +272,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     // Check if biometric is available and whether it is already enrolled
     final isBioAvailable = await BiometricService.isBiometricAvailable();
     final isBioEnabled = await BiometricService.isBiometricEnabled();
-    final hasPrompted = await BiometricService.hasPromptedEnrollment();
 
     if (isBioAvailable && isBioEnabled) {
       // User has already enrolled: keep stored credentials synchronized
       await BiometricService.saveCredentials(email, password);
       _proceedToApp(user);
-    } else if (isBioAvailable && !isBioEnabled && !hasPrompted) {
-      // First-time login: ask once whether to enable biometrics
+    } else if (isBioAvailable && !isBioEnabled) {
+      // Prompt user to enable Face ID / Biometrics
       await _offerBiometricEnrollment(email: email, password: password, user: user);
     } else {
       _proceedToApp(user);
@@ -291,6 +290,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     required String password,
     required AppUser user,
   }) async {
+    final label = await BiometricService.getBiometricLabel();
+    if (mounted) {
+      setState(() => _biometricLabel = label);
+    }
+
     final shouldEnroll = await showModalBottomSheet<bool>(
       context: context,
       backgroundColor: Colors.transparent,

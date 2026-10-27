@@ -289,13 +289,14 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                   children: [
                     Expanded(
                       child: _buildMetricItem(
-                        'Net Earnings (85%)',
+                        'Net Earnings',
                         'GHS ${netPayout.toStringAsFixed(2)}',
                         Icons.trending_up_rounded,
                       ),
                     ),
-                    Container(width: 1, height: 36, color: Colors.white.withValues(alpha: 0.20)),
-                    const SizedBox(width: 14),
+                    const SizedBox(width: 6),
+                    Container(width: 1, height: 32, color: Colors.white.withValues(alpha: 0.20)),
+                    const SizedBox(width: 6),
                     Expanded(
                       child: _buildMetricItem(
                         'Settled Out',
@@ -303,11 +304,12 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                         Icons.check_circle_outline_rounded,
                       ),
                     ),
-                    Container(width: 1, height: 36, color: Colors.white.withValues(alpha: 0.20)),
-                    const SizedBox(width: 14),
+                    const SizedBox(width: 6),
+                    Container(width: 1, height: 32, color: Colors.white.withValues(alpha: 0.20)),
+                    const SizedBox(width: 6),
                     Expanded(
                       child: _buildMetricItem(
-                        'Pending Settlement',
+                        'Pending Settlements',
                         'GHS ${pendingPayout.toStringAsFixed(2)}',
                         Icons.hourglass_empty_rounded,
                       ),
@@ -566,18 +568,39 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
   Widget _buildMetricItem(String title, String value, IconData icon) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           children: [
-            Icon(icon, size: 14, color: Colors.white70),
-            const SizedBox(width: 5),
-            Text(title, style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
+            Icon(icon, size: 12, color: Colors.white70),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: -0.3),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.3,
+            ),
+          ),
         ),
       ],
     );

@@ -237,7 +237,7 @@ class _BiometricSwitchTileState extends ConsumerState<BiometricSwitchTile> {
                               height: 20,
                               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             )
-                          : Text("Confirm & Link $label", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                          : const Text("Confirm", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                     ),
                     const SizedBox(height: 10),
                   ],
