@@ -1464,19 +1464,19 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                             showAdaptiveDialog(
                               context: context,
                               builder: (ctx) => AlertDialog.adaptive(
-                                title: const Text("Location Services Disabled"),
-                                content: const Text("Location Services are turned off on your device. Turn on Location to discover nearby meals and restaurants."),
+                                title: const Text("Location Services Turned Off"),
+                                content: const Text("Device location is currently switched off on your phone. Turn on Location Services in settings to pinpoint nearby stores, or type your address manually."),
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.pop(ctx),
-                                    child: const Text("Cancel"),
+                                    child: const Text("Enter Manually"),
                                   ),
                                   TextButton(
                                     onPressed: () {
                                       Navigator.pop(ctx);
                                       Geolocator.openLocationSettings();
                                     },
-                                    child: const Text("Settings", style: TextStyle(fontWeight: FontWeight.bold)),
+                                    child: const Text("Open Settings", style: TextStyle(fontWeight: FontWeight.bold)),
                                   ),
                                 ],
                               ),
@@ -1485,12 +1485,12 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                             showAdaptiveDialog(
                               context: context,
                               builder: (ctx) => AlertDialog.adaptive(
-                                title: const Text("Allow Location Access"),
-                                content: const Text("DreamEats uses your location to show available food deals near you. Please enable Location in Settings."),
+                                title: const Text("Location Permission Restricted"),
+                                content: const Text("Location permission was previously restricted. You can enable it in phone settings or continue entering your address manually."),
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.pop(ctx),
-                                    child: const Text("Cancel"),
+                                    child: const Text("Enter Manually"),
                                   ),
                                   TextButton(
                                     onPressed: () {
@@ -1500,6 +1500,16 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                                     child: const Text("Open Settings", style: TextStyle(fontWeight: FontWeight.bold)),
                                   ),
                                 ],
+                              ),
+                            );
+                          } else if (res.status == 'permission_denied') {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text("Location access was not granted. You can search or select your address below."),
+                                backgroundColor: AppTheme.charcoal,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                duration: const Duration(seconds: 3),
                               ),
                             );
                           }
@@ -1532,7 +1542,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    "Use Current Location",
+                                    "Use my current location",
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
@@ -1541,7 +1551,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                                   ),
                                   SizedBox(height: 2),
                                   Text(
-                                    "Pinpoint your location using device GPS",
+                                    "Find nearby stores and fill in your address faster",
                                     style: TextStyle(
                                       fontSize: 11,
                                       color: AppTheme.mutedGrey,

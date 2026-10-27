@@ -121,8 +121,8 @@ void main() {
       await tester.tap(riderDelivery);
       await tester.pumpAndSettle();
 
-      // Verify "Use My Location" button is displayed
-      expect(find.text('Use My Location'), findsOneWidget);
+      // Verify "Use my current location" button is displayed
+      expect(find.text('Use my current location'), findsOneWidget);
 
       // Find the address textfield by its hint text
       final addressField = find.byWidgetPredicate(

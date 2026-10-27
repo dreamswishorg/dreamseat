@@ -155,13 +155,23 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
         );
       } else if (result.status == 'permission_denied_forever') {
         _showLocationFeedback(
-          'Location access is blocked in settings. Please enter your address manually.',
+          'Location access is restricted. Tap Open Settings to allow access, or enter address manually.',
           isWarning: true,
+          action: SnackBarAction(
+            label: 'Open Settings',
+            textColor: Colors.white,
+            onPressed: () => Geolocator.openAppSettings(),
+          ),
         );
       } else if (result.status == 'gps_disabled') {
         _showLocationFeedback(
-          'Device GPS is turned off. Please enable location services or enter address manually.',
+          'Device location is switched off. Turn on Location Services or enter address manually.',
           isWarning: true,
+          action: SnackBarAction(
+            label: 'Open Settings',
+            textColor: Colors.white,
+            onPressed: () => Geolocator.openLocationSettings(),
+          ),
         );
       } else if (result.status == 'error' || result.position == null) {
         _showLocationFeedback(
@@ -216,7 +226,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
     }
   }
 
-  void _showLocationFeedback(String message, {bool isWarning = false}) {
+  void _showLocationFeedback(String message, {bool isWarning = false, SnackBarAction? action}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
@@ -238,6 +248,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
             ),
           ],
         ),
+        action: action,
         duration: const Duration(seconds: 4),
       ),
     );
@@ -1432,7 +1443,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                                           const Icon(Icons.my_location_rounded, size: 13, color: AppTheme.primaryGreen),
                                           const SizedBox(width: 5),
                                           const Text(
-                                            'Use My Location',
+                                            'Use my current location',
                                             style: TextStyle(
                                               fontSize: 11,
                                               fontWeight: FontWeight.w800,
