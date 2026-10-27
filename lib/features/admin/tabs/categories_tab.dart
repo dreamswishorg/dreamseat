@@ -76,35 +76,48 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
           return AlertDialog(
             backgroundColor: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+            actionsPadding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
             title: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.lightGreenBg,
-                    borderRadius: BorderRadius.circular(10),
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    isEditing ? Icons.edit_rounded : Icons.add_photo_alternate_rounded,
+                    isEditing ? Icons.edit_note_rounded : Icons.category_rounded,
                     color: AppTheme.primaryGreen,
                     size: 22,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 Expanded(
-                  child: Text(
-                    isEditing ? 'Edit Category' : 'Add New Category',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isEditing ? 'Edit Category' : 'Add New Category',
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: AppTheme.charcoal, letterSpacing: -0.3),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        "Organize catalogue and food discoverability",
+                        style: TextStyle(fontSize: 11.5, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
             content: ConstrainedBox(
               constraints: BoxConstraints(
-                maxWidth: (MediaQuery.sizeOf(ctx).width * 0.94).clamp(240.0, 480.0),
-                maxHeight: MediaQuery.sizeOf(ctx).height * 0.9,
+                maxWidth: (MediaQuery.sizeOf(ctx).width * 0.94).clamp(280.0, 500.0),
+                maxHeight: MediaQuery.sizeOf(ctx).height * 0.82,
               ),
               child: SingleChildScrollView(
                 child: Form(
@@ -113,46 +126,51 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Category Name
-                      const Text(
-                        'CATEGORY NAME',
-                        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey, letterSpacing: 0.8),
-                      ),
                       const SizedBox(height: 6),
+                      const Text(
+                        'CATEGORY DETAILS',
+                        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppTheme.mutedGrey, letterSpacing: 0.8),
+                      ),
+                      const SizedBox(height: 10),
                       TextFormField(
                         controller: nameCtrl,
+                        style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppTheme.charcoal),
                         decoration: InputDecoration(
+                          labelText: 'Category Title',
                           hintText: 'e.g. Traditional Jollof, Fruit Box',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          prefixIcon: const Icon(Icons.label_outline_rounded, size: 19),
+                          filled: true,
+                          fillColor: const Color(0xFFF8FAFC),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.8)),
                         ),
                         validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter a name' : null,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
 
-                      // Image URL input
-                      const Text(
-                        'CATEGORY PICTURE URL',
-                        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey, letterSpacing: 0.8),
-                      ),
-                      const SizedBox(height: 6),
                       TextFormField(
                         controller: urlCtrl,
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppTheme.charcoal),
                         decoration: InputDecoration(
+                          labelText: 'Image Resource URL',
                           hintText: 'https://images.unsplash.com/...',
-                          prefixIcon: const Icon(Icons.link_rounded, size: 20),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          prefixIcon: const Icon(Icons.link_rounded, size: 19),
+                          filled: true,
+                          fillColor: const Color(0xFFF8FAFC),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.8)),
                         ),
                         onChanged: (_) => setDlgState(() {}),
                         validator: (v) => (v == null || v.trim().isEmpty) ? 'Please provide an image URL' : null,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
 
                       // Quick Preset Images Selector
                       const Text(
-                        'OR SELECT A PRESET FOOD PHOTO:',
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey, letterSpacing: 0.6),
+                        'POPULAR PRESET PHOTOS',
+                        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppTheme.mutedGrey, letterSpacing: 0.8),
                       ),
                       const SizedBox(height: 8),
                       SizedBox(
@@ -171,18 +189,27 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
                                   urlCtrl.text = preset['url']!;
                                 });
                               },
-                              borderRadius: BorderRadius.circular(10),
-                              child: Container(
+                              borderRadius: BorderRadius.circular(12),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
                                 width: 72,
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: isPicked ? AppTheme.primaryGreen : Colors.transparent,
-                                    width: 2.5,
+                                    color: isPicked ? AppTheme.primaryGreen : const Color(0xFFE2E8F0),
+                                    width: isPicked ? 2.5 : 1,
                                   ),
+                                  boxShadow: isPicked
+                                      ? [
+                                          BoxShadow(
+                                            color: AppTheme.primaryGreen.withValues(alpha: 0.2),
+                                            blurRadius: 6,
+                                          )
+                                        ]
+                                      : null,
                                 ),
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(10),
                                   child: Image.network(
                                     preset['url']!,
                                     fit: BoxFit.cover,
@@ -198,12 +225,12 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
 
                       // Live Image Preview
                       const Text(
-                        'LIVE PICTURE PREVIEW',
-                        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey, letterSpacing: 0.8),
+                        'COVER PREVIEW',
+                        style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppTheme.mutedGrey, letterSpacing: 0.8),
                       ),
                       const SizedBox(height: 8),
                       Container(
-                        height: 140,
+                        height: 130,
                         width: double.infinity,
                         decoration: BoxDecoration(
                           color: const Color(0xFFF8FAFC),
@@ -219,9 +246,9 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.broken_image_rounded, color: AppTheme.mutedGrey, size: 32),
+                                      Icon(Icons.broken_image_rounded, color: AppTheme.mutedGrey, size: 28),
                                       SizedBox(height: 4),
-                                      Text('Invalid or broken image URL', style: TextStyle(color: AppTheme.mutedGrey, fontSize: 12)),
+                                      Text('Invalid image URL', style: TextStyle(color: AppTheme.mutedGrey, fontSize: 11.5)),
                                     ],
                                   ),
                                 ),
@@ -230,9 +257,9 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.image_outlined, color: AppTheme.mutedGrey, size: 32),
+                                    Icon(Icons.image_outlined, color: AppTheme.mutedGrey, size: 28),
                                     SizedBox(height: 4),
-                                    Text('No image specified yet', style: TextStyle(color: AppTheme.mutedGrey, fontSize: 12)),
+                                    Text('Select a preset photo above or paste a URL', style: TextStyle(color: AppTheme.mutedGrey, fontSize: 11.5)),
                                   ],
                                 ),
                               ),
@@ -245,14 +272,19 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel', style: TextStyle(color: AppTheme.mutedGrey)),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppTheme.mutedGrey,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryGreen,
                   foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 ),
                 onPressed: () async {
                   if (formKey.currentState!.validate()) {

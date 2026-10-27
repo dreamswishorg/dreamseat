@@ -218,20 +218,25 @@ class _BiometricSwitchTileState extends ConsumerState<BiometricSwitchTile> {
                                 return;
                               }
 
-                              final authOk = await BiometricService.authenticate(
+                              // Dismiss keyboard to release UI focus before native iOS/Android biometric prompt
+                              FocusScope.of(context).unfocus();
+                              await Future.delayed(const Duration(milliseconds: 300));
+
+                              final authResult = await BiometricService.authenticateWithDetails(
                                 reason: "Scan your $_biometricLabel to link this device",
                               );
 
-                              if (!authOk) {
+                              if (!authResult.isSuccess) {
                                 setModalState(() {
                                   isVerifying = false;
-                                  errorText = "$_biometricLabel scan cancelled or failed.";
+                                  errorText = authResult.message ?? "$_biometricLabel scan cancelled or failed.";
                                 });
                                 return;
                               }
 
                               await BiometricService.saveCredentials(user.email, pwd);
                               await BiometricService.setBiometricEnabled(true);
+                              await BiometricService.setPromptedEnrollment(true);
 
                               if (context.mounted) {
                                 Navigator.pop(ctx, true);

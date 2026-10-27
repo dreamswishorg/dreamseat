@@ -422,7 +422,7 @@ class _TabSupportState extends ConsumerState<TabSupport> {
                         ElevatedButton.icon(
                           onPressed: () => ref.read(appStateProvider.notifier).resolveTicket(t.id),
                           icon: const Icon(Icons.check_rounded, size: 14),
-                          label: const Text("Mark Resolved", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5)),
+                          label: const Text("Resolved", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primaryGreen,
                             foregroundColor: Colors.white,

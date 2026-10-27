@@ -97,6 +97,20 @@ class AppTheme {
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryGreen, width: 2)),
         hintStyle: const TextStyle(color: mutedGrey, fontSize: 15),
       ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: charcoal,
+        contentTextStyle: const TextStyle(
+          color: pureWhite,
+          fontWeight: FontWeight.w700,
+          fontSize: 13.5,
+          letterSpacing: -0.2,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        elevation: 8,
+      ),
     );
   }
 

@@ -524,30 +524,6 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
           ),
           const Divider(height: 24, color: Color(0xFFF1F5F9)),
           _buildActionTile(
-            title: "Two-Factor Authentication",
-            subtitle: _isTwoFactorEnabled ? "Active & Protected" : "Not configured",
-            icon: Icons.shield_outlined,
-            onTap: _onTwoFactorAuth,
-            trailing: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: _isTwoFactorEnabled
-                    ? AppTheme.primaryGreen.withValues(alpha: 0.12)
-                    : const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                _isTwoFactorEnabled ? "ENABLED" : "DISABLED",
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  color: _isTwoFactorEnabled ? AppTheme.primaryGreen : AppTheme.mutedGrey,
-                ),
-              ),
-            ),
-          ),
-          const Divider(height: 24, color: Color(0xFFF1F5F9)),
-          _buildActionTile(
             title: "Active Session History",
             subtitle: "View devices and IP addresses",
             icon: Icons.devices_rounded,

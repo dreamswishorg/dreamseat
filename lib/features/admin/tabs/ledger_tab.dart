@@ -66,57 +66,23 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
           const SizedBox(height: 16),
 
           // Streamlined Unified Toolbar
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isCompact = constraints.maxWidth < 850;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Row 1: Search Box + Export CSV
-                  Row(
-                    children: [
-                      Expanded(child: _buildSearchBox()),
-                      const SizedBox(width: 10),
-                      isCompact
-                          ? IconButton(
-                              onPressed: () => _exportLedger(orders, state.commissionRate),
-                              icon: const Icon(Icons.download_rounded, size: 18),
-                              tooltip: "Export CSV",
-                              style: IconButton.styleFrom(
-                                backgroundColor: AppTheme.primaryGreen,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                padding: const EdgeInsets.all(10),
-                              ),
-                            )
-                          : ElevatedButton.icon(
-                              onPressed: () => _exportLedger(orders, state.commissionRate),
-                              icon: const Icon(Icons.download_rounded, size: 15),
-                              label: const Text("Export CSV", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primaryGreen,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                elevation: 0,
-                              ),
-                            ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Row 1: Search Box across the full width
+              _buildSearchBox(),
+              const SizedBox(height: 10),
 
-                  // Row 2: Filters under the Search Bar
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      _buildViewToggle(),
-                      _buildPayoutFilter(orders),
-                    ],
-                  ),
+              // Row 2: Clean Filter Controls under the Search Bar
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  _buildViewToggle(),
+                  _buildPayoutFilter(orders),
                 ],
-              );
-            },
+              ),
+            ],
           ),
           const SizedBox(height: 16),
 

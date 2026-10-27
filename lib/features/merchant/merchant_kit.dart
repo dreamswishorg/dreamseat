@@ -964,21 +964,41 @@ class MToast {
       ..showSnackBar(
         SnackBar(
           behavior: SnackBarBehavior.floating,
-          backgroundColor: color,
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 84),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          margin: const EdgeInsets.fromLTRB(20, 0, 20, 28),
           duration: const Duration(seconds: 3),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          content: Row(
-            children: [
-              Icon(icon, color: Colors.white, size: 19),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  message,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13),
+          padding: EdgeInsets.zero,
+          content: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.35),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
                 ),
-              ),
-            ],
+              ],
+            ),
+            child: Row(
+              children: [
+                Icon(icon, color: Colors.white, size: 19),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );

@@ -1228,7 +1228,7 @@ class AppStateManager extends Notifier<AppState> {
     state = state.copyWith(orders: updated);
     CacheManager().saveOrders(state.orders);
 
-    // Notify customer
+    // 1. Notify Customer
     try {
       final order = state.orders.firstWhere((o) => o.id == orderId);
       final notifTitle = status == 'ready'
@@ -1237,7 +1237,11 @@ class AppStateManager extends Notifier<AppState> {
               ? 'Courier on the Way! 🛵'
               : (status == 'preparing'
                   ? 'Kitchen is Preparing Your Pack 🍳'
-                  : (status == 'collected' ? 'Order Collected! Enjoy Your Meal 🌿' : 'Order Status Update')));
+                  : (status == 'collected'
+                      ? 'Order Collected! Enjoy Your Meal 🌿'
+                      : (status == 'cancelled' || status == 'rejected'
+                          ? 'Order Not Completed ⚠️'
+                          : 'Order Status Update'))));
       final shortId = order.id.length > 8 ? order.id.substring(0, 8) : order.id;
       final notifBody =
           'Your pack "${order.dealTitle}" is now ${status.replaceAll('_', ' ')}. #$shortId · code ${order.collectionCode}.';
@@ -1252,6 +1256,36 @@ class AppStateManager extends Notifier<AppState> {
           'orderId': order.id,
         },
       );
+
+      // 2. Notify Merchant so merchant alerts & bell icon are always up to date
+      final business = state.businesses.cast<BusinessProfile?>().firstWhere(
+            (b) => b?.id == order.businessId,
+            orElse: () => _merchantBusiness,
+          );
+      final merchantOwnerId = business?.ownerId ?? (state.currentUser?.role == 'merchant' ? state.currentUser?.id : null);
+
+      if (merchantOwnerId != null && merchantOwnerId.isNotEmpty) {
+        final merchantNotifTitle = status == 'collected'
+            ? 'Order Collected Successfully! ✅'
+            : (status == 'ready'
+                ? 'Order Marked Ready 📦'
+                : (status == 'cancelled' || status == 'rejected'
+                    ? 'Order Rejected / Cancelled ⚠️'
+                    : 'Order Status Updated'));
+        final merchantNotifBody =
+            'Order #${order.collectionCode} (${order.dealTitle}) for ${order.customerName} marked as ${status.replaceAll('_', ' ')}.';
+
+        await dispatchNotification(
+          userId: merchantOwnerId,
+          title: merchantNotifTitle,
+          body: merchantNotifBody,
+          type: 'order',
+          data: {
+            'screen': 'merchant_orders',
+            'orderId': order.id,
+          },
+        );
+      }
     } catch (_) {}
   }
 

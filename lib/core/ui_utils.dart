@@ -951,3 +951,161 @@ void showModernDeleteAccountConfirmDialog(BuildContext context, WidgetRef ref) {
     },
   );
 }
+
+/// ─── Top Notification Banners ──────────────────────────────────────────────
+/// Sleek, glassmorphic floating banners anchored at the Top of the viewport.
+class AppNotificationBanner {
+  static void show(
+    BuildContext context, {
+    required String title,
+    required String message,
+    IconData icon = Icons.notifications_active_rounded,
+    Color accentColor = AppTheme.primaryGreen,
+    Duration duration = const Duration(seconds: 4),
+  }) {
+    if (!context.mounted) return;
+    final topPadding = MediaQuery.of(context).padding.top + 10;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          margin: EdgeInsets.only(
+            top: topPadding,
+            left: 16,
+            right: 16,
+            bottom: MediaQuery.of(context).size.height - topPadding - 100,
+          ),
+          duration: duration,
+          padding: EdgeInsets.zero,
+          content: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.94),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+                BoxShadow(
+                  color: accentColor.withValues(alpha: 0.2),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: accentColor, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                      Text(
+                        message,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+  }
+}
+
+/// ─── Bottom Toasts & Action Confirmations ────────────────────────────────────
+/// Modern, floating rounded pill at the Bottom of the viewport.
+class AppToast {
+  static void success(BuildContext context, String message) =>
+      _show(context, message, AppTheme.primaryGreen, Icons.check_circle_rounded);
+
+  static void error(BuildContext context, String message) =>
+      _show(context, message, AppTheme.errorRed, Icons.error_rounded);
+
+  static void info(BuildContext context, String message) =>
+      _show(context, message, AppTheme.charcoal, Icons.info_outline_rounded);
+
+  static void _show(BuildContext context, String message, Color color, IconData icon) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          margin: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+          duration: const Duration(seconds: 3),
+          padding: EdgeInsets.zero,
+          content: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.35),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: Colors.white, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+  }
+}

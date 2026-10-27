@@ -65,9 +65,7 @@ class AdminSidebar extends ConsumerWidget {
 
     // 4. SYSTEM & CONFIG
     final systemItems = <_SidebarNavItem>[];
-    if (user != null) {
-      systemItems.add(_SidebarNavItem(10, Icons.history_edu_rounded, "Audit Trail", currentTab == 10));
-    }
+    // Audit Trail is kept in database but hidden from Super Admin navigation per request
     if (user?.hasPrivilege('config') ?? false) {
       systemItems.add(_SidebarNavItem(8, Icons.settings_suggest_rounded, "Infrastructure Config", currentTab == 8));
     }
@@ -208,26 +206,6 @@ class AdminSidebar extends ConsumerWidget {
                               ),
                             ),
                           ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Material(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(12),
-                  child: InkWell(
-                    onTap: () => onTab(10), // Audit Trail
-                    borderRadius: BorderRadius.circular(12),
-                    child: Tooltip(
-                      message: 'Audit Log',
-                      child: Padding(
-                        padding: const EdgeInsets.all(9),
-                        child: Icon(
-                          Icons.qr_code_scanner_rounded,
-                          size: 16,
-                          color: isDark ? Colors.white70 : const Color(0xFF334155),
                         ),
                       ),
                     ),

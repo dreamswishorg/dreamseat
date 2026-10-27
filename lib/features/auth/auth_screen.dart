@@ -272,13 +272,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     // Check if biometric is available and whether it is already enrolled
     final isBioAvailable = await BiometricService.isBiometricAvailable();
     final isBioEnabled = await BiometricService.isBiometricEnabled();
+    final hasPrompted = await BiometricService.hasPromptedEnrollment();
 
     if (isBioAvailable && isBioEnabled) {
       // User has already enrolled: keep stored credentials synchronized
       await BiometricService.saveCredentials(email, password);
       _proceedToApp(user);
-    } else if (isBioAvailable && !isBioEnabled) {
-      // First-time or un-enrolled: offer optional biometric enrollment
+    } else if (isBioAvailable && !isBioEnabled && !hasPrompted) {
+      // First-time login: ask once whether to enable biometrics
       await _offerBiometricEnrollment(email: email, password: password, user: user);
     } else {
       _proceedToApp(user);
@@ -368,6 +369,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       },
     );
 
+    // Mark that the user has responded to the first-login prompt
+    await BiometricService.setPromptedEnrollment(true);
+
     if (shouldEnroll == true) {
       final authResult = await BiometricService.authenticateWithDetails(
         reason: 'Scan your $_biometricLabel to enable instant sign-in',
@@ -387,6 +391,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     if (!mounted) return;
     _isPasswordLoginInProgress = false;
     _isBiometricLoginInProgress = false;
+
+    if (user.isSuspended) {
+      ref.read(appStateProvider.notifier).signOut(
+            errorMessage: 'Your account has been suspended by administration. Please contact support.',
+          );
+      _showSuspendedDialog('Your account has been suspended by administration. Please contact support.');
+      return;
+    }
 
     final Widget destination;
     if (user.role == 'merchant') {

@@ -122,10 +122,10 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
           children: [
             Expanded(
               child: Container(
-                height: 42,
+                height: 44,
                 decoration: BoxDecoration(
                   color: context.cardColor,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: context.borderColor),
                   boxShadow: context.clientShadow,
                 ),
@@ -134,52 +134,45 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                     _searchQuery = v;
                     _currentPage = 0;
                   }),
-                  style: const TextStyle(fontSize: 13, color: AppTheme.charcoal, fontWeight: FontWeight.w500),
+                  style: const TextStyle(fontSize: 13, color: AppTheme.charcoal, fontWeight: FontWeight.w600),
                   decoration: const InputDecoration(
                     hintText: "Search accounts by name, email, or user ID...",
                     hintStyle: TextStyle(fontSize: 12.5, color: AppTheme.mutedGrey),
                     prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppTheme.mutedGrey),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 11),
+                    contentPadding: EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 10),
-            ElevatedButton.icon(
-              onPressed: () => _exportToCSV(filteredUsers),
-              icon: const Icon(Icons.download_rounded, size: 15),
-              label: Text(isMobile ? "CSV" : "Export CSV", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF1F5F9),
-                foregroundColor: AppTheme.charcoal,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-            const SizedBox(width: 10),
-            ElevatedButton.icon(
+            const SizedBox(width: 12),
+            ElevatedButton(
               onPressed: () => _showCreateStaffDialog(context),
-              icon: const Icon(Icons.person_add_rounded, size: 15),
-              label: Text(isMobile ? "Staff" : "+ Add Staff", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryGreen,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text(
+                isMobile ? "Staff" : "Add Staff",
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 0.2),
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
 
-        // Row 2: Filters under the Search Bar (Status Dropdown + Role Segmented Pills)
+        // Row 2: Streamlined Filters under Search Bar
         Wrap(
           spacing: 10,
           runSpacing: 10,
           children: [
+            _rolePill("All Accounts", totalCount, 'All', Icons.group_rounded, AppTheme.primaryGreen),
+            _rolePill("Customers", customerCount, 'Customer', Icons.shopping_bag_outlined, const Color(0xFF2563EB)),
+            _rolePill("Merchants", merchantCount, 'Merchant', Icons.storefront_rounded, const Color(0xFFD97706)),
+            _rolePill("Staff", staffCount, 'Staff', Icons.shield_rounded, AppTheme.charcoal),
             AdminDropdown<String>(
               icon: Icons.tune_rounded,
               label: "Status",
@@ -190,10 +183,6 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                 _currentPage = 0;
               }),
             ),
-            _rolePill("All Accounts", totalCount, 'All', Icons.group_rounded, AppTheme.primaryGreen),
-            _rolePill("Customers", customerCount, 'Customer', Icons.shopping_bag_outlined, const Color(0xFF2563EB)),
-            _rolePill("Merchants", merchantCount, 'Merchant', Icons.storefront_rounded, const Color(0xFFD97706)),
-            _rolePill("Staff Team", staffCount, 'Staff', Icons.shield_rounded, AppTheme.charcoal),
           ],
         ),
       ],
@@ -374,20 +363,45 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
           builder: (context, setModalState) {
             return AlertDialog(
               backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+              actionsPadding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
               title: Row(
                 children: [
-                  const Icon(Icons.shield_rounded, color: AppTheme.primaryGreen),
-                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.shield_outlined, color: AppTheme.primaryGreen, size: 22),
+                  ),
+                  const SizedBox(width: 14),
                   const Expanded(
-                    child: Text("Add New Staff Account", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppTheme.charcoal)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Add New Staff Account",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: AppTheme.charcoal, letterSpacing: -0.3),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          "Provision admin credentials and permissions",
+                          style: TextStyle(fontSize: 11.5, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
               content: ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxWidth: (MediaQuery.sizeOf(context).width * 0.94).clamp(240.0, 500.0),
-                  maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+                  maxWidth: (MediaQuery.sizeOf(context).width * 0.94).clamp(280.0, 520.0),
+                  maxHeight: MediaQuery.sizeOf(context).height * 0.82,
                 ),
                 child: SingleChildScrollView(
                   child: Form(
@@ -396,26 +410,38 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text("Staff Details", style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.mutedGrey, fontSize: 11, letterSpacing: 0.5)),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 6),
+                        const Text("CREDENTIALS", style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.mutedGrey, fontSize: 10.5, letterSpacing: 0.8)),
+                        const SizedBox(height: 10),
                         TextFormField(
                           controller: nameController,
+                          style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppTheme.charcoal),
                           decoration: InputDecoration(
                             labelText: "Full Name",
                             hintText: "e.g., Kofi Mensah",
-                            prefixIcon: const Icon(Icons.person_rounded, size: 20),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            prefixIcon: const Icon(Icons.person_outline_rounded, size: 19),
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.8)),
                           ),
                           validator: (val) => val == null || val.trim().isEmpty ? "Name is required" : null,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppTheme.charcoal),
                           decoration: InputDecoration(
-                            labelText: "Email Address",
+                            labelText: "Work Email",
                             hintText: "e.g., kofi@dreameats.app",
-                            prefixIcon: const Icon(Icons.email_rounded, size: 20),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            prefixIcon: const Icon(Icons.mail_outline_rounded, size: 19),
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.8)),
                           ),
                           validator: (val) {
                             if (val == null || val.trim().isEmpty) return "Email is required";
@@ -427,23 +453,33 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                         TextFormField(
                           controller: passwordController,
                           obscureText: true,
+                          style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppTheme.charcoal),
                           decoration: InputDecoration(
                             labelText: "Temporary Password",
                             hintText: "At least 8 characters",
-                            prefixIcon: const Icon(Icons.lock_rounded, size: 20),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            prefixIcon: const Icon(Icons.lock_outline_rounded, size: 19),
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.8)),
                           ),
                           validator: (val) => val == null || val.length < 8 ? "Password must be at least 8 chars" : null,
                         ),
-                        const SizedBox(height: 24),
-                        const Text("Role & Permissions Preset", style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.mutedGrey, fontSize: 11, letterSpacing: 0.5)),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 20),
+                        const Text("ROLE PRESET", style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.mutedGrey, fontSize: 10.5, letterSpacing: 0.8)),
+                        const SizedBox(height: 10),
                         DropdownButtonFormField<String>(
                           initialValue: selectedRole,
+                          style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppTheme.charcoal),
                           decoration: InputDecoration(
                             labelText: "Staff Preset",
-                            prefixIcon: const Icon(Icons.work_rounded, size: 20),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            prefixIcon: const Icon(Icons.badge_outlined, size: 19),
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.8)),
                           ),
                           items: roleTemplates.keys.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
                           onChanged: (val) {
@@ -457,24 +493,34 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                           },
                         ),
                         const SizedBox(height: 16),
-                        const Text("Allowed Administrative Sections", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.charcoal)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text("ASSIGNED MODULE PRIVILEGES", style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.mutedGrey, fontSize: 10.5, letterSpacing: 0.8)),
+                            Text("${selectedPrivs.length} selected", style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
+                          ],
+                        ),
                         const SizedBox(height: 8),
                         ConstrainedBox(
-                          constraints: const BoxConstraints(maxHeight: 220),
+                          constraints: const BoxConstraints(maxHeight: 200),
                           child: Container(
                             decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
                               border: Border.all(color: const Color(0xFFE2E8F0)),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(14),
                             ),
                             child: ListView(
                               shrinkWrap: true,
+                              padding: const EdgeInsets.symmetric(vertical: 4),
                               children: privLabels.entries.map((entry) {
                                 final key = entry.key;
                                 final label = entry.value;
                                 return CheckboxListTile(
                                   activeColor: AppTheme.primaryGreen,
                                   dense: true,
-                                  title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                                  controlAffinity: ListTileControlAffinity.leading,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                                  title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5, color: AppTheme.charcoal)),
                                   value: selectedPrivs.contains(key),
                                   onChanged: (checked) {
                                     setModalState(() {
@@ -499,7 +545,11 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
               actions: [
                 TextButton(
                   onPressed: isSaving ? null : () => Navigator.pop(ctx),
-                  child: const Text("Cancel", style: TextStyle(color: AppTheme.mutedGrey, fontWeight: FontWeight.bold)),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppTheme.mutedGrey,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  child: const Text("Cancel", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                 ),
                 ElevatedButton(
                   onPressed: isSaving
@@ -536,11 +586,13 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryGreen,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: isSaving
                       ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text("Create Account", style: TextStyle(fontWeight: FontWeight.bold)),
+                      : const Text("Create Staff Account", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
                 ),
               ],
             );

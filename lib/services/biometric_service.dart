@@ -36,6 +36,27 @@ class BiometricService {
   static const String _keyBiometricEnabled = 'biometric_enabled';
   static const String _keyBiometricEmail = 'biometric_email';
   static const String _keyBiometricPassword = 'biometric_password';
+  static const String _keyBiometricPrompted = 'biometric_prompted_once';
+
+  /// Check if the user has already made an enrollment choice (accepted or declined)
+  static Future<bool> hasPromptedEnrollment() async {
+    try {
+      final value = await _secureStorage.read(key: _keyBiometricPrompted);
+      return value == 'true';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Mark that the user has made an enrollment decision so they are not repeatedly interrupted
+  static Future<void> setPromptedEnrollment([bool prompted = true]) async {
+    try {
+      await _secureStorage.write(
+        key: _keyBiometricPrompted,
+        value: prompted ? 'true' : 'false',
+      );
+    } catch (_) {}
+  }
 
   /// Check if the device is capable of biometric authentication (iOS & Android)
   static Future<bool> isBiometricAvailable() async {
