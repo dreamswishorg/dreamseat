@@ -354,7 +354,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
-                  child: Text("Enable $_biometricLabel", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  child: const Text("Confirm", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                 ),
               ),
               const SizedBox(height: 8),
@@ -385,7 +385,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
 
       final authResult = await BiometricService.authenticateWithDetails(
         reason: 'Scan your $_biometricLabel to enable instant sign-in',
-        biometricOnly: false,
+        biometricOnly: true,
       );
 
       if (authResult.isSuccess) {
@@ -560,6 +560,22 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       _showSnackBar(error.replaceAll('AuthException: ', '').trim(),
           isError: true);
       return;
+    }
+
+    if (!mounted) return;
+
+    final user = ref.read(appStateProvider).currentUser;
+    if (user != null) {
+      final isBioAvailable = await BiometricService.isBiometricAvailable();
+      final isBioEnabled = await BiometricService.isBiometricEnabled();
+      if (isBioAvailable && !isBioEnabled) {
+        await _offerBiometricEnrollment(
+          email: _suEmailController.text.trim(),
+          password: _suPasswordController.text,
+          user: user,
+        );
+        return;
+      }
     }
 
     if (!mounted) return;

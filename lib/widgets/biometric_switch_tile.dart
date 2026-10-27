@@ -53,7 +53,7 @@ class _BiometricSwitchTileState extends ConsumerState<BiometricSwitchTile> {
         existingCreds['password']!.isNotEmpty) {
       final authenticated = await BiometricService.authenticate(
         reason: "Scan your $label to enable instant sign-in",
-        biometricOnly: false,
+        biometricOnly: true,
       );
       if (!mounted) return;
       if (authenticated) {
@@ -208,7 +208,7 @@ class _BiometricSwitchTileState extends ConsumerState<BiometricSwitchTile> {
 
                               final authResult = await BiometricService.authenticateWithDetails(
                                 reason: "Scan your $label to link this device",
-                                biometricOnly: false,
+                                biometricOnly: true,
                               );
 
                               if (!authResult.isSuccess) {
