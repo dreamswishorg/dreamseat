@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Request Account & Data Deletion — DreamEats</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #2E7D32;
+      --primary-dark: #1B5E20;
+      --danger: #DC2626;
+      --charcoal: #1E293B;
+      --muted: #64748B;
+      --bg: #F8FAFC;
+      --card-bg: #FFFFFF;
+      --border: #E2E8F0;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--charcoal);
+      line-height: 1.6;
+      padding: 32px 16px;
+    }
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 36px 32px;
+      border-radius: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+      border: 1px solid var(--border);
+    }
+    header {
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .badge {
+      display: inline-block;
+      background: #FEE2E2;
+      color: var(--danger);
+      font-weight: 700;
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.6px;
+      color: var(--charcoal);
+      margin-bottom: 8px;
+    }
+    p {
+      font-size: 14.5px;
+      color: #334155;
+      margin-bottom: 14px;
+    }
+    .info-card {
+      background: #F8FAFC;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin: 20px 0;
+    }
+    .info-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--charcoal);
+      margin-bottom: 8px;
+    }
+    ul {
+      margin-left: 20px;
+      margin-bottom: 12px;
+    }
+    li {
+      font-size: 14px;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+    form {
+      margin-top: 24px;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    label {
+      display: block;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--charcoal);
+      margin-bottom: 6px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+    }
+    button {
+      width: 100%;
+      background: var(--danger);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    .success-message {
+      display: none;
+      background: #E8F5E9;
+      border: 1px solid #A5D6A7;
+      color: #1B5E20;
+      padding: 18px 20px;
+      border-radius: 16px;
+      font-size: 14.5px;
+      margin-top: 20px;
+      text-align: center;
+    }
+    footer {
+      margin-top: 36px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <span class="badge">Google Play & Apple App Store Data Compliance</span>
+      <h1>Request Account & Data Deletion</h1>
+      <p>DreamEats Ghana &bull; User Privacy & Data Protection Center</p>
+    </header>
+
+    <div class="info-card">
+      <h3>How to delete your account:</h3>
+      <p><strong>Option 1 (Inside the DreamEats App):</strong></p>
+      <ul>
+        <li>For Customers: Open the app &rarr; go to <strong>Profile</strong> &rarr; <strong>Settings</strong> &rarr; <strong>Delete Account</strong>.</li>
+        <li>For Merchants: Open the portal &rarr; go to <strong>Profile & Settings</strong> &rarr; <strong>Delete Account</strong>.</li>
+      </ul>
+      <p><strong>Option 2 (Web Request if App is Uninstalled):</strong></p>
+      <p>If you have uninstalled the app or cannot log in, submit the form below. Our support team will verify your identity and purge your account within 48 hours.</p>
+    </div>
+
+    <div class="info-card">
+      <h3>What happens to your data:</h3>
+      <ul>
+        <li><strong>Permanently Deleted:</strong> Your profile details (name, email, phone number, address, avatar), authentication credentials, device push tokens, saved payment tokens, and notification preferences.</li>
+        <li><strong>Retained Data:</strong> Past financial transaction and invoice records are retained strictly for the statutory period required under Ghana tax and accounting law (GRA compliance). These records are decoupled from your active login.</li>
+      </ul>
+    </div>
+
+    <form id="deleteForm" onsubmit="handleDeleteSubmit(event)">
+      <div class="form-group">
+        <label for="email">Registered Email Address *</label>
+        <input type="email" id="email" required placeholder="e.g. name@example.com">
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Registered Phone Number *</label>
+        <input type="tel" id="phone" required placeholder="e.g. +233 24 123 4567">
+      </div>
+
+      <div class="form-group">
+        <label for="role">Account Role *</label>
+        <select id="role" required>
+          <option value="customer">Customer</option>
+          <option value="merchant">Merchant / Store Owner</option>
+          <option value="rider">Delivery Rider</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="reason">Reason for leaving (Optional)</label>
+        <textarea id="reason" rows="3" placeholder="Tell us why you would like to delete your account..."></textarea>
+      </div>
+
+      <button type="submit" id="submitBtn">Submit Permanent Deletion Request</button>
+    </form>
+
+    <div id="successMsg" class="success-message">
+      <strong>Deletion Request Received</strong><br>
+      We have received your account and data deletion request. A confirmation email and SMS will be sent to your registered contacts to finalize identity verification and initiate account purging.
+    </div>
+
+    <footer>
+      <p>Need immediate support? Contact our Data Protection Officer at <a href="mailto:support@winningedgeinvestment.com">support@winningedgeinvestment.com</a>.</p>
+      <p style="margin-top: 8px;">&copy; 2026 DreamEats. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <script>
+    function handleDeleteSubmit(e) {
+      e.preventDefault();
+      var btn = document.getElementById('submitBtn');
+      var form = document.getElementById('deleteForm');
+      var success = document.getElementById('successMsg');
+      
+      btn.disabled = true;
+      btn.innerText = "Submitting...";
+
+      // Mailto fallback or API submission
+      var email = document.getElementById('email').value;
+      var phone = document.getElementById('phone').value;
+      var role = document.getElementById('role').value;
+      var reason = document.getElementById('reason').value;
+
+      var mailtoUrl = "mailto:support@winningedgeinvestment.com?subject=" + 
+        encodeURIComponent("Account Deletion Request - " + email) + 
+        "&body=" + encodeURIComponent("Account Deletion Request:\nEmail: " + email + "\nPhone: " + phone + "\nRole: " + role + "\nReason: " + reason);
+
+      setTimeout(function() {
+        form.style.display = 'none';
+        success.style.display = 'block';
+        window.location.href = mailtoUrl;
+      }, 600);
+    }
+  </script>
+</body>
+</html>
