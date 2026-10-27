@@ -303,7 +303,7 @@ class _PartnerCard extends StatelessWidget {
                       const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
                       const SizedBox(width: 4),
                       Text(
-                        partner.rating.toStringAsFixed(1),
+                        partner.rating > 0 ? partner.rating.toStringAsFixed(1) : 'New',
                         style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppTheme.charcoal),
                       ),
                     ],

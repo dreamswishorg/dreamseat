@@ -1164,6 +1164,114 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     return distance;
   }
 
+  /// Location notice styled like the biometric (Face ID) linking sheet.
+  void _showLocationNoticeSheet({
+    required String title,
+    required String message,
+    required bool openAppSettings,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        final bg = isDark ? const Color(0xFF1E293B) : Colors.white;
+        final textCol = isDark ? Colors.white : AppTheme.charcoal;
+
+        return Container(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: AppTheme.lightGreenBg,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  openAppSettings
+                      ? Icons.location_on_rounded
+                      : Icons.location_off_rounded,
+                  size: 36,
+                  color: AppTheme.primaryGreen,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: textCol,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 13, color: AppTheme.mutedGrey),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    if (openAppSettings) {
+                      Geolocator.openAppSettings();
+                    } else {
+                      Geolocator.openLocationSettings();
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryGreen,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: const Text(
+                    "Open Settings",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _showAddressSelectionBottomSheet();
+                },
+                child: const Text(
+                  "Enter Manually",
+                  style: TextStyle(
+                    color: AppTheme.mutedGrey,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void _showAddressSelectionBottomSheet({bool isInitialSetup = false}) {
     final currentAddress = ref.read(userLocationProvider).address;
     final textController = TextEditingController(
@@ -1461,46 +1569,16 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                               ),
                             );
                           } else if (res.status == 'gps_disabled') {
-                            showAdaptiveDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog.adaptive(
-                                title: const Text("Location Services Turned Off"),
-                                content: const Text("Device location is currently switched off on your phone. Turn on Location Services in settings to pinpoint nearby stores, or type your address manually."),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(ctx),
-                                    child: const Text("Enter Manually"),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(ctx);
-                                      Geolocator.openLocationSettings();
-                                    },
-                                    child: const Text("Open Settings", style: TextStyle(fontWeight: FontWeight.bold)),
-                                  ),
-                                ],
-                              ),
+                            _showLocationNoticeSheet(
+                              title: "Location Services Turned Off",
+                              message: "Device location is currently switched off on your phone. Turn on Location Services in settings to pinpoint nearby stores, or type your address manually.",
+                              openAppSettings: false,
                             );
                           } else if (res.status == 'permission_denied_forever') {
-                            showAdaptiveDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog.adaptive(
-                                title: const Text("Location Permission Restricted"),
-                                content: const Text("Location permission was previously restricted. You can enable it in phone settings or continue entering your address manually."),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(ctx),
-                                    child: const Text("Enter Manually"),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(ctx);
-                                      Geolocator.openAppSettings();
-                                    },
-                                    child: const Text("Open Settings", style: TextStyle(fontWeight: FontWeight.bold)),
-                                  ),
-                                ],
-                              ),
+                            _showLocationNoticeSheet(
+                              title: "Location Permission Restricted",
+                              message: "Location permission was previously restricted. You can enable it in phone settings or continue entering your address manually.",
+                              openAppSettings: true,
                             );
                           } else if (res.status == 'permission_denied') {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -2084,7 +2162,7 @@ class _PartnerCircleCard extends StatelessWidget {
                 const Icon(Icons.star, color: Colors.amber, size: 10),
                 const SizedBox(width: 2),
                 Text(
-                  partner.rating > 0 ? partner.rating.toStringAsFixed(1) : "5.0",
+                  partner.rating > 0 ? partner.rating.toStringAsFixed(1) : "New",
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,

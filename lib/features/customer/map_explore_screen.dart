@@ -397,7 +397,7 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
                               const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 11),
                               const SizedBox(width: 2),
                               Text(
-                                biz.rating.toStringAsFixed(1),
+                                biz.rating > 0 ? biz.rating.toStringAsFixed(1) : 'New',
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 10,

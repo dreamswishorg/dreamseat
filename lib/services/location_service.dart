@@ -14,13 +14,9 @@ class LocationService {
   }
 
   Future<LocationStatusResult> getPositionWithStatus() async {
-    // 1. Check if device-wide location service (GPS) is switched off
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return LocationStatusResult(status: 'gps_disabled');
-    }
-
-    // 2. Check current app location permission
+    // 1. Resolve the app's location permission FIRST. iOS only registers the
+    //    app under Settings > Privacy > Location Services once the native
+    //    permission prompt has actually been shown to the user.
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       // Trigger native phone system prompt (iOS CoreLocation / Android)
@@ -32,6 +28,12 @@ class LocationService {
 
     if (permission == LocationPermission.deniedForever) {
       return LocationStatusResult(status: 'permission_denied_forever');
+    }
+
+    // 2. Check if device-wide location service (GPS) is switched off
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return LocationStatusResult(status: 'gps_disabled');
     }
 
     try {

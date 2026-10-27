@@ -145,7 +145,7 @@ class _BusinessDealsSheet extends ConsumerWidget {
                     const Icon(Icons.star_rounded, size: 14, color: AppTheme.warningOrange),
                     const SizedBox(width: 3),
                     Text(
-                      business.rating.toStringAsFixed(1),
+                      business.rating > 0 ? business.rating.toStringAsFixed(1) : 'New',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -512,7 +512,7 @@ class FavoritesScreen extends ConsumerWidget {
                       const Icon(Icons.star_rounded, size: 12, color: AppTheme.warningOrange),
                       const SizedBox(width: 2),
                       Text(
-                        biz.rating.toStringAsFixed(1),
+                        biz.rating > 0 ? biz.rating.toStringAsFixed(1) : 'New',
                         style: const TextStyle(
                           fontSize: 10.5,
                           fontWeight: FontWeight.bold,

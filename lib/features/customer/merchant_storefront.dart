@@ -367,7 +367,7 @@ class _MerchantStorefrontScreenState extends ConsumerState<MerchantStorefrontScr
               const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 16),
               const SizedBox(width: 4),
               Text(
-                '${business.rating > 0 ? business.rating.toStringAsFixed(1) : "5.0"} (236)',
+                business.rating > 0 ? business.rating.toStringAsFixed(1) : "New",
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.charcoal),
               ),
               const SizedBox(width: 8),

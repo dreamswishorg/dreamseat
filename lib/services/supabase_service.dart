@@ -1608,26 +1608,30 @@ class SupabaseService {
         debugPrint('admin_toggle_user_suspension RPC not available, falling back to direct update: $rpcErr');
       }
 
-      // 2. Direct table update fallback
-      try {
-        final res = await _db
-            .from('profiles')
-            .update({'is_suspended': suspend})
-            .eq('id', userId)
-            .select('id, is_suspended');
-        debugPrint('toggleUserSuspension update response: $res');
-        if ((res as List).isNotEmpty) return;
-      } catch (e) {
-        debugPrint('Direct update with select failed: $e, trying simple update');
-      }
-
+      // 2. Direct table update fallback. RLS can silently reject this write
+      //    (0 rows affected, no error), so re-read and verify it landed.
       await _db
           .from('profiles')
           .update({'is_suspended': suspend})
           .eq('id', userId);
+
+      final check = await _db
+          .from('profiles')
+          .select('is_suspended')
+          .eq('id', userId)
+          .maybeSingle();
+      final val = check?['is_suspended'];
+      final persisted = val == true || val == 'true' || val == 1;
+      if (persisted != suspend) {
+        throw Exception(
+          'The database rejected the suspension change (row not updated). '
+          'Run supabase/fix_suspension_ratings_payout.sql once in the Supabase SQL editor, then retry.',
+        );
+      }
     } on PostgrestException catch (e) {
       throw Exception('Failed to toggle user suspension: ${e.message}');
     } catch (e) {
+      if (e is Exception && e.toString().contains('rejected the suspension')) rethrow;
       throw Exception('Failed to toggle user suspension: $e');
     }
   }
