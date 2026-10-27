@@ -357,20 +357,23 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                         children: [
                           const Text('Mobile Money & Bank Settlement details:', style: TextStyle(color: MerchantTheme.textMuted, fontSize: 13)),
                           const SizedBox(height: 12),
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(color: Colors.amber.shade100, shape: BoxShape.circle),
-                              child: const Icon(Icons.phone_android_rounded, color: Colors.brown, size: 20),
+                          Material(
+                            color: Colors.transparent,
+                            child: ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(color: Colors.amber.shade100, shape: BoxShape.circle),
+                                child: const Icon(Icons.phone_android_rounded, color: Colors.brown, size: 20),
+                              ),
+                              title: Text(
+                                widget.business.hasPayoutAccount ? widget.business.payoutAccountNumber : 'No payout account set',
+                                style: const TextStyle(fontWeight: FontWeight.bold, color: MerchantTheme.textDark),
+                              ),
+                              subtitle: Text(widget.business.hasPayoutAccount
+                                  ? '${widget.business.payoutProvider} · ${widget.business.payoutAccountName}'
+                                  : 'Add one under Shop Profile → Payout Account'),
                             ),
-                            title: Text(
-                              widget.business.hasPayoutAccount ? widget.business.payoutAccountNumber : 'No payout account set',
-                              style: const TextStyle(fontWeight: FontWeight.bold, color: MerchantTheme.textDark),
-                            ),
-                            subtitle: Text(widget.business.hasPayoutAccount
-                                ? '${widget.business.payoutProvider} · ${widget.business.payoutAccountName}'
-                                : 'Add one under Shop Profile → Payout Account'),
                           ),
                         ],
                       ),

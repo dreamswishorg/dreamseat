@@ -373,15 +373,44 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     await BiometricService.setPromptedEnrollment(true);
 
     if (shouldEnroll == true) {
+      // Release keyboard focus and wait for modal route dismissal animation to finish
+      // to prevent iOS LocalAuthentication presentation collision / system cancel
+      FocusScope.of(context).unfocus();
+      await Future.delayed(const Duration(milliseconds: 350));
+
       final authResult = await BiometricService.authenticateWithDetails(
         reason: 'Scan your $_biometricLabel to enable instant sign-in',
+        biometricOnly: false,
       );
+
       if (authResult.isSuccess) {
         await BiometricService.saveCredentials(email, password);
         await BiometricService.setBiometricEnabled(true);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✅ $_biometricLabel enabled successfully!'),
+              backgroundColor: AppTheme.primaryGreen,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      } else {
+        // Did not succeed - keep biometric disabled
+        if (mounted && !authResult.isCancelled) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(authResult.message ?? '$_biometricLabel verification was not completed.'),
+              backgroundColor: const Color(0xFFF59E0B),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       }
-      // If user declined or cancelled, biometric stays disabled.
-      // Normal login proceeds smoothly into the app!
     }
 
     _proceedToApp(user);

@@ -71,6 +71,8 @@ class BiometricService {
     }
   }
 
+  static final ValueNotifier<bool> enabledNotifier = ValueNotifier<bool>(false);
+
   /// Returns friendly device-specific label ("Face ID", "Touch ID", "Fingerprint", or "Biometrics")
   static Future<String> getBiometricLabel() async {
     try {
@@ -82,9 +84,9 @@ class BiometricService {
       } else if (biometrics.contains(BiometricType.iris)) {
         return "Iris Scan";
       }
-      return defaultTargetPlatform == TargetPlatform.iOS ? "Face ID / Touch ID" : "Fingerprint";
+      return defaultTargetPlatform == TargetPlatform.iOS ? "Face ID" : "Fingerprint";
     } catch (_) {
-      return "Biometric Sign-In";
+      return defaultTargetPlatform == TargetPlatform.iOS ? "Face ID" : "Biometric Sign-In";
     }
   }
 
@@ -97,7 +99,11 @@ class BiometricService {
   static Future<bool> isBiometricEnabled() async {
     try {
       final value = await _secureStorage.read(key: _keyBiometricEnabled);
-      return value == 'true';
+      final isEnabled = value == 'true';
+      if (enabledNotifier.value != isEnabled) {
+        enabledNotifier.value = isEnabled;
+      }
+      return isEnabled;
     } catch (_) {
       return false;
     }
@@ -109,6 +115,7 @@ class BiometricService {
       key: _keyBiometricEnabled,
       value: enabled ? 'true' : 'false',
     );
+    enabledNotifier.value = enabled;
     if (!enabled) {
       await clearSavedCredentials();
     }
@@ -147,11 +154,11 @@ class BiometricService {
   }
 
   /// Prompt the user to authenticate using native device biometrics with detailed outcome classification.
-  /// [biometricOnly] is strictly true by default so that declining or failing
-  /// Face ID/Touch ID never falls back to the device PIN/passcode.
+  /// [biometricOnly] defaults to false to allow native iOS/Android passcode fallback
+  /// via LAPolicyDeviceOwnerAuthentication / system credential manager.
   static Future<BiometricResult> authenticateWithDetails({
     String? reason,
-    bool biometricOnly = true,
+    bool biometricOnly = false,
   }) async {
     try {
       final available = await isBiometricAvailable();
@@ -164,9 +171,9 @@ class BiometricService {
 
       final label = await getBiometricLabel();
       final didAuthenticate = await _auth.authenticate(
-        localizedReason: reason ?? 'Please scan your $label to sign in securely',
+        localizedReason: reason ?? 'Please scan your $label or enter passcode to sign in securely',
         biometricOnly: biometricOnly,
-        persistAcrossBackgrounding: false,
+        persistAcrossBackgrounding: true,
       );
 
       if (didAuthenticate) {
@@ -229,7 +236,7 @@ class BiometricService {
   }
 
   /// Convenience wrapper returning boolean
-  static Future<bool> authenticate({String? reason, bool biometricOnly = true}) async {
+  static Future<bool> authenticate({String? reason, bool biometricOnly = false}) async {
     final res = await authenticateWithDetails(reason: reason, biometricOnly: biometricOnly);
     return res.isSuccess;
   }

@@ -727,7 +727,6 @@ class AppStateManager extends Notifier<AppState> {
     if (_ordersSub != null) Supabase.instance.client.removeChannel(_ordersSub!);
     if (_notificationsSub != null) Supabase.instance.client.removeChannel(_notificationsSub!);
     await CacheManager().clearAll();
-    await BiometricService.clearSavedCredentials();
     state = errorMessage != null
         ? AppState.empty().copyWith(errorMessage: errorMessage)
         : AppState.empty();
@@ -2131,6 +2130,10 @@ class AppStateManager extends Notifier<AppState> {
   Future<bool> deleteAccount() async {
     state = state.copyWith(isLoading: true);
     final success = await _supa.deleteUserAccount();
+    if (success) {
+      await BiometricService.setBiometricEnabled(false);
+      await BiometricService.clearSavedCredentials();
+    }
     state = state.copyWith(isLoading: false);
     return success;
   }

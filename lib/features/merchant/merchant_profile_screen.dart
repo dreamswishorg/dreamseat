@@ -366,17 +366,20 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
                       const LinearProgressIndicator(minHeight: 3, color: MK.brand, backgroundColor: MK.line),
                     ],
                     ..._predictions.take(4).map(
-                          (p) => ListTile(
-                            dense: true,
-                            contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.pin_drop_outlined, size: 18, color: MK.brand),
-                            title: Text(p.displayName, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11.5)),
-                            onTap: () => setState(() {
-                              _location.text = p.displayName;
-                              _lat = p.latitude;
-                              _lng = p.longitude;
-                              _predictions = [];
-                            }),
+                          (p) => Material(
+                            color: Colors.transparent,
+                            child: ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              leading: const Icon(Icons.pin_drop_outlined, size: 18, color: MK.brand),
+                              title: Text(p.displayName, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11.5)),
+                              onTap: () => setState(() {
+                                _location.text = p.displayName;
+                                _lat = p.latitude;
+                                _lng = p.longitude;
+                                _predictions = [];
+                              }),
+                            ),
                           ),
                         ),
                     if (_lat != null && _lng != null) ...[
