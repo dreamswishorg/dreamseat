@@ -11,6 +11,7 @@ import '../../services/location_service.dart';
 import '../../services/supabase_service.dart';
 import '../common/help_support_screen.dart';
 import '../../core/ui_utils.dart';
+import '../../widgets/biometric_switch_tile.dart';
 import 'merchant_kit.dart';
 
 /// Shop profile tab: identity, contact, location and compliance documents.
@@ -495,6 +496,14 @@ class _MerchantProfileScreenState extends ConsumerState<MerchantProfileScreen> {
                   ),
                 ],
               ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          MReveal(
+            delay: 150,
+            child: MCard(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              child: const BiometricSwitchTile(),
             ),
           ),
           const SizedBox(height: 18),

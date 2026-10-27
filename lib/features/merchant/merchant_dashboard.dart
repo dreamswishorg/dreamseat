@@ -496,15 +496,6 @@ class _TopBar extends ConsumerWidget {
                         showModernLogoutConfirmDialog(context, () => ref.read(appStateProvider.notifier).signOut());
                       },
                     ),
-                    _MenuTile(
-                      icon: Icons.delete_forever_rounded,
-                      label: 'Delete account',
-                      color: MK.danger,
-                      onTap: () {
-                        menuCtrl.close();
-                        showModernDeleteAccountConfirmDialog(context, ref);
-                      },
-                    ),
                     const SizedBox(height: 6),
                   ],
                 ),
