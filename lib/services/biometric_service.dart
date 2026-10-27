@@ -102,14 +102,16 @@ class BiometricService {
     return null;
   }
 
-  /// Prompt the user to authenticate using native device biometrics
-  static Future<bool> authenticate({String? reason}) async {
+  /// Prompt the user to authenticate using native device biometrics.
+  /// [biometricOnly] is strictly true by default so that declining or failing
+  /// Face ID/Touch ID never falls back to the device PIN/passcode.
+  static Future<bool> authenticate({String? reason, bool biometricOnly = true}) async {
     try {
       final label = await getBiometricLabel();
       final didAuthenticate = await _auth.authenticate(
         localizedReason: reason ?? 'Please scan your $label to sign in securely',
-        biometricOnly: false,
-        persistAcrossBackgrounding: true,
+        biometricOnly: biometricOnly,
+        persistAcrossBackgrounding: false,
       );
       return didAuthenticate;
     } catch (e) {

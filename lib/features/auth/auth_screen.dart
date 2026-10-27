@@ -115,14 +115,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       });
     }
 
-    if (enabled && available) {
-      final creds = await BiometricService.getSavedCredentials();
-      if (creds != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _performBiometricLogin();
-        });
-      }
-    }
+    // Deliberate user action: Do not silently auto-fire biometric on screen load.
+    // The user can explicitly tap the Face ID / Fingerprint button to sign in.
   }
 
   Future<void> _performBiometricLogin() async {
@@ -141,7 +135,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     final authenticated = await BiometricService.authenticate(
       reason: 'Scan your $_biometricLabel to sign in to DreamEats',
     );
-    if (!authenticated) return;
+    if (!authenticated) {
+      if (creds['email'] != null && _emailController.text.isEmpty) {
+        _emailController.text = creds['email']!;
+      }
+      return;
+    }
 
     setState(() => _isLoading = true);
     final error = await ref.read(appStateProvider.notifier).signIn(
