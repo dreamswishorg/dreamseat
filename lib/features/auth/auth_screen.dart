@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme.dart';
+import '../../models/models.dart';
 import '../../providers/app_state.dart';
 import '../customer/customer_navigation.dart';
 import '../merchant/merchant_dashboard.dart';
@@ -56,6 +57,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   bool _isBiometricsAvailable = false;
   bool _isBiometricsEnabled = false;
   String _biometricLabel = "Biometrics";
+  bool _isPasswordLoginInProgress = false;
+  bool _isBiometricLoginInProgress = false;
 
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -120,64 +123,77 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   }
 
   Future<void> _performBiometricLogin() async {
-    final hasBiometrics = await BiometricService.isBiometricAvailable();
-    if (!hasBiometrics) {
-      _showSnackBar("Biometric authentication is not supported or set up on this device.", isError: true);
-      return;
-    }
+    if (_isPasswordLoginInProgress || _isBiometricLoginInProgress || _isLoading) return;
+    _isBiometricLoginInProgress = true;
 
-    final creds = await BiometricService.getSavedCredentials();
-    if (creds == null) {
-      _showSnackBar("Please sign in with your email & password once to link $_biometricLabel.", isError: true);
-      return;
-    }
-
-    final authenticated = await BiometricService.authenticate(
-      reason: 'Scan your $_biometricLabel to sign in to DreamEats',
-    );
-    if (!authenticated) {
-      if (creds['email'] != null && _emailController.text.isEmpty) {
-        _emailController.text = creds['email']!;
+    try {
+      final hasBiometrics = await BiometricService.isBiometricAvailable();
+      if (!hasBiometrics) {
+        _showSnackBar("Biometric authentication is not supported or set up on this device.", isError: true);
+        return;
       }
-      return;
-    }
 
-    setState(() => _isLoading = true);
-    final error = await ref.read(appStateProvider.notifier).signIn(
-          identifier: creds['email']!,
-          password: creds['password']!,
-        );
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    if (error != null) {
-      if (error.toLowerCase().contains('suspended')) {
-        _showSuspendedDialog(error.replaceAll('AuthException: ', '').trim());
-      } else {
-        _showSnackBar("Auto-login failed: ${error.replaceAll('AuthException: ', '').trim()}", isError: true);
+      final isEnabled = await BiometricService.isBiometricEnabled();
+      if (!isEnabled) {
+        _showSnackBar("$_biometricLabel is not enabled. Please sign in with your password to set it up.", isError: false);
+        return;
       }
-      return;
+
+      final creds = await BiometricService.getSavedCredentials();
+      if (creds == null) {
+        _showSnackBar("Please sign in with your email & password once to link $_biometricLabel.", isError: false);
+        return;
+      }
+
+      final result = await BiometricService.authenticateWithDetails(
+        reason: 'Scan your $_biometricLabel to sign in to DreamEats',
+      );
+
+      // Handle outcomes distinctly
+      if (result.isCancelled) {
+        // User cancelled Face ID prompt - silently return to form, NO error message
+        if (creds['email'] != null && _emailController.text.isEmpty) {
+          _emailController.text = creds['email']!;
+        }
+        return;
+      }
+
+      if (!result.isSuccess) {
+        if (result.isLockedOut) {
+          _showSnackBar("Biometrics locked out due to multiple failed attempts. Please enter your password.", isError: true);
+        } else if (result.isNotAvailable) {
+          _showSnackBar("Biometrics unavailable. Please enter your password.", isError: true);
+        } else {
+          _showSnackBar("$_biometricLabel not recognized. Please try again or use your password.", isError: true);
+        }
+        return;
+      }
+
+      setState(() => _isLoading = true);
+      final error = await ref.read(appStateProvider.notifier).signIn(
+            identifier: creds['email']!,
+            password: creds['password']!,
+          );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (error != null) {
+        if (error.toLowerCase().contains('suspended')) {
+          _showSuspendedDialog(error.replaceAll('AuthException: ', '').trim());
+        } else {
+          _showSnackBar("Sign-in failed: ${error.replaceAll('AuthException: ', '').trim()}", isError: true);
+        }
+        return;
+      }
+
+      final user = ref.read(appStateProvider).currentUser;
+      if (!mounted || user == null) return;
+
+      _proceedToApp(user);
+    } finally {
+      _isBiometricLoginInProgress = false;
     }
-
-    final user = ref.read(appStateProvider).currentUser;
-    if (!mounted || user == null) return;
-
-    final Widget destination;
-    if (user.role == 'merchant') {
-      destination = const MerchantDashboardScreen();
-    } else if (user.role == 'admin' || user.role == 'super_admin') {
-      destination = const AdminDashboardScreen();
-    } else if (user.role == 'rider') {
-      destination = const RiderDashboardScreen();
-    } else {
-      destination = const CustomerNavigation();
-    }
-
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => destination),
-      (route) => false,
-    );
   }
 
   void _showSuspendedDialog(String message) {
@@ -218,7 +234,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   // ─── Sign-in ───────────────────────────────────────────────────────────────
 
   void _signIn() async {
+    if (_isPasswordLoginInProgress || _isBiometricLoginInProgress || _isLoading) return;
     if (!_signInKey.currentState!.validate()) return;
+    _isPasswordLoginInProgress = true;
     setState(() => _isLoading = true);
 
     final error = await ref.read(appStateProvider.notifier).signIn(
@@ -230,6 +248,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     setState(() => _isLoading = false);
 
     if (error != null) {
+      _isPasswordLoginInProgress = false;
       if (error.toLowerCase().contains('suspended')) {
         _showSuspendedDialog(error.replaceAll('AuthException: ', '').trim());
       } else {
@@ -238,14 +257,136 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       return;
     }
 
-    // Save credentials to secure storage for seamless biometric sign-in
-    await BiometricService.saveCredentials(_emailController.text.trim(), _passwordController.text);
-    if (_isBiometricsAvailable) {
-      await BiometricService.setBiometricEnabled(true);
-    }
+    // Clear any lingering snackbars/messages from prior actions
+    ScaffoldMessenger.of(context).clearSnackBars();
 
     final user = ref.read(appStateProvider).currentUser;
-    if (!mounted || user == null) return;
+    if (!mounted || user == null) {
+      _isPasswordLoginInProgress = false;
+      return;
+    }
+
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    // Check if biometric is available and whether it is already enrolled
+    final isBioAvailable = await BiometricService.isBiometricAvailable();
+    final isBioEnabled = await BiometricService.isBiometricEnabled();
+
+    if (isBioAvailable && isBioEnabled) {
+      // User has already enrolled: keep stored credentials synchronized
+      await BiometricService.saveCredentials(email, password);
+      _proceedToApp(user);
+    } else if (isBioAvailable && !isBioEnabled) {
+      // First-time or un-enrolled: offer optional biometric enrollment
+      await _offerBiometricEnrollment(email: email, password: password, user: user);
+    } else {
+      _proceedToApp(user);
+    }
+  }
+
+  Future<void> _offerBiometricEnrollment({
+    required String email,
+    required String password,
+    required AppUser user,
+  }) async {
+    final shouldEnroll = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isDismissible: false,
+      builder: (ctx) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+        final textPrimary = isDark ? Colors.white : AppTheme.charcoal;
+
+        return Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: const BoxDecoration(
+                  color: AppTheme.lightGreenBg,
+                  shape: BoxShape.circle,
+                ),
+                child: DynamicBiometricIcon(
+                  size: 40,
+                  color: AppTheme.primaryGreen,
+                  biometricLabel: _biometricLabel,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                "Enable $_biometricLabel?",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: textPrimary,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "Would you like to use $_biometricLabel for faster, secure sign-in next time?",
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 14, color: AppTheme.mutedGrey, height: 1.4),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryGreen,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: Text("Enable $_biometricLabel", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text(
+                  "Not Now",
+                  style: TextStyle(
+                    color: AppTheme.mutedGrey,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (shouldEnroll == true) {
+      final authResult = await BiometricService.authenticateWithDetails(
+        reason: 'Scan your $_biometricLabel to enable instant sign-in',
+      );
+      if (authResult.isSuccess) {
+        await BiometricService.saveCredentials(email, password);
+        await BiometricService.setBiometricEnabled(true);
+      }
+      // If user declined or cancelled, biometric stays disabled.
+      // Normal login proceeds smoothly into the app!
+    }
+
+    _proceedToApp(user);
+  }
+
+  void _proceedToApp(AppUser user) {
+    if (!mounted) return;
+    _isPasswordLoginInProgress = false;
+    _isBiometricLoginInProgress = false;
 
     final Widget destination;
     if (user.role == 'merchant') {

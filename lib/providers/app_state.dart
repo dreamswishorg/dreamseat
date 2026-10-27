@@ -10,6 +10,7 @@ import '../services/notification_service.dart';
 import '../core/cache_manager.dart';
 import '../core/email_templates.dart';
 import '../core/config.dart';
+import '../services/biometric_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AppState
@@ -726,6 +727,7 @@ class AppStateManager extends Notifier<AppState> {
     if (_ordersSub != null) Supabase.instance.client.removeChannel(_ordersSub!);
     if (_notificationsSub != null) Supabase.instance.client.removeChannel(_notificationsSub!);
     await CacheManager().clearAll();
+    await BiometricService.clearSavedCredentials();
     state = errorMessage != null
         ? AppState.empty().copyWith(errorMessage: errorMessage)
         : AppState.empty();

@@ -1,7 +1,30 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+enum BiometricStatus {
+  success,
+  userCancelled,
+  notRecognized,
+  lockedOut,
+  notAvailable,
+  error,
+}
+
+class BiometricResult {
+  final BiometricStatus status;
+  final String? message;
+
+  const BiometricResult({required this.status, this.message});
+
+  bool get isSuccess => status == BiometricStatus.success;
+  bool get isCancelled => status == BiometricStatus.userCancelled;
+  bool get isNotRecognized => status == BiometricStatus.notRecognized;
+  bool get isLockedOut => status == BiometricStatus.lockedOut;
+  bool get isNotAvailable => status == BiometricStatus.notAvailable;
+}
 
 class BiometricService {
   static final _auth = LocalAuthentication();
@@ -102,22 +125,91 @@ class BiometricService {
     return null;
   }
 
-  /// Prompt the user to authenticate using native device biometrics.
+  /// Prompt the user to authenticate using native device biometrics with detailed outcome classification.
   /// [biometricOnly] is strictly true by default so that declining or failing
   /// Face ID/Touch ID never falls back to the device PIN/passcode.
-  static Future<bool> authenticate({String? reason, bool biometricOnly = true}) async {
+  static Future<BiometricResult> authenticateWithDetails({
+    String? reason,
+    bool biometricOnly = true,
+  }) async {
     try {
+      final available = await isBiometricAvailable();
+      if (!available) {
+        return const BiometricResult(
+          status: BiometricStatus.notAvailable,
+          message: 'Biometric authentication is not supported or enrolled on this device.',
+        );
+      }
+
       final label = await getBiometricLabel();
       final didAuthenticate = await _auth.authenticate(
         localizedReason: reason ?? 'Please scan your $label to sign in securely',
         biometricOnly: biometricOnly,
         persistAcrossBackgrounding: false,
       );
-      return didAuthenticate;
+
+      if (didAuthenticate) {
+        return const BiometricResult(status: BiometricStatus.success);
+      } else {
+        return const BiometricResult(
+          status: BiometricStatus.userCancelled,
+          message: 'Authentication was cancelled.',
+        );
+      }
+    } on LocalAuthException catch (e) {
+      debugPrint("LocalAuthException: ${e.code} - ${e.description}");
+      switch (e.code) {
+        case LocalAuthExceptionCode.userCanceled:
+        case LocalAuthExceptionCode.systemCanceled:
+          return const BiometricResult(status: BiometricStatus.userCancelled);
+        case LocalAuthExceptionCode.temporaryLockout:
+        case LocalAuthExceptionCode.biometricLockout:
+          return const BiometricResult(
+            status: BiometricStatus.lockedOut,
+            message: 'Biometrics temporarily locked out due to multiple attempts.',
+          );
+        case LocalAuthExceptionCode.noBiometricsEnrolled:
+        case LocalAuthExceptionCode.noBiometricHardware:
+        case LocalAuthExceptionCode.biometricHardwareTemporarilyUnavailable:
+          return const BiometricResult(
+            status: BiometricStatus.notAvailable,
+            message: 'Biometrics unavailable on this device.',
+          );
+        default:
+          return BiometricResult(status: BiometricStatus.error, message: e.description);
+      }
+    } on PlatformException catch (e) {
+      debugPrint("PlatformException in biometric auth: ${e.code} - ${e.message}");
+      final codeLower = e.code.toLowerCase();
+      if (codeLower.contains('cancel') || codeLower.contains('usercancel')) {
+        return const BiometricResult(status: BiometricStatus.userCancelled);
+      }
+      if (codeLower.contains('locked') || codeLower.contains('lockout')) {
+        return const BiometricResult(
+          status: BiometricStatus.lockedOut,
+          message: 'Biometrics temporarily locked out.',
+        );
+      }
+      if (codeLower.contains('notavailable') || codeLower.contains('notenrolled')) {
+        return const BiometricResult(
+          status: BiometricStatus.notAvailable,
+          message: 'Biometrics unavailable on this device.',
+        );
+      }
+      return BiometricResult(status: BiometricStatus.error, message: e.message);
     } catch (e) {
-      debugPrint("Biometric authentication error: $e");
-      return false;
+      debugPrint("Unexpected biometric auth error: $e");
+      final str = e.toString().toLowerCase();
+      if (str.contains('cancel')) {
+        return const BiometricResult(status: BiometricStatus.userCancelled);
+      }
+      return BiometricResult(status: BiometricStatus.error, message: e.toString());
     }
   }
-}
 
+  /// Convenience wrapper returning boolean
+  static Future<bool> authenticate({String? reason, bool biometricOnly = true}) async {
+    final res = await authenticateWithDetails(reason: reason, biometricOnly: biometricOnly);
+    return res.isSuccess;
+  }
+}

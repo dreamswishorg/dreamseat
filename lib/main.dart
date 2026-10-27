@@ -20,6 +20,8 @@ import 'features/customer/customer_navigation.dart';
 import 'features/merchant/merchant_dashboard.dart';
 import 'features/admin/admin_dashboard.dart';
 import 'features/rider/rider_dashboard.dart';
+import 'services/biometric_service.dart';
+import 'features/auth/app_lock_screen.dart';
 
 import 'providers/app_state.dart';
 
@@ -107,12 +109,15 @@ class DreamEatsApp extends ConsumerStatefulWidget {
   ConsumerState<DreamEatsApp> createState() => _DreamEatsAppState();
 }
 
-class _DreamEatsAppState extends ConsumerState<DreamEatsApp> {
+class _DreamEatsAppState extends ConsumerState<DreamEatsApp> with WidgetsBindingObserver {
   StreamSubscription<AuthState>? _authSub;
+  DateTime? _lastBackgrounded;
+  bool _isLockScreenActive = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     try {
       _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
         if (data.event == AuthChangeEvent.passwordRecovery) {
@@ -148,6 +153,8 @@ class _DreamEatsAppState extends ConsumerState<DreamEatsApp> {
             (route) => false,
           );
         } else if (data.event == AuthChangeEvent.signedOut) {
+          _isLockScreenActive = false;
+          _lastBackgrounded = null;
           if (navigatorKey.currentState != null) {
             final errorMsg = ref.read(appStateProvider).errorMessage;
             navigatorKey.currentState?.pushAndRemoveUntil(
@@ -164,8 +171,46 @@ class _DreamEatsAppState extends ConsumerState<DreamEatsApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _authSub?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _lastBackgrounded = DateTime.now();
+    } else if (state == AppLifecycleState.resumed) {
+      if (_lastBackgrounded == null) return;
+      final elapsed = DateTime.now().difference(_lastBackgrounded!);
+      _lastBackgrounded = null;
+
+      // Lock only if backgrounded for more than 30 seconds
+      if (elapsed.inSeconds >= 30) {
+        final session = Supabase.instance.client.auth.currentSession;
+        final currentUser = ref.read(appStateProvider).currentUser;
+
+        // If no active server session or user logged out, never prompt quick unlock
+        if (session == null || currentUser == null) return;
+
+        final isBioEnabled = await BiometricService.isBiometricEnabled();
+        if (!isBioEnabled) return;
+
+        if (!_isLockScreenActive && navigatorKey.currentState != null) {
+          _isLockScreenActive = true;
+          navigatorKey.currentState?.push(
+            MaterialPageRoute(
+              builder: (_) => AppLockScreen(
+                onUnlocked: () {
+                  _isLockScreenActive = false;
+                  navigatorKey.currentState?.pop();
+                },
+              ),
+            ),
+          );
+        }
+      }
+    }
   }
 
   @override

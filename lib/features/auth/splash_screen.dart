@@ -12,6 +12,8 @@ import 'welcome_screen.dart';
 import '../customer/customer_navigation.dart';
 import '../merchant/merchant_dashboard.dart';
 import '../admin/admin_dashboard.dart';
+import '../../services/biometric_service.dart';
+import 'app_lock_screen.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -187,6 +189,34 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
       targetScreen = const MerchantDashboardScreen();
     } else {
       targetScreen = const CustomerNavigation();
+    }
+
+    if (!mounted) return;
+
+    final isBioEnabled = await BiometricService.isBiometricEnabled();
+    if (isBioEnabled) {
+      final label = await BiometricService.getBiometricLabel();
+      final authOk = await BiometricService.authenticate(
+        reason: 'Scan your $label to unlock DreamEats',
+      );
+      if (!mounted) return;
+      if (!authOk) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AppLockScreen(
+              onUnlocked: () {
+                if (!mounted) return;
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => targetScreen),
+                );
+              },
+            ),
+          ),
+        );
+        return;
+      }
     }
 
     if (mounted) {
