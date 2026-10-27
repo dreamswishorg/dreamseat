@@ -385,7 +385,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
 
       final authResult = await BiometricService.authenticateWithDetails(
         reason: 'Scan your $_biometricLabel to enable instant sign-in',
-        biometricOnly: true,
       );
 
       if (authResult.isSuccess) {

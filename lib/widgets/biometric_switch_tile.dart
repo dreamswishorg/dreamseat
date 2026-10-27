@@ -27,13 +27,6 @@ class _BiometricSwitchTileState extends ConsumerState<BiometricSwitchTile> {
     final bioState = ref.read(biometricStateProvider);
     final label = bioState.label;
 
-    if (!bioState.isSupported && bioState.isInitialized) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Biometrics not supported or enrolled on this device.")),
-      );
-      return;
-    }
-
     if (!value) {
       await ref.read(biometricStateProvider.notifier).setEnabled(false);
       if (!mounted) return;
@@ -43,29 +36,43 @@ class _BiometricSwitchTileState extends ConsumerState<BiometricSwitchTile> {
       return;
     }
 
+    if (!bioState.isSupported && bioState.isInitialized) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Set up Face ID or a fingerprint in your device Settings first.")),
+      );
+      return;
+    }
+
     final user = ref.read(appStateProvider).currentUser;
     if (user == null) return;
+
+    // Like mainstream apps: toggling on immediately shows the native biometric scan.
+    final authResult = await BiometricService.authenticateWithDetails(
+      reason: "Confirm it's you — scan your $label to enable instant sign-in",
+    );
+    if (!mounted) return;
+    if (!authResult.isSuccess) {
+      if (!authResult.isCancelled) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(authResult.message ?? "$label scan failed. Please try again.")),
+        );
+      }
+      return;
+    }
 
     final existingCreds = await BiometricService.getSavedCredentials();
     if (existingCreds != null &&
         existingCreds['email'] == user.email &&
         existingCreds['password'] != null &&
         existingCreds['password']!.isNotEmpty) {
-      final authenticated = await BiometricService.authenticate(
-        reason: "Scan your $label to enable instant sign-in",
-        biometricOnly: true,
-      );
+      await ref.read(biometricStateProvider.notifier).setEnabled(true);
       if (!mounted) return;
-      if (authenticated) {
-        await ref.read(biometricStateProvider.notifier).setEnabled(true);
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("✅ $label enabled successfully!"),
-            backgroundColor: AppTheme.primaryGreen,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("✅ $label enabled successfully!"),
+          backgroundColor: AppTheme.primaryGreen,
+        ),
+      );
     } else {
       await _promptPasswordAndEnable(user, label);
     }
@@ -201,24 +208,8 @@ class _BiometricSwitchTileState extends ConsumerState<BiometricSwitchTile> {
                                 return;
                               }
 
-                              // Dismiss keyboard to release UI focus before native iOS/Android biometric prompt
-                              if (!context.mounted) return;
-                              FocusScope.of(context).unfocus();
-                              await Future.delayed(const Duration(milliseconds: 350));
-
-                              final authResult = await BiometricService.authenticateWithDetails(
-                                reason: "Scan your $label to link this device",
-                                biometricOnly: true,
-                              );
-
-                              if (!authResult.isSuccess) {
-                                setModalState(() {
-                                  isVerifying = false;
-                                  errorText = authResult.message ?? "$label scan cancelled or failed.";
-                                });
-                                return;
-                              }
-
+                              // Biometric scan already succeeded before this sheet opened;
+                              // just store and link the credentials now.
                               await BiometricService.saveCredentials(user.email, pwd);
                               await ref.read(biometricStateProvider.notifier).setEnabled(true);
                               await BiometricService.setPromptedEnrollment(true);

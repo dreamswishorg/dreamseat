@@ -59,15 +59,20 @@ class BiometricService {
     } catch (_) {}
   }
 
-  /// Check if the device is capable of biometric authentication (iOS & Android)
+  /// Check if the device has biometrics actually enrolled and usable (iOS & Android).
+  /// `canCheckBiometrics` only reports hardware presence (still true with nothing
+  /// enrolled on Android), so the enrolled-biometrics list is the source of truth.
   static Future<bool> isBiometricAvailable() async {
     try {
-      final canCheck = await _auth.canCheckBiometrics;
       final availableBiometrics = await _auth.getAvailableBiometrics();
-      return canCheck || availableBiometrics.isNotEmpty;
+      return availableBiometrics.isNotEmpty;
     } catch (e) {
       debugPrint("Biometric availability error: $e");
-      return false;
+      try {
+        return await _auth.canCheckBiometrics;
+      } catch (_) {
+        return false;
+      }
     }
   }
 
@@ -153,148 +158,87 @@ class BiometricService {
     return null;
   }
 
-  /// Prompt the user to authenticate using native device biometrics with detailed outcome classification.
-  /// Runs Face ID / Touch ID first (with up to 3 biometric trials). Only if 3 trials fail or biometrics
-  /// are locked out does it fall back to native device passcode if allowed.
+  /// Shows the native biometric sheet (Face ID / Touch ID / fingerprint) exactly once.
+  /// The OS sheet itself allows several scan attempts before dismissing.
+  /// There is deliberately NO automatic fallback to the device passcode/PIN:
+  /// on failure or cancel the caller shows the app's own password form,
+  /// matching how mainstream apps handle biometric sign-in.
   static Future<BiometricResult> authenticateWithDetails({
     String? reason,
-    bool biometricOnly = false,
-    int maxBiometricTrials = 3,
   }) async {
     try {
       final available = await isBiometricAvailable();
       if (!available) {
         return const BiometricResult(
           status: BiometricStatus.notAvailable,
-          message: 'Biometric authentication is not supported or enrolled on this device.',
+          message: 'No biometrics are set up on this device. Add Face ID or a fingerprint in your device Settings first.',
         );
       }
 
       final label = await getBiometricLabel();
-      final authReason = reason ?? 'Please scan your $label to sign in securely';
+      final authReason = reason ?? 'Please scan your $label to continue';
 
       // Setting localizedFallbackTitle to '' hides the "Enter Passcode" fallback button
-      // from the native iOS Face ID HUD, ensuring Face ID camera scan runs directly.
+      // from the native iOS HUD, ensuring only the biometric scan runs.
       const iosAuthMessages = IOSAuthMessages(
         cancelButton: 'Cancel',
         localizedFallbackTitle: '',
       );
 
-      bool bioSuccess = false;
-      bool isLockedOut = false;
-      int trial = 0;
+      final didAuth = await _auth.authenticate(
+        localizedReason: authReason,
+        authMessages: const [iosAuthMessages],
+        biometricOnly: true,
+        persistAcrossBackgrounding: true,
+      );
 
-      // 1. Primary biometric scan(s) (Face ID / Touch ID) up to maxBiometricTrials (3)
-      while (trial < maxBiometricTrials) {
-        trial++;
-        try {
-          final didBioAuth = await _auth.authenticate(
-            localizedReason: authReason,
-            authMessages: const [iosAuthMessages],
-            biometricOnly: true,
-            persistAcrossBackgrounding: true,
-          );
-
-          if (didBioAuth) {
-            bioSuccess = true;
-            break;
-          }
-          // If false without exception, biometrics did not recognize user on this trial.
-        } on LocalAuthException catch (e) {
-          debugPrint("Biometric trial $trial: ${e.code} - ${e.description}");
-          if (e.code == LocalAuthExceptionCode.userCanceled ||
-              e.code == LocalAuthExceptionCode.systemCanceled) {
-            // User explicitly tapped Cancel - return immediately, do not prompt for passcode
-            return const BiometricResult(status: BiometricStatus.userCancelled);
-          }
-          if (e.code == LocalAuthExceptionCode.biometricLockout ||
-              e.code == LocalAuthExceptionCode.temporaryLockout) {
-            isLockedOut = true;
-            break;
-          }
-          if (e.code == LocalAuthExceptionCode.noBiometricsEnrolled ||
-              e.code == LocalAuthExceptionCode.noBiometricHardware) {
-            return const BiometricResult(
-              status: BiometricStatus.notAvailable,
-              message: 'Face ID is not enrolled or enabled in device settings.',
-            );
-          }
-          break;
-        } on PlatformException catch (e) {
-          final codeLower = e.code.toLowerCase();
-          if (codeLower.contains('usercancel') || codeLower.contains('appcancel')) {
-            return const BiometricResult(status: BiometricStatus.userCancelled);
-          }
-          break;
-        } catch (e) {
-          debugPrint("Biometric trial $trial error: $e");
-          break;
-        }
-      }
-
-      if (bioSuccess) {
+      if (didAuth) {
         return const BiometricResult(status: BiometricStatus.success);
       }
-
-      // 2. Only after 3 failed Face ID trials or biometric lockout, fall back to native device passcode
-      if (!biometricOnly) {
-        try {
-          final didPasscodeAuth = await _auth.authenticate(
-            localizedReason: 'Enter your device passcode to authenticate',
-            biometricOnly: false,
-            persistAcrossBackgrounding: true,
-          );
-
-          if (didPasscodeAuth) {
-            return const BiometricResult(status: BiometricStatus.success);
-          } else {
-            return const BiometricResult(status: BiometricStatus.userCancelled);
-          }
-        } on LocalAuthException catch (e) {
-          debugPrint("Passcode fallback attempt: ${e.code} - ${e.description}");
-          switch (e.code) {
-            case LocalAuthExceptionCode.userCanceled:
-            case LocalAuthExceptionCode.systemCanceled:
-              return const BiometricResult(status: BiometricStatus.userCancelled);
-            case LocalAuthExceptionCode.temporaryLockout:
-            case LocalAuthExceptionCode.biometricLockout:
-              return const BiometricResult(
-                status: BiometricStatus.lockedOut,
-                message: 'Device authentication locked out due to multiple attempts.',
-              );
-            case LocalAuthExceptionCode.noBiometricsEnrolled:
-            case LocalAuthExceptionCode.noBiometricHardware:
-            case LocalAuthExceptionCode.biometricHardwareTemporarilyUnavailable:
-              return const BiometricResult(
-                status: BiometricStatus.notAvailable,
-                message: 'Biometrics unavailable on this device.',
-              );
-            default:
-              return BiometricResult(status: BiometricStatus.error, message: e.description);
-          }
-        } on PlatformException catch (e) {
-          final codeLower = e.code.toLowerCase();
-          if (codeLower.contains('cancel')) {
-            return const BiometricResult(status: BiometricStatus.userCancelled);
-          }
-          return BiometricResult(status: BiometricStatus.error, message: e.message);
-        }
-      }
-
       return BiometricResult(
-        status: isLockedOut ? BiometricStatus.lockedOut : BiometricStatus.notRecognized,
-        message: isLockedOut
-            ? 'Face ID locked out due to multiple attempts.'
-            : 'Face ID not recognized.',
+        status: BiometricStatus.notRecognized,
+        message: "$label didn't recognize you. Please try again.",
       );
+    } on LocalAuthException catch (e) {
+      debugPrint("Biometric auth error: ${e.code} - ${e.description}");
+      switch (e.code) {
+        case LocalAuthExceptionCode.userCanceled:
+        case LocalAuthExceptionCode.systemCanceled:
+        case LocalAuthExceptionCode.userRequestedFallback:
+          return const BiometricResult(status: BiometricStatus.userCancelled);
+        case LocalAuthExceptionCode.temporaryLockout:
+        case LocalAuthExceptionCode.biometricLockout:
+          return const BiometricResult(
+            status: BiometricStatus.lockedOut,
+            message: 'Biometrics temporarily locked after too many attempts. Use your password or try again later.',
+          );
+        case LocalAuthExceptionCode.noBiometricsEnrolled:
+        case LocalAuthExceptionCode.noBiometricHardware:
+        case LocalAuthExceptionCode.biometricHardwareTemporarilyUnavailable:
+          return const BiometricResult(
+            status: BiometricStatus.notAvailable,
+            message: "Biometrics aren't available on this device. Enable Face ID or fingerprint in Settings, then try again.",
+          );
+        default:
+          return BiometricResult(
+            status: BiometricStatus.error,
+            message: e.description ?? 'Biometric authentication failed.',
+          );
+      }
+    } on PlatformException catch (e) {
+      final codeLower = e.code.toLowerCase();
+      if (codeLower.contains('cancel')) {
+        return const BiometricResult(status: BiometricStatus.userCancelled);
+      }
+      return BiometricResult(status: BiometricStatus.error, message: e.message);
     } catch (e) {
       return BiometricResult(status: BiometricStatus.error, message: e.toString());
     }
   }
 
   /// Convenience wrapper returning boolean
-  static Future<bool> authenticate({String? reason, bool biometricOnly = false}) async {
-    final res = await authenticateWithDetails(reason: reason, biometricOnly: biometricOnly);
+  static Future<bool> authenticate({String? reason}) async {
+    final res = await authenticateWithDetails(reason: reason);
     return res.isSuccess;
   }
 }
