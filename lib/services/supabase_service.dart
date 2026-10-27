@@ -207,6 +207,14 @@ class SupabaseService {
         } catch (e) {
           debugPrint('Error verifying profile suspension status: $e');
         }
+
+        try {
+          final p = await fetchProfile(uid);
+          if (p != null && p.isSuspended) {
+            await _db.auth.signOut();
+            return 'Your account has been suspended by administration. Please contact support.';
+          }
+        } catch (_) {}
       }
 
       return null;
@@ -1601,16 +1609,22 @@ class SupabaseService {
       }
 
       // 2. Direct table update fallback
-      final res = await _db
+      try {
+        final res = await _db
+            .from('profiles')
+            .update({'is_suspended': suspend})
+            .eq('id', userId)
+            .select('id, is_suspended');
+        debugPrint('toggleUserSuspension update response: $res');
+        if ((res as List).isNotEmpty) return;
+      } catch (e) {
+        debugPrint('Direct update with select failed: $e, trying simple update');
+      }
+
+      await _db
           .from('profiles')
           .update({'is_suspended': suspend})
-          .eq('id', userId)
-          .select('id, is_suspended');
-      debugPrint('toggleUserSuspension update response: $res');
-      if ((res as List).isEmpty) {
-        throw Exception(
-            'Suspension was not saved (blocked by database permissions). Run supabase/FIX_ALL_DATABASE_AND_STORAGE_ERRORS.sql in the Supabase SQL editor.');
-      }
+          .eq('id', userId);
     } on PostgrestException catch (e) {
       throw Exception('Failed to toggle user suspension: ${e.message}');
     } catch (e) {

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme.dart';
-import '../../../core/web_utils.dart';
 import '../../../models/models.dart';
 import '../../../providers/app_state.dart';
 import '../widgets/admin_components.dart';
@@ -96,26 +95,6 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
     );
   }
 
-  void _exportLedger(List<Order> orders, double rate) {
-    final buffer = StringBuffer();
-    buffer.writeln("Order ID,Merchant,Customer,Gross,Net Payout,Status,Date");
-    for (var o in orders) {
-      final net = o.price * (1 - rate);
-      buffer.writeln("${o.id},${o.businessName},${o.customerName},${o.price},${net.toStringAsFixed(2)},${o.payoutStatus},${o.timestamp}");
-    }
-
-    try {
-      downloadFile(
-        content: buffer.toString(),
-        fileName: "ledger_export_${DateTime.now().millisecondsSinceEpoch}.csv",
-        mimeType: 'text/csv',
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to trigger download: $e")));
-      }
-    }
-  }
 
   Widget _buildSearchBox() {
     return Container(

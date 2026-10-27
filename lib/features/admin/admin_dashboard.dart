@@ -448,16 +448,16 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               const PopupMenuItem(
                 value: 0,
                 child: PopupItem(
-                  icon: Icons.settings_outlined,
-                  label: "Settings",
+                  icon: Icons.person_outline_rounded,
+                  label: "Profile & Account Settings",
                   color: Color(0xFF2563EB),
                 ),
               ),
               const PopupMenuItem(
                 value: 1,
                 child: PopupItem(
-                  icon: Icons.headset_mic_outlined,
-                  label: "Support",
+                  icon: Icons.support_agent_rounded,
+                  label: "Help & Support Desk",
                   color: AppTheme.warningOrange,
                 ),
               ),
@@ -466,7 +466,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 value: 2,
                 child: PopupItem(
                   icon: Icons.logout_rounded,
-                  label: "Logout",
+                  label: "Sign Out",
                   color: AppTheme.errorRed,
                 ),
               ),

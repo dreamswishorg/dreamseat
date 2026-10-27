@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme.dart';
-import '../../../core/web_utils.dart';
 import '../../../models/models.dart';
 import '../../../providers/app_state.dart';
 import '../widgets/admin_components.dart';
@@ -18,7 +17,6 @@ class TabAccounts extends ConsumerStatefulWidget {
 class _TabAccountsState extends ConsumerState<TabAccounts> {
   String _searchQuery = '';
   String _roleFilter = 'All'; // 'All', 'Customer', 'Merchant', 'Staff'
-  String _statusFilter = 'All'; // 'All', 'Active', 'Suspended'
   int _currentPage = 0;
   static const int _itemsPerPage = 15;
 
@@ -45,10 +43,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
               ? (u.role == 'admin' || u.role == 'super_admin')
               : u.role == _roleFilter.toLowerCase());
 
-      final matchesStatus = _statusFilter == 'All' ||
-          (_statusFilter == 'Active' ? !u.isSuspended : u.isSuspended);
-
-      return matchesSearch && matchesRole && matchesStatus;
+      return matchesSearch && matchesRole;
     }).toList();
 
     // Pagination
@@ -92,7 +87,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                         currentAdminId: state.currentUser?.id,
                         isSuperAdmin: state.currentUser?.role == 'super_admin',
                         onInspect: () => _showUserDetails(u),
-                        onToggleSuspension: () => ref.read(appStateProvider.notifier).toggleUserSuspension(u.id),
+                        onToggleSuspension: () => _toggleSuspensionWithFeedback(u),
                         onUpdateRole: (newRole) => ref.read(appStateProvider.notifier).updateUserRole(u.id, newRole),
                       );
                     },
@@ -164,7 +159,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
         ),
         const SizedBox(height: 12),
 
-        // Row 2: Streamlined Filters under Search Bar
+        // Row 2: Streamlined Clean Role Filters under Search Bar
         Wrap(
           spacing: 10,
           runSpacing: 10,
@@ -173,16 +168,6 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
             _rolePill("Customers", customerCount, 'Customer', Icons.shopping_bag_outlined, const Color(0xFF2563EB)),
             _rolePill("Merchants", merchantCount, 'Merchant', Icons.storefront_rounded, const Color(0xFFD97706)),
             _rolePill("Staff", staffCount, 'Staff', Icons.shield_rounded, AppTheme.charcoal),
-            AdminDropdown<String>(
-              icon: Icons.tune_rounded,
-              label: "Status",
-              value: _statusFilter,
-              items: const ['All', 'Active', 'Suspended'],
-              onChanged: (val) => setState(() {
-                _statusFilter = val ?? 'All';
-                _currentPage = 0;
-              }),
-            ),
           ],
         ),
       ],
@@ -301,23 +286,26 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
     );
   }
 
-  void _exportToCSV(List<AppUser> users) {
-    final buffer = StringBuffer();
-    buffer.writeln("ID,Name,Email,Role,Status,DreamPoints,WalletCredit,JoinedAt");
-    for (var u in users) {
-      buffer.writeln("${u.id},${u.name},${u.email},${u.role},${u.isSuspended ? 'Suspended' : 'Active'},${u.dreamPoints},${u.referralCredit},${u.createdAt.toIso8601String()}");
-    }
-
-    try {
-      downloadFile(
-        content: buffer.toString(),
-        fileName: "dreameats_users_${DateTime.now().millisecondsSinceEpoch}.csv",
-        mimeType: 'text/csv',
+  Future<void> _toggleSuspensionWithFeedback(AppUser u) async {
+    final willSuspend = !u.isSuspended;
+    final error = await ref.read(appStateProvider.notifier).toggleUserSuspension(u.id);
+    if (!mounted) return;
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error toggling suspension: $error"),
+          backgroundColor: AppTheme.errorRed,
+        ),
       );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Download triggered: $e")));
-      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(willSuspend
+              ? "🚫 Account for ${u.name} has been suspended."
+              : "✅ Account for ${u.name} is now active."),
+          backgroundColor: willSuspend ? AppTheme.charcoal : AppTheme.primaryGreen,
+        ),
+      );
     }
   }
 
@@ -326,6 +314,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
     final nameController = TextEditingController();
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
+    bool obscurePassword = true;
 
     final Map<String, String> privLabels = {
       'analytics': 'Analytics Hub',
@@ -351,6 +340,14 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
       'Custom': [],
     };
 
+    final Map<String, IconData> roleIcons = {
+      'Administrator': Icons.admin_panel_settings_rounded,
+      'Operations': Icons.storefront_rounded,
+      'Support Desk Agent': Icons.support_agent_rounded,
+      'Financial Controller': Icons.account_balance_wallet_rounded,
+      'Custom': Icons.tune_rounded,
+    };
+
     String selectedRole = 'Operations';
     Set<String> selectedPrivs = Set.from(roleTemplates['Operations']!);
     bool isSaving = false;
@@ -364,43 +361,37 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
             return AlertDialog(
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-              actionsPadding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
-              title: Row(
+              titlePadding: const EdgeInsets.fromLTRB(28, 26, 28, 14),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 28),
+              actionsPadding: const EdgeInsets.fromLTRB(28, 16, 28, 24),
+              title: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryGreen.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
+                  Text(
+                    "Add New Staff Account",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 19,
+                      color: AppTheme.charcoal,
+                      letterSpacing: -0.4,
                     ),
-                    child: const Icon(Icons.shield_outlined, color: AppTheme.primaryGreen, size: 22),
                   ),
-                  const SizedBox(width: 14),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Add New Staff Account",
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: AppTheme.charcoal, letterSpacing: -0.3),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          "Provision admin credentials and permissions",
-                          style: TextStyle(fontSize: 11.5, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500),
-                        ),
-                      ],
+                  SizedBox(height: 4),
+                  Text(
+                    "Provision administrative credentials and granular access privileges",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.mutedGrey,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
               ),
               content: ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxWidth: (MediaQuery.sizeOf(context).width * 0.94).clamp(280.0, 520.0),
+                  maxWidth: (MediaQuery.sizeOf(context).width * 0.94).clamp(320.0, 540.0),
                   maxHeight: MediaQuery.sizeOf(context).height * 0.82,
                 ),
                 child: SingleChildScrollView(
@@ -411,15 +402,23 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const SizedBox(height: 6),
-                        const Text("CREDENTIALS", style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.mutedGrey, fontSize: 10.5, letterSpacing: 0.8)),
+                        const Text(
+                          "CREDENTIALS",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.mutedGrey,
+                            fontSize: 10.5,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
                         const SizedBox(height: 10),
                         TextFormField(
                           controller: nameController,
                           style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppTheme.charcoal),
                           decoration: InputDecoration(
                             labelText: "Full Name",
-                            hintText: "e.g., Kofi Mensah",
-                            prefixIcon: const Icon(Icons.person_outline_rounded, size: 19),
+                            hintText: "e.g., Kwame Mensah",
+                            prefixIcon: const Icon(Icons.person_outline_rounded, size: 19, color: Color(0xFF64748B)),
                             filled: true,
                             fillColor: const Color(0xFFF8FAFC),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
@@ -435,8 +434,8 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                           style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppTheme.charcoal),
                           decoration: InputDecoration(
                             labelText: "Work Email",
-                            hintText: "e.g., kofi@dreameats.app",
-                            prefixIcon: const Icon(Icons.mail_outline_rounded, size: 19),
+                            hintText: "e.g., staff@dreameats.app",
+                            prefixIcon: const Icon(Icons.mail_outline_rounded, size: 19, color: Color(0xFF64748B)),
                             filled: true,
                             fillColor: const Color(0xFFF8FAFC),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
@@ -445,64 +444,129 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                           ),
                           validator: (val) {
                             if (val == null || val.trim().isEmpty) return "Email is required";
-                            if (!val.contains('@')) return "Enter a valid email";
+                            if (!val.contains('@')) return "Enter a valid email address";
                             return null;
                           },
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: passwordController,
-                          obscureText: true,
+                          obscureText: obscurePassword,
                           style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppTheme.charcoal),
                           decoration: InputDecoration(
                             labelText: "Temporary Password",
                             hintText: "At least 8 characters",
-                            prefixIcon: const Icon(Icons.lock_outline_rounded, size: 19),
+                            prefixIcon: const Icon(Icons.lock_outline_rounded, size: 19, color: Color(0xFF64748B)),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                size: 18,
+                                color: const Color(0xFF64748B),
+                              ),
+                              onPressed: () => setModalState(() => obscurePassword = !obscurePassword),
+                            ),
                             filled: true,
                             fillColor: const Color(0xFFF8FAFC),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.8)),
                           ),
-                          validator: (val) => val == null || val.length < 8 ? "Password must be at least 8 chars" : null,
+                          validator: (val) => val == null || val.length < 8 ? "Password must be at least 8 characters" : null,
+                        ),
+                        const SizedBox(height: 22),
+                        const Text(
+                          "SELECT ROLE PRESET",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.mutedGrey,
+                            fontSize: 10.5,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: roleTemplates.keys.map((role) {
+                            final isSel = selectedRole == role;
+                            final icon = roleIcons[role] ?? Icons.security_rounded;
+                            return InkWell(
+                              onTap: () {
+                                setModalState(() {
+                                  selectedRole = role;
+                                  if (role != 'Custom') {
+                                    selectedPrivs = Set.from(roleTemplates[role]!);
+                                  }
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(10),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 160),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isSel ? AppTheme.primaryGreen.withValues(alpha: 0.12) : const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: isSel ? AppTheme.primaryGreen : const Color(0xFFE2E8F0),
+                                    width: isSel ? 1.6 : 1.0,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      icon,
+                                      size: 15,
+                                      color: isSel ? AppTheme.primaryGreen : const Color(0xFF64748B),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      role,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                                        color: isSel ? AppTheme.primaryGreen : AppTheme.charcoal,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ),
                         const SizedBox(height: 20),
-                        const Text("ROLE PRESET", style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.mutedGrey, fontSize: 10.5, letterSpacing: 0.8)),
-                        const SizedBox(height: 10),
-                        DropdownButtonFormField<String>(
-                          initialValue: selectedRole,
-                          style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppTheme.charcoal),
-                          decoration: InputDecoration(
-                            labelText: "Staff Preset",
-                            prefixIcon: const Icon(Icons.badge_outlined, size: 19),
-                            filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.8)),
-                          ),
-                          items: roleTemplates.keys.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
-                          onChanged: (val) {
-                            if (val == null) return;
-                            setModalState(() {
-                              selectedRole = val;
-                              if (val != 'Custom') {
-                                selectedPrivs = Set.from(roleTemplates[val]!);
-                              }
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text("ASSIGNED MODULE PRIVILEGES", style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.mutedGrey, fontSize: 10.5, letterSpacing: 0.8)),
-                            Text("${selectedPrivs.length} selected", style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
+                            const Text(
+                              "MODULE PRIVILEGES",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.mutedGrey,
+                                fontSize: 10.5,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryGreen.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                "${selectedPrivs.length} assigned",
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.primaryGreen,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 8),
                         ConstrainedBox(
-                          constraints: const BoxConstraints(maxHeight: 200),
+                          constraints: const BoxConstraints(maxHeight: 190),
                           child: Container(
                             decoration: BoxDecoration(
                               color: const Color(0xFFF8FAFC),
@@ -515,13 +579,21 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                               children: privLabels.entries.map((entry) {
                                 final key = entry.key;
                                 final label = entry.value;
+                                final isChecked = selectedPrivs.contains(key);
                                 return CheckboxListTile(
                                   activeColor: AppTheme.primaryGreen,
                                   dense: true,
                                   controlAffinity: ListTileControlAffinity.leading,
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-                                  title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5, color: AppTheme.charcoal)),
-                                  value: selectedPrivs.contains(key),
+                                  title: Text(
+                                    label,
+                                    style: TextStyle(
+                                      fontWeight: isChecked ? FontWeight.w700 : FontWeight.w500,
+                                      fontSize: 12.5,
+                                      color: isChecked ? AppTheme.charcoal : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  value: isChecked,
                                   onChanged: (checked) {
                                     setModalState(() {
                                       selectedRole = 'Custom';
@@ -547,7 +619,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                   onPressed: isSaving ? null : () => Navigator.pop(ctx),
                   style: TextButton.styleFrom(
                     foregroundColor: AppTheme.mutedGrey,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                   ),
                   child: const Text("Cancel", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                 ),
@@ -1113,7 +1185,24 @@ class _UserDetailDrawer extends ConsumerWidget {
                   Switch(
                     value: !currentUser.isSuspended,
                     activeThumbColor: AppTheme.primaryGreen,
-                    onChanged: (v) => ref.read(appStateProvider.notifier).toggleUserSuspension(currentUser.id),
+                    onChanged: (v) async {
+                      final willSuspend = !currentUser.isSuspended;
+                      final error = await ref.read(appStateProvider.notifier).toggleUserSuspension(currentUser.id);
+                      if (context.mounted) {
+                        if (error != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Error: $error"), backgroundColor: AppTheme.errorRed),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(willSuspend ? "🚫 Account suspended" : "✅ Account activated"),
+                              backgroundColor: willSuspend ? AppTheme.charcoal : AppTheme.primaryGreen,
+                            ),
+                          );
+                        }
+                      }
+                    },
                   ),
                 ],
               ),

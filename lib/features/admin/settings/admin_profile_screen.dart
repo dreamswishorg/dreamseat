@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme.dart';
 import '../../../providers/app_state.dart';
 import '../../../services/supabase_service.dart';
@@ -19,7 +18,6 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
   late TextEditingController _phoneController;
   bool _isEditing = false;
   bool _isSaving = false;
-  bool _isTwoFactorEnabled = false;
 
   @override
   void initState() {
@@ -28,7 +26,6 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
     _nameController = TextEditingController(text: user?.name ?? '');
     _emailController = TextEditingController(text: user?.email ?? '');
     _phoneController = TextEditingController(text: user?.phone ?? '');
-    _loadTwoFactorStatus();
   }
 
   @override
@@ -71,15 +68,6 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
     }
   }
 
-  Future<void> _loadTwoFactorStatus() async {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user != null && user.userMetadata != null) {
-      final mfa = user.userMetadata!['mfa_enabled'];
-      setState(() {
-        _isTwoFactorEnabled = mfa == true;
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -738,22 +726,6 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
     );
   }
 
-  void _onTwoFactorAuth() async {
-    final enabled = !_isTwoFactorEnabled;
-    final messenger = ScaffoldMessenger.of(context);
-    final error = await SupabaseService().toggleTwoFactor(enabled);
-    if (error != null) {
-      messenger.showSnackBar(SnackBar(content: Text('Error: $error'), backgroundColor: AppTheme.errorRed));
-    } else {
-      setState(() => _isTwoFactorEnabled = enabled);
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(enabled ? '✅ 2FA enabled' : 'ℹ️ 2FA disabled'),
-          backgroundColor: enabled ? AppTheme.primaryGreen : AppTheme.charcoal,
-        ),
-      );
-    }
-  }
 
   void _onSessionHistory() {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SessionHistoryScreen()));

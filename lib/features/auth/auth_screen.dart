@@ -295,12 +295,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       setState(() => _biometricLabel = label);
     }
 
+    if (!mounted) return;
+
     final shouldEnroll = await showModalBottomSheet<bool>(
       context: context,
       backgroundColor: Colors.transparent,
       isDismissible: false,
       builder: (ctx) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
         final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
         final textPrimary = isDark ? Colors.white : AppTheme.charcoal;
 
@@ -377,8 +379,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     await BiometricService.setPromptedEnrollment(true);
 
     if (shouldEnroll == true) {
-      // Release keyboard focus and wait for modal route dismissal animation to finish
-      // to prevent iOS LocalAuthentication presentation collision / system cancel
+      if (!mounted) return;
       FocusScope.of(context).unfocus();
       await Future.delayed(const Duration(milliseconds: 350));
 

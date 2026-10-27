@@ -1609,24 +1609,30 @@ class AppStateManager extends Notifier<AppState> {
         referenceNumber: referenceNumber,
       );
 
-  Future<void> toggleUserSuspension(String userId) async {
-    final user = state.users.firstWhere((u) => u.id == userId);
-    final newSuspended = !user.isSuspended;
-    await _supa.toggleUserSuspension(userId, newSuspended);
+  Future<String?> toggleUserSuspension(String userId) async {
+    try {
+      final user = state.users.firstWhere((u) => u.id == userId);
+      final newSuspended = !user.isSuspended;
+      await _supa.toggleUserSuspension(userId, newSuspended);
 
-    // Audit Log
-    await _supa.logAction(
-      action: newSuspended ? 'suspend_user' : 'activate_user',
-      entityType: 'user',
-      entityId: userId,
-      description: '${newSuspended ? "Suspended" : "Activated"} ${user.role}: ${user.name}',
-      metadata: {'name': user.name, 'role': user.role},
-    );
-    final updated = state.users.map((u) {
-      if (u.id == userId) return u.copyWith(isSuspended: newSuspended);
-      return u;
-    }).toList();
-    state = state.copyWith(users: updated);
+      // Audit Log
+      await _supa.logAction(
+        action: newSuspended ? 'suspend_user' : 'activate_user',
+        entityType: 'user',
+        entityId: userId,
+        description: '${newSuspended ? "Suspended" : "Activated"} ${user.role}: ${user.name}',
+        metadata: {'name': user.name, 'role': user.role},
+      );
+      final updated = state.users.map((u) {
+        if (u.id == userId) return u.copyWith(isSuspended: newSuspended);
+        return u;
+      }).toList();
+      state = state.copyWith(users: updated);
+      return null;
+    } catch (e) {
+      debugPrint('Error toggling user suspension: $e');
+      return e.toString();
+    }
   }
 
   Future<void> updateUserRole(String userId, String newRole) async {

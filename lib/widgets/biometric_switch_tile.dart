@@ -58,6 +58,7 @@ class _BiometricSwitchTileState extends ConsumerState<BiometricSwitchTile> {
       if (!mounted) return;
       if (authenticated) {
         await ref.read(biometricStateProvider.notifier).setEnabled(true);
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("✅ $label enabled successfully!"),
@@ -201,6 +202,7 @@ class _BiometricSwitchTileState extends ConsumerState<BiometricSwitchTile> {
                               }
 
                               // Dismiss keyboard to release UI focus before native iOS/Android biometric prompt
+                              if (!context.mounted) return;
                               FocusScope.of(context).unfocus();
                               await Future.delayed(const Duration(milliseconds: 350));
 
