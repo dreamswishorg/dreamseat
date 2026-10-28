@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
+import '../../providers/biometric_provider.dart';
 import '../customer/customer_navigation.dart';
 import '../merchant/merchant_dashboard.dart';
 import '../admin/admin_dashboard.dart';
@@ -174,10 +175,23 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
             unlock['refreshToken']!,
           );
 
-      // Expired/revoked refresh token: the stored unlock data is dead, so drop it
-      // and fall back to password sign-in.
-      if (error != null && error.toLowerCase().contains('expired')) {
-        await BiometricService.setBiometricEnabled(false);
+      final errorLower = error?.toLowerCase() ?? '';
+      final tokenIsDead = errorLower.contains('expired') ||
+          errorLower.contains('invalid refresh token') ||
+          errorLower.contains('already used') ||
+          errorLower.contains('refresh_token_already_used') ||
+          errorLower.contains('invalid_token');
+
+      // Expired/rotated/revoked refresh token: the stored unlock data is dead,
+      // so drop it and require one password sign-in to re-link Face ID.
+      if (error != null && tokenIsDead) {
+        await ref.read(biometricStateProvider.notifier).setEnabled(false);
+        if (mounted) {
+          _showSnackBar(
+            "$_biometricLabel sign-in needs relinking. Please sign in with your password once — it'll work again automatically.",
+            isError: false,
+          );
+        }
         error = null;
       }
 

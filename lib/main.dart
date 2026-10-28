@@ -118,8 +118,14 @@ class _DreamEatsAppState extends ConsumerState<DreamEatsApp> with WidgetsBinding
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _syncUnlockToken();
     try {
       _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
+        if (data.event == AuthChangeEvent.tokenRefreshed ||
+            data.event == AuthChangeEvent.signedIn ||
+            data.event == AuthChangeEvent.initialSession) {
+          _syncUnlockToken();
+        }
         if (data.event == AuthChangeEvent.passwordRecovery) {
           navigatorKey.currentState?.pushAndRemoveUntil(
             MaterialPageRoute(builder: (_) => const ResetPasswordScreen()),
@@ -167,6 +173,15 @@ class _DreamEatsAppState extends ConsumerState<DreamEatsApp> with WidgetsBinding
     } catch (_) {
       _authSub = null;
     }
+  }
+
+  Future<void> _syncUnlockToken() async {
+    try {
+      if (!await BiometricService.isBiometricEnabled()) return;
+      final refreshToken = Supabase.instance.client.auth.currentSession?.refreshToken;
+      if (refreshToken == null || refreshToken.isEmpty) return;
+      await BiometricService.refreshUnlockToken(refreshToken);
+    } catch (_) {}
   }
 
   @override

@@ -142,6 +142,21 @@ class BiometricService {
     }
   }
 
+  /// Supabase rotates the refresh token on every auto-refresh. The Keychain copy
+  /// must be replaced immediately after each rotation, otherwise Face ID sign-in
+  /// presents a consumed token and the server rejects it with
+  /// `refresh_token_already_used`. Only touches the token, never the enabled flag.
+  static Future<void> refreshUnlockToken(String refreshToken) async {
+    try {
+      final isEnabled = await _secureStorage.read(key: _keyBiometricEnabled);
+      if (isEnabled != 'true') return;
+      if (refreshToken.isEmpty) return;
+      await _secureStorage.write(key: _keyBiometricRefreshToken, value: refreshToken);
+    } catch (e) {
+      debugPrint("Error refreshing unlock token: $e");
+    }
+  }
+
   /// Clear saved unlock data
   static Future<void> clearSavedCredentials() async {
     try {
