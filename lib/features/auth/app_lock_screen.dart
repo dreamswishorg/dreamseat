@@ -50,8 +50,15 @@ class _AppLockScreenState extends ConsumerState<AppLockScreen> {
 
     if (result.isSuccess) {
       widget.onUnlocked();
-    } else if (result.isLockedOut) {
-      setState(() => _errorMessage = 'Biometrics locked out. Please log out and enter your password.');
+    } else if (result.isLockedOut || result.isNotAvailable) {
+      // Biometrics are exhausted or no longer usable - send the user back to
+      // sign in so they can re-enter their credentials. The signedOut event
+      // in main.dart routes to the Welcome screen with this message.
+      await ref.read(appStateProvider.notifier).signOut(
+            errorMessage: result.isLockedOut
+                ? 'Too many failed biometric attempts. Please sign in again.'
+                : 'Biometrics are no longer available on this device. Please sign in again.',
+          );
     } else if (!result.isCancelled) {
       setState(() => _errorMessage = '$_biometricLabel not recognized. Please try again.');
     }
