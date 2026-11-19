@@ -220,7 +220,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         icon: const Icon(Icons.block_rounded, color: AppTheme.errorRed, size: 48),
         title: const Text(
           "Account Suspended",
@@ -326,14 +326,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       isDismissible: false,
       builder: (ctx) {
         final isDark = Theme.of(ctx).brightness == Brightness.dark;
-        final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+        final cardBg = isDark ? AppTheme.charcoal : Colors.white;
         final textPrimary = isDark ? Colors.white : AppTheme.charcoal;
 
         return Container(
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
             color: cardBg,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -422,7 +422,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('✅ $_biometricLabel enabled successfully!'),
+              content: Text('$_biometricLabel enabled successfully!'),
               backgroundColor: AppTheme.primaryGreen,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -436,7 +436,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(authResult.message ?? '$_biometricLabel verification was not completed.'),
-              backgroundColor: const Color(0xFFF59E0B),
+              backgroundColor: AppTheme.warningOrange,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               duration: const Duration(seconds: 3),
@@ -654,7 +654,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
         ),
         backgroundColor: isError ? AppTheme.errorRed : AppTheme.primaryGreen,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),
     );
@@ -770,7 +770,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.cream,
       body: Stack(
         children: [
           // ── Gradient background accents ──
@@ -921,7 +921,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color(0xFF1B5E20), // Deep Forest Green
+            AppTheme.deepGreen, // Deep Forest Green
             AppTheme.primaryGreen, // Exact Primary Green (0xFF2E7D32) matching button
             Color(0xFF1E6F2B), // Rich Emerald Green
           ],
@@ -982,7 +982,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                       height: 44,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
                             color: AppTheme.primaryGreen.withValues(alpha: 0.3),
@@ -992,7 +992,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                         ],
                       ),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                         child: Image.asset('assets/images/logo.jpg', fit: BoxFit.cover),
                       ),
                     ),
@@ -1077,7 +1077,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
                   ),
                   child: const Row(
@@ -1107,7 +1107,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
         ),
         child: Column(
@@ -1357,10 +1357,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                         initialValue: _suBizCategory,
                         decoration: InputDecoration(
                           filled: true,
-                          fillColor: const Color(0xFFF7F8FA),
+                          fillColor: AppTheme.cream,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.08))),
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.08))),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.08))),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.08))),
                         ),
                         items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 13)))).toList(),
                         onChanged: (v) => setState(() => _suBizCategory = v!),
@@ -1457,10 +1457,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.lightGreenBg : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(14),
+          color: isSelected ? AppTheme.lightGreenBg : AppTheme.cream,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppTheme.primaryGreen : const Color(0xFFE2E8F0),
+            color: isSelected ? AppTheme.primaryGreen : AppTheme.hairline,
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
@@ -1469,7 +1469,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: isSelected ? AppTheme.primaryGreen : const Color(0xFFE2E8F0),
+                color: isSelected ? AppTheme.primaryGreen : AppTheme.hairline,
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: isSelected ? Colors.white : const Color(0xFF475569), size: 16),
@@ -1862,10 +1862,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                 flex: 3,
                 child: _buildPrimaryButton(
                   label: _suStep == 0
-                      ? 'Next Step ➔'
+                      ? 'Next Step'
                       : (_suRole == 'customer'
                           ? 'Create Account'
-                          : (_suRole == 'merchant' ? 'Launch Store 🚀' : 'Register Rider 🛵')),
+                          : (_suRole == 'merchant' ? 'Launch Store' : 'Register Rider')),
                   onPressed: _isLoading ? null : _nextStep,
                 ),
               ),
@@ -1901,7 +1901,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
           color: isSelected ? AppTheme.lightGreenBg : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppTheme.primaryGreen : const Color(0xFFE2E8F0),
+            color: isSelected ? AppTheme.primaryGreen : AppTheme.hairline,
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
@@ -2303,11 +2303,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 14),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide(
                             color:
                                 AppTheme.charcoal.withValues(alpha: 0.08)),
@@ -2410,7 +2410,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                     isExpanded: true,
                     borderRadius: BorderRadius.circular(16),
                     dropdownColor: Colors.white,
-                    decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.zero),
+                    decoration: const InputDecoration(border: InputBorder.none,
+enabledBorder: InputBorder.none,
+focusedBorder: InputBorder.none,
+errorBorder: InputBorder.none,
+disabledBorder: InputBorder.none,
+filled: false, contentPadding: EdgeInsets.zero),
                     items: ['Motorbike', 'Bicycle', 'Scooter', 'Car']
                         .map((v) => DropdownMenuItem(value: v, child: Text(v)))
                         .toList(),
@@ -2474,7 +2479,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: _agreeToTerms ? AppTheme.lightGreenBg : const Color(0xFFF5F6F8),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _agreeToTerms ? AppTheme.primaryGreen : Colors.transparent),
       ),
       child: Row(
@@ -2571,29 +2576,29 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
             ),
             suffixIcon: suffixIcon,
             filled: true,
-            fillColor: const Color(0xFFF7F8FA),
+            fillColor: AppTheme.cream,
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide(
                   color: AppTheme.charcoal.withValues(alpha: 0.07)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               borderSide:
                   const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               borderSide: const BorderSide(color: AppTheme.errorRed),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               borderSide:
                   const BorderSide(color: AppTheme.errorRed, width: 1.5),
             ),
@@ -2687,7 +2692,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                 backgroundColor: Colors.white,
                 foregroundColor: AppTheme.charcoal,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 side: BorderSide(
                     color: AppTheme.charcoal.withValues(alpha: 0.1),
@@ -2723,7 +2728,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                 backgroundColor: AppTheme.charcoal,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 elevation: 0,
               ),

@@ -7,6 +7,7 @@ import '../../../models/models.dart';
 import '../../../providers/app_state.dart';
 import '../merchant_kit.dart';
 import '../theme/merchant_theme.dart';
+import '../../../core/theme.dart';
 
 class MerchantVerifyTab extends ConsumerStatefulWidget {
   final BusinessProfile business;
@@ -148,7 +149,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
       HapticFeedback.mediumImpact();
       await showMResult(
         context,
-        title: 'Handover Verified! ✅',
+        title: 'Handover Verified! ',
         message: '“${order.dealTitle}” handed to ${order.customerName}. Payment settlement queued.',
         actionLabel: 'Next Customer',
       );
@@ -450,6 +451,11 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
                         color: MK.inkSoft,
                       ),
                       border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      errorBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                      filled: false,
                     ),
                     onChanged: (v) {
                       setState(() {
@@ -564,7 +570,7 @@ class _MerchantVerifyTabState extends ConsumerState<MerchantVerifyTab> {
                       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: MerchantTheme.brandDeepGreen),
                     ),
                     Text(
-                      'Order #${order.id.substring(0, 8).toUpperCase()} · Code: ${order.collectionCode}',
+                      'Order #${order.id.shortId(8).toUpperCase()} · Code: ${order.collectionCode}',
                       style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: MerchantTheme.brandDeepGreen),
                     ),
                   ],

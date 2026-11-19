@@ -404,7 +404,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                               style: TextStyle(
                                 fontSize: (screenW * 0.09).clamp(28.0, 40.0),
                                 fontWeight: FontWeight.w900,
-                                color: const Color(0xFF0D3B22),
+                                color: AppTheme.deepGreen,
                                 letterSpacing: 3.5,
                               ),
                             ),
@@ -439,7 +439,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                                     style: TextStyle(
                                       fontSize: 11.5,
                                       fontWeight: FontWeight.w800,
-                                      color: Color(0xFF0D3B22),
+                                      color: AppTheme.deepGreen,
                                       letterSpacing: 1.0,
                                     ),
                                   ),

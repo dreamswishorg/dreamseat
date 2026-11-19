@@ -179,7 +179,7 @@ class AdminHeader extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppTheme.hairline),
                 ),
                 child: Row(
                   children: [

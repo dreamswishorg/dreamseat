@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../core/theme.dart';
 import '../../core/responsive.dart';
 import '../../providers/app_state.dart';
+import '../../providers/biometric_provider.dart';
 import '../common/legal_screens.dart';
 import '../../widgets/biometric_switch_tile.dart';
 import '../auth/welcome_screen.dart';
@@ -157,7 +158,7 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
         content: Text(text, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
         backgroundColor: isError ? AppTheme.errorRed : AppTheme.primaryGreen,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
     );
@@ -166,9 +167,9 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.cream,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -244,7 +245,7 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
                         backgroundColor: _locationStatus == 'Allowed' ? const Color(0xFFF1F5F9) : AppTheme.primaryGreen,
                         foregroundColor: _locationStatus == 'Allowed' ? AppTheme.charcoal : Colors.white,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       ),
                       child: Text(_locationStatus == 'Allowed' ? "Verify" : "Enable", style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
@@ -254,25 +255,27 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
               ),
               const SizedBox(height: 28),
 
+              if (ref.watch(biometricStateProvider.select((b) => b.isSupported || !b.isInitialized))) ...[
               // ── Section: Biometrics Security ────────────────────────
-              const Text(
-                "Biometrics Security",
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.charcoal, letterSpacing: -0.3),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.06)),
-                  boxShadow: const [
-                    BoxShadow(color: Color(0x06000000), blurRadius: 16, offset: Offset(0, 6)),
-                  ],
+                const Text(
+                  "Biometrics Security",
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.charcoal, letterSpacing: -0.3),
                 ),
-                child: const BiometricSwitchTile(),
-              ),
-              const SizedBox(height: 28),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.06)),
+                    boxShadow: const [
+                      BoxShadow(color: Color(0x06000000), blurRadius: 16, offset: Offset(0, 6)),
+                    ],
+                  ),
+                  child: const BiometricSwitchTile(),
+                ),
+                const SizedBox(height: 28),
+              ],
 
               // ── Section: Account Password Security ──────────────────
               const Text(
@@ -432,7 +435,7 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
                       hintText: "••••••••",
                       prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppTheme.primaryGreen, size: 20),
                       filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
+                      fillColor: AppTheme.cream,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                     ),
@@ -537,7 +540,7 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
               onPressed: onToggle,
             ),
             filled: true,
-            fillColor: const Color(0xFFF8FAFC),
+            fillColor: AppTheme.cream,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -576,7 +579,7 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: AppTheme.lightGreenBg,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(icon, color: AppTheme.primaryGreen, size: 22),
               ),

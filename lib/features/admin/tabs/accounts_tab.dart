@@ -29,6 +29,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
     final totalCount = users.length;
     final customerCount = users.where((u) => u.role == 'customer').length;
     final merchantCount = users.where((u) => u.role == 'merchant').length;
+    final riderCount = users.where((u) => u.role == 'rider').length;
     final staffCount = users.where((u) => u.role == 'admin' || u.role == 'super_admin').length;
 
     // Filtered
@@ -65,6 +66,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
             totalCount: totalCount,
             customerCount: customerCount,
             merchantCount: merchantCount,
+            riderCount: riderCount,
             staffCount: staffCount,
             isMobile: isMobile,
           ),
@@ -106,6 +108,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
     required int totalCount,
     required int customerCount,
     required int merchantCount,
+    required int riderCount,
     required int staffCount,
     required bool isMobile,
   }) {
@@ -135,6 +138,11 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                     hintStyle: TextStyle(fontSize: 12.5, color: AppTheme.mutedGrey),
                     prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppTheme.mutedGrey),
                     border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    filled: false,
                     contentPadding: EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
@@ -166,7 +174,8 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
           children: [
             _rolePill("All Accounts", totalCount, 'All', Icons.group_rounded, AppTheme.primaryGreen),
             _rolePill("Customers", customerCount, 'Customer', Icons.shopping_bag_outlined, const Color(0xFF2563EB)),
-            _rolePill("Merchants", merchantCount, 'Merchant', Icons.storefront_rounded, const Color(0xFFD97706)),
+            _rolePill("Merchants", merchantCount, 'Merchant', Icons.storefront_rounded, AppTheme.goldAccent),
+            _rolePill("Riders", riderCount, 'Rider', Icons.two_wheeler_rounded, AppTheme.infoBlue),
             _rolePill("Staff", staffCount, 'Staff', Icons.shield_rounded, AppTheme.charcoal),
           ],
         ),
@@ -189,14 +198,14 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
           color: isSelected ? color.withValues(alpha: 0.1) : Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? color : const Color(0xFFE2E8F0),
+            color: isSelected ? color : AppTheme.hairline,
             width: isSelected ? 1.6 : 1.0,
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: isSelected ? color : const Color(0xFF64748B)),
+            Icon(icon, size: 14, color: isSelected ? color : AppTheme.mutedGrey),
             const SizedBox(width: 7),
             Text(
               title,
@@ -218,7 +227,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w900,
-                  color: isSelected ? Colors.white : const Color(0xFF64748B),
+                  color: isSelected ? Colors.white : AppTheme.mutedGrey,
                 ),
               ),
             ),
@@ -235,7 +244,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.hairline),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -301,8 +310,8 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(willSuspend
-              ? "🚫 Account for ${u.name} has been suspended."
-              : "✅ Account for ${u.name} is now active."),
+              ? "Account for ${u.name} has been suspended."
+              : "Account for ${u.name} is now active."),
           backgroundColor: willSuspend ? AppTheme.charcoal : AppTheme.primaryGreen,
         ),
       );
@@ -418,11 +427,11 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                           decoration: InputDecoration(
                             labelText: "Full Name",
                             hintText: "e.g., Kwame Mensah",
-                            prefixIcon: const Icon(Icons.person_outline_rounded, size: 19, color: Color(0xFF64748B)),
+                            prefixIcon: const Icon(Icons.person_outline_rounded, size: 19, color: AppTheme.mutedGrey),
                             filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                            fillColor: AppTheme.cream,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.hairline)),
+                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.hairline)),
                             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.8)),
                           ),
                           validator: (val) => val == null || val.trim().isEmpty ? "Name is required" : null,
@@ -435,11 +444,11 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                           decoration: InputDecoration(
                             labelText: "Work Email",
                             hintText: "e.g., staff@dreameats.app",
-                            prefixIcon: const Icon(Icons.mail_outline_rounded, size: 19, color: Color(0xFF64748B)),
+                            prefixIcon: const Icon(Icons.mail_outline_rounded, size: 19, color: AppTheme.mutedGrey),
                             filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                            fillColor: AppTheme.cream,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.hairline)),
+                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.hairline)),
                             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.8)),
                           ),
                           validator: (val) {
@@ -456,19 +465,19 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                           decoration: InputDecoration(
                             labelText: "Temporary Password",
                             hintText: "At least 8 characters",
-                            prefixIcon: const Icon(Icons.lock_outline_rounded, size: 19, color: Color(0xFF64748B)),
+                            prefixIcon: const Icon(Icons.lock_outline_rounded, size: 19, color: AppTheme.mutedGrey),
                             suffixIcon: IconButton(
                               icon: Icon(
                                 obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                                 size: 18,
-                                color: const Color(0xFF64748B),
+                                color: AppTheme.mutedGrey,
                               ),
                               onPressed: () => setModalState(() => obscurePassword = !obscurePassword),
                             ),
                             filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                            fillColor: AppTheme.cream,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.hairline)),
+                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.hairline)),
                             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.8)),
                           ),
                           validator: (val) => val == null || val.length < 8 ? "Password must be at least 8 characters" : null,
@@ -504,10 +513,10 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                                 duration: const Duration(milliseconds: 160),
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: isSel ? AppTheme.primaryGreen.withValues(alpha: 0.12) : const Color(0xFFF8FAFC),
+                                  color: isSel ? AppTheme.primaryGreen.withValues(alpha: 0.12) : AppTheme.cream,
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: isSel ? AppTheme.primaryGreen : const Color(0xFFE2E8F0),
+                                    color: isSel ? AppTheme.primaryGreen : AppTheme.hairline,
                                     width: isSel ? 1.6 : 1.0,
                                   ),
                                 ),
@@ -517,7 +526,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                                     Icon(
                                       icon,
                                       size: 15,
-                                      color: isSel ? AppTheme.primaryGreen : const Color(0xFF64748B),
+                                      color: isSel ? AppTheme.primaryGreen : AppTheme.mutedGrey,
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
@@ -569,8 +578,8 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                           constraints: const BoxConstraints(maxHeight: 190),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              color: AppTheme.cream,
+                              border: Border.all(color: AppTheme.hairline),
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: ListView(
@@ -590,7 +599,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                                     style: TextStyle(
                                       fontWeight: isChecked ? FontWeight.w700 : FontWeight.w500,
                                       fontSize: 12.5,
-                                      color: isChecked ? AppTheme.charcoal : const Color(0xFF64748B),
+                                      color: isChecked ? AppTheme.charcoal : AppTheme.mutedGrey,
                                     ),
                                   ),
                                   value: isChecked,
@@ -646,7 +655,7 @@ class _TabAccountsState extends ConsumerState<TabAccounts> {
                             if (error == null) {
                               Navigator.pop(ctx);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("✅ Staff account created successfully!"), backgroundColor: AppTheme.primaryGreen),
+                                const SnackBar(content: Text("Staff account created successfully."), backgroundColor: AppTheme.primaryGreen),
                               );
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -701,7 +710,9 @@ class _MemberCard extends StatelessWidget {
     final isStaff = user.role == 'admin' || user.role == 'super_admin';
     final avatarColor = isStaff
         ? AppTheme.primaryGreen
-        : (user.role == 'merchant' ? const Color(0xFFD97706) : const Color(0xFF2563EB));
+        : (user.role == 'merchant'
+            ? AppTheme.goldAccent
+            : (user.role == 'rider' ? AppTheme.dealOrange : const Color(0xFF2563EB)));
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
@@ -709,7 +720,7 @@ class _MemberCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: user.isSuspended ? AppTheme.errorRed.withValues(alpha: 0.25) : const Color(0xFFE2E8F0),
+          color: user.isSuspended ? AppTheme.errorRed.withValues(alpha: 0.25) : AppTheme.hairline,
         ),
         boxShadow: [
           BoxShadow(
@@ -825,7 +836,7 @@ class _MemberCard extends StatelessWidget {
                     label: const Text("Details", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.charcoal,
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                      side: const BorderSide(color: AppTheme.hairline),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       minimumSize: Size.zero,
@@ -917,7 +928,7 @@ class _MemberCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
-                "⭐ ${user.dreamPoints} pts",
+                "${user.dreamPoints} pts",
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: Color(0xFFB45309)),
@@ -1015,7 +1026,7 @@ class _UserDetailDrawer extends ConsumerWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: const Color(0xFFE2E8F0),
+                color: AppTheme.hairline,
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
@@ -1048,9 +1059,9 @@ class _UserDetailDrawer extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: AppTheme.cream,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: AppTheme.hairline),
             ),
             child: Row(
               children: [
@@ -1125,13 +1136,13 @@ class _UserDetailDrawer extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: AppTheme.cream,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: AppTheme.hairline),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.manage_accounts_rounded, size: 18, color: Color(0xFF64748B)),
+                  const Icon(Icons.manage_accounts_rounded, size: 18, color: AppTheme.mutedGrey),
                   const SizedBox(width: 10),
                   const Text("Role Permission:", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.charcoal)),
                   const Spacer(),
@@ -1196,7 +1207,7 @@ class _UserDetailDrawer extends ConsumerWidget {
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(willSuspend ? "🚫 Account suspended" : "✅ Account activated"),
+                              content: Text(willSuspend ? "Account suspended" : "Account activated"),
                               backgroundColor: willSuspend ? AppTheme.charcoal : AppTheme.primaryGreen,
                             ),
                           );
@@ -1239,7 +1250,7 @@ class _UserDetailDrawer extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(8)),
-            child: Icon(icon, size: 14, color: const Color(0xFF64748B)),
+            child: Icon(icon, size: 14, color: AppTheme.mutedGrey),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1273,24 +1284,34 @@ class _RoleBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color color;
-    String label;
+    final Color color;
+    final String label;
+    final IconData icon;
     switch (role) {
       case 'super_admin':
         color = const Color(0xFFDC2626);
-        label = '👑 Super Admin';
+        label = 'Super Admin';
+        icon = Icons.workspace_premium_rounded;
         break;
       case 'admin':
         color = AppTheme.primaryGreen;
-        label = '🛡️ Staff Admin';
+        label = 'Staff Admin';
+        icon = Icons.shield_rounded;
         break;
       case 'merchant':
-        color = const Color(0xFFD97706);
-        label = '🏪 Merchant';
+        color = AppTheme.goldAccent;
+        label = 'Merchant';
+        icon = Icons.storefront_rounded;
+        break;
+      case 'rider':
+        color = AppTheme.dealOrange;
+        label = 'Rider';
+        icon = Icons.two_wheeler_rounded;
         break;
       default:
         color = const Color(0xFF059669);
-        label = '🛍️ Customer';
+        label = 'Customer';
+        icon = Icons.shopping_bag_outlined;
     }
 
     return Container(
@@ -1300,9 +1321,16 @@ class _RoleBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color),
+          ),
+        ],
       ),
     );
   }
@@ -1321,7 +1349,7 @@ class _RoleSwitcher extends StatelessWidget {
       offset: const Offset(0, 38),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: Color(0xFFE2E8F0)),
+        side: const BorderSide(color: AppTheme.hairline),
       ),
       color: Colors.white,
       elevation: 12,
@@ -1329,6 +1357,7 @@ class _RoleSwitcher extends StatelessWidget {
       itemBuilder: (context) => [
         _roleItem('customer', 'Customer', Icons.person_outline_rounded, Colors.blue),
         _roleItem('merchant', 'Merchant Hub', Icons.storefront_rounded, AppTheme.warningOrange),
+        _roleItem('rider', 'Rider', Icons.two_wheeler_rounded, AppTheme.dealOrange),
         _roleItem('admin', 'Staff Admin', Icons.shield_outlined, AppTheme.primaryGreen),
         _roleItem('super_admin', 'Super Admin', Icons.admin_panel_settings_rounded, AppTheme.errorRed),
       ],

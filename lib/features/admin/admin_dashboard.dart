@@ -140,7 +140,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     return Scaffold(
       backgroundColor: isDark
           ? const Color(0xFF0F172A).withValues(alpha: 0.94)
-          : const Color(0xFFF8FAFC).withValues(alpha: 0.90),
+          : AppTheme.cream.withValues(alpha: 0.90),
       drawer: !isWide
           ? Drawer(
               width: 290,
@@ -172,7 +172,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(
-            color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+            color: isDark ? Colors.white.withValues(alpha: 0.08) : AppTheme.hairline,
             height: 1,
           ),
         ),
@@ -182,7 +182,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                      color: isDark ? AppTheme.charcoal : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -190,7 +190,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                       style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF64748B),
+                        color: AppTheme.mutedGrey,
                         letterSpacing: 0.8,
                       ),
                     ),
@@ -219,10 +219,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                       child: Container(
                         height: 38,
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                          color: isDark ? AppTheme.charcoal : AppTheme.cream,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+                            color: isDark ? Colors.white.withValues(alpha: 0.08) : AppTheme.hairline,
                           ),
                         ),
                     child: Row(
@@ -251,6 +251,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                                 fontWeight: FontWeight.w500,
                               ),
                               border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              disabledBorder: InputBorder.none,
+                              filled: false,
                               isDense: true,
                               contentPadding: EdgeInsets.symmetric(vertical: 8),
                             ),
@@ -263,7 +268,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(5),
                             border: Border.all(
-                              color: const Color(0xFFE2E8F0),
+                              color: AppTheme.hairline,
                             ),
                           ),
                           child: const Text(
@@ -292,7 +297,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                     style: const TextStyle(
                       fontSize: 8.5,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF64748B),
+                      color: AppTheme.mutedGrey,
                       letterSpacing: 0.6,
                     ),
                   ),
@@ -331,7 +336,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             offset: const Offset(0, 56),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
-              side: const BorderSide(color: Color(0xFFE2E8F0)),
+              side: const BorderSide(color: AppTheme.hairline),
             ),
             color: Colors.white,
             surfaceTintColor: Colors.transparent,
@@ -351,12 +356,12 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFF8FAFC), Color(0xFFF1F5F9)],
+                      colors: [AppTheme.cream, Color(0xFFF1F5F9)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: AppTheme.hairline),
                   ),
                   child: Row(
                     children: [
@@ -428,7 +433,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                                 ),
                               ),
                               child: Text(
-                                isSuperAdmin ? "👑 SUPER ADMIN" : "🛡️ STAFF ADMIN",
+                                isSuperAdmin ? "SUPER ADMIN" : "STAFF ADMIN",
                                 style: TextStyle(
                                   fontSize: 8.5,
                                   fontWeight: FontWeight.w900,
@@ -484,7 +489,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                         border: Border.all(
                           color: Theme.of(context).brightness == Brightness.dark
                               ? Colors.white.withValues(alpha: 0.1)
-                              : const Color(0xFFE2E8F0),
+                              : AppTheme.hairline,
                         ),
                         boxShadow: [
                           BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 2)),
@@ -592,7 +597,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 color: Colors.white,
                 border: Border(
                   right: BorderSide(
-                    color: Color(0xFFE2E8F0),
+                    color: AppTheme.hairline,
                     width: 1,
                   ),
                 ),
@@ -763,7 +768,7 @@ class _HeaderAction extends StatelessWidget {
             border: Border.all(
               color: count > 0 
                   ? color.withValues(alpha: 0.2) 
-                  : (isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFE2E8F0)),
+                  : (isDark ? Colors.white.withValues(alpha: 0.05) : AppTheme.hairline),
             ),
           ),
           child: Stack(

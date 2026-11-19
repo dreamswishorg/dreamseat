@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
+import '../../core/ds_kit.dart';
 import '../../core/responsive.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
@@ -207,7 +208,7 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
           ),
         ),
         SizedBox(
-          height: 38,
+          height: 44,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -218,48 +219,10 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
               final isSelected = selected == opt;
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: GestureDetector(
+                child: DsFilterChip(
+                  label: opt,
+                  selected: isSelected,
                   onTap: () => onSelected(opt),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      gradient: isSelected
-                          ? const LinearGradient(
-                              colors: [AppTheme.primaryGreen, Color(0xFF2E7D32)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                          : null,
-                      color: isSelected ? null : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isSelected
-                            ? Colors.transparent
-                            : AppTheme.charcoal.withValues(alpha: 0.08),
-                        width: 1.2,
-                      ),
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color: AppTheme.primaryGreen.withValues(alpha: 0.25),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              )
-                            ]
-                          : [],
-                    ),
-                    child: Center(
-                      child: Text(
-                        opt,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                          color: isSelected ? Colors.white : AppTheme.charcoal,
-                        ),
-                      ),
-                    ),
-                  ),
                 ),
               );
             },
@@ -311,7 +274,7 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
                           color: AppTheme.primaryGreen.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           '${_activeFilterCount()} active',
@@ -411,7 +374,7 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
           ),
         ),
         SizedBox(
-          height: 38,
+          height: 44,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -422,39 +385,10 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
               final isSelected = selected.contains(opt);
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: GestureDetector(
+                child: DsFilterChip(
+                  label: opt,
+                  selected: isSelected,
                   onTap: () => onSelected(opt),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      gradient: isSelected
-                          ? const LinearGradient(
-                              colors: [AppTheme.primaryGreen, Color(0xFF2E7D32)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                          : null,
-                      color: isSelected ? null : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isSelected
-                            ? Colors.transparent
-                            : AppTheme.charcoal.withValues(alpha: 0.08),
-                        width: 1.2,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        opt,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                          color: isSelected ? Colors.white : AppTheme.charcoal,
-                        ),
-                      ),
-                    ),
-                  ),
                 ),
               );
             },
@@ -718,7 +652,7 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppTheme.lightGreenBg,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(24),
                 ),
                 child: const Row(
                   children: [
@@ -822,9 +756,9 @@ class _SearchFilterScreenState extends ConsumerState<SearchFilterScreen> {
     final filteredDeals = _applyFilters(state);
 
     return Scaffold(
-      backgroundColor: AppTheme.lightGrey,
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.cream,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(

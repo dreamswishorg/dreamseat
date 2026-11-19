@@ -28,13 +28,13 @@ class LiquidGlassCard extends StatelessWidget {
       padding: padding ?? const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark
-            ? const Color(0xFF1E293B).withValues(alpha: 0.75)
+            ? AppTheme.charcoal.withValues(alpha: 0.75)
             : Colors.white.withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.1)
-              : const Color(0xFFE2E8F0).withValues(alpha: 0.8),
+              : AppTheme.hairline.withValues(alpha: 0.8),
           width: 1,
         ),
         boxShadow: [
@@ -94,13 +94,13 @@ class MetricCard extends StatelessWidget {
       width: width,
       decoration: BoxDecoration(
         color: isDark
-            ? const Color(0xFF1E293B).withValues(alpha: 0.78)
+            ? AppTheme.charcoal.withValues(alpha: 0.78)
             : Colors.white.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.09)
-              : const Color(0xFFE2E8F0),
+              : AppTheme.hairline,
           width: 1,
         ),
         boxShadow: [
@@ -316,20 +316,50 @@ class NoDataState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 48, color: context.isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1)),
-          const SizedBox(height: 12),
-          Text(
-            msg,
-            style: TextStyle(
-              color: context.textSecondary,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.xl, vertical: AppSpace.x3),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 340),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: 96,
+                    height: 96,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.05),
+                    ),
+                  ),
+                  Container(
+                    width: 68,
+                    height: 68,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.10),
+                    ),
+                  ),
+                  Icon(icon, size: 32, color: AppTheme.primaryGreen),
+                ],
+              ),
+              const SizedBox(height: AppSpace.lg),
+              Text(
+                msg,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppTheme.charcoal,
+                  fontSize: 14.5,
+                  height: 1.45,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.1,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -397,6 +427,11 @@ class AdminSearchBar extends StatelessWidget {
           hintStyle: TextStyle(fontSize: 13.5, color: context.textSecondary),
           prefixIcon: Icon(Icons.search_rounded, size: 20, color: context.textSecondary),
           border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          disabledBorder: InputBorder.none,
+          filled: false,
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         ),
       ),
@@ -438,7 +473,7 @@ class AdminDropdown<T> extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+            color: isDark ? const Color(0xFF334155) : AppTheme.hairline,
             width: 1,
           ),
         ),
@@ -503,7 +538,7 @@ class AdminDropdown<T> extends StatelessWidget {
             color: context.cardColor,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+              color: isDark ? const Color(0xFF334155) : AppTheme.hairline,
               width: 1,
             ),
             boxShadow: isDark

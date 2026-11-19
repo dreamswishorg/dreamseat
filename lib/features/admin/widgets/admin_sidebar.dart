@@ -75,7 +75,7 @@ class AdminSidebar extends ConsumerWidget {
         color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.95) : Colors.white.withValues(alpha: 0.96),
         border: Border(
           right: BorderSide(
-            color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+            color: isDark ? Colors.white.withValues(alpha: 0.08) : AppTheme.hairline,
             width: 1,
           ),
         ),
@@ -95,7 +95,7 @@ class AdminSidebar extends ConsumerWidget {
                     padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+                        colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -195,10 +195,10 @@ class AdminSidebar extends ConsumerWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.add_rounded, color: Colors.white, size: 16),
+                            Icon(approvals > 0 ? Icons.verified_user_rounded : Icons.campaign_rounded, color: Colors.white, size: 16),
                             const SizedBox(width: 4),
                             Text(
-                              approvals > 0 ? "Review ($approvals)" : "+ Broadcast",
+                              approvals > 0 ? "Review ($approvals)" : "New Broadcast",
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w800,
@@ -218,7 +218,7 @@ class AdminSidebar extends ConsumerWidget {
           const SizedBox(height: 8),
           Divider(
             height: 1,
-            color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+            color: isDark ? Colors.white.withValues(alpha: 0.08) : AppTheme.hairline,
           ),
           const SizedBox(height: 8),
 
@@ -286,7 +286,7 @@ class AdminSidebar extends ConsumerWidget {
         child: InkWell(
           onTap: () => onTab(nav.index),
           borderRadius: BorderRadius.circular(14),
-          hoverColor: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF8FAFC),
+          hoverColor: isDark ? Colors.white.withValues(alpha: 0.05) : AppTheme.cream,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -310,7 +310,7 @@ class AdminSidebar extends ConsumerWidget {
                   size: 19,
                   color: nav.isSelected
                       ? (isDark ? const Color(0xFF34D399) : const Color(0xFF1B5E20))
-                      : const Color(0xFF64748B),
+                      : AppTheme.mutedGrey,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -321,7 +321,7 @@ class AdminSidebar extends ConsumerWidget {
                       fontWeight: nav.isSelected ? FontWeight.w800 : FontWeight.w600,
                       color: nav.isSelected
                           ? (isDark ? const Color(0xFF34D399) : const Color(0xFF1B5E20))
-                          : (isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155)),
+                          : (isDark ? AppTheme.hairline : const Color(0xFF334155)),
                       letterSpacing: -0.2,
                     ),
                   ),
@@ -330,7 +330,7 @@ class AdminSidebar extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEF4444),
+                      color: AppTheme.errorRed,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -356,17 +356,17 @@ class AdminSidebar extends ConsumerWidget {
       decoration: BoxDecoration(
         border: Border(
           top: BorderSide(
-            color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+            color: isDark ? Colors.white.withValues(alpha: 0.08) : AppTheme.hairline,
           ),
         ),
       ),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+          color: isDark ? AppTheme.charcoal : AppTheme.cream,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFE2E8F0),
+            color: isDark ? Colors.white.withValues(alpha: 0.06) : AppTheme.hairline,
           ),
         ),
         child: Row(
@@ -393,7 +393,7 @@ class AdminSidebar extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 9.5,
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF64748B),
+                  color: AppTheme.mutedGrey,
                   letterSpacing: 0.8,
                 ),
               ),

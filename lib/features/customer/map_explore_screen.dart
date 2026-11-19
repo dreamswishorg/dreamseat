@@ -31,7 +31,7 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
   final List<String> _quickFilters = [
     'All',
     'Open now',
-    '★ 4 Stars and up',
+    '4 Stars and up',
     'Offers',
     'Bakery',
     'Meals',
@@ -66,7 +66,7 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
         final matchesCat = biz.category.toLowerCase().contains(_searchQuery.toLowerCase());
         if (!matchesName && !matchesCat) return false;
       }
-      if (_selectedFilter == '★ 4 Stars and up' && biz.rating < 4.0) {
+      if (_selectedFilter == '4 Stars and up' && biz.rating < 4.0) {
         return false;
       }
       if (_selectedFilter == 'Bakery' && !biz.category.toLowerCase().contains('bakery')) {
@@ -278,6 +278,11 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
                         prefixIcon: Icon(Icons.search_rounded, color: AppTheme.mutedGrey, size: 20),
                         contentPadding: EdgeInsets.symmetric(vertical: 12),
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        filled: false,
                       ),
                     ),
                   ),
@@ -301,7 +306,7 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                           decoration: BoxDecoration(
                             color: isSelected ? AppTheme.charcoal : Colors.white,
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.08),
@@ -351,8 +356,8 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppTheme.hairline),
         boxShadow: const [
           BoxShadow(
             color: Color(0x18000000),
@@ -394,7 +399,7 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 11),
+                              const Icon(Icons.star_rounded, color: AppTheme.warningOrange, size: 11),
                               const SizedBox(width: 2),
                               Text(
                                 biz.rating > 0 ? biz.rating.toStringAsFixed(1) : 'New',
@@ -437,12 +442,12 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
                         // Favorite Heart
                         InkWell(
                           onTap: () => ref.read(appStateProvider.notifier).toggleFavorite(biz.id),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(24),
                           child: Padding(
                             padding: const EdgeInsets.all(4),
                             child: Icon(
                               isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                              color: isFavorite ? const Color(0xFFEF4444) : AppTheme.mutedGrey,
+                              color: isFavorite ? AppTheme.errorRed : AppTheme.mutedGrey,
                               size: 20,
                             ),
                           ),
@@ -450,7 +455,7 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
                         // Dismiss (X)
                         InkWell(
                           onTap: () => setState(() => _selectedIndex = -1),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(24),
                           child: Padding(
                             padding: const EdgeInsets.all(4),
                             child: Icon(

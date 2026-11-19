@@ -594,7 +594,7 @@ class _BottomNav extends StatelessWidget {
                               Icon(
                                 selected ? item.$2 : item.$1,
                                 size: 22,
-                                color: selected ? AppTheme.primaryGreen : const Color(0xFF64748B),
+                                color: selected ? AppTheme.primaryGreen : AppTheme.mutedGrey,
                               ),
                               if (showBadge)
                                 Positioned(
@@ -628,7 +628,7 @@ class _BottomNav extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 10.5,
                               fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                              color: selected ? AppTheme.primaryGreen : const Color(0xFF64748B),
+                              color: selected ? AppTheme.primaryGreen : AppTheme.mutedGrey,
                               letterSpacing: -0.2,
                             ),
                           ),

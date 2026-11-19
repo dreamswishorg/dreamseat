@@ -583,6 +583,7 @@ class _HeroButton extends StatelessWidget {
         onTap: onTap,
         child: Container(
           height: 44,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
             color: soft ? Colors.white.withValues(alpha: 0.16) : Colors.white,
             borderRadius: BorderRadius.circular(MK.rSm),

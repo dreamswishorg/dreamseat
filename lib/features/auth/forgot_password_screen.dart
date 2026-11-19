@@ -95,7 +95,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                             backgroundColor: const Color(0xFFF1F5F9),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                         ),
                       ),
@@ -124,7 +124,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
     // Mobile Layout (screenW < 768)
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -213,7 +213,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color(0xFF1B5E20), // Deep Forest Green
+            AppTheme.deepGreen, // Deep Forest Green
             AppTheme.primaryGreen, // Primary Green
             Color(0xFF1E6F2B), // Rich Emerald Green
           ],
@@ -273,7 +273,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       height: 44,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
                             color: AppTheme.primaryGreen.withValues(alpha: 0.3),
@@ -283,7 +283,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                         ],
                       ),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                         child: Image.asset('assets/images/logo.jpg', fit: BoxFit.cover),
                       ),
                     ),
@@ -368,7 +368,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
                   ),
                   child: const Row(
@@ -398,7 +398,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
         ),
         child: Column(
@@ -451,7 +451,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
                     color: AppTheme.primaryGreen.withValues(alpha: 0.3),
@@ -510,7 +510,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             onPressed: _isLoading ? null : _sendResetLink,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
             child: _isLoading
                 ? const SizedBox(
@@ -562,7 +562,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
                   color: AppTheme.primaryGreen.withValues(alpha: 0.3),
@@ -615,7 +615,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 child: Text(
                   'Please check your inbox (and spam folder) for the link to set a new password.',
                   style: TextStyle(
-                    color: Color(0xFF2E7D32),
+                    color: AppTheme.primaryGreen,
                     fontSize: 12.5,
                     height: 1.4,
                     fontWeight: FontWeight.w500,
@@ -632,7 +632,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           onPressed: () => Navigator.of(context).pop(),
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
           child: const Text(
             'Back to Sign In',

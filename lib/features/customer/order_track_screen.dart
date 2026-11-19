@@ -47,7 +47,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
   final List<Map<String, dynamic>> _messages = [
     {
       'isRider': true,
-      'text': 'Hello! I picked up your fresh surplus meal. On my way now! 🛵',
+      'text': 'Hello! I picked up your fresh surplus meal. On my way now!',
       'time': 'Just now',
     },
   ];
@@ -126,7 +126,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
             height: 36,
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
           // Scooter structure
@@ -166,7 +166,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                 width: 14,
                 height: 12,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
+                  color: AppTheme.charcoal,
                   shape: BoxShape.circle,
                   border: Border.all(color: const Color(0xFFF97316), width: 1.5),
                 ),
@@ -218,7 +218,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
             height: MediaQuery.of(context).size.height * 0.72,
             decoration: const BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
             child: Column(
               children: [
@@ -409,7 +409,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                             hintText: 'Message rider...',
                             hintStyle: const TextStyle(fontSize: 13),
                             filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
+                            fillColor: AppTheme.cream,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 10,
@@ -482,7 +482,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: AppTheme.cream,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -504,7 +504,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryGreen,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
             icon: const Icon(Icons.call_rounded, size: 16),
             label: const Text('Dial Now'),
@@ -518,7 +518,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('📞 Dialing $_riderName ($_riderPhone)...'),
+                    content: Text('Dialing $_riderName ($_riderPhone)...'),
                     backgroundColor: AppTheme.primaryGreen,
                   ),
                 );
@@ -567,9 +567,9 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: AppTheme.cream,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: AppTheme.hairline),
               ),
               child: Row(
                 children: [
@@ -593,7 +593,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                       Clipboard.setData(ClipboardData(text: storePhone));
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('📋 Store phone number copied!'),
+                          content: Text('Store phone number copied!'),
                           backgroundColor: AppTheme.primaryGreen,
                           duration: Duration(seconds: 2),
                         ),
@@ -614,7 +614,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryGreen,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
             ),
             icon: const Icon(Icons.call_rounded, size: 16),
@@ -629,7 +629,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('📞 Calling $storePhone...'),
+                    content: Text('Calling $storePhone...'),
                     backgroundColor: AppTheme.primaryGreen,
                   ),
                 );
@@ -840,7 +840,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.14),
@@ -877,7 +877,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                               fontWeight: FontWeight.w900,
                               color: isCollected
                                   ? const Color(0xFF16A34A)
-                                  : (isReady ? const Color(0xFFD97706) : AppTheme.primaryGreen),
+                                  : (isReady ? AppTheme.goldAccent : AppTheme.primaryGreen),
                             ),
                           ),
                         ),
@@ -903,7 +903,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
                         color: AppTheme.lightGreenBg,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.2)),
                       ),
                       child: Row(
@@ -959,7 +959,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                             ),
                           ),
                           child: const Center(
-                            child: Text('🛵', style: TextStyle(fontSize: 24)),
+                            child: Icon(Icons.two_wheeler_rounded, size: 24, color: AppTheme.primaryGreen),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -980,7 +980,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                               const SizedBox(height: 3),
                               Row(
                                 children: [
-                                  const Icon(Icons.star_rounded, size: 14, color: Color(0xFFF59E0B)),
+                                  const Icon(Icons.star_rounded, size: 14, color: AppTheme.warningOrange),
                                   const SizedBox(width: 2),
                                   Text(
                                     _riderRating,
@@ -995,7 +995,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                                     width: 6,
                                     height: 6,
                                     decoration: const BoxDecoration(
-                                      color: Color(0xFFEF4444),
+                                      color: AppTheme.errorRed,
                                       shape: BoxShape.circle,
                                     ),
                                   ),
@@ -1061,12 +1061,12 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFEF3C7),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.3)),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppTheme.warningOrange.withValues(alpha: 0.3)),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.key_rounded, color: Color(0xFFD97706), size: 24),
+                            const Icon(Icons.key_rounded, color: AppTheme.goldAccent, size: 24),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
@@ -1142,7 +1142,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             minimumSize: const Size(0, 36),
                             elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                         ),
                     ],
@@ -1163,7 +1163,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
           width: 18,
           height: 18,
           decoration: BoxDecoration(
-            color: isDone ? AppTheme.primaryGreen : const Color(0xFFE2E8F0),
+            color: isDone ? AppTheme.primaryGreen : AppTheme.hairline,
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -1192,7 +1192,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
       child: Container(
         height: 2,
         margin: const EdgeInsets.only(bottom: 14),
-        color: isDone ? AppTheme.primaryGreen : const Color(0xFFE2E8F0),
+        color: isDone ? AppTheme.primaryGreen : AppTheme.hairline,
       ),
     );
   }

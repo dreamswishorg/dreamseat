@@ -36,7 +36,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       'icon': Icons.phone_android_rounded,
       'logo_asset': 'assets/icons/mtn.png',
       'bg_tint': const Color(0xFFFFFBEB),
-      'border_color': const Color(0xFFF59E0B),
+      'border_color': AppTheme.warningOrange,
     },
     {
       'name': 'Telecel Cash',
@@ -45,7 +45,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       'icon': Icons.phone_iphone_rounded,
       'logo_asset': 'assets/icons/telecel.png',
       'bg_tint': const Color(0xFFFEF2F2),
-      'border_color': const Color(0xFFEF4444),
+      'border_color': AppTheme.errorRed,
     },
     {
       'name': 'AirtelTigo Money',
@@ -62,7 +62,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       'color': const Color(0xFF0F172A),
       'icon': Icons.credit_card_rounded,
       'logo_asset': 'assets/icons/master.jpg',
-      'bg_tint': const Color(0xFFF8FAFC),
+      'bg_tint': AppTheme.cream,
       'border_color': const Color(0xFF334155),
     },
     {
@@ -296,7 +296,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       barrierDismissible: false,
       builder: (dlgContext) => StatefulBuilder(
         builder: (context, setDlgState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: const Row(
             children: [
               Icon(Icons.lock_clock_rounded, color: AppTheme.primaryGreen),
@@ -335,7 +335,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               if (_selectedProvider.contains('MTN')) ...[
                 const SizedBox(height: 10),
                 const Text(
-                  '💡 MTN MoMo: If no prompt popped up, check your wallet approvals at *170# > 6) My Wallet > 3) My Approvals.',
+                  'MTN MoMo: If no prompt popped up, check your wallet approvals at *170# > 6) My Wallet > 3) My Approvals.',
                   style: TextStyle(fontSize: 11, color: AppTheme.charcoal, fontStyle: FontStyle.italic),
                 ),
               ],
@@ -468,9 +468,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Sleek slate light background
+      backgroundColor: AppTheme.cream, // Sleek slate light background
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.cream,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.charcoal, size: 20),
@@ -546,7 +546,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
                           color: AppTheme.lightGreenBg,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(24),
                         ),
                         child: const Row(
                           children: [
@@ -581,7 +581,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: AppTheme.errorRed.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: AppTheme.errorRed.withValues(alpha: 0.2)),
                     ),
                     child: const Row(
@@ -629,7 +629,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+          colors: [Color(0xFF0F172A), AppTheme.charcoal],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -671,7 +671,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                         child: const Icon(Icons.restaurant_rounded, color: Colors.white, size: 22),
                       ),
@@ -873,7 +873,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 backgroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                   side: BorderSide(color: borderColor.withValues(alpha: 0.4)),
                 ),
               ),
@@ -918,7 +918,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: isSelected ? bgTint : Colors.white,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isSelected ? borderColor : AppTheme.charcoal.withValues(alpha: 0.1),
                   width: isSelected ? 2.0 : 1.0,
@@ -948,7 +948,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.08)),
                         boxShadow: isSelected
                             ? [BoxShadow(color: color.withValues(alpha: 0.2), blurRadius: 6, offset: const Offset(0, 2))]
@@ -964,7 +964,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: isSelected ? Colors.white : color.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(p['icon'] as IconData, color: color, size: 22),
                     ),
@@ -1060,7 +1060,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               margin: const EdgeInsets.only(right: 12),
               decoration: BoxDecoration(
                 color: AppTheme.charcoal.withValues(alpha: 0.04),
-                borderRadius: const BorderRadius.horizontal(left: Radius.circular(14)),
+                borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
                 border: Border(right: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.08))),
               ),
               child: const Text(
@@ -1073,19 +1073,19 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.08)),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.08)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 2),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
             ),
           ),
@@ -1101,7 +1101,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: const Color(0xFFECFDF5), // Soft emerald tint
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.2)),
           ),
           child: Row(

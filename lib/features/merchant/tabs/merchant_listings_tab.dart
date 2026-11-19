@@ -830,7 +830,7 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
       padding: EdgeInsets.fromLTRB(isWide ? 24 : 16, 6, isWide ? 24 : 16, 8),
       gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: isWide ? 440 : 390,
-        mainAxisExtent: 280,
+        mainAxisExtent: 236,
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
       ),
@@ -992,7 +992,7 @@ class _MerchantListingsTabState extends ConsumerState<MerchantListingsTab> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        '${categoryEmoji(deal.category)} ${deal.category}',
+                        deal.category,
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,

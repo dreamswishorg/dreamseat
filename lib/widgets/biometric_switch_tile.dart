@@ -79,7 +79,7 @@ class _BiometricSwitchTileState extends ConsumerState<BiometricSwitchTile> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text("✅ $label enabled successfully!"),
+        content: Text("$label enabled successfully!"),
         backgroundColor: AppTheme.primaryGreen,
       ),
     );

@@ -4,6 +4,7 @@ import '../../core/theme.dart';
 import '../../core/responsive.dart';
 import '../../core/ui_utils.dart';
 import '../../providers/app_state.dart';
+import '../../providers/biometric_provider.dart';
 import '../../services/location_service.dart';
 import 'customer_home.dart';
 import '../admin/admin_dashboard.dart';
@@ -139,7 +140,7 @@ class _CustomerSettingsScreenState
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
+          colors: [AppTheme.primaryGreen, AppTheme.deepGreen],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -265,7 +266,7 @@ class _CustomerSettingsScreenState
         ),
         backgroundColor: isError ? AppTheme.errorRed : AppTheme.primaryGreen,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
     );
@@ -277,12 +278,12 @@ class _CustomerSettingsScreenState
     final user = state.currentUser;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
-    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final bgColor = isDark ? const Color(0xFF0F172A) : AppTheme.cream;
+    final cardColor = isDark ? AppTheme.charcoal : Colors.white;
     final primaryTextColor = isDark ? Colors.white : AppTheme.charcoal;
     final secondaryTextColor = isDark ? const Color(0xFF94A3B8) : AppTheme.mutedGrey;
     final borderColor = isDark ? Colors.white.withValues(alpha: 0.08) : AppTheme.charcoal.withValues(alpha: 0.06);
-    final inputBg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final inputBg = isDark ? const Color(0xFF0F172A) : AppTheme.cream;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -321,7 +322,7 @@ class _CustomerSettingsScreenState
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                      colors: [Color(0xFF0F172A), AppTheme.charcoal],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -757,34 +758,36 @@ class _CustomerSettingsScreenState
               ),
               const SizedBox(height: 28),
 
+              if (ref.watch(biometricStateProvider.select((b) => b.isSupported || !b.isInitialized))) ...[
               // Section: Security & Biometrics
-              Text(
-                'Security & Biometrics',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  color: primaryTextColor,
-                  letterSpacing: -0.3,
+                Text(
+                  'Security & Biometrics',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: primaryTextColor,
+                    letterSpacing: -0.3,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: borderColor),
-                  boxShadow: [
-                    BoxShadow(
-                      color: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0x06000000),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: borderColor),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0x06000000),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: const BiometricSwitchTile(),
                 ),
-                child: const BiometricSwitchTile(),
-              ),
-              const SizedBox(height: 28),
+                const SizedBox(height: 28),
+              ],
 
               // Section: Account Actions
               Text(
@@ -828,7 +831,7 @@ class _CustomerSettingsScreenState
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
                               color: AppTheme.errorRed.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(16),
                             ),
                             child: const Icon(Icons.logout_rounded, color: AppTheme.errorRed, size: 22),
                           ),
@@ -887,7 +890,7 @@ class _CustomerSettingsScreenState
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
                               color: AppTheme.errorRed.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(16),
                             ),
                             child: const Icon(Icons.delete_forever_rounded, color: AppTheme.errorRed, size: 22),
                           ),

@@ -53,7 +53,7 @@ class TabPulse extends ConsumerWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 24, vertical: 16),
       decoration: const BoxDecoration(
-        color: Color(0xFFF8FAFC),
+        color: AppTheme.cream,
         border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
       ),
       child: Row(

@@ -37,7 +37,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     final paginatedOrders = allMyOrders.skip(_currentPage * _itemsPerPage).take(_itemsPerPage).toList();
 
     return Scaffold(
-      backgroundColor: AppTheme.lightGrey,
+      backgroundColor: AppTheme.cream,
       appBar: buildCustomerAppBar(
         context: context,
         ref: ref,
@@ -141,7 +141,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     
     switch (order.status) {
       case 'preparing':
-        statusColor = const Color(0xFFD97706);
+        statusColor = AppTheme.goldAccent;
         statusText = 'Preparing';
         statusBg = const Color(0xFFFEF3C7);
         statusIcon = Icons.soup_kitchen_rounded;
@@ -167,7 +167,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
         break;
       case 'cancelled':
       default:
-        statusColor = const Color(0xFFEF4444);
+        statusColor = AppTheme.errorRed;
         statusText = 'Cancelled';
         statusBg = const Color(0xFFFEE2E2);
         statusIcon = Icons.cancel_rounded;
@@ -183,7 +183,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
       margin: EdgeInsets.only(bottom: isWide ? 0 : 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
         boxShadow: [
           BoxShadow(
@@ -287,7 +287,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                     decoration: BoxDecoration(
                       color: const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: AppTheme.hairline),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -325,10 +325,10 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                     label: const Text('View Code', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.charcoal,
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                      side: const BorderSide(color: AppTheme.hairline),
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       minimumSize: const Size(0, 32),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -347,7 +347,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       minimumSize: const Size(0, 32),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ] else ...[
@@ -357,10 +357,10 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                     label: const Text('Receipt', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.mutedGrey,
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                      side: const BorderSide(color: AppTheme.hairline),
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       minimumSize: const Size(0, 32),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                   if (canRate) ...[
@@ -375,7 +375,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         minimumSize: const Size(0, 32),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ],
@@ -404,7 +404,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
@@ -436,8 +436,8 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppTheme.hairline),
                   boxShadow: [
                     BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10),
                   ],
@@ -478,7 +478,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryGreen,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   onPressed: () => Navigator.pop(ctx),
@@ -527,7 +527,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                       ),
                       child: const Icon(
                         Icons.report_problem_rounded,
-                        color: Color(0xFFEF4444),
+                        color: AppTheme.errorRed,
                         size: 32,
                       ),
                     ),
@@ -564,10 +564,10 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                           duration: const Duration(milliseconds: 150),
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: isSelected ? const Color(0xFFEF4444).withValues(alpha: 0.1) : const Color(0xFFF8FAFC),
+                            color: isSelected ? AppTheme.errorRed.withValues(alpha: 0.1) : AppTheme.cream,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: isSelected ? const Color(0xFFEF4444) : const Color(0xFFE2E8F0),
+                              color: isSelected ? AppTheme.errorRed : AppTheme.hairline,
                               width: isSelected ? 1.5 : 1.0,
                             ),
                           ),
@@ -576,7 +576,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
-                              color: isSelected ? const Color(0xFFEF4444) : AppTheme.charcoal,
+                              color: isSelected ? AppTheme.errorRed : AppTheme.charcoal,
                             ),
                           ),
                         ),
@@ -599,10 +599,10 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                       hintText: "Tell us more (e.g. order details, response)...",
                       hintStyle: const TextStyle(color: AppTheme.mutedGrey, fontSize: 12),
                       filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: const BorderSide(color: AppTheme.charcoal, width: 1.5)),
+                      fillColor: AppTheme.cream,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.hairline)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.hairline)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.charcoal, width: 1.5)),
                       contentPadding: const EdgeInsets.all(16),
                     ),
                   ),
@@ -621,17 +621,17 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                       Expanded(
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFEF4444),
+                            backgroundColor: AppTheme.errorRed,
                             foregroundColor: Colors.white,
                             elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                           onPressed: isSaving ? null : () async {
                             final detail = issueController.text.trim();
                             if (detail.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("⚠️ Please provide some details!"), backgroundColor: AppTheme.errorRed),
+                                const SnackBar(content: Text("Please provide some details!"), backgroundColor: AppTheme.errorRed),
                               );
                               return;
                             }
@@ -660,7 +660,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                               navigator.pop();
                               scaffoldMessenger.showSnackBar(
                                 const SnackBar(
-                                  content: Text("✅ Issue reported. Our support team will review it shortly."),
+                                  content: Text("Issue reported. Our support team will review it shortly."),
                                   backgroundColor: AppTheme.primaryGreen,
                                 ),
                               );
@@ -669,7 +669,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                                 isSaving = false;
                               });
                               scaffoldMessenger.showSnackBar(
-                                SnackBar(content: Text("❌ Failed to report issue: $e"), backgroundColor: AppTheme.errorRed),
+                                SnackBar(content: Text("Failed to report issue: $e"), backgroundColor: AppTheme.errorRed),
                               );
                             }
                           },
@@ -717,9 +717,10 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                         color: const Color(0xFFFEF3C7),
                         shape: BoxShape.circle,
                       ),
-                      child: const Text(
-                        "😋",
-                        style: TextStyle(fontSize: 32),
+                      child: const Icon(
+                        Icons.sentiment_very_satisfied_rounded,
+                        size: 36,
+                        color: AppTheme.goldAccent,
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -776,10 +777,10 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                         hintText: "Add specific comments (freshness, service)...",
                         hintStyle: const TextStyle(color: AppTheme.mutedGrey, fontSize: 12),
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: const BorderSide(color: AppTheme.charcoal, width: 1.5)),
+                        fillColor: AppTheme.cream,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.hairline)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.hairline)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.charcoal, width: 1.5)),
                         contentPadding: const EdgeInsets.all(16),
                       ),
                     ),
@@ -801,7 +802,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                               backgroundColor: AppTheme.primaryGreen,
                               foregroundColor: Colors.white,
                               elevation: 0,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                             onPressed: () async {
@@ -818,7 +819,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                                 navigator.pop();
                                 scaffoldMessenger.showSnackBar(
                                   const SnackBar(
-                                    content: Text("✅ Thank you for rating your rescue meal!"),
+                                    content: Text("Thank you for rating your rescue meal!"),
                                     backgroundColor: AppTheme.primaryGreen,
                                   ),
                                 );

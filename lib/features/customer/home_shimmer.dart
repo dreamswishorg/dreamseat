@@ -30,7 +30,7 @@ class HomeShimmer extends StatelessWidget {
                       Container(width: 140, height: 24, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
                     ],
                   ),
-                  Container(width: 100, height: 36, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20))),
+                  Container(width: 100, height: 36, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24))),
                 ],
               ),
             ),

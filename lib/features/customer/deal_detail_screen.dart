@@ -1,9 +1,9 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme.dart';
+import '../../core/ds_kit.dart';
 import '../../core/responsive.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
@@ -23,589 +23,393 @@ class DealDetailScreen extends ConsumerWidget {
       }
       return null;
     }));
+    final topInset = MediaQuery.paddingOf(context).top;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final saved = (deal.originalPrice - deal.discountedPrice).clamp(0, double.infinity);
+    final lowStock = deal.quantityRemaining <= 3;
+    const heroHeight = 340.0;
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            backgroundColor: Colors.white,
-            foregroundColor: AppTheme.charcoal,
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
-              onPressed: () => Navigator.pop(context),
+      backgroundColor: AppTheme.pureWhite,
+      body: Stack(
+        children: [
+          // Fixed hero image; the content sheet scrolls over it.
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: heroHeight,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Hero(
+                  tag: 'deal-image-${deal.id}',
+                  child: _buildHeroVisual(imageUrl: deal.imageUrl, category: deal.category),
+                ),
+                const IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.center,
+                        colors: [Color(0x59000000), Color(0x00000000)],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: ResponsiveCenter(
-          maxWidth: 800,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-            Container(
-              height: 300,
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppTheme.lightGreenBg, Color(0xFFE8F5E9)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: Hero(
-                      tag: 'deal-image-${deal.id}',
-                      child: _buildHeroVisual(
-                        imageUrl: deal.imageUrl,
-                        category: deal.category,
-                      ),
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Colors.black.withValues(alpha: 0.12), Colors.transparent],
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 92,
-                    left: 20,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.95),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        deal.category,
-                        style: const TextStyle(
-                          color: AppTheme.charcoal,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 18,
-                    right: 18,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppTheme.errorRed,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.errorRed.withValues(alpha: 0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          )
-                        ],
-                      ),
-                      child: Text(
-                        "SAVE ${deal.percentageSaved}%",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            Padding(
-              padding: const EdgeInsets.all(20.0),
+
+          SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: ResponsiveCenter(
+              maxWidth: 800,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title and business info
-                  Text(
-                    deal.title,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.charcoal,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  GestureDetector(
-                    onTap: () {
-                      if (business != null) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => MerchantStorefrontScreen(business: business),
-                          ),
-                        );
-                      }
-                    },
-                    child: Row(
-                      children: [
-                        Text(
-                          deal.businessName,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryGreen,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppTheme.primaryGreen),
-                        const SizedBox(width: 8),
-                        Container(width: 4, height: 4, decoration: const BoxDecoration(color: AppTheme.mutedGrey, shape: BoxShape.circle)),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.star_rounded, color: Colors.amber, size: 18),
-                        const SizedBox(width: 4),
-                        Text(
-                          "${business?.rating ?? 4.5}",
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.charcoal),
-                        ),
-                        const SizedBox(width: 12),
-                        const Icon(Icons.directions_walk_rounded, color: AppTheme.mutedGrey, size: 16),
-                        const SizedBox(width: 4),
-                        Text(
-                          "${business?.distance ?? 1.5} km",
-                          style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 13, fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Divider(color: AppTheme.charcoal.withValues(alpha: 0.05)),
-                  const SizedBox(height: 18),
-
-                  // Prices & Inventory Remaining
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.05)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.02),
-                          blurRadius: 15,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  "Rescue Price",
-                                  style: TextStyle(color: AppTheme.primaryGreen, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.5),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                                  textBaseline: TextBaseline.alphabetic,
-                                  children: [
-                                    Text(
-                                      "GHS ${AppTheme.formatPrice(deal.discountedPrice)}",
-                                      style: const TextStyle(
-                                        color: AppTheme.primaryGreen,
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.w900,
-                                        letterSpacing: -1,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      "GHS ${AppTheme.formatPrice(deal.originalPrice)}",
-                                      style: TextStyle(
-                                        decoration: TextDecoration.lineThrough,
-                                        color: AppTheme.mutedGrey.withValues(alpha: 0.5),
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: AppTheme.errorRed.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                "-${deal.percentageSaved}%",
-                                style: const TextStyle(color: AppTheme.errorRed, fontWeight: FontWeight.w900, fontSize: 16),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        Divider(color: AppTheme.charcoal.withValues(alpha: 0.05)),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            _buildMiniInfo(Icons.access_time_filled_rounded, deal.pickupWindow, "Pickup Window"),
-                            const SizedBox(width: 24),
-                            _buildMiniInfo(Icons.inventory_2_rounded, "${deal.quantityRemaining} left", "Availability"),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Dietary Tags
-                  if (deal.dietaryTags.isNotEmpty) ...[
-                    const Text(
-                      "Dietary Information",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.charcoal,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: deal.dietaryTags.map((tag) => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppTheme.lightGrey,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.05)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.check_circle_outline_rounded, size: 14, color: AppTheme.primaryGreen),
-                            const SizedBox(width: 6),
-                            Text(
-                              tag,
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.charcoal),
-                            ),
-                          ],
-                        ),
-                      )).toList(),
-                    ),
-                    const SizedBox(height: 28),
-                  ],
-
-                  // Description
-                  const Text(
-                    "What's in the pack?",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.charcoal,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    deal.description,
-                    style: const TextStyle(
-                      color: AppTheme.mutedGrey,
-                      fontSize: 14,
-                      height: 1.5,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Pickup Instructions
-                  const Text(
-                    "Pickup Instructions & Location",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.charcoal,
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: heroHeight - AppRadius.xl),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.lightGreenBg,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.15)),
+                    padding: const EdgeInsets.fromLTRB(AppSpace.gutter, AppSpace.xxl, AppSpace.gutter, 0),
+                    decoration: const BoxDecoration(
+                      color: AppTheme.pureWhite,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
+                        Wrap(
+                          spacing: AppSpace.sm,
+                          runSpacing: AppSpace.sm,
                           children: [
-                            const Icon(Icons.access_time_filled_rounded, color: AppTheme.primaryGreen, size: 20),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                "Window: ${deal.pickupWindow}",
-                                style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryGreen, fontSize: 13),
-                              ),
-                            ),
+                            DsPill(label: deal.category, tone: DsTone.neutral),
+                            if (deal.percentageSaved > 0)
+                              DsPill(label: 'SAVE ${deal.percentageSaved}%', tone: DsTone.deal, solid: true),
                           ],
                         ),
-                        const SizedBox(height: 10),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Icon(Icons.pin_drop_rounded, color: AppTheme.charcoal, size: 20),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                business?.location ?? "Accra, Ghana",
-                                style: const TextStyle(fontSize: 13, color: AppTheme.charcoal, fontWeight: FontWeight.w500),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Divider(color: AppTheme.primaryGreen.withValues(alpha: 0.15)),
-                        const SizedBox(height: 10),
-                        const Text(
-                          "Guideline: Please do not go to the merchant outside the pickup window. Bring your phone and show the Collection Code to the shop assistant to verify before taking your food package.",
-                          style: TextStyle(fontSize: 12, height: 1.4, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500),
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          child: TextButton.icon(
-                            onPressed: () => _launchDirections(context, business),
-                            icon: const Icon(Icons.map_outlined, size: 18),
-                            label: const Text("Get Directions", style: TextStyle(fontWeight: FontWeight.bold)),
-                            style: TextButton.styleFrom(
-                              foregroundColor: AppTheme.primaryGreen,
-                              backgroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        const SizedBox(height: AppSpace.md),
+                        Semantics(
+                          header: true,
+                          child: Text(
+                            deal.title,
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.charcoal,
+                              letterSpacing: -0.8,
+                              height: 1.15,
                             ),
                           ),
                         ),
+                        const SizedBox(height: AppSpace.md),
+
+                        // Merchant row
+                        DsPressable(
+                          onTap: business == null
+                              ? null
+                              : () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => MerchantStorefrontScreen(business: business)),
+                                  ),
+                          semanticLabel: 'Open ${deal.businessName} storefront',
+                          child: Container(
+                            constraints: const BoxConstraints(minHeight: 56),
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.sm),
+                            decoration: BoxDecoration(
+                              color: AppTheme.cream,
+                              borderRadius: AppRadius.rMd,
+                              border: Border.all(color: AppTheme.hairline),
+                            ),
+                            child: Row(
+                              children: [
+                                const DsIconBadge(icon: Icons.storefront_rounded, size: 36),
+                                const SizedBox(width: AppSpace.md),
+                                Expanded(
+                                  child: Text(
+                                    deal.businessName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.charcoal),
+                                  ),
+                                ),
+                                if (business != null) ...[
+                                  const Icon(Icons.star_rounded, color: AppTheme.warningOrange, size: 18),
+                                  const SizedBox(width: AppSpace.xs),
+                                  Text(
+                                    business.rating > 0 ? business.rating.toStringAsFixed(1) : 'New',
+                                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: AppTheme.charcoal),
+                                  ),
+                                  const SizedBox(width: AppSpace.sm),
+                                ],
+                                const Icon(Icons.chevron_right_rounded, color: AppTheme.mutedGrey),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpace.xl),
+
+                        // Price + savings
+                        DsCard(
+                          padding: const EdgeInsets.all(AppSpace.xl),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Rescue Price',
+                                          style: TextStyle(color: AppTheme.primaryGreen, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.8),
+                                        ),
+                                        const SizedBox(height: AppSpace.xs),
+                                        Row(
+                                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                                          textBaseline: TextBaseline.alphabetic,
+                                          children: [
+                                            Text(
+                                              'GHS ${AppTheme.formatPrice(deal.discountedPrice)}',
+                                              style: const TextStyle(
+                                                color: AppTheme.primaryGreen,
+                                                fontSize: 34,
+                                                fontWeight: FontWeight.w900,
+                                                letterSpacing: -1.2,
+                                              ),
+                                            ),
+                                            const SizedBox(width: AppSpace.sm),
+                                            Flexible(
+                                              child: Text(
+                                                'GHS ${AppTheme.formatPrice(deal.originalPrice)}',
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  decoration: TextDecoration.lineThrough,
+                                                  color: AppTheme.mutedGrey,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (saved > 0) ...[
+                                const SizedBox(height: AppSpace.md),
+                                DsPill(label: 'You save GHS ${AppTheme.formatPrice(saved)}', icon: Icons.savings_rounded, tone: DsTone.deal),
+                              ],
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: AppSpace.lg),
+                                child: Divider(),
+                              ),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildMiniInfo(Icons.schedule_rounded, deal.pickupWindow, 'Pickup Window'),
+                                  const SizedBox(width: AppSpace.lg),
+                                  _buildMiniInfo(
+                                    Icons.inventory_2_rounded,
+                                    lowStock ? 'Only ${deal.quantityRemaining} left' : '${deal.quantityRemaining} available',
+                                    'Availability',
+                                    tone: lowStock ? DsTone.deal : DsTone.neutral,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppSpace.x3),
+
+                        // Dietary
+                        if (deal.dietaryTags.isNotEmpty) ...[
+                          _sectionTitle('Dietary Information'),
+                          Wrap(
+                            spacing: AppSpace.sm,
+                            runSpacing: AppSpace.sm,
+                            children: [
+                              for (final tag in deal.dietaryTags)
+                                DsPill(label: tag, icon: Icons.check_circle_rounded, tone: DsTone.brand),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpace.x3),
+                        ],
+
+                        // Description
+                        if (deal.description.trim().isNotEmpty) ...[
+                          _sectionTitle("What's in the pack?"),
+                          Text(
+                            deal.description,
+                            style: const TextStyle(color: AppTheme.charcoal, fontSize: 15.5, height: 1.6, fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(height: AppSpace.x3),
+                        ],
+
+                        // Pickup
+                        _sectionTitle('Pickup Instructions & Location'),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(AppSpace.lg),
+                          decoration: BoxDecoration(
+                            color: AppTheme.lightGreenBg,
+                            borderRadius: AppRadius.rMd,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.schedule_rounded, color: AppTheme.primaryGreen, size: 20),
+                                  const SizedBox(width: AppSpace.sm),
+                                  Expanded(
+                                    child: Text(
+                                      'Window: ${deal.pickupWindow}',
+                                      style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.deepGreen, fontSize: 14),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: AppSpace.md),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(Icons.place_rounded, color: AppTheme.deepGreen, size: 20),
+                                  const SizedBox(width: AppSpace.sm),
+                                  Expanded(
+                                    child: Text(
+                                      business?.location ?? 'Accra, Ghana',
+                                      style: const TextStyle(fontSize: 14, color: AppTheme.charcoal, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: AppSpace.lg),
+                              const Text(
+                                'Guideline: Please do not go to the merchant outside the pickup window. Bring your phone and show the Collection Code to the shop assistant to verify before taking your food package.',
+                                style: TextStyle(fontSize: 13, height: 1.5, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500),
+                              ),
+                              const SizedBox(height: AppSpace.lg),
+                              DsButton(
+                                label: 'Get Directions',
+                                icon: Icons.directions_rounded,
+                                variant: DsButtonVariant.secondary,
+                                onPressed: () => _launchDirections(context, business),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 120 + bottomInset),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 110), // padding to scroll above the fixed reserve button
                 ],
               ),
             ),
-          ],
-        ),
-        ),
+          ),
+
+          // Floating back button
+          Positioned(
+            top: topInset + AppSpace.sm,
+            left: AppSpace.md,
+            child: Semantics(
+              button: true,
+              label: 'Back',
+              child: DsPressable(
+                onTap: () => Navigator.pop(context),
+                pressedScale: 0.9,
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppTheme.pureWhite,
+                    shape: BoxShape.circle,
+                    boxShadow: AppTheme.softShadow,
+                  ),
+                  child: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppTheme.charcoal),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       bottomSheet: Container(
-        color: Colors.transparent,
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+        padding: EdgeInsets.fromLTRB(AppSpace.gutter, AppSpace.md, AppSpace.gutter, AppSpace.md + bottomInset),
+        decoration: const BoxDecoration(
+          color: AppTheme.pureWhite,
+          border: Border(top: BorderSide(color: AppTheme.hairline)),
+          boxShadow: [BoxShadow(color: Color(0x0F0F172A), blurRadius: 20, offset: Offset(0, -6))],
+        ),
         child: ResponsiveCenter(
           maxWidth: 800,
-          child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.95),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.08)),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.charcoal.withValues(alpha: 0.05),
-                blurRadius: 20,
-                offset: const Offset(0, -4),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    ref.read(appStateProvider.notifier).addToBasket(deal);
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        behavior: SnackBarBehavior.floating,
-                        elevation: 8,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        backgroundColor: AppTheme.primaryGreen,
-                        content: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Row(
-                              children: [
-                                Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Added to basket!',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            InkWell(
-                              onTap: () {
-                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (_) => const BasketScreen(isStandalone: true)),
-                                );
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.22),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'View Basket',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: 12.5,
-                                      ),
-                                    ),
-                                    SizedBox(width: 4),
-                                    Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 14),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        duration: const Duration(seconds: 3),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.shopping_basket_rounded, size: 20),
-                  label: const Text('Add to Basket', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 52),
-                    backgroundColor: AppTheme.primaryGreen,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+          child: DsButton(
+            label: 'Add to Basket',
+            icon: Icons.shopping_basket_rounded,
+            onPressed: () {
+              ref.read(appStateProvider.notifier).addToBasket(deal);
+              final messenger = ScaffoldMessenger.of(context);
+              messenger.hideCurrentSnackBar();
+              messenger.showSnackBar(
+                SnackBar(
+                  content: const Text('Added to basket!'),
+                  duration: const Duration(seconds: 3),
+                  margin: EdgeInsets.fromLTRB(AppSpace.lg, 0, AppSpace.lg, 96 + bottomInset),
+                  action: SnackBarAction(
+                    label: 'View Basket',
+                    textColor: AppTheme.limeAccent,
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const BasketScreen(isStandalone: true)),
                     ),
                   ),
                 ),
-              ),
-            ],
+              );
+            },
           ),
-        ),
         ),
       ),
     );
   }
+
+  Widget _sectionTitle(String text) => Padding(
+        padding: const EdgeInsets.only(bottom: AppSpace.md),
+        child: Semantics(
+          header: true,
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppTheme.charcoal, letterSpacing: -0.4),
+          ),
+        ),
+      );
 
   Widget _buildHeroVisual({required String imageUrl, required String category}) {
-    final hasImage = imageUrl.trim().isNotEmpty;
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppTheme.lightGreenBg, const Color(0xFFE8F5E9)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      child: hasImage
-          ? CachedNetworkImage(
-              imageUrl: imageUrl,
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
-              placeholder: (context, url) => Container(color: AppTheme.lightGrey),
-              errorWidget: (context, url, error) => Center(
-                child: Icon(
-                  _getIconForCategory(category),
-                  size: 64,
-                  color: AppTheme.primaryGreen,
-                ),
-              ),
-            )
-          : Center(
-              child: Icon(
-                _getIconForCategory(category),
-                size: 64,
-                color: AppTheme.primaryGreen,
-              ),
-            ),
-    );
+    return DsMedia(url: imageUrl.trim(), category: category);
   }
 
-  Widget _buildMiniInfo(IconData icon, String value, String label) {
+  Widget _buildMiniInfo(IconData icon, String value, String label, {DsTone tone = DsTone.neutral}) {
     return Expanded(
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: AppTheme.lightGrey, borderRadius: BorderRadius.circular(10)),
-            child: Icon(icon, size: 16, color: AppTheme.charcoal),
-          ),
-          const SizedBox(width: 12),
+          DsIconBadge(icon: icon, tone: tone, size: 36),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppTheme.charcoal)),
-                Text(label, style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 10, fontWeight: FontWeight.w600)),
+                Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppTheme.charcoal)),
+                const SizedBox(height: AppSpace.xxs),
+                Text(label, style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 12, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
         ],
       ),
     );
-  }
-
-  IconData _getIconForCategory(String category) {
-    switch (category) {
-      case 'Bakery Pack':
-        return Icons.bakery_dining_rounded;
-      case 'Restaurant Meal':
-        return Icons.restaurant_rounded;
-      case 'Fruit & Vegetable Pack':
-        return Icons.shopping_basket_rounded;
-      case 'Hotel Buffet':
-        return Icons.room_service_rounded;
-      case 'Grocery Bundle':
-        return Icons.local_grocery_store_rounded;
-      case 'Snacks & Drinks':
-        return Icons.local_cafe_rounded;
-      default:
-        return Icons.fastfood_rounded;
-    }
   }
 
   Future<void> _launchDirections(BuildContext context, BusinessProfile? business) async {

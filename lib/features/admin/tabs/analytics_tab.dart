@@ -172,20 +172,24 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
           LayoutBuilder(
             builder: (context, constraints) {
               final width = constraints.maxWidth;
-              final crossAxisCount = width < 600 ? 2 : (width < 1000 ? 3 : 4);
-              final childAspectRatio = width < 420 ? 1.0 : (width < 600 ? 1.25 : (width < 1000 ? 1.5 : 1.7));
+              final crossAxisCount = width < 760 ? 2 : 4;
               final spacing = width < 600 ? 10.0 : 14.0;
-              return GridView.count(
-                crossAxisCount: crossAxisCount,
-                crossAxisSpacing: spacing,
-                mainAxisSpacing: spacing,
+              // Fixed height, so the label, value and badge sit together
+              // instead of being pushed to the card edges.
+              final cardHeight = MediaQuery.sizeOf(context).width >= 1000 ? 152.0 : 120.0;
+              return GridView(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: spacing,
+                  mainAxisSpacing: spacing,
+                  mainAxisExtent: cardHeight,
+                ),
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                childAspectRatio: childAspectRatio,
                 children: [
-                  _statCard("GROSS VOLUME", "GHS ${totalRevenue.toStringAsFixed(2)}", "+12.4%", Icons.payments_outlined, AppTheme.primaryGreen),
+                  _statCard("GROSS VOLUME", "GHS ${totalRevenue.toStringAsFixed(2)}", "Collected orders", Icons.payments_outlined, AppTheme.primaryGreen),
                   _statCard("NET COMMISSION", "GHS ${netProfit.toStringAsFixed(2)}", "${(commissionRate * 100).toInt()}% Rate", Icons.account_balance_outlined, const Color(0xFF2563EB)),
-                  _statCard("MEALS RESCUED", "$mealsRescuedCount Saved", "Eco Impact", Icons.eco_outlined, const Color(0xFFD97706)),
+                  _statCard("MEALS RESCUED", "$mealsRescuedCount Saved", "Eco Impact", Icons.eco_outlined, AppTheme.goldAccent),
                   _statCard("LIVE LISTINGS", "$activeDealsCount Deals", "Active", Icons.storefront_outlined, const Color(0xFF7C3AED)),
                 ],
               );
@@ -202,7 +206,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppTheme.hairline),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,7 +299,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppTheme.hairline),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -365,7 +369,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppTheme.hairline),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -384,7 +388,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
                     const SizedBox(height: 14),
                     _impactRow("Freshwater Saved", "${waterSavedLitres.toStringAsFixed(0)} L", Icons.water_drop_outlined, const Color(0xFF0D9488)),
                     const SizedBox(height: 14),
-                    _impactRow("Landfill Waste Diverted", "${landfillSavedKg.toStringAsFixed(1)} kg", Icons.delete_outline_rounded, const Color(0xFFD97706)),
+                    _impactRow("Landfill Waste Diverted", "${landfillSavedKg.toStringAsFixed(1)} kg", Icons.delete_outline_rounded, AppTheme.goldAccent),
                   ],
                 ),
               );
@@ -417,15 +421,16 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
 
   Widget _statCard(String label, String value, String badge, IconData icon, Color color) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final roomy = MediaQuery.sizeOf(context).width >= 1000;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark
-            ? const Color(0xFF1E293B).withValues(alpha: 0.80)
+            ? AppTheme.charcoal.withValues(alpha: 0.80)
             : Colors.white.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.09) : const Color(0xFFE2E8F0),
+          color: isDark ? Colors.white.withValues(alpha: 0.09) : AppTheme.hairline,
           width: 1,
         ),
         boxShadow: [
@@ -462,7 +467,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -472,10 +477,10 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
                       label,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 10,
+                      style: TextStyle(
+                        fontSize: roomy ? 11 : 10,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF94A3B8),
+                        color: const Color(0xFF94A3B8),
                         letterSpacing: 0.8,
                       ),
                     ),
@@ -491,6 +496,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
                   ),
                 ],
               ),
+              SizedBox(height: roomy ? 14 : 8),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -501,16 +507,16 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
                       value,
                       maxLines: 1,
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: roomy ? 26 : 18,
                         fontWeight: FontWeight.w900,
                         color: isDark ? Colors.white : AppTheme.charcoal,
-                        letterSpacing: -0.5,
+                        letterSpacing: roomy ? -0.9 : -0.5,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 3),
+                  SizedBox(height: roomy ? 6 : 3),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    padding: EdgeInsets.symmetric(horizontal: roomy ? 9 : 7, vertical: roomy ? 3 : 2),
                     decoration: BoxDecoration(
                       color: color.withValues(alpha: isDark ? 0.2 : 0.1),
                       borderRadius: BorderRadius.circular(6),
@@ -520,7 +526,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 9.5,
+                        fontSize: roomy ? 11 : 9.5,
                         fontWeight: FontWeight.w800,
                         color: color,
                       ),
@@ -539,7 +545,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppTheme.cream,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFF1F5F9)),
       ),
@@ -673,7 +679,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
               showTitles: true,
               reservedSize: narrow ? 36 : 48,
               getTitlesWidget: (val, meta) {
-                if (val == 0) return const SizedBox.shrink();
+                if (val == 0 || val == meta.max) return const SizedBox.shrink();
                 if (val >= 1000) {
                   return Text(
                     '${(val / 1000).toStringAsFixed(1)}k',
@@ -695,8 +701,10 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: narrow ? 30 : 38,
+              interval: 1,
               getTitlesWidget: (val, meta) {
                 final idx = val.toInt();
+                if (val != idx.toDouble()) return const SizedBox.shrink();
                 if (idx >= 0 && idx < dayLabels.length) {
                   return Padding(
                     padding: const EdgeInsets.only(top: 10),
@@ -771,7 +779,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
               showTitles: true,
               reservedSize: narrow ? 36 : 48,
               getTitlesWidget: (val, meta) {
-                if (val == 0) return const SizedBox.shrink();
+                if (val == 0 || val == meta.max) return const SizedBox.shrink();
                 if (val >= 1000) {
                   return Text(
                     '${(val / 1000).toStringAsFixed(1)}k',
@@ -793,8 +801,10 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: narrow ? 30 : 38,
+              interval: 1,
               getTitlesWidget: (val, meta) {
                 final idx = val.toInt();
+                if (val != idx.toDouble()) return const SizedBox.shrink();
                 if (idx >= 0 && idx < dayLabels.length) {
                   return Padding(
                     padding: const EdgeInsets.only(top: 8),
@@ -832,7 +842,7 @@ class _TabAnalyticsState extends ConsumerState<TabAnalytics> {
                 backDrawRodData: BackgroundBarChartRodData(
                   show: true,
                   toY: maxY,
-                  color: const Color(0xFFF8FAFC),
+                  color: AppTheme.cream,
                 ),
               ),
             ],

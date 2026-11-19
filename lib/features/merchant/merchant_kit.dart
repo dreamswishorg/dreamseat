@@ -25,16 +25,16 @@ const List<MTab> kMerchantNavTabs = [MTab.home, MTab.orders, MTab.listings, MTab
 class MK {
   MK._();
 
-  static Color get canvas => kIsWeb ? Colors.transparent : AppTheme.lightGrey;
+  static Color get canvas => kIsWeb ? Colors.transparent : AppTheme.cream;
   static const Color ink = AppTheme.charcoal; // #1E293B
   static const Color inkSoft = AppTheme.mutedGrey; // #64748B
   static const Color inkFaint = Color(0xFF94A3B8);
-  static const Color line = Color(0xFFE2E8F0);
+  static const Color line = AppTheme.hairline;
   static const Color lineSoft = Color(0xFFF1F5F9);
   static const Color surface = Colors.white;
-  static const Color surfaceAlt = Color(0xFFF8FAFC);
+  static const Color surfaceAlt = AppTheme.cream;
   static const Color brand = AppTheme.primaryGreen; // #2E7D32
-  static const Color brandDeep = Color(0xFF1B5E20);
+  static const Color brandDeep = AppTheme.deepGreen;
   static const Color brandGlow = AppTheme.secondaryGreen; // #4CAF50
   static const Color brandTint = AppTheme.lightGreenBg; // #E8F5E9
   static const Color amber = AppTheme.warningOrange; // #F59E0B
@@ -46,8 +46,8 @@ class MK {
   static const Color danger = AppTheme.errorRed; // #EF4444
   static const Color dangerTint = Color(0xFFFEF2F2);
 
-  static const double rHero = 26;
-  static const double rLg = 22;
+  static const double rHero = 32;
+  static const double rLg = 24;
   static const double rMd = 16;
   static const double rSm = 12;
   static const double rXs = 8;
@@ -65,11 +65,7 @@ class MK {
       ];
 
   /// Same hero treatment as the customer portal banners.
-  static const LinearGradient heroGradient = LinearGradient(
-    colors: [brand, brandDeep],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
+  static const LinearGradient heroGradient = AppTheme.heroGradient;
 
   static String money(num value) => 'GHS ${AppTheme.formatPrice(value)}';
 
@@ -1509,6 +1505,11 @@ class MSearchField extends StatelessWidget {
                 decoration: InputDecoration(
                   isDense: true,
                   border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
+                  filled: false,
                   hintText: hint,
                   hintStyle: const TextStyle(fontSize: 13.5, color: MK.inkSoft, fontWeight: FontWeight.w600),
                 ),

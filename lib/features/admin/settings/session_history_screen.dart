@@ -34,7 +34,7 @@ class SessionHistoryScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? const Color(0xFF0F172A) : AppTheme.cream,
       appBar: AppBar(
         title: const Text('Active & Past Sessions', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
@@ -57,12 +57,12 @@ class SessionHistoryScreen extends StatelessWidget {
               return Container(
                 padding: EdgeInsets.all(isMobile ? 16 : 20),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  color: isDark ? AppTheme.charcoal : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isActive
                         ? AppTheme.primaryGreen.withValues(alpha: 0.5)
-                        : (isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFE2E8F0)),
+                        : (isDark ? Colors.white.withValues(alpha: 0.05) : AppTheme.hairline),
                   ),
                   boxShadow: [
                     BoxShadow(

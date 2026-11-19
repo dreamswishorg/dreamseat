@@ -91,6 +91,11 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
                 hintStyle: const TextStyle(fontSize: 12.5, color: AppTheme.mutedGrey),
                 prefixIcon: const Icon(Icons.search_rounded, size: 18, color: AppTheme.mutedGrey),
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+                filled: false,
                 contentPadding: const EdgeInsets.symmetric(vertical: 11),
               ),
             ),
@@ -319,9 +324,9 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: AppTheme.cream,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: AppTheme.hairline),
                     ),
                     child: Row(
                       children: [
@@ -342,7 +347,7 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            b.isApproved ? "✅ VERIFIED & APPROVED" : "⌛ PENDING APPROVAL",
+                            b.isApproved ? "VERIFIED & APPROVED" : "PENDING APPROVAL",
                             style: TextStyle(
                               fontSize: 10.5,
                               fontWeight: FontWeight.w900,
@@ -527,10 +532,10 @@ class _TabApprovalsState extends ConsumerState<TabApprovals> {
                                   Container(
                                     padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFD97706).withValues(alpha: 0.12),
+                                      color: AppTheme.goldAccent.withValues(alpha: 0.12),
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Icon(Icons.file_upload_outlined, color: Color(0xFFD97706), size: 48),
+                                    child: const Icon(Icons.file_upload_outlined, color: AppTheme.goldAccent, size: 48),
                                   ),
                                   const SizedBox(height: 16),
                                   const Text(
@@ -665,7 +670,7 @@ class _KycDocVaultCard extends StatelessWidget {
               height: 160,
               margin: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: AppTheme.cream,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: context.borderColor),
               ),
@@ -696,17 +701,17 @@ class _KycDocVaultCard extends StatelessWidget {
                     // Unuploaded State Placeholder
                     Container(
                       padding: const EdgeInsets.all(14),
-                      color: const Color(0xFFF8FAFC),
+                      color: AppTheme.cream,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFD97706).withValues(alpha: 0.1),
+                              color: AppTheme.goldAccent.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.file_upload_outlined, color: Color(0xFFD97706), size: 28),
+                            child: const Icon(Icons.file_upload_outlined, color: AppTheme.goldAccent, size: 28),
                           ),
                           const SizedBox(height: 10),
                           Text(
@@ -719,7 +724,7 @@ class _KycDocVaultCard extends StatelessWidget {
                           const SizedBox(height: 4),
                           const Text(
                             "NO ATTACHMENT YET",
-                            style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: Color(0xFFD97706), letterSpacing: 0.5),
+                            style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: AppTheme.goldAccent, letterSpacing: 0.5),
                           ),
                           const SizedBox(height: 4),
                           const Text(
@@ -758,7 +763,7 @@ class _KycDocVaultCard extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                       decoration: BoxDecoration(
-                        color: hasUploadedImage ? AppTheme.primaryGreen : const Color(0xFFD97706),
+                        color: hasUploadedImage ? AppTheme.primaryGreen : AppTheme.goldAccent,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(

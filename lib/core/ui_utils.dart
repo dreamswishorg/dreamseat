@@ -22,7 +22,7 @@ AppBar buildCustomerAppBar({
   List<Widget>? extraActions,
 }) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
-  final appBarBg = isDark ? const Color(0xFF0F172A) : Colors.white;
+  final appBarBg = isDark ? const Color(0xFF0F172A) : AppTheme.cream;
 
   return AppBar(
     backgroundColor: appBarBg,
@@ -41,7 +41,7 @@ AppBar buildCustomerAppBar({
       child: Divider(
         height: 1,
         thickness: 1,
-        color: AppTheme.charcoal.withValues(alpha: 0.05),
+        color: AppTheme.hairline,
       ),
     ),
   );
@@ -121,20 +121,20 @@ Widget buildCustomerAvatarMenuAnchor({
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Center(
                         child: Text(
-                          initials.isNotEmpty ? initials : '👤',
+                          initials.isNotEmpty ? initials : '?',
                           style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFC2410C), fontSize: 13),
                         ),
                       ),
                       errorWidget: (context, url, error) => Center(
                         child: Text(
-                          initials.isNotEmpty ? initials : '👤',
+                          initials.isNotEmpty ? initials : '?',
                           style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFC2410C), fontSize: 13),
                         ),
                       ),
                     ),
                   )
                 : Text(
-                    initials.isNotEmpty ? initials : '👤',
+                    initials.isNotEmpty ? initials : '?',
                     style: TextStyle(
                       color: isDark ? AppTheme.primaryGreen : const Color(0xFFC2410C),
                       fontWeight: FontWeight.bold,

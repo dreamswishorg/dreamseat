@@ -22,34 +22,41 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
   String _priority = 'standard'; // 'standard', 'urgent', 'promo'
   bool _isLoading = false;
 
+  static const List<IconData> _templateIcons = [
+    Icons.bolt_rounded,
+    Icons.campaign_rounded,
+    Icons.warning_amber_rounded,
+    Icons.celebration_rounded,
+  ];
+
   final List<Map<String, String>> _templates = [
     {
       'title': 'Flash Surplus Drop Live! 🔥',
       'message': 'Surplus meals are ready for rescue across top neighborhood kitchens at up to 70% off. Claim yours before they sell out!',
       'audience': 'customers',
       'priority': 'promo',
-      'label': '⚡ Flash Surplus Drop',
+      'label': 'Flash Surplus Drop',
     },
     {
       'title': 'Holiday Operations & Hours 📢',
       'message': 'Please review holiday dispatch schedules and kitchen pickup cut-off times for this upcoming long weekend.',
       'audience': 'all',
       'priority': 'standard',
-      'label': '📢 Holiday Schedule',
+      'label': 'Holiday Schedule',
     },
     {
       'title': 'Scheduled Core Maintenance 🚨',
       'message': 'DreamEats systems will undergo scheduled maintenance tonight at 02:00 UTC. Expected downtime is under 15 minutes.',
       'audience': 'all',
       'priority': 'urgent',
-      'label': '🚨 System Maintenance',
+      'label': 'System Maintenance',
     },
     {
       'title': 'New Kitchen Hubs Onboarded! 🎉',
       'message': 'Explore 12 newly approved artisan bakeries and local eateries now live in your delivery zone.',
       'audience': 'customers',
       'priority': 'promo',
-      'label': '🎉 New Hubs Live',
+      'label': 'New Hubs Live',
     },
   ];
 
@@ -161,7 +168,7 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.hairline),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -249,7 +256,7 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
             children: [
               _headerStat("AUDIENCE REACH", "$totalReach Total", Icons.groups_rounded, const Color(0xFF2563EB)),
               _headerStat("CUSTOMERS", "$activeCustomers Savers", Icons.person_rounded, AppTheme.primaryGreen),
-              _headerStat("MERCHANTS", "${state.businesses.length} Kitchens", Icons.storefront_rounded, const Color(0xFFD97706)),
+              _headerStat("MERCHANTS", "${state.businesses.length} Kitchens", Icons.storefront_rounded, AppTheme.goldAccent),
               _headerStat("CAMPAIGNS", "${state.broadcasts.length} Sent", Icons.send_rounded, const Color(0xFF7C3AED)),
             ],
           ),
@@ -279,7 +286,7 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
               style: const TextStyle(
                 fontSize: 8.5,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF64748B),
+                color: AppTheme.mutedGrey,
                 letterSpacing: 0.6,
               ),
             ),
@@ -321,10 +328,12 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
           child: Row(
-            children: _templates.map((t) {
+            children: _templates.asMap().entries.map((e) {
+              final t = e.value;
               return Padding(
                 padding: const EdgeInsets.only(right: 10),
                 child: ActionChip(
+                  avatar: Icon(_templateIcons[e.key % _templateIcons.length], size: 18, color: AppTheme.primaryGreen),
                   onPressed: () => _applyTemplate(t),
                   backgroundColor: context.cardColor,
                   side: BorderSide(color: context.borderColor),
@@ -756,7 +765,7 @@ class _TabBroadcastsState extends ConsumerState<TabBroadcasts> {
                   : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: context.isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0),
+                color: context.isDark ? Colors.white.withValues(alpha: 0.1) : AppTheme.hairline,
               ),
               boxShadow: [
                 BoxShadow(

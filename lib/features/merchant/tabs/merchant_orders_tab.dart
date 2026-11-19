@@ -6,6 +6,7 @@ import '../../../models/models.dart';
 import '../../../providers/app_state.dart';
 import '../merchant_kit.dart';
 import '../services/merchant_export_service.dart';
+import '../../../core/theme.dart';
 
 class MerchantOrdersTab extends ConsumerStatefulWidget {
   final BusinessProfile business;
@@ -466,7 +467,7 @@ class _MerchantOrdersTabState extends ConsumerState<MerchantOrdersTab> {
       'Payout Status',
     ];
     final rows = orders.map((o) => [
-      o.id.substring(0, 8).toUpperCase(),
+      o.id.shortId(8).toUpperCase(),
       o.collectionCode,
       o.dealTitle,
       o.customerName,

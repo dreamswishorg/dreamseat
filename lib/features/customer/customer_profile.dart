@@ -11,6 +11,9 @@ import '../../core/ui_utils.dart';
 import '../../providers/app_state.dart';
 import '../../services/supabase_service.dart';
 import 'customer_settings_screen.dart';
+import 'order_history_screen.dart';
+import 'favorites_screen.dart';
+import 'loyalty_referral_screen.dart';
 import 'privacy_security_screen.dart';
 import '../common/help_support_screen.dart';
 
@@ -69,13 +72,13 @@ class _CustomerProfileScreenState
         String errMsg = e.toString().replaceAll('Exception: ', '');
         final lower = errMsg.toLowerCase();
         if (lower.contains('bucket not found')) {
-          errMsg = "⚠️ Supabase Bucket Missing:\nIn your Supabase Dashboard, go to Storage -> New Bucket -> Name it 'user-avatars' and toggle Public.";
+          errMsg = "Supabase Bucket Missing:\nIn your Supabase Dashboard, go to Storage -> New Bucket -> Name it 'user-avatars' and toggle Public.";
         } else if (lower.contains('violates row-level security') || lower.contains('403') || lower.contains('unauthorized')) {
-          errMsg = "🔒 Supabase Storage RLS Policy Blocked Upload:\nPlease open your Supabase Dashboard SQL Editor and run the script located at 'supabase/FIX_ALL_DATABASE_AND_STORAGE_ERRORS.sql' to allow file uploads.";
+          errMsg = "Supabase Storage RLS Policy Blocked Upload:\nPlease open your Supabase Dashboard SQL Editor and run the script located at 'supabase/FIX_ALL_DATABASE_AND_STORAGE_ERRORS.sql' to allow file uploads.";
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               title: const Row(
                 children: [
                   Icon(Icons.security_rounded, color: AppTheme.errorRed),
@@ -116,7 +119,7 @@ class _CustomerProfileScreenState
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (_) => Padding(
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
@@ -188,7 +191,7 @@ class _CustomerProfileScreenState
     final avatarUrl = user?.avatarUrl;
 
     return Scaffold(
-      backgroundColor: AppTheme.lightGrey,
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -362,7 +365,7 @@ class _CustomerProfileScreenState
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
                 gradient: const LinearGradient(
-                  colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
+                  colors: [AppTheme.primaryGreen, AppTheme.deepGreen],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -403,7 +406,7 @@ class _CustomerProfileScreenState
                               horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
@@ -489,12 +492,42 @@ class _CustomerProfileScreenState
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
                 border: Border.all(
                     color: AppTheme.charcoal.withValues(alpha: 0.05)),
               ),
               child: Column(
                 children: [
+                  _ProfileTile(
+                    icon: Icons.receipt_long_rounded,
+                    label: 'Order History',
+                    subtitle: 'Past orders, receipts, rate a meal',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const OrderHistoryScreen()),
+                    ),
+                  ),
+                  _Divider(),
+                  _ProfileTile(
+                    icon: Icons.favorite_rounded,
+                    label: 'My Favorites',
+                    subtitle: 'Kitchens you have saved',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+                    ),
+                  ),
+                  _Divider(),
+                  _ProfileTile(
+                    icon: Icons.card_giftcard_rounded,
+                    label: 'Rewards & Referrals',
+                    subtitle: 'Redeem DreamPoints, invite friends',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoyaltyReferralScreen()),
+                    ),
+                  ),
+                  _Divider(),
                   _ProfileTile(
                     icon: Icons.settings_outlined,
                     label: 'Account Settings',
@@ -536,7 +569,7 @@ class _CustomerProfileScreenState
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
                 border: Border.all(
                     color: AppTheme.charcoal.withValues(alpha: 0.05)),
               ),
@@ -605,7 +638,7 @@ class _ProfileTile extends StatelessWidget {
     final c = color ?? AppTheme.charcoal;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(24),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
@@ -616,7 +649,7 @@ class _ProfileTile extends StatelessWidget {
               decoration: BoxDecoration(
                 color: (color ?? AppTheme.primaryGreen)
                     .withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: c, size: 18),
             ),
@@ -670,7 +703,7 @@ class _AvatarOptionTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
           border:
               Border.all(color: color.withValues(alpha: 0.15)),
         ),
