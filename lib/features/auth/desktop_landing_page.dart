@@ -722,7 +722,8 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(flex: isDesktop ? 2 : 3, child: brandBlock),
-                for (final c in columns) Expanded(child: c),
+                for (var i = 0; i < columns.length; i++)
+                  Expanded(flex: i == columns.length - 1 ? 2 : 1, child: columns[i]),
               ],
             ),
             const SizedBox(height: 40),
