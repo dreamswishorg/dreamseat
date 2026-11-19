@@ -126,7 +126,7 @@ class CustomerHomeScreen extends ConsumerStatefulWidget {
 
 class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   String _selectedCategory = 'All';
-  String _selectedQuickFilter = 'Pickup';
+  String _selectedQuickFilter = 'All';
   String _priceSort = 'none'; // 'none', 'asc', 'desc'
 
   @override
@@ -231,13 +231,15 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
       }
 
       // Quick filter matching
-      if (_selectedQuickFilter == '4.5+ Rating') {
-        return deal.originalPrice > 0;
-      } else if (_selectedQuickFilter == '50%+ Off' || _selectedQuickFilter == 'Offers') {
-        return deal.discountedPrice <= deal.originalPrice * 0.6;
-      } else if (_selectedQuickFilter == 'Under 30 min') {
-        final dist = _distanceTo(deal, businesses, userLocation);
-        return dist <= 3.5;
+      if (_selectedQuickFilter == 'Top Rated') {
+        for (final b in businesses) {
+          if (b.id == deal.businessId) return b.rating >= 4.5;
+        }
+        return false;
+      } else if (_selectedQuickFilter == 'Big Savings') {
+        return deal.originalPrice > 0 && deal.discountedPrice <= deal.originalPrice * 0.5;
+      } else if (_selectedQuickFilter == 'Nearby') {
+        return _distanceTo(deal, businesses, userLocation) <= 3.5;
       }
 
       return true;
@@ -894,11 +896,10 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
             : 'Price';
 
     final pills = <(String, IconData)>[
-      ('Pickup', Icons.directions_walk_rounded),
-      ('Delivery', Icons.two_wheeler_rounded),
-      ('Under 30 min', Icons.schedule_rounded),
-      ('4.5+ Rating', Icons.star_rounded),
-      ('50%+ Off', Icons.sell_rounded),
+      ('All', Icons.apps_rounded),
+      ('Nearby', Icons.near_me_rounded),
+      ('Top Rated', Icons.star_rounded),
+      ('Big Savings', Icons.sell_rounded),
       (priceLabel, Icons.swap_vert_rounded),
     ];
 
@@ -930,7 +931,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                     _priceSort = 'none';
                   }
                 } else {
-                  _selectedQuickFilter = _selectedQuickFilter == pill ? 'Pickup' : pill;
+                  _selectedQuickFilter = _selectedQuickFilter == pill ? 'All' : pill;
                 }
               });
             },

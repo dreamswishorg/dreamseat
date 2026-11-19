@@ -41,7 +41,6 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
   Timer? _motionTimer;
 
   late String _riderName;
-  final String _riderRating = '4.5(102+)';
   late String _riderPhone;
 
   final List<Map<String, dynamic>> _messages = [
@@ -56,7 +55,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
   void initState() {
     super.initState();
     _riderName = widget.initialRiderName ?? (widget.order?.courierName?.isNotEmpty == true ? widget.order!.courierName! : 'Assigned Courier');
-    _riderPhone = widget.order?.courierPhone?.isNotEmpty == true ? widget.order!.courierPhone! : '+233 24 567 8901';
+    _riderPhone = widget.order?.courierPhone?.isNotEmpty == true ? widget.order!.courierPhone! : '';
     _routePoints = [
       _restaurantLoc,
       LatLng(5.5650, -0.1790),
@@ -455,6 +454,12 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
   }
 
   void _showCallDialog() {
+    if (_riderPhone.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("The courier's phone number isn't available yet.")),
+      );
+      return;
+    }
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -980,17 +985,6 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                               const SizedBox(height: 3),
                               Row(
                                 children: [
-                                  const Icon(Icons.star_rounded, size: 14, color: AppTheme.warningOrange),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    _riderRating,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.charcoal,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
                                   Container(
                                     width: 6,
                                     height: 6,
@@ -1001,7 +995,7 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    status == 'out_for_delivery' ? '$_etaMinutes mins' : status.replaceAll('_', ' '),
+                                    status == 'out_for_delivery' ? 'About $_etaMinutes mins' : status.replaceAll('_', ' '),
                                     style: const TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
