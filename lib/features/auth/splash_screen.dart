@@ -303,8 +303,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
-    final screenW = MediaQuery.of(context).size.width;
-
     return Scaffold(
       backgroundColor: AppTheme.deepGreen,
       body: Stack(
@@ -366,12 +364,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                           children: [
                             // Beautiful balanced White & Green Logo Container
                             Container(
-                              width: 130,
-                              height: 130,
+                              width: 92,
+                              height: 92,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: Colors.white,
-                                border: Border.all(color: AppTheme.limeAccent, width: 3.5),
+                                border: Border.all(color: AppTheme.limeAccent, width: 3),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withValues(alpha: 0.30),
@@ -400,23 +398,23 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 32),
+                            const SizedBox(height: 24),
 
                             // Clean Modern Typography
                             Text(
                               'DREAMEATS',
                               style: TextStyle(
-                                fontSize: (screenW * 0.09).clamp(28.0, 40.0),
+                                fontSize: 18,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.white,
-                                letterSpacing: 3.5,
+                                letterSpacing: 5,
                               ),
                             ),
                             const SizedBox(height: 8),
 
                             // Green Accent Divider
                             Container(
-                              width: 48,
+                              width: 120,
                               height: 4,
                               decoration: BoxDecoration(
                                 color: AppTheme.limeAccent,

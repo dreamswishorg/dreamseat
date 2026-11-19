@@ -2115,7 +2115,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
           ],
         );
       }
-    } else if (_suRole == 'business') {
+    } else if (_suRole == 'merchant') {
       // Merchant Flow
       if (_suStep == 0) {
         // Merchant Step 0: Contact & Security
