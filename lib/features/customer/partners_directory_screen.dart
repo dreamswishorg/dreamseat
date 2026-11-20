@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
+import '../../core/ds_kit.dart';
 import '../../core/responsive.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
@@ -64,7 +65,7 @@ class _PartnersDirectoryScreenState extends ConsumerState<PartnersDirectoryScree
     }).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.cream,
       body: SafeArea(
         child: ResponsiveCenter(
           maxWidth: 1100,
@@ -76,14 +77,28 @@ class _PartnersDirectoryScreenState extends ConsumerState<PartnersDirectoryScree
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Our Partners",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        color: AppTheme.charcoal,
-                        letterSpacing: -0.6,
-                      ),
+                    Row(
+                      children: [
+                        if (Navigator.canPop(context))
+                          IconButton(
+                            tooltip: 'Back',
+                            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                            padding: EdgeInsets.zero,
+                            icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.charcoal),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        const Expanded(
+                          child: Text(
+                            'Our Partners',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.charcoal,
+                              letterSpacing: -0.6,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     const Text(
@@ -128,7 +143,7 @@ class _PartnersDirectoryScreenState extends ConsumerState<PartnersDirectoryScree
                     const SizedBox(height: 14),
                     // Category Filter Chips
                     SizedBox(
-                      height: 38,
+                      height: 44,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         physics: const BouncingScrollPhysics(),
@@ -137,25 +152,11 @@ class _PartnersDirectoryScreenState extends ConsumerState<PartnersDirectoryScree
                           final cat = _categories[idx];
                           final isSelected = cat == _selectedCategory;
                           return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: FilterChip(
-                              label: Text(cat),
+                            padding: const EdgeInsets.only(right: AppSpace.sm),
+                            child: DsFilterChip(
+                              label: cat,
                               selected: isSelected,
-                              onSelected: (_) => setState(() => _selectedCategory = cat),
-                              labelStyle: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                                color: isSelected ? Colors.white : AppTheme.charcoal,
-                              ),
-                              backgroundColor: Colors.white,
-                              selectedColor: AppTheme.primaryGreen,
-                              checkmarkColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                                side: BorderSide(
-                                  color: isSelected ? AppTheme.primaryGreen : AppTheme.charcoal.withValues(alpha: 0.1),
-                                ),
-                              ),
+                              onTap: () => setState(() => _selectedCategory = cat),
                             ),
                           );
                         },
@@ -164,7 +165,7 @@ class _PartnersDirectoryScreenState extends ConsumerState<PartnersDirectoryScree
                   ],
                 ),
               ),
-              const Divider(height: 1, color: Color(0xFFE2E8F0)),
+              const Divider(height: 1, color: AppTheme.hairline),
 
               // Partners List
               Expanded(
@@ -247,7 +248,7 @@ class _PartnerCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.06)),
           boxShadow: const [
             BoxShadow(

@@ -38,7 +38,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("🎉 Success! Referral credit added to your account + 50 DreamPoints!"),
+            content: Text("Success! Referral credit added to your account + 50 DreamPoints!"),
             backgroundColor: AppTheme.primaryGreen,
           ),
         );
@@ -47,7 +47,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("❌ Invalid or already redeemed referral code."),
+            content: Text("Invalid or already redeemed referral code."),
             backgroundColor: AppTheme.errorRed,
           ),
         );
@@ -64,7 +64,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
         showDialog(
           context: context,
           builder: (context) => Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             backgroundColor: Colors.white,
             child: Padding(
               padding: const EdgeInsets.all(28.0),
@@ -120,7 +120,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
                         backgroundColor: AppTheme.primaryGreen,
                         foregroundColor: Colors.white,
                         minimumSize: const Size(0, 50),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         elevation: 0,
                       ),
                       onPressed: () => Navigator.pop(context),
@@ -137,7 +137,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
       final deficit = pointsCost - stateVal.customerDreamPoints;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("🔒 Need $deficit more points to claim this reward! Rescue more meals to earn points."),
+          content: Text("Need $deficit more points to claim this reward! Rescue more meals to earn points."),
           backgroundColor: AppTheme.warningOrange,
           duration: const Duration(seconds: 4),
         ),
@@ -150,7 +150,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
     final state = ref.watch(appStateProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.cream,
       appBar: buildCustomerAppBar(
         context: context,
         ref: ref,
@@ -334,11 +334,11 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
       width: double.infinity,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
+          colors: [AppTheme.primaryGreen, AppTheme.deepGreen],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: const [
           BoxShadow(
             color: Color(0x332E7D32),
@@ -348,7 +348,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(24),
         child: Stack(
           children: [
             Positioned(
@@ -377,7 +377,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(24),
                         ),
                         child: const Row(
                           children: [
@@ -482,7 +482,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.06)),
         boxShadow: [
           BoxShadow(color: AppTheme.charcoal.withValues(alpha: 0.03), blurRadius: 16, offset: const Offset(0, 6)),
@@ -559,7 +559,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: canClaim ? badgeColor.withValues(alpha: 0.3) : AppTheme.charcoal.withValues(alpha: 0.06), width: canClaim ? 1.5 : 1.0),
         boxShadow: [
           BoxShadow(color: AppTheme.charcoal.withValues(alpha: 0.03), blurRadius: 12, offset: const Offset(0, 5)),
@@ -568,7 +568,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(24),
           onTap: () => _redeemRewardItem(pointsCost, title),
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -599,7 +599,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
                                 color: AppTheme.goldAccent.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: const Text("🌟 EXCLUSIVE MYSTERY", style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w900, color: AppTheme.goldAccent)),
+                              child: const Text("EXCLUSIVE MYSTERY", style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w900, color: AppTheme.goldAccent)),
                             ),
                           Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.charcoal, letterSpacing: -0.3)),
                           const SizedBox(height: 4),
@@ -660,7 +660,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: AppTheme.lightGrey,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Row(
                           children: [
@@ -754,11 +754,11 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
       width: double.infinity,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
+          colors: [AppTheme.primaryGreen, AppTheme.deepGreen],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: const [
           BoxShadow(
             color: Color(0x332E7D32),
@@ -768,7 +768,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(24),
         child: Stack(
           children: [
             Positioned(
@@ -855,7 +855,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.06)),
             boxShadow: [
               BoxShadow(color: AppTheme.charcoal.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
@@ -887,7 +887,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
                       onTap: () {
                         Clipboard.setData(ClipboardData(text: referralCode));
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("✅ Code copied to clipboard!"), backgroundColor: AppTheme.primaryGreen),
+                          const SnackBar(content: Text("Code copied to clipboard!"), backgroundColor: AppTheme.primaryGreen),
                         );
                       },
                       borderRadius: BorderRadius.circular(8),
@@ -908,13 +908,13 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
                     backgroundColor: AppTheme.primaryGreen,
                     foregroundColor: Colors.white,
                     minimumSize: const Size(0, 48),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     elevation: 0,
                   ),
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: "Join DreamEats with my code $referralCode to get 50 Dream Points + discount on your first food rescue package!\nhttps://dreameats.app"));
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("🚀 Invite message copied! Ready to paste in WhatsApp."), backgroundColor: AppTheme.primaryGreen),
+                      const SnackBar(content: Text("Invite message copied! Ready to paste in WhatsApp."), backgroundColor: AppTheme.primaryGreen),
                     );
                   },
                   icon: const Icon(Icons.share_rounded, size: 18),
@@ -938,7 +938,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.06)),
           ),
           child: Form(
@@ -955,7 +955,7 @@ class _LoyaltyReferralScreenState extends ConsumerState<LoyaltyReferralScreen> w
                       hintStyle: const TextStyle(color: AppTheme.mutedGrey, fontSize: 13, fontWeight: FontWeight.normal),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
+                      fillColor: AppTheme.cream,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     ),
                     validator: (val) => val!.trim().isEmpty ? 'Enter code' : null,

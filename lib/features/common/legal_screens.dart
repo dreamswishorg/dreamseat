@@ -35,11 +35,11 @@ class TermsOfServiceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final bgColor = isDark ? const Color(0xFF0F172A) : AppTheme.cream;
+    final cardBg = isDark ? AppTheme.charcoal : Colors.white;
     final primaryText = isDark ? Colors.white : AppTheme.charcoal;
     final secondaryText = isDark ? const Color(0xFF94A3B8) : AppTheme.mutedGrey;
-    final borderColor = isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0);
+    final borderColor = isDark ? Colors.white.withValues(alpha: 0.08) : AppTheme.hairline;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -297,11 +297,11 @@ class PrivacyPolicyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final bgColor = isDark ? const Color(0xFF0F172A) : AppTheme.cream;
+    final cardBg = isDark ? AppTheme.charcoal : Colors.white;
     final primaryText = isDark ? Colors.white : AppTheme.charcoal;
     final secondaryText = isDark ? const Color(0xFF94A3B8) : AppTheme.mutedGrey;
-    final borderColor = isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0);
+    final borderColor = isDark ? Colors.white.withValues(alpha: 0.08) : AppTheme.hairline;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -536,7 +536,7 @@ Widget _buildLegalCard({
     margin: const EdgeInsets.only(bottom: 16),
     padding: const EdgeInsets.all(24),
     decoration: BoxDecoration(
-      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+      color: isDark ? AppTheme.charcoal : Colors.white,
       borderRadius: BorderRadius.circular(20),
       border: Border.all(color: borderColor),
     ),
@@ -590,7 +590,7 @@ Widget _buildLegalContactCard(
   return Container(
     padding: const EdgeInsets.all(24),
     decoration: BoxDecoration(
-      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+      color: isDark ? AppTheme.charcoal : Colors.white,
       borderRadius: BorderRadius.circular(20),
       border: Border.all(color: borderColor),
     ),

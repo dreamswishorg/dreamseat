@@ -134,11 +134,11 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
                         decoration: InputDecoration(
                           labelText: 'Category Title',
                           hintText: 'e.g., Traditional Jollof, Fresh Fruit Box',
-                          prefixIcon: const Icon(Icons.label_outline_rounded, size: 19, color: Color(0xFF64748B)),
+                          prefixIcon: const Icon(Icons.label_outline_rounded, size: 19, color: AppTheme.mutedGrey),
                           filled: true,
-                          fillColor: const Color(0xFFF8FAFC),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                          fillColor: AppTheme.cream,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.hairline)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.hairline)),
                           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.8)),
                         ),
                         validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter a name' : null,
@@ -151,7 +151,7 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
                         decoration: InputDecoration(
                           labelText: 'Image Resource URL',
                           hintText: 'https://images.unsplash.com/...',
-                          prefixIcon: const Icon(Icons.link_rounded, size: 19, color: Color(0xFF64748B)),
+                          prefixIcon: const Icon(Icons.link_rounded, size: 19, color: AppTheme.mutedGrey),
                           suffixIcon: currentUrl.isNotEmpty
                               ? IconButton(
                                   icon: const Icon(Icons.clear_rounded, size: 16, color: AppTheme.mutedGrey),
@@ -162,9 +162,9 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
                                 )
                               : null,
                           filled: true,
-                          fillColor: const Color(0xFFF8FAFC),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                          fillColor: AppTheme.cream,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.hairline)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.hairline)),
                           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.8)),
                         ),
                         onChanged: (_) => setDlgState(() {}),
@@ -213,7 +213,7 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: isPicked ? AppTheme.primaryGreen : const Color(0xFFE2E8F0),
+                                    color: isPicked ? AppTheme.primaryGreen : AppTheme.hairline,
                                     width: isPicked ? 2.5 : 1,
                                   ),
                                   boxShadow: isPicked
@@ -270,9 +270,9 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
                         height: 140,
                         width: double.infinity,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: AppTheme.cream,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: AppTheme.hairline),
                         ),
                         clipBehavior: Clip.antiAlias,
                         child: Stack(
@@ -499,7 +499,7 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
                   title: 'Preset Food Photos',
                   value: '${_presetImages.length}',
                   icon: Icons.photo_library_rounded,
-                  color: const Color(0xFFD97706),
+                  color: AppTheme.goldAccent,
                   isCompact: isNarrow,
                 ),
               ];
@@ -532,7 +532,7 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: AppTheme.hairline),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
@@ -545,6 +545,11 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
                       decoration: const InputDecoration(
                         hintText: 'Search categories...',
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        filled: false,
                         hintStyle: TextStyle(fontSize: 13, color: AppTheme.mutedGrey),
                       ),
                       onChanged: (val) => setState(() => _searchQuery = val.trim()),
@@ -571,7 +576,7 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppTheme.hairline),
                 ),
                 child: const Column(
                   children: [
@@ -607,7 +612,7 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: AppTheme.hairline),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.03),
@@ -734,7 +739,7 @@ class _TabCategoriesState extends ConsumerState<TabCategories> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.hairline),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),

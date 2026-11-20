@@ -51,7 +51,7 @@ class RiderPendingScreen extends ConsumerWidget {
                 child: const Icon(
                   Icons.hourglass_top_rounded,
                   size: 44,
-                  color: Color(0xFFD97706),
+                  color: AppTheme.goldAccent,
                 ),
               ),
               const SizedBox(height: 24),
@@ -79,9 +79,9 @@ class RiderPendingScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: AppTheme.cream,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppTheme.hairline),
                 ),
                 child: Column(
                   children: [
@@ -126,7 +126,7 @@ class RiderPendingScreen extends ConsumerWidget {
   Widget _infoRow(IconData icon, String label, String value, {bool isPending = false}) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: isPending ? const Color(0xFFD97706) : AppTheme.charcoal),
+        Icon(icon, size: 18, color: isPending ? AppTheme.goldAccent : AppTheme.charcoal),
         const SizedBox(width: 10),
         Text(label, style: const TextStyle(fontSize: 13, color: AppTheme.mutedGrey, fontWeight: FontWeight.w600)),
         const Spacer(),
@@ -135,7 +135,7 @@ class RiderPendingScreen extends ConsumerWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.bold,
-            color: isPending ? const Color(0xFFD97706) : AppTheme.charcoal,
+            color: isPending ? AppTheme.goldAccent : AppTheme.charcoal,
           ),
         ),
       ],

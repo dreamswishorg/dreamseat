@@ -11,6 +11,7 @@ import '../core/cache_manager.dart';
 import '../core/email_templates.dart';
 import '../core/config.dart';
 import '../services/biometric_service.dart';
+import '../core/theme.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AppState
@@ -1281,7 +1282,7 @@ class AppStateManager extends Notifier<AppState> {
                       : (status == 'cancelled' || status == 'rejected'
                           ? 'Order Not Completed ⚠️'
                           : 'Order Status Update'))));
-      final shortId = order.id.length > 8 ? order.id.substring(0, 8) : order.id;
+      final shortId = order.id.length > 8 ? order.id.shortId(8) : order.id;
       final notifBody =
           'Your pack "${order.dealTitle}" is now ${status.replaceAll('_', ' ')}. #$shortId · code ${order.collectionCode}.';
 
@@ -1717,7 +1718,7 @@ class AppStateManager extends Notifier<AppState> {
 
       await NotificationService().sendDisputeResolvedEmail(
         email: customer.email,
-        ticketId: disputeId.substring(0, 8),
+        ticketId: disputeId.shortId(8),
         resolution: "Your issue has been resolved. If a refund was requested, it is being processed.",
       );
     } catch (_) {}

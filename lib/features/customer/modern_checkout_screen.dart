@@ -7,6 +7,7 @@ import 'package:flutter_paystack_plus/flutter_paystack_plus.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../core/config.dart';
 import '../../core/theme.dart';
+import '../../core/ds_kit.dart';
 import '../../core/responsive.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
@@ -102,7 +103,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('🎉 WELCOME20 applied: Saved GHS 20.00!'),
+          content: Text('WELCOME20 applied: Saved GHS 20.00!'),
           backgroundColor: AppTheme.primaryGreen,
         ),
       );
@@ -113,7 +114,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('🌱 RESCUE10 applied: Saved GHS 10.00!'),
+          content: Text('RESCUE10 applied: Saved GHS 10.00!'),
           backgroundColor: AppTheme.primaryGreen,
         ),
       );
@@ -124,7 +125,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('🛵 Free Delivery Voucher applied!'),
+          content: Text('Free Delivery Voucher applied!'),
           backgroundColor: AppTheme.primaryGreen,
         ),
       );
@@ -132,7 +133,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Invalid promo code. Try WELCOME20 or RESCUE10'),
-          backgroundColor: Color(0xFFEF4444),
+          backgroundColor: AppTheme.errorRed,
         ),
       );
     }
@@ -230,7 +231,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: isWarning ? const Color(0xFFF59E0B) : AppTheme.charcoal,
+        backgroundColor: isWarning ? AppTheme.warningOrange : AppTheme.charcoal,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         content: Row(
           children: [
@@ -357,7 +358,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
@@ -492,7 +493,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (bottomSheetCtx) => Padding(
         padding: EdgeInsets.only(
@@ -542,7 +543,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
                           color: AppTheme.lightGreenBg,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           'GHS ${AppTheme.formatPrice(total)}',
@@ -572,18 +573,18 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                       ),
                       hintText: '024 123 4567',
                       filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
+                      fillColor: AppTheme.cream,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: AppTheme.hairline),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: AppTheme.hairline),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                         borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.8),
                       ),
                     ),
@@ -640,7 +641,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryGreen,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       child: Text(
                         'Send MoMo Prompt • GHS ${AppTheme.formatPrice(total)}',
@@ -719,7 +720,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                   const SizedBox(height: 16),
                   Text(
                     isSuccess
-                        ? 'Payment Approved! 🎉'
+                        ? 'Payment Approved!'
                         : isWaitingUser
                             ? 'Prompt Sent to Phone'
                             : 'Connecting to Paystack...',
@@ -867,7 +868,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
       barrierDismissible: false,
       builder: (otpDlg) => StatefulBuilder(
         builder: (sbContext, setOtpState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: const Text('One-Time Password (OTP)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1042,7 +1043,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Payment was not completed. Please try again.'),
-            backgroundColor: Color(0xFFEF4444),
+            backgroundColor: AppTheme.errorRed,
           ),
         );
         return;
@@ -1114,9 +1115,9 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
     final double finalTotal = (subtotal + _deliveryFee - _discountAmount).clamp(0.0, 999999.0);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.cream,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.charcoal),
@@ -1158,7 +1159,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(24),
                         ),
                         child: const Center(
                           child: Text('Your cart is empty. Add deals to checkout!'),
@@ -1173,7 +1174,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.04),
@@ -1186,7 +1187,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                             children: [
                               // Food Thumbnail
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(16),
                                 child: SizedBox(
                                   width: 68,
                                   height: 68,
@@ -1236,7 +1237,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                                               ? Icons.delete_outline_rounded
                                               : Icons.remove_rounded,
                                           color: item.quantity <= 1
-                                              ? const Color(0xFFEF4444)
+                                              ? AppTheme.errorRed
                                               : AppTheme.charcoal,
                                           onTap: () {
                                             if (item.quantity > 1) {
@@ -1247,7 +1248,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                                           },
                                         ),
                                         Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                                          padding: const EdgeInsets.symmetric(horizontal: 4),
                                           child: Text(
                                             '${item.quantity}',
                                             style: const TextStyle(
@@ -1291,7 +1292,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.04),
@@ -1316,13 +1317,13 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                             children: [
                               Expanded(
                                 child: InkWell(
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(16),
                                   onTap: () => setState(() => _isDelivery = false),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
                                     decoration: BoxDecoration(
-                                      color: !_isDelivery ? AppTheme.lightGreenBg : const Color(0xFFF8FAFC),
-                                      borderRadius: BorderRadius.circular(14),
+                                      color: !_isDelivery ? AppTheme.lightGreenBg : AppTheme.cream,
+                                      borderRadius: BorderRadius.circular(16),
                                       border: Border.all(
                                         color: !_isDelivery ? AppTheme.primaryGreen : Colors.transparent,
                                         width: 1.8,
@@ -1351,13 +1352,13 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: InkWell(
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(16),
                                   onTap: () => setState(() => _isDelivery = true),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
                                     decoration: BoxDecoration(
-                                      color: _isDelivery ? AppTheme.lightGreenBg : const Color(0xFFF8FAFC),
-                                      borderRadius: BorderRadius.circular(14),
+                                      color: _isDelivery ? AppTheme.lightGreenBg : AppTheme.cream,
+                                      borderRadius: BorderRadius.circular(16),
                                       border: Border.all(
                                         color: _isDelivery ? AppTheme.primaryGreen : Colors.transparent,
                                         width: 1.8,
@@ -1410,12 +1411,12 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                                 ),
                                 InkWell(
                                   onTap: _isLocating ? null : _fetchCurrentDeviceLocation,
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(12),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                     decoration: BoxDecoration(
                                       color: AppTheme.primaryGreen.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(12),
                                       border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.25)),
                                     ),
                                     child: Row(
@@ -1560,18 +1561,18 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                                   ],
                                 ),
                                 filled: true,
-                                fillColor: const Color(0xFFF8FAFC),
+                                fillColor: AppTheme.cream,
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide(
-                                    color: _addressValidationError != null ? AppTheme.errorRed : const Color(0xFFE2E8F0),
+                                    color: _addressValidationError != null ? AppTheme.errorRed : AppTheme.hairline,
                                   ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide(
-                                    color: _addressValidationError != null ? AppTheme.errorRed : const Color(0xFFE2E8F0),
+                                    color: _addressValidationError != null ? AppTheme.errorRed : AppTheme.hairline,
                                   ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
@@ -1608,8 +1609,8 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                                 constraints: const BoxConstraints(maxHeight: 220),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: AppTheme.hairline),
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.black.withValues(alpha: 0.08),
@@ -1619,7 +1620,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                                   ],
                                 ),
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(16),
                                   child: ListView.separated(
                                     shrinkWrap: true,
                                     padding: EdgeInsets.zero,
@@ -1718,7 +1719,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.04),
@@ -1737,6 +1738,11 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                                 hintText: 'Enter Promo Code',
                                 hintStyle: TextStyle(fontSize: 13, color: AppTheme.mutedGrey),
                                 border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                errorBorder: InputBorder.none,
+                                disabledBorder: InputBorder.none,
+                                filled: false,
                                 contentPadding: EdgeInsets.symmetric(horizontal: 8),
                               ),
                             ),
@@ -1778,7 +1784,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(22),
+                        borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.04),
@@ -1847,7 +1853,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                           elevation: 4,
                           shadowColor: AppTheme.primaryGreen.withValues(alpha: 0.4),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(28),
+                            borderRadius: BorderRadius.circular(24),
                           ),
                         ),
                         onPressed: () => _onCheckoutPressed(finalTotal, displayItems),
@@ -1875,16 +1881,28 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
     required Color color,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: isTrash ? const Color(0xFFFEE2E2) : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(10),
+    // 44x44 tap target around a 32px visible control.
+    return Semantics(
+      button: true,
+      label: isTrash ? 'Remove item' : (icon == Icons.add_rounded ? 'Increase quantity' : 'Decrease quantity'),
+      child: DsPressable(
+        onTap: onTap,
+        pressedScale: 0.88,
+        child: SizedBox(
+          width: 44,
+          height: 44,
+          child: Center(
+            child: Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: isTrash ? const Color(0xFFFEECEC) : AppTheme.lightGrey,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 18, color: color),
+            ),
+          ),
         ),
-        child: Icon(icon, size: 14, color: color),
       ),
     );
   }
@@ -1909,7 +1927,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
             color: isFree
                 ? AppTheme.primaryGreen
                 : isDiscount
-                    ? const Color(0xFFEF4444)
+                    ? AppTheme.errorRed
                     : AppTheme.charcoal,
           ),
         ),

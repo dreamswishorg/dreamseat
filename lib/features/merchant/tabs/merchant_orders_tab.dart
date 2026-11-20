@@ -6,6 +6,7 @@ import '../../../models/models.dart';
 import '../../../providers/app_state.dart';
 import '../merchant_kit.dart';
 import '../services/merchant_export_service.dart';
+import '../../../core/theme.dart';
 
 class MerchantOrdersTab extends ConsumerStatefulWidget {
   final BusinessProfile business;
@@ -466,7 +467,7 @@ class _MerchantOrdersTabState extends ConsumerState<MerchantOrdersTab> {
       'Payout Status',
     ];
     final rows = orders.map((o) => [
-      o.id.substring(0, 8).toUpperCase(),
+      o.id.shortId(8).toUpperCase(),
       o.collectionCode,
       o.dealTitle,
       o.customerName,
@@ -590,19 +591,19 @@ class _OrderCard extends StatelessWidget {
                   order.collectionCode,
                   style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: MK.ink, letterSpacing: 1.2),
                 ),
-                const SizedBox(width: 12),
-                const Icon(Icons.schedule_rounded, size: 14, color: MK.inkSoft),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    order.trackingNotes?.isNotEmpty == true
-                        ? order.trackingNotes!
-                        : 'Pickup window on the deal',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 10.5, color: MK.inkSoft, fontWeight: FontWeight.w700),
+                if (order.trackingNotes?.isNotEmpty == true) ...[
+                  const SizedBox(width: 12),
+                  const Icon(Icons.notes_rounded, size: 14, color: MK.inkSoft),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      order.trackingNotes!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 10.5, color: MK.inkSoft, fontWeight: FontWeight.w700),
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),

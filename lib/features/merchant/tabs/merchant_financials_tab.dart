@@ -8,6 +8,7 @@ import '../../../providers/app_state.dart';
 import '../merchant_kit.dart';
 import '../services/merchant_export_service.dart';
 import '../theme/merchant_theme.dart';
+import '../../../core/theme.dart';
 
 class MerchantFinancialsTab extends ConsumerStatefulWidget {
   final BusinessProfile business;
@@ -52,7 +53,7 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
       final net = gross * 0.85;
 
       return [
-        o.id.substring(0, 8).toUpperCase(),
+        o.id.shortId(8).toUpperCase(),
         o.timestamp,
         o.customerName,
         o.dealTitle,
@@ -235,7 +236,7 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: const Text(
-                              'FINANCIAL LEDGER & SETTLEMENTS',
+                              'LEDGER & SETTLEMENTS',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -309,7 +310,7 @@ class _MerchantFinancialsTabState extends ConsumerState<MerchantFinancialsTab> {
                     const SizedBox(width: 6),
                     Expanded(
                       child: _buildMetricItem(
-                        'Pending Settlements',
+                        'Pending',
                         'GHS ${pendingPayout.toStringAsFixed(2)}',
                         Icons.hourglass_empty_rounded,
                       ),

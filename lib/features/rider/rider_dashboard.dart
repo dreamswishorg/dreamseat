@@ -73,7 +73,7 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen> wit
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -93,7 +93,7 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen> wit
                   style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppTheme.charcoal),
                 ),
                 Text(
-                  '${user.vehicleType} • ⭐ ${user.rating.toStringAsFixed(1)}',
+                  '${user.vehicleType} • ${user.rating.toStringAsFixed(1)} ★',
                   style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -165,7 +165,7 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen> wit
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: 13,
-                            color: isOnline ? AppTheme.primaryGreen : const Color(0xFF64748B),
+                            color: isOnline ? AppTheme.primaryGreen : AppTheme.mutedGrey,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -206,7 +206,7 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen> wit
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: _statCard('Earnings', 'GHS ${AppTheme.formatPrice(totalEarnings)}', Icons.payments_rounded, const Color(0xFFD97706)),
+                    child: _statCard('Earnings', 'GHS ${AppTheme.formatPrice(totalEarnings)}', Icons.payments_rounded, AppTheme.goldAccent),
                   ),
                 ],
               ),
@@ -259,7 +259,7 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen> wit
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.hairline),
       ),
       child: Row(
         children: [
@@ -336,7 +336,7 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen> wit
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: AppTheme.hairline),
             boxShadow: [
               BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 6, offset: const Offset(0, 2)),
             ],
@@ -349,7 +349,7 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen> wit
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(6)),
-                    child: Text('TRIP #${order.id.substring(0, 8).toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: Color(0xFF2563EB))),
+                    child: Text('TRIP #${order.id.shortId(8).toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: Color(0xFF2563EB))),
                   ),
                   const Spacer(),
                   Text('GHS ${AppTheme.formatPrice(fee)}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.primaryGreen)),
@@ -467,7 +467,7 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen> wit
               const SizedBox(height: 10),
               Text(order.dealTitle, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
               const SizedBox(height: 4),
-              Text('From: ${order.businessName}  ➔  To: ${order.customerName}', style: const TextStyle(fontSize: 12.5, color: AppTheme.mutedGrey)),
+              Text('From: ${order.businessName}  →  To: ${order.customerName}', style: const TextStyle(fontSize: 12.5, color: AppTheme.mutedGrey)),
               const SizedBox(height: 14),
               SizedBox(
                 width: double.infinity,
@@ -515,7 +515,7 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen> wit
           ),
           child: Row(
             children: [
-              const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFFD97706), size: 28),
+              const Icon(Icons.account_balance_wallet_rounded, color: AppTheme.goldAccent, size: 28),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -533,7 +533,7 @@ class _RiderDashboardScreenState extends ConsumerState<RiderDashboardScreen> wit
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFD97706),
+                  backgroundColor: AppTheme.goldAccent,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

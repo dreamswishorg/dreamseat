@@ -4,6 +4,7 @@ import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_ti
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
+import '../../core/ds_kit.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
 
@@ -50,7 +51,7 @@ class _RiderDeliveryScreenState extends ConsumerState<RiderDeliveryScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Update failed: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Update failed: $e'), backgroundColor: AppTheme.errorRed),
         );
       }
     } finally {
@@ -63,7 +64,7 @@ class _RiderDeliveryScreenState extends ConsumerState<RiderDeliveryScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: const Text('Confirm Delivery Proof', style: TextStyle(fontWeight: FontWeight.w900)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -84,14 +85,14 @@ class _RiderDeliveryScreenState extends ConsumerState<RiderDeliveryScreen> {
                 hintText: '••••',
                 counterText: '',
                 filled: true,
-                fillColor: const Color(0xFFF1F5F9),
+                fillColor: AppTheme.lightGrey,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               ),
             ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: AppTheme.lightGreenBg, borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(color: AppTheme.lightGreenBg, borderRadius: BorderRadius.circular(12)),
               child: const Row(
                 children: [
                   Icon(Icons.camera_alt_outlined, size: 16, color: AppTheme.primaryGreen),
@@ -123,21 +124,21 @@ class _RiderDeliveryScreenState extends ConsumerState<RiderDeliveryScreen> {
                 );
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('🎉 Delivery successfully completed! Trip payout credited.'), backgroundColor: AppTheme.primaryGreen),
+                    const SnackBar(content: Text('Delivery successfully completed! Trip payout credited.'), backgroundColor: AppTheme.primaryGreen),
                   );
                   Navigator.pop(context);
                 }
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
+                    SnackBar(content: Text('Failed: $e'), backgroundColor: AppTheme.errorRed),
                   );
                 }
               } finally {
                 if (mounted) setState(() => _isUpdating = false);
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryGreen, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryGreen, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
             child: const Text('Confirm Delivered', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
@@ -169,8 +170,8 @@ class _RiderDeliveryScreenState extends ConsumerState<RiderDeliveryScreen> {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: const Color(0xFFFEE2E2), borderRadius: BorderRadius.circular(10)),
-                    child: const Icon(Icons.report_problem_rounded, color: Colors.red, size: 20),
+                    decoration: BoxDecoration(color: const Color(0xFFFEECEC), borderRadius: BorderRadius.circular(12)),
+                    child: const Icon(Icons.report_problem_rounded, color: AppTheme.errorRed, size: 20),
                   ),
                   const SizedBox(width: 12),
                   const Text('Report Delivery Issue', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
@@ -186,7 +187,7 @@ class _RiderDeliveryScreenState extends ConsumerState<RiderDeliveryScreen> {
                 (reason) {
                   final isSelected = selectedReason == reason;
                   return InkWell(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                     onTap: () => setSheetState(() => selectedReason = reason),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
@@ -194,7 +195,7 @@ class _RiderDeliveryScreenState extends ConsumerState<RiderDeliveryScreen> {
                         children: [
                           Icon(
                             isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                            color: isSelected ? Colors.red : AppTheme.mutedGrey,
+                            color: isSelected ? AppTheme.errorRed : AppTheme.mutedGrey,
                             size: 20,
                           ),
                           const SizedBox(width: 10),
@@ -221,8 +222,8 @@ class _RiderDeliveryScreenState extends ConsumerState<RiderDeliveryScreen> {
                   hintText: 'Additional details for dispatch...',
                   hintStyle: const TextStyle(fontSize: 13),
                   filled: true,
-                  fillColor: const Color(0xFFF8FAFC),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                  fillColor: AppTheme.cream,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.hairline)),
                 ),
                 maxLines: 2,
               ),
@@ -250,7 +251,7 @@ class _RiderDeliveryScreenState extends ConsumerState<RiderDeliveryScreen> {
                     } catch (e) {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error reporting issue: $e'), backgroundColor: Colors.red),
+                          SnackBar(content: Text('Error reporting issue: $e'), backgroundColor: AppTheme.errorRed),
                         );
                       }
                     } finally {
@@ -258,7 +259,7 @@ class _RiderDeliveryScreenState extends ConsumerState<RiderDeliveryScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
+                    backgroundColor: AppTheme.errorRed,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: const Text('Submit Report & Cancel Trip', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -281,14 +282,14 @@ class _RiderDeliveryScreenState extends ConsumerState<RiderDeliveryScreen> {
     final deliveryStatus = liveOrder.deliveryStatus;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
-        title: Text('Trip #${liveOrder.id.substring(0, 8).toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-        backgroundColor: Colors.white,
+        title: Text('Trip #${(liveOrder.id.length > 8 ? liveOrder.id.substring(0, 8) : liveOrder.id).toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17, letterSpacing: -0.3)),
+        backgroundColor: AppTheme.cream,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.warning_amber_rounded, color: Colors.red),
+            icon: const Icon(Icons.warning_amber_rounded, color: AppTheme.errorRed),
             tooltip: 'Report Delivery Issue',
             onPressed: _showReportFailedDialog,
           ),
@@ -328,13 +329,13 @@ class _RiderDeliveryScreenState extends ConsumerState<RiderDeliveryScreen> {
                           point: _restaurantLoc,
                           width: 40,
                           height: 40,
-                          child: const Icon(Icons.storefront_rounded, color: Colors.blue, size: 30),
+                          child: const Icon(Icons.storefront_rounded, color: AppTheme.infoBlue, size: 30),
                         ),
                         Marker(
                           point: _customerLoc,
                           width: 40,
                           height: 40,
-                          child: const Icon(Icons.location_on_rounded, color: Colors.red, size: 32),
+                          child: const Icon(Icons.location_on_rounded, color: AppTheme.errorRed, size: 32),
                         ),
                         Marker(
                           point: _riderLoc,
@@ -358,7 +359,7 @@ class _RiderDeliveryScreenState extends ConsumerState<RiderDeliveryScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, 4)),
                       ],
@@ -367,7 +368,7 @@ class _RiderDeliveryScreenState extends ConsumerState<RiderDeliveryScreen> {
                       children: [
                         Container(
                           padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(color: AppTheme.lightGreenBg, borderRadius: BorderRadius.circular(10)),
+                          decoration: BoxDecoration(color: AppTheme.lightGreenBg, borderRadius: BorderRadius.circular(12)),
                           child: const Icon(Icons.navigation_rounded, color: AppTheme.primaryGreen, size: 20),
                         ),
                         const SizedBox(width: 12),
@@ -395,10 +396,10 @@ class _RiderDeliveryScreenState extends ConsumerState<RiderDeliveryScreen> {
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(8)),
+                          decoration: BoxDecoration(color: AppTheme.infoBlueBg, borderRadius: BorderRadius.circular(8)),
                           child: Text(
                             'GHS ${AppTheme.formatPrice(liveOrder.deliveryFee > 0 ? liveOrder.deliveryFee : 12.0)}',
-                            style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF2563EB), fontSize: 13),
+                            style: const TextStyle(fontWeight: FontWeight.w900, color: AppTheme.infoBlue, fontSize: 13),
                           ),
                         ),
                       ],
@@ -439,16 +440,16 @@ class _RiderDeliveryScreenState extends ConsumerState<RiderDeliveryScreen> {
                     ElevatedButton.icon(
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('📞 Dialing ${liveOrder.customerName}...')),
+                          SnackBar(content: Text('Dialing ${liveOrder.customerName}...')),
                         );
                       },
                       icon: const Icon(Icons.phone, size: 14),
                       label: const Text('Call'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF1F5F9),
+                        backgroundColor: AppTheme.lightGrey,
                         foregroundColor: AppTheme.charcoal,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ],
@@ -459,9 +460,9 @@ class _RiderDeliveryScreenState extends ConsumerState<RiderDeliveryScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: AppTheme.cream,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: AppTheme.hairline),
                   ),
                   child: Row(
                     children: [
@@ -485,59 +486,28 @@ class _RiderDeliveryScreenState extends ConsumerState<RiderDeliveryScreen> {
                 if (_isUpdating)
                   const Center(child: CircularProgressIndicator())
                 else if (deliveryStatus == 'assigned')
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _updateStatus('picked_up'),
-                      icon: const Icon(Icons.check_box_outlined, size: 20),
-                      label: const Text('Confirm Order Picked Up at Restaurant', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryGreen,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                    ),
+                  DsButton(
+                    label: 'Confirm Order Picked Up at Restaurant',
+                    icon: Icons.check_box_outlined,
+                    variant: DsButtonVariant.primary,
+                    onPressed: () => _updateStatus('picked_up'),
                   )
                 else if (deliveryStatus == 'picked_up')
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _updateStatus('in_transit'),
-                      icon: const Icon(Icons.directions_bike_rounded, size: 20),
-                      label: const Text('Start Heading to Customer', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                    ),
+                  DsButton(
+                    label: 'Start Heading to Customer',
+                    icon: Icons.directions_bike_rounded,
+                    variant: DsButtonVariant.dark,
+                    onPressed: () => _updateStatus('in_transit'),
                   )
                 else if (deliveryStatus == 'in_transit')
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton.icon(
-                      onPressed: _showCompleteDialog,
-                      icon: const Icon(Icons.verified_rounded, size: 20),
-                      label: const Text('Arrived & Complete Delivery', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryGreen,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                    ),
+                  DsButton(
+                    label: 'Arrived & Complete Delivery',
+                    icon: Icons.verified_rounded,
+                    variant: DsButtonVariant.primary,
+                    onPressed: _showCompleteDialog,
                   )
                 else
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(12)),
-                    child: Text('Trip status: ${deliveryStatus.toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  ),
+                  DsPill(label: 'Trip status: ${deliveryStatus.toUpperCase()}', tone: DsTone.neutral),
               ],
             ),
           ),

@@ -6,9 +6,12 @@ import '../../core/theme.dart';
 import '../../core/responsive.dart';
 import '../../core/ui_utils.dart';
 import '../../core/branded_empty_state.dart';
+import '../../core/ds_kit.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
 import 'order_track_screen.dart';
+
+enum _OrderFilter { all, active, past }
 
 class OrderHistoryScreen extends ConsumerStatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -20,6 +23,9 @@ class OrderHistoryScreen extends ConsumerStatefulWidget {
 class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
   int _currentPage = 0;
   static const int _itemsPerPage = 10;
+  _OrderFilter _filter = _OrderFilter.all;
+
+  static bool _isActive(Order o) => o.status != 'collected' && o.status != 'cancelled';
 
   @override
   Widget build(BuildContext context) {
@@ -28,16 +34,29 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
       s.orders.where((o) => o.customerId == currentUserId).toList()
     ));
 
-    // Pagination
-    final totalPages = (allMyOrders.length / _itemsPerPage).ceil();
+    final activeCount = allMyOrders.where(_isActive).length;
+    final rescued = allMyOrders.where((o) => o.status == 'collected').toList();
+    final saved = rescued.fold<double>(0, (s, o) => s + (o.originalPrice - o.price).clamp(0, double.infinity));
+
+    final filtered = allMyOrders.where((o) {
+      switch (_filter) {
+        case _OrderFilter.active:
+          return _isActive(o);
+        case _OrderFilter.past:
+          return !_isActive(o);
+        case _OrderFilter.all:
+          return true;
+      }
+    }).toList();
+
+    final totalPages = (filtered.length / _itemsPerPage).ceil();
     if (_currentPage >= totalPages && totalPages > 0) {
       _currentPage = totalPages - 1;
     }
-    
-    final paginatedOrders = allMyOrders.skip(_currentPage * _itemsPerPage).take(_itemsPerPage).toList();
+    final paginatedOrders = filtered.skip(_currentPage * _itemsPerPage).take(_itemsPerPage).toList();
 
     return Scaffold(
-      backgroundColor: AppTheme.lightGrey,
+      backgroundColor: AppTheme.cream,
       appBar: buildCustomerAppBar(
         context: context,
         ref: ref,
@@ -57,45 +76,87 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
             ? _buildEmptyState()
             : Column(
                 children: [
-                  Expanded(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isWide = constraints.maxWidth >= 720;
-                        if (isWide) {
-                          const gap = 16.0;
-                          final cardWidth = (constraints.maxWidth - 40 - gap) / 2;
-                          return ListView(
-                            physics: const BouncingScrollPhysics(),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                            children: [
-                              Wrap(
-                                spacing: gap,
-                                runSpacing: gap,
-                                children: paginatedOrders.map((order) {
-                                  return SizedBox(
-                                    width: cardWidth,
-                                    child: _HoverLift(
-                                      child: _buildOrderCard(context, ref, order, isWide: true),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            ],
-                          );
-                        }
-                        return ListView.builder(
-                          physics: const BouncingScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                          itemCount: paginatedOrders.length,
-                          itemBuilder: (context, index) {
-                            final order = paginatedOrders[index];
-                            return _HoverLift(
-                              child: _buildOrderCard(context, ref, order),
-                            );
-                          },
-                        );
-                      },
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(AppSpace.gutter, AppSpace.md, AppSpace.gutter, 0),
+                    child: Row(
+                      children: [
+                        Expanded(child: DsStatTile(icon: Icons.receipt_long_rounded, value: '${allMyOrders.length}', label: 'Orders')),
+                        const SizedBox(width: AppSpace.sm),
+                        Expanded(child: DsStatTile(icon: Icons.volunteer_activism_rounded, value: '${rescued.length}', label: 'Rescued')),
+                        const SizedBox(width: AppSpace.sm),
+                        Expanded(child: DsStatTile(icon: Icons.savings_rounded, value: AppTheme.formatPrice(saved), label: 'GHS saved')),
+                      ],
                     ),
+                  ),
+                  SizedBox(
+                    height: 56,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpace.gutter, vertical: AppSpace.sm),
+                      children: [
+                        DsFilterChip(
+                          label: 'All (${allMyOrders.length})',
+                          selected: _filter == _OrderFilter.all,
+                          onTap: () => setState(() { _filter = _OrderFilter.all; _currentPage = 0; }),
+                        ),
+                        const SizedBox(width: AppSpace.xs),
+                        DsFilterChip(
+                          label: 'Active ($activeCount)',
+                          selected: _filter == _OrderFilter.active,
+                          onTap: () => setState(() { _filter = _OrderFilter.active; _currentPage = 0; }),
+                        ),
+                        const SizedBox(width: AppSpace.xs),
+                        DsFilterChip(
+                          label: 'Past (${allMyOrders.length - activeCount})',
+                          selected: _filter == _OrderFilter.past,
+                          onTap: () => setState(() { _filter = _OrderFilter.past; _currentPage = 0; }),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: filtered.isEmpty
+                        ? Center(
+                            child: Text(
+                              _filter == _OrderFilter.active ? 'No active orders right now.' : 'No past orders yet.',
+                              style: const TextStyle(color: AppTheme.mutedGrey, fontWeight: FontWeight.w600),
+                            ),
+                          )
+                        : LayoutBuilder(
+                            builder: (context, constraints) {
+                              final isWide = constraints.maxWidth >= 720;
+                              if (isWide) {
+                                const gap = 16.0;
+                                final cardWidth = (constraints.maxWidth - 40 - gap) / 2;
+                                return ListView(
+                                  physics: const BouncingScrollPhysics(),
+                                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+                                  children: [
+                                    Wrap(
+                                      spacing: gap,
+                                      runSpacing: gap,
+                                      children: paginatedOrders.map((order) {
+                                        return SizedBox(
+                                          width: cardWidth,
+                                          child: _HoverLift(
+                                            child: _buildOrderCard(context, ref, order, isWide: true),
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ],
+                                );
+                              }
+                              return ListView.builder(
+                                physics: const BouncingScrollPhysics(),
+                                padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+                                itemCount: paginatedOrders.length,
+                                itemBuilder: (context, index) => _HoverLift(
+                                  child: _buildOrderCard(context, ref, paginatedOrders[index]),
+                                ),
+                              );
+                            },
+                          ),
                   ),
                   if (totalPages > 1) _buildPagination(totalPages),
                 ],
@@ -132,264 +193,162 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
   }
 
   Widget _buildOrderCard(BuildContext context, WidgetRef ref, Order order, {bool isWide = false}) {
-    final dateStr = DateFormat('MMM dd, yyyy • hh:mm a').format(order.timestamp);
-    
-    Color statusColor;
-    String statusText;
-    Color statusBg;
-    IconData statusIcon;
-    
+    final dateStr = DateFormat('MMM d, yyyy • h:mm a').format(order.timestamp);
+
+    final DsTone tone;
+    final String statusText;
+    final IconData statusIcon;
     switch (order.status) {
       case 'preparing':
-        statusColor = const Color(0xFFD97706);
+        tone = DsTone.warn;
         statusText = 'Preparing';
-        statusBg = const Color(0xFFFEF3C7);
         statusIcon = Icons.soup_kitchen_rounded;
         break;
       case 'ready':
       case 'reserved':
-        statusColor = AppTheme.primaryGreen;
-        statusText = 'Ready for Pickup';
-        statusBg = AppTheme.lightGreenBg;
+        tone = DsTone.brand;
+        statusText = 'Ready for pickup';
         statusIcon = Icons.stars_rounded;
         break;
       case 'out_for_delivery':
-        statusColor = const Color(0xFF2563EB);
-        statusText = 'Out for Delivery';
-        statusBg = const Color(0xFFDBEAFE);
+        tone = DsTone.info;
+        statusText = 'Out for delivery';
         statusIcon = Icons.two_wheeler_rounded;
         break;
       case 'collected':
-        statusColor = const Color(0xFF475569);
+        tone = DsTone.neutral;
         statusText = 'Rescued';
-        statusBg = const Color(0xFFF1F5F9);
         statusIcon = Icons.check_circle_rounded;
         break;
       case 'cancelled':
       default:
-        statusColor = const Color(0xFFEF4444);
+        tone = DsTone.danger;
         statusText = 'Cancelled';
-        statusBg = const Color(0xFFFEE2E2);
         statusIcon = Icons.cancel_rounded;
         break;
     }
 
-    final isCollected = order.status == 'collected';
-    final isCancelled = order.status == 'cancelled';
-    final isActive = !isCollected && !isCancelled;
-    final canRate = isCollected && !order.isRated;
+    final isActive = _isActive(order);
+    final canRate = order.status == 'collected' && !order.isRated;
+    final saving = order.originalPrice - order.price;
 
-    return Container(
-      margin: EdgeInsets.only(bottom: isWide ? 0 : 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    return Padding(
+      padding: EdgeInsets.only(bottom: isWide ? 0 : AppSpace.sm),
+      child: DsCard(
+        padding: const EdgeInsets.all(AppSpace.md),
+        onTap: () => isActive
+            ? Navigator.push(context, MaterialPageRoute(builder: (_) => OrderTrackScreen(order: order)))
+            : _showPickupCodeSheet(context, order),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Row: Store Name + Status Badge
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Text(
-                    order.businessName.toUpperCase(),
+                    order.businessName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppTheme.mutedGrey,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.8,
-                    ),
+                    style: const TextStyle(fontSize: 12.5, color: AppTheme.mutedGrey, fontWeight: FontWeight.w700),
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusBg,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(statusIcon, size: 12, color: statusColor),
-                      const SizedBox(width: 4),
-                      Text(
-                        statusText,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                DsPill(label: statusText, icon: statusIcon, tone: tone, compact: true),
               ],
             ),
-            const SizedBox(height: 8),
-
-            // Middle Row: Deal Title & Price
+            const SizedBox(height: AppSpace.xs),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Text(
                     order.dealTitle,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.charcoal,
-                    ),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.charcoal, height: 1.25),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Text(
-                  "GHS ${order.price.toStringAsFixed(2)}",
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                    color: AppTheme.primaryGreen,
-                  ),
+                const SizedBox(width: AppSpace.sm),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      dsPrice(order.price),
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.primaryGreen),
+                    ),
+                    if (saving > 0)
+                      Text(
+                        'Saved ${dsPrice(saving)}',
+                        style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey, fontWeight: FontWeight.w600),
+                      ),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 6),
-
-            // Info Row: Date + Pickup Code Pill
+            const SizedBox(height: AppSpace.xs),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  dateStr,
-                  style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey, fontWeight: FontWeight.w600),
-                ),
-                InkWell(
-                  onTap: () => _showPickupCodeSheet(context, order),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.qr_code_2_rounded, size: 13, color: AppTheme.charcoal),
-                        const SizedBox(width: 4),
-                        Text(
-                          '#${order.collectionCode}',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            color: AppTheme.charcoal,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
+                const Icon(Icons.schedule_rounded, size: 13, color: AppTheme.mutedGrey),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    dateStr,
+                    style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey, fontWeight: FontWeight.w600),
                   ),
                 ),
+                if (isActive)
+                  Text(
+                    '#${order.collectionCode}',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: 0.8),
+                  ),
               ],
             ),
-
-            // Actions Divider & Row
-            const SizedBox(height: 10),
-            Divider(height: 1, color: Colors.black.withValues(alpha: 0.05)),
-            const SizedBox(height: 8),
-
+            const SizedBox(height: AppSpace.sm),
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 if (isActive) ...[
-                  OutlinedButton.icon(
-                    onPressed: () => _showPickupCodeSheet(context, order),
-                    icon: const Icon(Icons.qr_code_rounded, size: 13),
-                    label: const Text('View Code', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.charcoal,
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      minimumSize: const Size(0, 32),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  Expanded(
+                    child: DsButton(
+                      label: 'View code',
+                      icon: Icons.qr_code_rounded,
+                      variant: DsButtonVariant.secondary,
+                      onPressed: () => _showPickupCodeSheet(context, order),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
+                  const SizedBox(width: AppSpace.xs),
+                  Expanded(
+                    child: DsButton(
+                      label: 'Track',
+                      icon: Icons.navigation_rounded,
+                      onPressed: () => Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => OrderTrackScreen(order: order)),
-                      );
-                    },
-                    icon: const Icon(Icons.navigation_rounded, size: 13),
-                    label: const Text('Track Order', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryGreen,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      minimumSize: const Size(0, 32),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
                     ),
                   ),
                 ] else ...[
-                  OutlinedButton.icon(
-                    onPressed: () => _showPickupCodeSheet(context, order),
-                    icon: const Icon(Icons.receipt_long_rounded, size: 13),
-                    label: const Text('Receipt', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.mutedGrey,
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      minimumSize: const Size(0, 32),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  Expanded(
+                    child: DsButton(
+                      label: 'Receipt',
+                      icon: Icons.receipt_long_rounded,
+                      variant: DsButtonVariant.secondary,
+                      onPressed: () => _showPickupCodeSheet(context, order),
                     ),
                   ),
                   if (canRate) ...[
-                    const SizedBox(width: 8),
-                    ElevatedButton.icon(
-                      onPressed: () => _showRatingDialog(context, ref, order),
-                      icon: const Icon(Icons.star_rounded, size: 13),
-                      label: const Text('Rate', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryGreen,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        minimumSize: const Size(0, 32),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    const SizedBox(width: AppSpace.xs),
+                    Expanded(
+                      child: DsButton(
+                        label: 'Rate',
+                        icon: Icons.star_rounded,
+                        onPressed: () => _showRatingDialog(context, ref, order),
                       ),
                     ),
                   ],
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpace.xs),
                   IconButton(
                     onPressed: () => _showDisputeDialog(context, ref, order),
-                    icon: const Icon(Icons.help_outline_rounded, size: 16, color: AppTheme.mutedGrey),
-                    tooltip: 'Report Issue',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                    style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xFFF1F5F9),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
+                    icon: const Icon(Icons.help_outline_rounded, size: 20, color: AppTheme.mutedGrey),
+                    tooltip: 'Report an issue',
                   ),
                 ],
               ],
@@ -404,7 +363,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
@@ -436,8 +395,8 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppTheme.hairline),
                   boxShadow: [
                     BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10),
                   ],
@@ -478,7 +437,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryGreen,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   onPressed: () => Navigator.pop(ctx),
@@ -527,7 +486,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                       ),
                       child: const Icon(
                         Icons.report_problem_rounded,
-                        color: Color(0xFFEF4444),
+                        color: AppTheme.errorRed,
                         size: 32,
                       ),
                     ),
@@ -564,10 +523,10 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                           duration: const Duration(milliseconds: 150),
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: isSelected ? const Color(0xFFEF4444).withValues(alpha: 0.1) : const Color(0xFFF8FAFC),
+                            color: isSelected ? AppTheme.errorRed.withValues(alpha: 0.1) : AppTheme.cream,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: isSelected ? const Color(0xFFEF4444) : const Color(0xFFE2E8F0),
+                              color: isSelected ? AppTheme.errorRed : AppTheme.hairline,
                               width: isSelected ? 1.5 : 1.0,
                             ),
                           ),
@@ -576,7 +535,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
-                              color: isSelected ? const Color(0xFFEF4444) : AppTheme.charcoal,
+                              color: isSelected ? AppTheme.errorRed : AppTheme.charcoal,
                             ),
                           ),
                         ),
@@ -599,10 +558,10 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                       hintText: "Tell us more (e.g. order details, response)...",
                       hintStyle: const TextStyle(color: AppTheme.mutedGrey, fontSize: 12),
                       filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: const BorderSide(color: AppTheme.charcoal, width: 1.5)),
+                      fillColor: AppTheme.cream,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.hairline)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.hairline)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.charcoal, width: 1.5)),
                       contentPadding: const EdgeInsets.all(16),
                     ),
                   ),
@@ -621,17 +580,17 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                       Expanded(
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFEF4444),
+                            backgroundColor: AppTheme.errorRed,
                             foregroundColor: Colors.white,
                             elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                           onPressed: isSaving ? null : () async {
                             final detail = issueController.text.trim();
                             if (detail.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("⚠️ Please provide some details!"), backgroundColor: AppTheme.errorRed),
+                                const SnackBar(content: Text("Please provide some details!"), backgroundColor: AppTheme.errorRed),
                               );
                               return;
                             }
@@ -660,7 +619,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                               navigator.pop();
                               scaffoldMessenger.showSnackBar(
                                 const SnackBar(
-                                  content: Text("✅ Issue reported. Our support team will review it shortly."),
+                                  content: Text("Issue reported. Our support team will review it shortly."),
                                   backgroundColor: AppTheme.primaryGreen,
                                 ),
                               );
@@ -669,7 +628,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                                 isSaving = false;
                               });
                               scaffoldMessenger.showSnackBar(
-                                SnackBar(content: Text("❌ Failed to report issue: $e"), backgroundColor: AppTheme.errorRed),
+                                SnackBar(content: Text("Failed to report issue: $e"), backgroundColor: AppTheme.errorRed),
                               );
                             }
                           },
@@ -717,9 +676,10 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                         color: const Color(0xFFFEF3C7),
                         shape: BoxShape.circle,
                       ),
-                      child: const Text(
-                        "😋",
-                        style: TextStyle(fontSize: 32),
+                      child: const Icon(
+                        Icons.sentiment_very_satisfied_rounded,
+                        size: 36,
+                        color: AppTheme.goldAccent,
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -776,10 +736,10 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                         hintText: "Add specific comments (freshness, service)...",
                         hintStyle: const TextStyle(color: AppTheme.mutedGrey, fontSize: 12),
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: const BorderSide(color: AppTheme.charcoal, width: 1.5)),
+                        fillColor: AppTheme.cream,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.hairline)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.hairline)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.charcoal, width: 1.5)),
                         contentPadding: const EdgeInsets.all(16),
                       ),
                     ),
@@ -801,7 +761,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                               backgroundColor: AppTheme.primaryGreen,
                               foregroundColor: Colors.white,
                               elevation: 0,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                             onPressed: () async {
@@ -818,7 +778,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen> {
                                 navigator.pop();
                                 scaffoldMessenger.showSnackBar(
                                   const SnackBar(
-                                    content: Text("✅ Thank you for rating your rescue meal!"),
+                                    content: Text("Thank you for rating your rescue meal!"),
                                     backgroundColor: AppTheme.primaryGreen,
                                   ),
                                 );

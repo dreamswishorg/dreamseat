@@ -35,12 +35,8 @@ class MerchantImpactTab extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(26),
+              gradient: AppTheme.heroGradient,
+              borderRadius: BorderRadius.circular(32),
               boxShadow: [
                 BoxShadow(
                   color: AppTheme.primaryGreen.withValues(alpha: 0.30),
@@ -75,7 +71,9 @@ class MerchantImpactTab extends ConsumerWidget {
                   style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: -0.8),
                 ),
                 Text(
-                  '${business.name} is leading Accra in sustainable food diversion.',
+                  mealsSaved > 0
+                      ? 'Good food that would have been thrown away, now eaten.'
+                      : 'Your first rescued meal will show up here.',
                   style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 20),
@@ -121,7 +119,8 @@ class MerchantImpactTab extends ConsumerWidget {
           const SizedBox(height: 20),
 
           // ── Detailed ESG Stat Cards ──
-          Row(
+          IntrinsicHeight(child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
                 child: _buildEsgCard(
@@ -139,13 +138,14 @@ class MerchantImpactTab extends ConsumerWidget {
                   value: '${waterSavedLitres.toStringAsFixed(0)} L',
                   subtitle: 'Agricultural irrigation water preserved',
                   icon: Icons.water_drop_outlined,
-                  color: Colors.blueAccent,
+                  color: AppTheme.infoBlue,
                 ),
               ),
             ],
-          ),
+          )),
           const SizedBox(height: 14),
-          Row(
+          IntrinsicHeight(child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
                 child: _buildEsgCard(
@@ -163,11 +163,11 @@ class MerchantImpactTab extends ConsumerWidget {
                   value: 'GHS ${communitySavings.toStringAsFixed(2)}',
                   subtitle: 'Discounts given to local food rescue heroes',
                   icon: Icons.favorite_border_rounded,
-                  color: Colors.amber.shade700,
+                  color: AppTheme.goldAccent,
                 ),
               ),
             ],
-          ),
+          )),
           const SizedBox(height: 24),
 
           // ── Green Partner Certificate ──
@@ -200,13 +200,15 @@ class MerchantImpactTab extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Verified Sustainability Partner',
-                        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.charcoal),
+                      Text(
+                        business.isApproved ? 'Verified DreamEats Partner' : 'Approval Pending',
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.charcoal),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${business.name} is officially certified under the DreamEats Ghana Green Hospitality initiative.',
+                        business.isApproved
+                            ? '${business.name} has been reviewed and approved to sell surplus food on DreamEats.'
+                            : 'Your shop is waiting for approval from the DreamEats team.',
                         style: const TextStyle(fontSize: 12.5, color: AppTheme.mutedGrey),
                       ),
                     ],

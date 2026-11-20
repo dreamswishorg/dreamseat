@@ -15,7 +15,7 @@ class NotificationScreen extends ConsumerWidget {
     final unreadCount = notifications.where((n) => !n.isRead).length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,

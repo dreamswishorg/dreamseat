@@ -86,7 +86,7 @@ class _TabSupportState extends ConsumerState<TabSupport> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.hairline),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -103,7 +103,7 @@ class _TabSupportState extends ConsumerState<TabSupport> {
             padding: const EdgeInsets.all(16),
             decoration: const BoxDecoration(
               color: Colors.white,
-              border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+              border: Border(bottom: BorderSide(color: AppTheme.hairline)),
             ),
             child: Column(
               children: [
@@ -138,9 +138,9 @@ class _TabSupportState extends ConsumerState<TabSupport> {
                 Container(
                   height: 38,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: AppTheme.cream,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: AppTheme.hairline),
                   ),
                   child: TextField(
                     controller: _searchController,
@@ -151,6 +151,11 @@ class _TabSupportState extends ConsumerState<TabSupport> {
                       hintStyle: TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
                       prefixIcon: Icon(Icons.search_rounded, size: 16, color: AppTheme.mutedGrey),
                       border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      errorBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                      filled: false,
                       contentPadding: EdgeInsets.symmetric(vertical: 9),
                     ),
                   ),
@@ -315,7 +320,7 @@ class _TabSupportState extends ConsumerState<TabSupport> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.hairline),
       ),
       child: const Center(
         child: Padding(
@@ -349,7 +354,7 @@ class _TabSupportState extends ConsumerState<TabSupport> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.hairline),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -366,7 +371,7 @@ class _TabSupportState extends ConsumerState<TabSupport> {
             padding: EdgeInsets.symmetric(horizontal: narrow ? 16 : 20, vertical: 14),
             decoration: const BoxDecoration(
               color: Colors.white,
-              border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+              border: Border(bottom: BorderSide(color: AppTheme.hairline)),
             ),
             child: Row(
               children: [
@@ -401,7 +406,7 @@ class _TabSupportState extends ConsumerState<TabSupport> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        "From: ${t.userName} • Ticket #${t.id.substring(0, 8).toUpperCase()}",
+                        "From: ${t.userName} • Ticket #${t.id.shortId(8).toUpperCase()}",
                         style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 11),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -441,7 +446,7 @@ class _TabSupportState extends ConsumerState<TabSupport> {
           // Messages Timeline Area
           Expanded(
             child: Container(
-              color: const Color(0xFFF8FAFC),
+              color: AppTheme.cream,
               child: FutureBuilder<List<TicketReply>>(
                 future: _repliesFuture,
                 builder: (context, snapshot) {
@@ -482,7 +487,7 @@ class _TabSupportState extends ConsumerState<TabSupport> {
             padding: const EdgeInsets.all(16),
             decoration: const BoxDecoration(
               color: Colors.white,
-              border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+              border: Border(top: BorderSide(color: AppTheme.hairline)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -512,9 +517,9 @@ class _TabSupportState extends ConsumerState<TabSupport> {
                     Expanded(
                       child: Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: AppTheme.cream,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: AppTheme.hairline),
                         ),
                         child: TextField(
                           controller: _replyController,
@@ -526,6 +531,11 @@ class _TabSupportState extends ConsumerState<TabSupport> {
                             hintStyle: TextStyle(color: AppTheme.mutedGrey, fontSize: 12.5),
                             contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                             border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            errorBorder: InputBorder.none,
+                            disabledBorder: InputBorder.none,
+                            filled: false,
                           ),
                         ),
                       ),
@@ -570,7 +580,7 @@ class _TabSupportState extends ConsumerState<TabSupport> {
         decoration: BoxDecoration(
           color: const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: AppTheme.hairline),
         ),
         child: Text(
           "+ $text",
@@ -603,7 +613,7 @@ class _TabSupportState extends ConsumerState<TabSupport> {
             decoration: BoxDecoration(
               color: isStaff ? AppTheme.primaryGreen : Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: isStaff ? null : Border.all(color: const Color(0xFFE2E8F0)),
+              border: isStaff ? null : Border.all(color: AppTheme.hairline),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.03),
@@ -648,7 +658,7 @@ class _TabSupportState extends ConsumerState<TabSupport> {
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.4,
-                    color: isStaff ? Colors.white : const Color(0xFF1E293B),
+                    color: isStaff ? Colors.white : AppTheme.charcoal,
                   ),
                 ),
               ],

@@ -36,7 +36,7 @@ class _TabMapState extends ConsumerState<TabMap> {
     final mapWidget = Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(isMobile ? 20 : 32),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 2),
+        border: Border.all(color: AppTheme.hairline, width: 2),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 10))
         ],
@@ -112,7 +112,7 @@ class _TabMapState extends ConsumerState<TabMap> {
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.85),
                 borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: AppTheme.hairline),
               ),
               child: const Text(
                 '© OpenStreetMap contributors',
@@ -200,7 +200,7 @@ class _TabMapState extends ConsumerState<TabMap> {
             height: 38,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: AppTheme.hairline),
             ),
             child: Icon(icon, size: 20, color: AppTheme.charcoal),
           ),
@@ -211,31 +211,55 @@ class _TabMapState extends ConsumerState<TabMap> {
 
   Widget _buildMapControls() {
     return Container(
-      padding: const EdgeInsets.all(6),
+      padding: const EdgeInsets.all(AppSpace.xs),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: AppTheme.lightGrey,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppTheme.hairline),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _controlChip("🏪 Hubs", _showBusinesses, (v) => setState(() => _showBusinesses = v)),
+          _controlChip('Hubs', Icons.storefront_rounded, _showBusinesses, (v) => setState(() => _showBusinesses = v)),
         ],
       ),
     );
   }
 
-  Widget _controlChip(String label, bool active, ValueChanged<bool> onChanged) {
-    return FilterChip(
-      label: Text(label, style: TextStyle(fontSize: 12, fontWeight: active ? FontWeight.bold : FontWeight.w600)),
+  Widget _controlChip(String label, IconData icon, bool active, ValueChanged<bool> onChanged) {
+    return Semantics(
+      button: true,
       selected: active,
-      onSelected: onChanged,
-      selectedColor: Colors.white,
-      backgroundColor: Colors.transparent,
-      checkmarkColor: AppTheme.primaryGreen,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      side: BorderSide.none,
+      label: '$label layer',
+      child: InkWell(
+        onTap: () => onChanged(!active),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: AnimatedContainer(
+          duration: AppMotion.base,
+          constraints: const BoxConstraints(minHeight: 40),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.md),
+          decoration: BoxDecoration(
+            color: active ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            boxShadow: active ? AppTheme.softShadow : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: active ? AppTheme.primaryGreen : AppTheme.mutedGrey),
+              const SizedBox(width: AppSpace.sm),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+                  color: active ? AppTheme.charcoal : AppTheme.mutedGrey,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -305,7 +329,7 @@ class _TabMapState extends ConsumerState<TabMap> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.hairline),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -352,7 +376,7 @@ class _TabMapState extends ConsumerState<TabMap> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: AppTheme.hairline),
         ),
         child: const Center(
           child: Column(
@@ -511,9 +535,9 @@ class _TabMapState extends ConsumerState<TabMap> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: AppTheme.cream,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: AppTheme.hairline),
               ),
               child: Row(
                 children: [
@@ -531,7 +555,7 @@ class _TabMapState extends ConsumerState<TabMap> {
                       ],
                     ),
                   ),
-                  Container(width: 1, height: 32, color: const Color(0xFFE2E8F0)),
+                  Container(width: 1, height: 32, color: AppTheme.hairline),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -547,7 +571,7 @@ class _TabMapState extends ConsumerState<TabMap> {
                       ],
                     ),
                   ),
-                  Container(width: 1, height: 32, color: const Color(0xFFE2E8F0)),
+                  Container(width: 1, height: 32, color: AppTheme.hairline),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(

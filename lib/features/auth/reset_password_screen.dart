@@ -146,7 +146,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color(0xFF1B5E20), // Deep Forest Green
+            AppTheme.deepGreen, // Deep Forest Green
             AppTheme.primaryGreen, // Primary Green
             Color(0xFF1E6F2B), // Rich Emerald Green
           ],
@@ -206,7 +206,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                       height: 44,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
                             color: AppTheme.primaryGreen.withValues(alpha: 0.3),
@@ -216,7 +216,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                         ],
                       ),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                         child: Image.asset('assets/images/logo.jpg', fit: BoxFit.cover),
                       ),
                     ),
@@ -301,7 +301,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
                   ),
                   child: const Row(
@@ -331,7 +331,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
         ),
         child: Column(
@@ -367,7 +367,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
   Widget _buildMobileLayout() {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.cream,
       body: Stack(
         children: [
           Positioned(
@@ -460,7 +460,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
                     color: AppTheme.primaryGreen.withValues(alpha: 0.3),
@@ -545,7 +545,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
             onPressed: _isLoading ? null : _submitNewPassword,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
             child: _isLoading
                 ? const SizedBox(
@@ -583,7 +583,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
                   color: AppTheme.primaryGreen.withValues(alpha: 0.3),

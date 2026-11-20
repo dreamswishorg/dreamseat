@@ -43,7 +43,7 @@ class _TabVouchersState extends ConsumerState<TabVouchers> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: AppTheme.hairline),
                 ),
                 child: TextField(
                   onChanged: (v) => setState(() => _searchQuery = v),
@@ -53,6 +53,11 @@ class _TabVouchersState extends ConsumerState<TabVouchers> {
                     hintStyle: TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
                     prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppTheme.mutedGrey),
                     border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    filled: false,
                     contentPadding: EdgeInsets.symmetric(vertical: 10),
                   ),
                 ),
@@ -142,7 +147,7 @@ class _TabVouchersState extends ConsumerState<TabVouchers> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
+          Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.mutedGrey)),
           const SizedBox(width: 6),
           Text(value, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: color)),
         ],
@@ -307,7 +312,7 @@ class _VoucherItemCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.hairline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -85,6 +85,11 @@ class _TabAuditState extends ConsumerState<TabAudit> {
                               hintStyle: TextStyle(fontSize: 12.5, color: context.textSecondary),
                               prefixIcon: Icon(Icons.search_rounded, size: 18, color: context.textSecondary),
                               border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              disabledBorder: InputBorder.none,
+                              filled: false,
                               contentPadding: const EdgeInsets.symmetric(vertical: 11),
                             ),
                           ),
@@ -267,19 +272,19 @@ class _TabAuditState extends ConsumerState<TabAudit> {
     final role = log.actorRole.toLowerCase();
     if (role.contains('super')) {
       roleColor = AppTheme.errorRed;
-      roleLabel = "👑 SUPER ADMIN";
+      roleLabel = "SUPER ADMIN";
     } else if (role.contains('admin')) {
       roleColor = const Color(0xFF2563EB);
-      roleLabel = "🛡️ ADMIN";
+      roleLabel = "ADMIN";
     } else if (role.contains('merchant')) {
       roleColor = Colors.purple;
-      roleLabel = "🏪 MERCHANT";
+      roleLabel = "MERCHANT";
     } else if (role.contains('customer')) {
       roleColor = AppTheme.warningOrange;
-      roleLabel = "🛍️ CUSTOMER";
+      roleLabel = "CUSTOMER";
     } else if (role.contains('system')) {
-      roleColor = const Color(0xFF64748B);
-      roleLabel = "⚙️ SYSTEM";
+      roleColor = AppTheme.mutedGrey;
+      roleLabel = "SYSTEM";
     }
 
     return InkWell(
@@ -429,7 +434,7 @@ class _TabAuditState extends ConsumerState<TabAudit> {
       roleColor = AppTheme.warningOrange;
       roleLabel = "CUSTOMER";
     } else if (role.contains('system')) {
-      roleColor = const Color(0xFF64748B);
+      roleColor = AppTheme.mutedGrey;
       roleLabel = "SYSTEM";
     }
 

@@ -67,7 +67,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
               child: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppTheme.charcoal, Color(0xFF1E293B)],
+                    colors: [AppTheme.charcoal, AppTheme.charcoal],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -209,10 +209,10 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
       hintText: hint,
       prefixIcon: Icon(icon, size: 20, color: AppTheme.charcoal.withValues(alpha: 0.4)),
       filled: true,
-      fillColor: const Color(0xFFF8FAFC),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade200)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade200)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.charcoal, width: 1.5)),
+      fillColor: AppTheme.cream,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.charcoal, width: 1.5)),
     );
   }
 }

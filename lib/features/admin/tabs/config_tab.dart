@@ -41,7 +41,7 @@ class _TabConfigState extends ConsumerState<TabConfig> {
               : MediaQuery.sizeOf(context).width - 32;
           final sectionWidth = isMobile
               ? double.infinity
-              : (available < 500 ? available : 500.0);
+              : (available >= 880 ? (available - 24) / 2 : (available < 560 ? available : 560.0));
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,9 +147,10 @@ class _TabConfigState extends ConsumerState<TabConfig> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
+              width: double.infinity,
               padding: EdgeInsets.all(sectionPadding),
               decoration: const BoxDecoration(
-                color: Color(0xFFF8FAFC),
+                color: AppTheme.cream,
                 border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
               ),
               child: Column(
@@ -299,7 +300,7 @@ class _TabConfigState extends ConsumerState<TabConfig> {
             decoration: InputDecoration(
               hintText: "e.g. 1.0.4",
               filled: true,
-              fillColor: const Color(0xFFF8FAFC),
+              fillColor: AppTheme.cream,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
@@ -329,7 +330,7 @@ class _TabConfigState extends ConsumerState<TabConfig> {
                   decoration: InputDecoration(
                     hintText: "e.g. 1.0.4",
                     filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
+                    fillColor: AppTheme.cream,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
@@ -392,7 +393,7 @@ class _TabConfigState extends ConsumerState<TabConfig> {
       await ref.read(appStateProvider.notifier).updateMinAppVersion(version);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("✅ System version policy updated successfully."), backgroundColor: AppTheme.primaryGreen),
+          const SnackBar(content: Text("System version policy updated successfully."), backgroundColor: AppTheme.primaryGreen),
         );
       }
     } finally {

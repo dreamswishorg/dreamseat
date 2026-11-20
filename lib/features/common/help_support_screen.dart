@@ -43,7 +43,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("✅ Support ticket submitted successfully."), backgroundColor: AppTheme.primaryGreen),
+          const SnackBar(content: Text("Support ticket submitted successfully."), backgroundColor: AppTheme.primaryGreen),
         );
         _subjectController.clear();
         _messageController.clear();
@@ -126,7 +126,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
     final tickets = ref.watch(appStateProvider.select((s) => s.supportTickets));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,

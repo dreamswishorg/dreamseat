@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
+import '../../core/ds_kit.dart';
 import '../../core/responsive.dart';
 import '../../core/ui_utils.dart';
 import '../../core/branded_empty_state.dart';
@@ -54,9 +54,9 @@ class _BasketScreenState extends ConsumerState<BasketScreen> {
     final notifier = ref.read(appStateProvider.notifier);
 
     return Scaffold(
-      backgroundColor: AppTheme.lightGrey,
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
-        backgroundColor: AppTheme.pureWhite,
+        backgroundColor: AppTheme.cream,
         foregroundColor: AppTheme.charcoal,
         elevation: 0,
         leading: IconButton(
@@ -88,7 +88,7 @@ class _BasketScreenState extends ConsumerState<BasketScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: AppTheme.primaryGreen,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(24),
                 ),
                 child: Text(
                   '$itemCount',
@@ -148,9 +148,9 @@ class _BasketScreenState extends ConsumerState<BasketScreen> {
       children: [
         Expanded(
           child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: const EdgeInsets.fromLTRB(AppSpace.gutter, AppSpace.lg, AppSpace.gutter, AppSpace.md),
             itemCount: basket.length,
-            separatorBuilder: (context, i) => const SizedBox(height: 10),
+            separatorBuilder: (context, i) => const SizedBox(height: AppSpace.md),
             itemBuilder: (context, index) {
               final item = basket[index];
               return _BasketItemCard(
@@ -185,48 +185,33 @@ class _BasketScreenState extends ConsumerState<BasketScreen> {
     final totalMeals = basket.fold<int>(0, (sum, i) => sum + i.quantity);
 
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppTheme.pureWhite,
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.charcoal.withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
-          ),
-        ],
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border(top: BorderSide(color: AppTheme.hairline)),
+        boxShadow: [BoxShadow(color: Color(0x120F172A), blurRadius: 24, offset: Offset(0, -8))],
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      padding: const EdgeInsets.fromLTRB(AppSpace.gutter, AppSpace.xl, AppSpace.gutter, AppSpace.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle bar
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: AppTheme.charcoal.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(2),
+          Semantics(
+            header: true,
+            child: const Text(
+              'Order Summary',
+              style: TextStyle(
+                color: AppTheme.charcoal,
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.3,
               ),
             ),
           ),
-
-          const Text(
-            'Order Summary',
-            style: TextStyle(
-              color: AppTheme.charcoal,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              letterSpacing: -0.3,
-            ),
-          ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpace.md),
 
           _summaryRow('Subtotal', 'GHS ${total.toStringAsFixed(2)}'),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           _summaryRow(
             'Platform Fee (0%)',
             'GHS 0.00',
@@ -235,9 +220,9 @@ class _BasketScreenState extends ConsumerState<BasketScreen> {
           ),
 
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 14),
+            padding: const EdgeInsets.symmetric(vertical: AppSpace.lg),
             child: DashedDivider(
-              color: AppTheme.charcoal.withValues(alpha: 0.12),
+              color: AppTheme.hairline,
               height: 1,
               dashWidth: 6,
               dashSpace: 4,
@@ -246,47 +231,45 @@ class _BasketScreenState extends ConsumerState<BasketScreen> {
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
               const Text(
                 'Total',
-                style: TextStyle(
-                  color: AppTheme.charcoal,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(color: AppTheme.charcoal, fontSize: 18, fontWeight: FontWeight.w700),
               ),
               Text(
                 'GHS ${total.toStringAsFixed(2)}',
                 style: const TextStyle(
                   color: AppTheme.primaryGreen,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.8,
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpace.md),
 
           // Eco note
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: AppSpace.md),
             decoration: BoxDecoration(
               color: AppTheme.lightGreenBg,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: AppRadius.rSm,
             ),
             child: Row(
               children: [
-                const Icon(Icons.eco_rounded, color: AppTheme.primaryGreen, size: 16),
-                const SizedBox(width: 8),
+                const Icon(Icons.eco_rounded, color: AppTheme.primaryGreen, size: 18),
+                const SizedBox(width: AppSpace.sm),
                 Expanded(
                   child: Text(
-                    'You\'re rescuing $totalMeals meal${totalMeals == 1 ? '' : 's'} from going to waste 🌿',
+                    'You\'re rescuing $totalMeals meal${totalMeals == 1 ? '' : 's'} from going to waste',
                     style: const TextStyle(
-                      color: AppTheme.primaryGreen,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      color: AppTheme.deepGreen,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -294,38 +277,17 @@ class _BasketScreenState extends ConsumerState<BasketScreen> {
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpace.lg),
 
-          // Proceed button
-          ElevatedButton(
+          DsButton(
+            label: 'Proceed to Checkout',
+            icon: Icons.lock_rounded,
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const ModernCheckoutScreen()),
               );
             },
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 54),
-              backgroundColor: AppTheme.primaryGreen,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Proceed to Checkout',
-                  style: TextStyle(
-                    color: AppTheme.pureWhite,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(width: 8),
-                Icon(Icons.arrow_forward_rounded, color: AppTheme.pureWhite, size: 18),
-              ],
-            ),
           ),
 
           SizedBox(height: MediaQuery.of(context).padding.bottom),
@@ -345,27 +307,13 @@ class _BasketScreenState extends ConsumerState<BasketScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 14),
+          style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 15, fontWeight: FontWeight.w500),
         ),
         Row(
           children: [
             if (badge != null) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  badge,
-                  style: const TextStyle(
-                    color: AppTheme.pureWhite,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
+              DsPill(label: badge, tone: DsTone.brand, solid: true, compact: true),
+              const SizedBox(width: AppSpace.sm),
             ],
             Text(
               value,
@@ -409,160 +357,134 @@ class _BasketItemCard extends StatelessWidget {
         onDismiss();
         return false;
       },
-      child: _HoverLift(
-        child: Container(
-          decoration: BoxDecoration(
-          color: AppTheme.pureWhite,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.charcoal.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-          border: Border.all(
-            color: AppTheme.charcoal.withValues(alpha: 0.06),
-            width: 1,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Deal Image/Icon Box
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: AppTheme.lightGreenBg,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: item.deal.imageUrl.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: item.deal.imageUrl,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(color: AppTheme.lightGrey),
-                        )
-                      : Icon(categoryIcon, color: AppTheme.primaryGreen, size: 28),
-                ),
+      child: DsCard(
+        padding: const EdgeInsets.all(AppSpace.md),
+        radius: AppRadius.md,
+        child: Row(
+          children: [
+            // Deal image / icon
+            SizedBox(
+              width: 72,
+              height: 72,
+              child: DsMedia(
+                url: item.deal.imageUrl,
+                category: item.deal.category,
+                borderRadius: AppRadius.rSm,
               ),
-              const SizedBox(width: 14),
+            ),
+            const SizedBox(width: AppSpace.md),
 
-              // Deal info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.deal.title,
-                      style: const TextStyle(
-                        color: AppTheme.charcoal,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.3,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+            // Deal info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.deal.title,
+                    style: const TextStyle(
+                      color: AppTheme.charcoal,
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.3,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      item.deal.businessName,
-                      style: const TextStyle(
-                        color: AppTheme.mutedGrey,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Text(
-                          'GHS ${AppTheme.formatPrice(item.deal.discountedPrice)}',
-                          style: const TextStyle(
-                            color: AppTheme.primaryGreen,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
-                          ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: AppSpace.xxs),
+                  Text(
+                    item.deal.businessName,
+                    style: const TextStyle(color: AppTheme.mutedGrey, fontSize: 12.5, fontWeight: FontWeight.w600),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: AppSpace.sm),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        'GHS ${AppTheme.formatPrice(item.deal.discountedPrice)}',
+                        style: const TextStyle(
+                          color: AppTheme.primaryGreen,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
+                      ),
+                      const SizedBox(width: AppSpace.sm),
+                      Flexible(
+                        child: Text(
                           'GHS ${AppTheme.formatPrice(item.deal.originalPrice)}',
-                          style: TextStyle(
-                            color: AppTheme.mutedGrey.withValues(alpha: 0.6),
-                            fontSize: 11,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppTheme.mutedGrey,
+                            fontSize: 12,
                             decoration: TextDecoration.lineThrough,
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-
-              // Quantity adjuster
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.lightGrey,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _qtyButton(
-                          icon: item.quantity == 1
-                              ? Icons.delete_outline_rounded
-                              : Icons.remove_rounded,
-                          color: item.quantity == 1
-                              ? AppTheme.errorRed
-                              : AppTheme.charcoal,
-                          onTap: onDecrement,
-                        ),
-                        Text(
-                          '${item.quantity}',
-                          style: const TextStyle(
-                            color: AppTheme.charcoal,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        _qtyButton(
-                          icon: Icons.add_rounded,
-                          color: AppTheme.primaryGreen,
-                          onTap: onIncrement,
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: AppSpace.sm),
+
+            // Quantity stepper
+            Container(
+              decoration: BoxDecoration(
+                color: AppTheme.cream,
+                borderRadius: AppRadius.rPill,
+                border: Border.all(color: AppTheme.hairline),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _qtyButton(
+                    icon: item.quantity == 1 ? Icons.delete_outline_rounded : Icons.remove_rounded,
+                    color: item.quantity == 1 ? AppTheme.errorRed : AppTheme.charcoal,
+                    label: item.quantity == 1 ? 'Remove ${item.deal.title}' : 'Decrease quantity',
+                    onTap: onDecrement,
+                  ),
+                  SizedBox(
+                    width: 20,
+                    child: Text(
+                      '${item.quantity}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: AppTheme.charcoal, fontSize: 15, fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                  _qtyButton(
+                    icon: Icons.add_rounded,
+                    color: AppTheme.primaryGreen,
+                    label: 'Increase quantity',
+                    onTap: onIncrement,
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _qtyButton({
     required IconData icon,
     required Color color,
+    required String label,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Icon(icon, size: 18, color: color),
+    return Semantics(
+      button: true,
+      label: label,
+      child: DsPressable(
+        onTap: onTap,
+        pressedScale: 0.88,
+        child: SizedBox(
+          width: 40,
+          height: 44,
+          child: Icon(icon, size: 20, color: color),
+        ),
       ),
     );
   }
@@ -571,7 +493,7 @@ class _BasketItemCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.errorRed,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: AppRadius.rMd,
       ),
       alignment: Alignment.centerRight,
       padding: const EdgeInsets.only(right: 20),
@@ -589,33 +511,6 @@ class _BasketItemCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _HoverLift extends StatefulWidget {
-  final Widget child;
-  const _HoverLift({required this.child});
-
-  @override
-  State<_HoverLift> createState() => _HoverLiftState();
-}
-
-class _HoverLiftState extends State<_HoverLift> {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        transform: _isHovered
-            ? Matrix4.translationValues(0, -3, 0)
-            : Matrix4.identity(),
-        child: widget.child,
       ),
     );
   }

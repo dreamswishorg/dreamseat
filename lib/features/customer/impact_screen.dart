@@ -13,7 +13,7 @@ class ImpactScreen extends ConsumerWidget {
     final appState = ref.watch(appStateProvider);
     final userStats = appState.customerStats;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final cardBg = isDark ? AppTheme.charcoal : Colors.white;
     final textColor = isDark ? Colors.white : AppTheme.charcoal;
 
     // Derived eco metrics
@@ -26,7 +26,7 @@ class ImpactScreen extends ConsumerWidget {
     final waterSavedLiters = mealsCount * 350; // avg 350L virtual water saved per meal
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF7F8FA),
+      backgroundColor: isDark ? const Color(0xFF0F172A) : AppTheme.cream,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -65,9 +65,9 @@ class ImpactScreen extends ConsumerWidget {
             // ── Hero Sustainability Banner ──────────────────────────────────
             Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(24),
                 gradient: const LinearGradient(
-                  colors: [AppTheme.primaryGreen, Color(0xFF1B5E20)],
+                  colors: [AppTheme.primaryGreen, AppTheme.deepGreen],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -107,10 +107,10 @@ class ImpactScreen extends ConsumerWidget {
                             ),
                             Text(
                               mealsCount >= 10
-                                  ? 'Eco Champion 🌿'
+                                  ? 'Eco Champion'
                                   : mealsCount >= 3
-                                      ? 'Waste Warrior 🌱'
-                                      : 'Seedling Rescuer 🌱',
+                                      ? 'Waste Warrior'
+                                      : 'Seedling Rescuer',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
@@ -233,7 +233,7 @@ class ImpactScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 color: cardBg,
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
                 boxShadow: [
                   BoxShadow(
@@ -279,7 +279,7 @@ class ImpactScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: AppTheme.lightGreenBg,
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.2)),
               ),
               child: Row(
@@ -307,7 +307,9 @@ class ImpactScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Together, our Ghana food rescue community has saved over 12,500+ meals!',
+                          appState.globalStats.mealsRescued > 0
+                              ? 'Together, the DreamEats community has rescued ${appState.globalStats.mealsRescued} meals so far.'
+                              : 'Every rescue you make adds to the community total.',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.black.withValues(alpha: 0.7),
@@ -373,7 +375,7 @@ class ImpactScreen extends ConsumerWidget {
     final user = appState.currentUser;
     final referralCode = (user != null && user.referralCode.isNotEmpty)
         ? user.referralCode
-        : 'REF-${user?.id.substring(0, 6).toUpperCase() ?? "DREAM"}';
+        : 'REF-${user?.id.shortId(6).toUpperCase() ?? "DREAM"}';
 
     final inviteMessage = "🌱 I've rescued $mealsCount surplus meals and saved ${co2Kg.toStringAsFixed(1)}kg CO₂ on DreamEats Ghana! Join the movement and get 50 Dream Points + GH₵15 credit on your first meal rescue with my referral code: $referralCode\n\nhttps://dreameats.app";
 
@@ -383,7 +385,7 @@ class ImpactScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       builder: (modalContext) {
         final isDark = Theme.of(modalContext).brightness == Brightness.dark;
-        final sheetBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+        final sheetBg = isDark ? AppTheme.charcoal : Colors.white;
         final textColor = isDark ? Colors.white : AppTheme.charcoal;
 
         return Container(
@@ -446,7 +448,7 @@ class ImpactScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Invite friends to rescue surplus meals! When someone uses your referral code, they receive 50 Dream Points + GH₵15 credit, and you earn 100 Dream Points! 🌱✨',
+                'Invite friends to rescue surplus meals! When someone uses your referral code, they receive 50 Dream Points + GH₵15 credit, and you earn 100 Dream Points!',
                 style: TextStyle(
                   fontSize: 13,
                   color: isDark ? Colors.white70 : AppTheme.mutedGrey,
@@ -594,7 +596,7 @@ class ImpactScreen extends ConsumerWidget {
                     Navigator.pop(modalContext);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: const Text('🎉 Full impact invite message copied to clipboard!'),
+                        content: const Text('Full impact invite message copied to clipboard!'),
                         backgroundColor: AppTheme.primaryGreen,
                         behavior: SnackBarBehavior.floating,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -683,7 +685,7 @@ class _EquivTile extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
         boxShadow: [
           BoxShadow(

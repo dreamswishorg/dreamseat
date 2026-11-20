@@ -19,7 +19,7 @@ class DesktopLandingPage extends StatefulWidget {
 }
 
 class _DesktopLandingPageState extends State<DesktopLandingPage> {
-  static const _ink = Color(0xFF0D3B22);
+  static const _ink = AppTheme.deepGreen;
   static const _border = Color(0xFFE5E7EB);
   static const _surface = Color(0xFFF7F8F7);
   static const _maxWidth = 1180.0;
@@ -82,7 +82,7 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFF0D3B22),
+                            color: AppTheme.deepGreen,
                           ),
                         ),
                         SizedBox(height: 2),
@@ -140,9 +140,9 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  color: AppTheme.cream,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppTheme.hairline),
                 ),
                 child: const Row(
                   children: [
@@ -177,7 +177,7 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.hairline),
       ),
       child: Row(
         children: [
@@ -196,7 +196,7 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
               children: [
                 Text(title, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppTheme.mutedGrey)),
                 const SizedBox(height: 2),
-                Text(detail, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: Color(0xFF0D3B22))),
+                Text(detail, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppTheme.deepGreen)),
               ],
             ),
           ),
@@ -425,7 +425,7 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 textStyle: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600),
               ),
               child: const Text('Find deals near you'),
@@ -437,7 +437,7 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
                 foregroundColor: _ink,
                 side: const BorderSide(color: Color(0xFFD1D5DB)),
                 padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 textStyle: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600),
               ),
               child: const Text('List your business'),
@@ -632,7 +632,7 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
         foregroundColor: _ink,
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         textStyle: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600),
       ),
       child: const Text('Become a partner'),
@@ -641,9 +641,9 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
     return Container(
       padding: const EdgeInsets.all(48),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         gradient: const LinearGradient(
-          colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+          colors: [AppTheme.primaryGreen, AppTheme.deepGreen],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -722,7 +722,8 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(flex: isDesktop ? 2 : 3, child: brandBlock),
-                for (final c in columns) Expanded(child: c),
+                for (var i = 0; i < columns.length; i++)
+                  Expanded(flex: i == columns.length - 1 ? 2 : 1, child: columns[i]),
               ],
             ),
             const SizedBox(height: 40),
@@ -777,13 +778,13 @@ class _DealPreviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const ink = Color(0xFF0D3B22);
+    const ink = AppTheme.deepGreen;
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 380),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(color: const Color(0xFFE5E7EB)),
           boxShadow: [
             BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 40, offset: const Offset(0, 20)),
@@ -799,7 +800,7 @@ class _DealPreviewCard extends StatelessWidget {
               width: double.infinity,
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+                  colors: [AppTheme.primaryGreen, AppTheme.deepGreen],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -812,7 +813,7 @@ class _DealPreviewCard extends StatelessWidget {
                     left: 14,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
                       child: const Text('3 left', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: ink)),
                     ),
                   ),

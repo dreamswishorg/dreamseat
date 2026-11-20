@@ -59,7 +59,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("✅ Profile updated successfully"),
+            content: Text("Profile updated successfully"),
             backgroundColor: AppTheme.primaryGreen,
             behavior: SnackBarBehavior.floating,
           ),
@@ -77,7 +77,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
     final isMobile = screenWidth < 768;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.cream,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -97,7 +97,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: const Color(0xFFE2E8F0), height: 1),
+          child: Container(color: AppTheme.hairline, height: 1),
         ),
       ),
       body: Center(
@@ -160,7 +160,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.hairline),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -224,7 +224,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
                   alignment: WrapAlignment.center,
                   children: [
                     _buildBadge(
-                      label: isSuperAdmin ? "👑 SUPER ADMIN" : "🛡️ STAFF ADMIN",
+                      label: isSuperAdmin ? "SUPER ADMIN" : "STAFF ADMIN",
                       color: isSuperAdmin ? AppTheme.errorRed : AppTheme.primaryGreen,
                     ),
                     _buildBadge(
@@ -274,7 +274,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
                           const SizedBox(width: 12),
                           Flexible(
                             child: _buildBadge(
-                              label: isSuperAdmin ? "👑 SUPER ADMIN" : "🛡️ STAFF ADMIN",
+                              label: isSuperAdmin ? "SUPER ADMIN" : "STAFF ADMIN",
                               color: isSuperAdmin ? AppTheme.errorRed : AppTheme.primaryGreen,
                             ),
                           ),
@@ -358,7 +358,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.hairline),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -464,9 +464,9 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
           decoration: InputDecoration(
             prefixIcon: Icon(icon, size: 19, color: (enabled && _isEditing) ? AppTheme.primaryGreen : AppTheme.mutedGrey),
             filled: true,
-            fillColor: (enabled && _isEditing) ? Colors.white : const Color(0xFFF8FAFC),
+            fillColor: (enabled && _isEditing) ? Colors.white : AppTheme.cream,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.hairline)),
             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
             disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFF1F5F9))),
             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 2)),
@@ -482,7 +482,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.hairline),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -672,7 +672,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
                   decoration: InputDecoration(
                     labelText: 'New Password',
                     filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
+                    fillColor: AppTheme.cream,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
@@ -683,7 +683,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
                   decoration: InputDecoration(
                     labelText: 'Confirm Password',
                     filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
+                    fillColor: AppTheme.cream,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
@@ -708,7 +708,7 @@ class _AdminProfileScreenState extends ConsumerState<AdminProfileScreen> {
                   messenger.showSnackBar(SnackBar(content: Text('Error: $error'), backgroundColor: AppTheme.errorRed));
                 } else {
                   messenger.showSnackBar(
-                    const SnackBar(content: Text('🔒 Security key updated successfully'), backgroundColor: AppTheme.primaryGreen),
+                    const SnackBar(content: Text('Security key updated successfully'), backgroundColor: AppTheme.primaryGreen),
                   );
                 }
                 if (ctx.mounted) Navigator.pop(ctx, true);

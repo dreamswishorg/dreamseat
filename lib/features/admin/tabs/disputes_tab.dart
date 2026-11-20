@@ -49,7 +49,7 @@ class _TabDisputesState extends ConsumerState<TabDisputes> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: AppTheme.hairline),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.02),
@@ -66,6 +66,11 @@ class _TabDisputesState extends ConsumerState<TabDisputes> {
                 hintStyle: TextStyle(fontSize: 12.5, color: AppTheme.mutedGrey),
                 prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppTheme.mutedGrey),
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+                filled: false,
                 contentPadding: EdgeInsets.symmetric(vertical: 11),
               ),
             ),
@@ -156,7 +161,7 @@ class _DisputeCard extends ConsumerWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isOpen ? AppTheme.errorRed.withValues(alpha: 0.25) : const Color(0xFFE2E8F0),
+          color: isOpen ? AppTheme.errorRed.withValues(alpha: 0.25) : AppTheme.hairline,
         ),
         boxShadow: [
           BoxShadow(
@@ -257,16 +262,16 @@ class _DisputeCard extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: AppTheme.cream,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: AppTheme.hairline),
             ),
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final claimantCell = Expanded(
                   child: Row(
                     children: [
-                      const Icon(Icons.person_outline_rounded, size: 16, color: Color(0xFF64748B)),
+                      const Icon(Icons.person_outline_rounded, size: 16, color: AppTheme.mutedGrey),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Column(
@@ -288,7 +293,7 @@ class _DisputeCard extends ConsumerWidget {
                 final defendantCell = Expanded(
                   child: Row(
                     children: [
-                      const Icon(Icons.storefront_rounded, size: 16, color: Color(0xFF64748B)),
+                      const Icon(Icons.storefront_rounded, size: 16, color: AppTheme.mutedGrey),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Column(
@@ -307,7 +312,7 @@ class _DisputeCard extends ConsumerWidget {
                     ],
                   ),
                 );
-                final dividerCell = Container(width: 1, height: 26, color: const Color(0xFFE2E8F0));
+                final dividerCell = Container(width: 1, height: 26, color: AppTheme.hairline);
                 final refundButton = OutlinedButton.icon(
                   onPressed: () async {
                     if (dispute.orderId.isNotEmpty) {

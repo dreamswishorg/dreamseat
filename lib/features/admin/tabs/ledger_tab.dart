@@ -102,7 +102,7 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.hairline),
       ),
       child: TextField(
         controller: _searchController,
@@ -128,6 +128,11 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
                 )
               : null,
           border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          disabledBorder: InputBorder.none,
+          filled: false,
           contentPadding: const EdgeInsets.symmetric(vertical: 10),
         ),
       ),
@@ -177,7 +182,7 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.hairline),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -471,7 +476,7 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
             Expanded(
               flex: 2,
               child: Text(
-                order.id.substring(0, 8).toUpperCase(),
+                order.id.shortId(8).toUpperCase(),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -642,7 +647,7 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        "#${order.id.length > 10 ? order.id.substring(0, 10).toUpperCase() : order.id.toUpperCase()}",
+                        "#${order.id.length > 10 ? order.id.shortId(10).toUpperCase() : order.id.toUpperCase()}",
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -1071,7 +1076,7 @@ class _TabLedgerState extends ConsumerState<TabLedger> {
                   }
                   if (ctx.mounted) {
                     Navigator.pop(ctx);
-                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text("✅ Dispersal of GHS ${amount.toStringAsFixed(2)} to $name successful.")));
+                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text("Dispersal of GHS ${amount.toStringAsFixed(2)} to $name successful.")));
                   }
                 },
                 child: const Text("Confirm & Send"),

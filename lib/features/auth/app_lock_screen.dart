@@ -71,8 +71,8 @@ class _AppLockScreenState extends ConsumerState<AppLockScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final bg = isDark ? const Color(0xFF0F172A) : AppTheme.cream;
+    final cardBg = isDark ? AppTheme.charcoal : Colors.white;
     final primaryText = isDark ? Colors.white : AppTheme.charcoal;
 
     return PopScope(
@@ -89,7 +89,7 @@ class _AppLockScreenState extends ConsumerState<AppLockScreen> {
                   padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
                     color: cardBg,
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: BorderRadius.circular(24),
                     border: Border.all(color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06)),
                     boxShadow: [
                       BoxShadow(

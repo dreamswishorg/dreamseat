@@ -303,12 +303,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
-    final screenW = MediaQuery.of(context).size.width;
-
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.deepGreen,
       body: Stack(
         children: [
+          // Same deep-green gradient as the web loader, so there is no flash.
+          const Positioned.fill(
+            child: DecoratedBox(decoration: BoxDecoration(gradient: AppTheme.heroGradient)),
+          ),
           // Subtle professional top-right & bottom-left emerald glow gradients
           Positioned(
             top: -120,
@@ -320,7 +322,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppTheme.primaryGreen.withValues(alpha: 0.12),
+                    AppTheme.limeAccent.withValues(alpha: 0.10),
                     Colors.transparent,
                   ],
                 ),
@@ -337,7 +339,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF00C853).withValues(alpha: 0.10),
+                    AppTheme.limeAccent.withValues(alpha: 0.08),
                     Colors.transparent,
                   ],
                 ),
@@ -362,15 +364,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                           children: [
                             // Beautiful balanced White & Green Logo Container
                             Container(
-                              width: 130,
-                              height: 130,
+                              width: 92,
+                              height: 92,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: Colors.white,
-                                border: Border.all(color: AppTheme.primaryGreen, width: 3.5),
+                                border: Border.all(color: AppTheme.limeAccent, width: 3),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppTheme.primaryGreen.withValues(alpha: 0.22),
+                                    color: Colors.black.withValues(alpha: 0.30),
                                     blurRadius: 28,
                                     offset: const Offset(0, 10),
                                   ),
@@ -396,26 +398,26 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 32),
+                            const SizedBox(height: 24),
 
                             // Clean Modern Typography
                             Text(
                               'DREAMEATS',
                               style: TextStyle(
-                                fontSize: (screenW * 0.09).clamp(28.0, 40.0),
+                                fontSize: 18,
                                 fontWeight: FontWeight.w900,
-                                color: const Color(0xFF0D3B22),
-                                letterSpacing: 3.5,
+                                color: Colors.white,
+                                letterSpacing: 5,
                               ),
                             ),
                             const SizedBox(height: 8),
 
                             // Green Accent Divider
                             Container(
-                              width: 48,
+                              width: 120,
                               height: 4,
                               decoration: BoxDecoration(
-                                color: AppTheme.primaryGreen,
+                                color: AppTheme.limeAccent,
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -425,21 +427,21 @@ class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerPr
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF1F8F4),
+                                color: Colors.white.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(30),
-                                border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.2)),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                               ),
                               child: const Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.eco_rounded, color: AppTheme.primaryGreen, size: 16),
+                                  Icon(Icons.eco_rounded, color: AppTheme.limeAccent, size: 16),
                                   SizedBox(width: 8),
                                   Text(
                                     'RESCUE SURPLUS • SAVOR QUALITY',
                                     style: TextStyle(
                                       fontSize: 11.5,
                                       fontWeight: FontWeight.w800,
-                                      color: Color(0xFF0D3B22),
+                                      color: Colors.white,
                                       letterSpacing: 1.0,
                                     ),
                                   ),

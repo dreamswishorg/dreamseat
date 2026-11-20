@@ -569,6 +569,7 @@ class _ShopHeader extends StatelessWidget {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(MK.rLg),
         border: Border.all(color: MK.line),
         boxShadow: MK.shadow,
@@ -576,6 +577,7 @@ class _ShopHeader extends StatelessWidget {
       child: Column(
         children: [
           Stack(
+            clipBehavior: Clip.none,
             children: [
               Container(
                 height: 128,
