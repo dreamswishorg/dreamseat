@@ -7,6 +7,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/ds_kit.dart';
 import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
@@ -780,36 +781,30 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
           // ── FLOATING TOP BAR ──────────────────────────────────────────
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.sm),
               child: Container(
                 height: 52,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.sm),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 16,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  color: AppTheme.pureWhite,
+                  borderRadius: AppRadius.rPill,
+                  border: Border.all(color: AppTheme.hairline),
+                  boxShadow: AppTheme.softShadow,
                 ),
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.charcoal),
+                      tooltip: 'Back',
+                      icon: const Icon(Icons.arrow_back_rounded),
                       onPressed: () => Navigator.pop(context),
                     ),
                     Expanded(
                       child: Center(
-                        child: Text(
-                          isPickup ? 'Store Pickup Tracker' : 'Delivery Tracker',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.charcoal,
-                            letterSpacing: -0.3,
+                        child: Semantics(
+                          header: true,
+                          child: Text(
+                            isPickup ? 'Store Pickup Tracker' : 'Delivery Tracker',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.charcoal, letterSpacing: -0.3),
                           ),
                         ),
                       ),
@@ -821,328 +816,60 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
             ),
           ),
 
-          // ── RECENTER FLOATING BUTTON ────────────────────────────────────
+          // ── RECENTER BUTTON + ORDER CARD ────────────────────────────────
           Positioned(
-            right: 20,
-            bottom: isPickup ? 280 : 230,
-            child: FloatingActionButton.small(
-              heroTag: 'track_recenter',
-              backgroundColor: Colors.white,
-              foregroundColor: AppTheme.charcoal,
-              elevation: 4,
-              shape: const CircleBorder(),
-              onPressed: _recenter,
-              child: const Icon(Icons.my_location_rounded, size: 20),
-            ),
-          ),
-
-          // ── FLOATING BOTTOM ORDER CARD ──────────────────────────────────
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 24,
-            child: Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.14),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
+            left: AppSpace.lg,
+            right: AppSpace.lg,
+            bottom: MediaQuery.paddingOf(context).bottom + AppSpace.lg,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FloatingActionButton.small(
+                    heroTag: 'track_recenter',
+                    tooltip: 'Recenter map',
+                    backgroundColor: AppTheme.pureWhite,
+                    foregroundColor: AppTheme.charcoal,
+                    elevation: 4,
+                    shape: const CircleBorder(),
+                    onPressed: _recenter,
+                    child: const Icon(Icons.my_location_rounded, size: 20),
                   ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Status Timeline Row for Pickup
-                  if (isPickup) ...[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'PICKUP PROGRESS',
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppTheme.mutedGrey, letterSpacing: 0.8),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: isCollected
-                                ? const Color(0xFFDCFCE7)
-                                : (isReady ? const Color(0xFFFEF3C7) : AppTheme.lightGreenBg),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            status.replaceAll('_', ' ').toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w900,
-                              color: isCollected
-                                  ? const Color(0xFF16A34A)
-                                  : (isReady ? AppTheme.goldAccent : AppTheme.primaryGreen),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    // 4 Step Visual Track
-                    Row(
-                      children: [
-                        _buildStepIndicator(label: 'Placed', isDone: true),
-                        _buildStepDivider(isDone: isPreparing),
-                        _buildStepIndicator(label: 'Prep', isDone: isPreparing),
-                        _buildStepDivider(isDone: isReady),
-                        _buildStepIndicator(label: 'Ready', isDone: isReady),
-                        _buildStepDivider(isDone: isCollected),
-                        _buildStepIndicator(label: 'Rescued', isDone: isCollected),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-
-                    // Pickup Code Banner
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: AppTheme.lightGreenBg,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.2)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.qr_code_2_rounded, color: AppTheme.primaryGreen, size: 28),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('COLLECTION CODE (SHOW CASHIER)', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
-                                Text(
-                                  order?.collectionCode != null ? '#${order!.collectionCode}' : 'READY',
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: 1),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (order?.trackingNotes != null && order!.trackingNotes!.isNotEmpty)
-                            Tooltip(
-                              message: order.trackingNotes ?? '',
-                              child: const Icon(Icons.notes_rounded, color: AppTheme.primaryGreen, size: 20),
-                            ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                  ] else ...[
-                    // Delivery Section Header
-                    const Text(
-                      'Courier Status',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.mutedGrey,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Courier Details Row
-                    Row(
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFED7AA),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: const Color(0xFFF97316),
-                              width: 2,
-                            ),
-                          ),
-                          child: const Center(
-                            child: Icon(Icons.two_wheeler_rounded, size: 24, color: AppTheme.primaryGreen),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-
-                        // Name, Rating & ETA
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                displayName,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.charcoal,
-                                ),
-                              ),
-                              const SizedBox(height: 3),
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 6,
-                                    height: 6,
-                                    decoration: const BoxDecoration(
-                                      color: AppTheme.errorRed,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    status == 'out_for_delivery' ? 'About $_etaMinutes mins' : status.replaceAll('_', ' '),
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.charcoal,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Chat Button
-                        Material(
-                          color: AppTheme.lightGreenBg,
-                          borderRadius: BorderRadius.circular(16),
-                          child: InkWell(
-                            onTap: _showChatModal,
-                            borderRadius: BorderRadius.circular(16),
-                            child: const SizedBox(
-                              width: 44,
-                              height: 44,
-                              child: Icon(
-                                Icons.chat_bubble_outline_rounded,
-                                color: AppTheme.primaryGreen,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-
-                        // Call Button
-                        Material(
-                          color: AppTheme.primaryGreen,
-                          shape: const CircleBorder(),
-                          elevation: 2,
-                          child: InkWell(
-                            onTap: _showCallDialog,
-                            customBorder: const CircleBorder(),
-                            child: const SizedBox(
-                              width: 44,
-                              height: 44,
-                              child: Icon(
-                                Icons.phone_rounded,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (order.deliveryPin.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFEF3C7),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppTheme.warningOrange.withValues(alpha: 0.3)),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.key_rounded, color: AppTheme.goldAccent, size: 24),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('DELIVERY PIN (GIVE TO RIDER UPON ARRIVAL)',
-                                      style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFFB45309))),
-                                  Text(
-                                    order.deliveryPin,
-                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: 2),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                  ],
-
-                  // Order summary footnote
-                  Row(
+                ),
+                const SizedBox(height: AppSpace.md),
+                Container(
+                  padding: const EdgeInsets.all(AppSpace.lg),
+                  decoration: BoxDecoration(
+                    color: AppTheme.pureWhite,
+                    borderRadius: AppRadius.rLg,
+                    boxShadow: AppTheme.clientElevatedShadow,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: AppTheme.lightGreenBg,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.inventory_2_rounded,
-                          color: AppTheme.primaryGreen,
-                          size: 14,
-                        ),
+                      if (isPickup)
+                        _buildPickupSection(
+                          order: order,
+                          status: status,
+                          isPreparing: isPreparing,
+                          isReady: isReady,
+                          isCollected: isCollected,
+                        )
+                      else
+                        _buildDeliverySection(order, displayName, status),
+                      const SizedBox(height: AppSpace.md),
+                      _buildOrderFooter(
+                        dealTitle: dealTitle,
+                        businessName: businessName,
+                        phone: isPickup ? displayPhone : '',
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              dealTitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.charcoal,
-                              ),
-                            ),
-                            Text(
-                              businessName,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: AppTheme.mutedGrey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (isPickup && displayPhone.isNotEmpty)
-                        ElevatedButton.icon(
-                          onPressed: () => _showStoreCallDialog(businessName, displayPhone),
-                          icon: const Icon(Icons.call_rounded, size: 14),
-                          label: Text(
-                            'Call Store ($displayPhone)',
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryGreen,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            minimumSize: const Size(0, 36),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                        ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
@@ -1150,12 +877,244 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
     );
   }
 
+  // ── Pickup: progress, status, collection code ───────────────────────────
+  Widget _buildPickupSection({
+    required Order? order,
+    required String status,
+    required bool isPreparing,
+    required bool isReady,
+    required bool isCollected,
+  }) {
+    final hasNotes = order?.trackingNotes != null && order!.trackingNotes!.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Pickup progress',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.mutedGrey),
+              ),
+            ),
+            DsPill(
+              label: status.replaceAll('_', ' ').toUpperCase(),
+              tone: isCollected ? DsTone.brand : (isReady ? DsTone.warn : DsTone.info),
+              compact: true,
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpace.md),
+        Row(
+          children: [
+            _buildStepIndicator(label: 'Placed', isDone: true),
+            _buildStepDivider(isDone: isPreparing),
+            _buildStepIndicator(label: 'Prep', isDone: isPreparing),
+            _buildStepDivider(isDone: isReady),
+            _buildStepIndicator(label: 'Ready', isDone: isReady),
+            _buildStepDivider(isDone: isCollected),
+            _buildStepIndicator(label: 'Rescued', isDone: isCollected),
+          ],
+        ),
+        const SizedBox(height: AppSpace.lg),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
+          decoration: BoxDecoration(
+            color: AppTheme.lightGreenBg,
+            borderRadius: AppRadius.rMd,
+            border: Border.all(color: AppTheme.mintGreen),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.qr_code_2_rounded, color: AppTheme.primaryGreen, size: 32),
+              const SizedBox(width: AppSpace.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Collection code · show cashier',
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.primaryGreen),
+                    ),
+                    Text(
+                      order?.collectionCode != null ? '#${order!.collectionCode}' : 'READY',
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: 1.2),
+                    ),
+                  ],
+                ),
+              ),
+              if (hasNotes)
+                Tooltip(
+                  message: order.trackingNotes ?? '',
+                  child: const Icon(Icons.notes_rounded, color: AppTheme.primaryGreen, size: 22),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Delivery: courier, ETA, chat/call, PIN ──────────────────────────────
+  Widget _buildDeliverySection(Order order, String displayName, String status) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'Courier status',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.mutedGrey),
+        ),
+        const SizedBox(height: AppSpace.md),
+        Row(
+          children: [
+            const DsIconBadge(icon: Icons.two_wheeler_rounded, tone: DsTone.deal, size: 48),
+            const SizedBox(width: AppSpace.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.charcoal, letterSpacing: -0.3),
+                  ),
+                  const SizedBox(height: AppSpace.xxs),
+                  Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(color: AppTheme.errorRed, shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: AppSpace.xs + 2),
+                      Flexible(
+                        child: Text(
+                          status == 'out_for_delivery' ? 'About $_etaMinutes mins' : status.replaceAll('_', ' '),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.charcoal),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpace.sm),
+            _roundAction(Icons.chat_bubble_outline_rounded, 'Message courier', _showChatModal, filled: false),
+            const SizedBox(width: AppSpace.md),
+            _roundAction(Icons.phone_rounded, 'Call courier', _showCallDialog, filled: true),
+          ],
+        ),
+        if (order.deliveryPin.isNotEmpty) ...[
+          const SizedBox(height: AppSpace.md),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
+            decoration: BoxDecoration(
+              color: AppTheme.dealOrangeBg,
+              borderRadius: AppRadius.rMd,
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.key_rounded, color: AppTheme.dealOrange, size: 26),
+                const SizedBox(width: AppSpace.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Delivery PIN · give to rider on arrival',
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.dealOrange),
+                      ),
+                      Text(
+                        order.deliveryPin,
+                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppTheme.charcoal, letterSpacing: 3),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _roundAction(IconData icon, String label, VoidCallback onTap, {required bool filled}) {
+    return DsPressable(
+      onTap: onTap,
+      semanticLabel: label,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: filled ? AppTheme.primaryGreen : AppTheme.lightGreenBg,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: filled ? AppTheme.pureWhite : AppTheme.primaryGreen, size: 22),
+      ),
+    );
+  }
+
+  // ── Order summary footnote ──────────────────────────────────────────────
+  Widget _buildOrderFooter({required String dealTitle, required String businessName, required String phone}) {
+    return Row(
+      children: [
+        const DsIconBadge(icon: Icons.inventory_2_rounded, size: 36),
+        const SizedBox(width: AppSpace.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                dealTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.charcoal),
+              ),
+              Text(
+                businessName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 12.5, color: AppTheme.mutedGrey),
+              ),
+            ],
+          ),
+        ),
+        if (phone.isNotEmpty) ...[
+          const SizedBox(width: AppSpace.sm),
+          Semantics(
+            label: 'Call store on $phone',
+            child: DsPressable(
+              onTap: () => _showStoreCallDialog(businessName, phone),
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 44),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+                decoration: BoxDecoration(color: AppTheme.primaryGreen, borderRadius: AppRadius.rPill),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.call_rounded, size: 16, color: AppTheme.pureWhite),
+                    SizedBox(width: AppSpace.sm),
+                    Text('Call store', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppTheme.pureWhite)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
   Widget _buildStepIndicator({required String label, required bool isDone}) {
     return Column(
       children: [
         Container(
-          width: 18,
-          height: 18,
+          width: 24,
+          height: 24,
           decoration: BoxDecoration(
             color: isDone ? AppTheme.primaryGreen : AppTheme.hairline,
             shape: BoxShape.circle,
@@ -1163,18 +1122,25 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
           child: Center(
             child: Icon(
               isDone ? Icons.check_rounded : Icons.circle,
-              color: Colors.white,
-              size: isDone ? 12 : 6,
+              color: AppTheme.pureWhite,
+              size: isDone ? 15 : 7,
             ),
           ),
         ),
-        const SizedBox(height: 3),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 9,
-            fontWeight: isDone ? FontWeight.bold : FontWeight.w500,
-            color: isDone ? AppTheme.charcoal : AppTheme.mutedGrey,
+        const SizedBox(height: AppSpace.xs),
+        // A fixed slot the label scales into, so large text sizes never push the track out.
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 52),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isDone ? FontWeight.w800 : FontWeight.w600,
+                color: isDone ? AppTheme.charcoal : AppTheme.mutedGrey,
+              ),
+            ),
           ),
         ),
       ],
@@ -1184,9 +1150,12 @@ class _OrderTrackScreenState extends ConsumerState<OrderTrackScreen>
   Widget _buildStepDivider({required bool isDone}) {
     return Expanded(
       child: Container(
-        height: 2,
-        margin: const EdgeInsets.only(bottom: 14),
-        color: isDone ? AppTheme.primaryGreen : AppTheme.hairline,
+        height: 3,
+        margin: const EdgeInsets.only(bottom: AppSpace.xl),
+        decoration: BoxDecoration(
+          color: isDone ? AppTheme.primaryGreen : AppTheme.hairline,
+          borderRadius: AppRadius.rPill,
+        ),
       ),
     );
   }

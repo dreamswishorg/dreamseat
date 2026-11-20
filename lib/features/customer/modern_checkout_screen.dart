@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../core/config.dart';
 import '../../core/theme.dart';
 import '../../core/ds_kit.dart';
+import '../../core/ui_utils.dart';
 import '../../core/responsive.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
@@ -92,9 +93,33 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
     super.dispose();
   }
 
-  void _applyPromo(String code) {
+  /// Validates on the server first (real, admin-managed vouchers: expiry, usage
+  /// limits, ownership). If the validation function isn't deployed yet, the
+  /// legacy built-in codes below still work so checkout never breaks.
+  Future<void> _applyPromo(String code) async {
     final cleanCode = code.trim().toUpperCase();
     if (cleanCode.isEmpty) return;
+
+    final check = await ref.read(appStateProvider.notifier).validateVoucher(cleanCode);
+    if (!mounted) return;
+    if (check.status == 'valid') {
+      final subtotal = ref.read(appStateProvider).basketTotal;
+      final saved = check.type == 'percentage' ? subtotal * check.amount / 100 : check.amount;
+      setState(() {
+        _appliedPromoCode = cleanCode;
+        _discountAmount = saved.clamp(0.0, subtotal);
+      });
+      AppToast.success(context, '$cleanCode applied: saved GHS ${_discountAmount.toStringAsFixed(2)}');
+      return;
+    }
+    if (check.status == 'invalid') {
+      AppToast.error(context, 'That code isn\'t valid, has expired, or was already used.');
+      return;
+    }
+    _applyLegacyPromo(cleanCode);
+  }
+
+  void _applyLegacyPromo(String cleanCode) {
 
     if (cleanCode == 'WELCOME20') {
       setState(() {
@@ -132,7 +157,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Invalid promo code. Try WELCOME20 or RESCUE10'),
+          content: Text('Invalid promo code.'),
           backgroundColor: AppTheme.errorRed,
         ),
       );
@@ -829,6 +854,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
         );
       }
       notifier.clearBasket();
+      if (_appliedPromoCode.isNotEmpty) notifier.consumeVoucher(_appliedPromoCode);
 
       await Future.delayed(const Duration(milliseconds: 600));
       if (mounted && Navigator.canPop(context)) Navigator.pop(context); // Close dialog
@@ -918,6 +944,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                             );
                           }
                           notifier.clearBasket();
+                          if (_appliedPromoCode.isNotEmpty) notifier.consumeVoucher(_appliedPromoCode);
                           if (createdOrder != null && mounted) {
                             Navigator.pushReplacement(
                               context,
@@ -1120,6 +1147,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
         backgroundColor: AppTheme.cream,
         elevation: 0,
         leading: IconButton(
+          tooltip: 'Back',
           icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.charcoal),
           onPressed: () => Navigator.pop(context),
         ),
@@ -1189,13 +1217,13 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(16),
                                 child: SizedBox(
-                                  width: 68,
-                                  height: 68,
+                                  width: 56,
+                                  height: 56,
                                   child: item.deal.imageUrl.isNotEmpty
                                       ? CachedNetworkImage(
                                           imageUrl: item.deal.imageUrl,
                                           fit: BoxFit.cover,
-                                          placeholder: (context, url) => Container(color: const Color(0xFFF1F5F9)),
+                                          placeholder: (context, url) => Container(color: AppTheme.lightGrey),
                                           errorWidget: (context, url, error) => _buildFallbackThumbnail(),
                                         )
                                       : _buildFallbackThumbnail(),
@@ -1229,7 +1257,8 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                                     const SizedBox(height: 8),
 
                                     // Stepper [-] qty [+] with Red Trash Icon at qty == 1
-                                    Row(
+                                    Wrap(
+                                      crossAxisAlignment: WrapCrossAlignment.center,
                                       children: [
                                         _buildStepperButton(
                                           isTrash: item.quantity <= 1,
@@ -1392,7 +1421,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                           ),
                           if (_isDelivery) ...[
                             const SizedBox(height: 16),
-                            const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                            const Divider(height: 1, color: AppTheme.lightGrey),
                             const SizedBox(height: 14),
 
                             // Header row with "Use My Location" button
@@ -1474,7 +1503,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF1F5F9),
+                                    color: AppTheme.lightGrey,
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
                                       color: _addressController.text == _savedProfileAddress
@@ -1531,7 +1560,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                               style: const TextStyle(fontSize: 13.5, color: AppTheme.charcoal, fontWeight: FontWeight.w500),
                               decoration: InputDecoration(
                                 hintText: 'Enter street name, landmark, or house number...',
-                                hintStyle: const TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
+                                hintStyle: const TextStyle(fontSize: 12.5, color: AppTheme.mutedGrey),
                                 prefixIcon: const Icon(Icons.location_on_rounded, color: AppTheme.primaryGreen, size: 20),
                                 suffixIcon: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -1547,7 +1576,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                                       ),
                                     if (_addressController.text.isNotEmpty)
                                       IconButton(
-                                        icon: const Icon(Icons.cancel_rounded, size: 18, color: Color(0xFF94A3B8)),
+                                        icon: const Icon(Icons.cancel_rounded, size: 18, color: AppTheme.mutedGrey),
                                         tooltip: 'Clear address',
                                         onPressed: () {
                                           setState(() {
@@ -1625,7 +1654,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                                     shrinkWrap: true,
                                     padding: EdgeInsets.zero,
                                     itemCount: _addressSuggestions.length,
-                                    separatorBuilder: (_, _) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                                    separatorBuilder: (_, _) => const Divider(height: 1, color: AppTheme.lightGrey),
                                     itemBuilder: (ctx, index) {
                                       final suggestion = _addressSuggestions[index];
                                       return InkWell(
@@ -1671,7 +1700,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                                                   ],
                                                 ),
                                               ),
-                                              const Icon(Icons.arrow_forward_ios_rounded, size: 11, color: Color(0xFF94A3B8)),
+                                              const Icon(Icons.arrow_forward_ios_rounded, size: 11, color: AppTheme.mutedGrey),
                                             ],
                                           ),
                                         ),
@@ -1714,68 +1743,62 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // ── PROMO CODE SECTION (Mockup 1 Left) ──────────────────
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Row(
+                    // ── PROMO CODE ──────────────────────────────────────────
+                    DsCard(
+                      padding: const EdgeInsets.all(AppSpace.lg),
+                      radius: AppRadius.lg,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _promoController,
-                              textCapitalization: TextCapitalization.characters,
-                              decoration: const InputDecoration(
-                                hintText: 'Enter Promo Code',
-                                hintStyle: TextStyle(fontSize: 13, color: AppTheme.mutedGrey),
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                errorBorder: InputBorder.none,
-                                disabledBorder: InputBorder.none,
-                                filled: false,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Expanded(
+                                child: DsTextField(
+                                  controller: _promoController,
+                                  label: 'Promo code',
+                                  hint: 'Enter promo code',
+                                  icon: Icons.local_offer_outlined,
+                                  textCapitalization:
+                                      TextCapitalization.characters,
+                                  textInputAction: TextInputAction.done,
+                                  onSubmitted: _applyPromo,
+                                ),
                               ),
-                            ),
+                              const SizedBox(width: AppSpace.md),
+                              DsButton(
+                                label: 'Apply',
+                                expand: false,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpace.xl,
+                                  vertical: AppSpace.md,
+                                ),
+                                onPressed: () =>
+                                    _applyPromo(_promoController.text),
+                              ),
+                            ],
                           ),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryGreen,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                            ),
-                            onPressed: () => _applyPromo(_promoController.text),
-                            child: const Text('Apply', style: TextStyle(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: AppSpace.md),
+                          // Suggested codes
+                          Wrap(
+                            spacing: AppSpace.sm,
+                            runSpacing: AppSpace.sm,
+                            children: _suggestedVouchers
+                                .map(
+                                  (v) => DsFilterChip(
+                                    label: v,
+                                    icon: Icons.local_offer_rounded,
+                                    selected: false,
+                                    onTap: () {
+                                      _promoController.text = v;
+                                      _applyPromo(v);
+                                    },
+                                  ),
+                                )
+                                .toList(),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Suggested Voucher Chips
-                    Wrap(
-                      spacing: 8,
-                      children: _suggestedVouchers.map((v) {
-                        return ActionChip(
-                          avatar: const Icon(Icons.local_offer_rounded, size: 12, color: AppTheme.primaryGreen),
-                          label: Text(v, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                          backgroundColor: AppTheme.lightGreenBg,
-                          onPressed: () {
-                            _promoController.text = v;
-                            _applyPromo(v);
-                          },
-                        );
-                      }).toList(),
                     ),
                     const SizedBox(height: 20),
 
@@ -1814,7 +1837,7 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                           ],
                           const Padding(
                             padding: EdgeInsets.symmetric(vertical: 14),
-                            child: Divider(height: 1, color: Color(0xFFF1F5F9)),
+                            child: Divider(height: 1, color: AppTheme.lightGrey),
                           ),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1827,12 +1850,17 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
                                   color: AppTheme.charcoal,
                                 ),
                               ),
-                              Text(
-                                'GHS ${finalTotal.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppTheme.charcoal,
+                              Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    'GHS ${finalTotal.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppTheme.charcoal,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
@@ -1883,14 +1911,14 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
   }) {
     // 44x44 tap target around a 32px visible control.
     return Semantics(
-      button: true,
-      label: isTrash ? 'Remove item' : (icon == Icons.add_rounded ? 'Increase quantity' : 'Decrease quantity'),
+      container: true,
       child: DsPressable(
         onTap: onTap,
         pressedScale: 0.88,
+        semanticLabel: isTrash ? 'Remove item' : (icon == Icons.add_rounded ? 'Increase quantity' : 'Decrease quantity'),
         child: SizedBox(
-          width: 44,
-          height: 44,
+          width: 48,
+          height: 48,
           child: Center(
             child: Container(
               width: 32,
@@ -1911,24 +1939,30 @@ class _ModernCheckoutScreenState extends ConsumerState<ModernCheckoutScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 13.5,
-            color: AppTheme.mutedGrey,
-            fontWeight: FontWeight.w500,
+        Flexible(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 13.5, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500),
           ),
         ),
-        Text(
-          amount,
-          style: TextStyle(
-            fontSize: 13.5,
-            fontWeight: FontWeight.bold,
-            color: isFree
-                ? AppTheme.primaryGreen
-                : isDiscount
-                    ? AppTheme.errorRed
-                    : AppTheme.charcoal,
+        const SizedBox(width: AppSpace.md),
+        Flexible(
+          child: Text(
+            amount,
+            textAlign: TextAlign.end,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.bold,
+              color: isFree
+                  ? AppTheme.primaryGreen
+                  : isDiscount
+                      ? AppTheme.errorRed
+                      : AppTheme.charcoal,
+            ),
           ),
         ),
       ],

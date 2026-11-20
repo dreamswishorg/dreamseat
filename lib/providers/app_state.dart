@@ -1967,6 +1967,20 @@ class AppStateManager extends Notifier<AppState> {
     return false;
   }
 
+  Future<RewardRedemption> redeemRewardVoucher({
+    required int pointsCost,
+    required String rewardName,
+    required double discount,
+  }) async {
+    final res = await _supa.redeemRewardVoucher(pointsCost: pointsCost, rewardName: rewardName, discount: discount);
+    if (res.status == 'issued') await _hydrate();
+    return res;
+  }
+
+  Future<VoucherCheck> validateVoucher(String code) => _supa.validateVoucher(code);
+
+  Future<void> consumeVoucher(String code) => _supa.consumeVoucher(code);
+
   void startBackgroundRefresh() {
     _refreshTimer?.cancel();
     _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) async {

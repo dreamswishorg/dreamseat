@@ -2495,6 +2495,55 @@ class SupabaseService {
     }
   }
 
+  /// Redeems points for a real single-use voucher (server-issued code).
+  /// Status is `issued`, `insufficient`, or `unavailable` (migration not applied yet).
+  Future<RewardRedemption> redeemRewardVoucher({
+    required int pointsCost,
+    required String rewardName,
+    required double discount,
+  }) async {
+    try {
+      final result = await _db.rpc('redeem_reward', params: {
+        'points_cost': pointsCost,
+        'reward_name': rewardName,
+        'discount': discount,
+      });
+      return RewardRedemption('issued', result as String?);
+    } on PostgrestException catch (e) {
+      if (e.message.contains('INSUFFICIENT_POINTS')) return const RewardRedemption('insufficient');
+      debugPrint('redeem_reward unavailable: ${e.code} ${e.message}');
+      return const RewardRedemption('unavailable');
+    } catch (e) {
+      debugPrint('redeem_reward failed: $e');
+      return const RewardRedemption('unavailable');
+    }
+  }
+
+  /// Checks a promo/voucher code on the server. `unavailable` means the
+  /// validation function isn't deployed, so the caller may fall back.
+  Future<VoucherCheck> validateVoucher(String code) async {
+    try {
+      final rows = await _db.rpc('validate_voucher', params: {'voucher_code': code});
+      final list = rows as List<dynamic>;
+      if (list.isEmpty) return const VoucherCheck('invalid');
+      final row = list.first as Map<String, dynamic>;
+      return VoucherCheck('valid',
+          amount: (row['discount_amount'] as num).toDouble(), type: row['discount_type'] as String);
+    } catch (e) {
+      debugPrint('validate_voucher unavailable: $e');
+      return const VoucherCheck('unavailable');
+    }
+  }
+
+  /// Records one use of a voucher after a successful payment. Never throws.
+  Future<void> consumeVoucher(String code) async {
+    try {
+      await _db.rpc('consume_voucher', params: {'voucher_code': code});
+    } catch (e) {
+      debugPrint('consume_voucher skipped: $e');
+    }
+  }
+
   /// Increments DreamPoints for a user.
   Future<void> incrementDreamPoints(int points) async {
     final uid = _db.auth.currentUser?.id;
@@ -2669,3 +2718,19 @@ class SupabaseService {
   }
 }
 
+
+
+/// Outcome of redeeming a reward for a voucher.
+class RewardRedemption {
+  final String status; // 'issued' | 'insufficient' | 'unavailable'
+  final String? code;
+  const RewardRedemption(this.status, [this.code]);
+}
+
+/// Outcome of validating a promo/voucher code.
+class VoucherCheck {
+  final String status; // 'valid' | 'invalid' | 'unavailable'
+  final double amount;
+  final String type; // 'fixed' | 'percentage'
+  const VoucherCheck(this.status, {this.amount = 0, this.type = 'fixed'});
+}

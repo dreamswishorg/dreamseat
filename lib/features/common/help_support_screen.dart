@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../core/theme.dart';
 import '../../core/config.dart';
-import '../../providers/app_state.dart';
+import '../../core/ds_kit.dart';
+import '../../core/responsive.dart';
+import '../../core/theme.dart';
+import '../../core/ui_utils.dart';
 import '../../models/models.dart';
+import '../../providers/app_state.dart';
 import '../../services/supabase_service.dart';
 import 'legal_screens.dart';
 
@@ -17,9 +20,25 @@ class HelpSupportScreen extends ConsumerStatefulWidget {
 }
 
 class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
+  final _ticketFormKey = GlobalKey<FormState>();
   final _subjectController = TextEditingController();
   final _messageController = TextEditingController();
   bool _isSubmitting = false;
+
+  static const _faqs = <(String, String)>[
+    (
+      'How do I rescue a meal?',
+      "Browse available deals, add them to your basket, and complete checkout. You'll receive a digital collection code to show at the store during their pickup window.",
+    ),
+    (
+      'What if the store is closed upon arrival?',
+      "Always arrive within the merchant's specified window. If the store is unexpectedly closed, open a support ticket immediately for a verified refund.",
+    ),
+    (
+      'How do mystery bags work?',
+      'Mystery bags contain high-quality surplus meals selected by the chef each day. While exact contents vary, the retail value is guaranteed to exceed the discounted price!',
+    ),
+  ];
 
   @override
   void dispose() {
@@ -29,32 +48,28 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
   }
 
   void _submitTicket() async {
-    if (_subjectController.text.isEmpty || _messageController.text.isEmpty) return;
+    if (!(_ticketFormKey.currentState?.validate() ?? false)) return;
 
     setState(() => _isSubmitting = true);
     try {
       final user = ref.read(appStateProvider).currentUser;
       if (user == null) return;
 
-      await ref.read(appStateProvider.notifier).createSupportTicket(
-        subject: _subjectController.text.trim(),
-        message: _messageController.text.trim(),
-      );
+      await ref
+          .read(appStateProvider.notifier)
+          .createSupportTicket(
+            subject: _subjectController.text.trim(),
+            message: _messageController.text.trim(),
+          );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Support ticket submitted successfully."), backgroundColor: AppTheme.primaryGreen),
-        );
+        AppToast.success(context, 'Support ticket submitted successfully.');
         _subjectController.clear();
         _messageController.clear();
         Navigator.pop(context);
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e"), backgroundColor: AppTheme.errorRed),
-        );
-      }
+      if (mounted) AppToast.error(context, 'Error: $e');
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -64,58 +79,83 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 24, right: 24, top: 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppTheme.lightGrey, borderRadius: BorderRadius.circular(2)))),
-            const SizedBox(height: 24),
-            const Text("New Support Request", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: AppTheme.charcoal)),
-            const SizedBox(height: 6),
-            const Text("Describe your issue and our dedicated support team in Accra will get back to you.", style: TextStyle(color: AppTheme.mutedGrey, fontSize: 13, height: 1.4)),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _subjectController,
-              decoration: InputDecoration(
-                labelText: "Subject (e.g. Order #1042 Collection Issue)",
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                filled: true,
-                fillColor: AppTheme.lightGrey,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom,
+          left: AppSpace.xxl,
+          right: AppSpace.xxl,
+          top: AppSpace.md,
+        ),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _ticketFormKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppTheme.hairline,
+                      borderRadius: AppRadius.rPill,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpace.xl),
+                const Text(
+                  'New Support Request',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 20,
+                    color: AppTheme.charcoal,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+                const SizedBox(height: AppSpace.xs),
+                const Text(
+                  'Describe your issue and our dedicated support team in Accra will get back to you.',
+                  style: TextStyle(
+                    color: AppTheme.mutedGrey,
+                    fontSize: 14,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: AppSpace.xl),
+                DsTextField(
+                  controller: _subjectController,
+                  label: 'Subject',
+                  hint: 'e.g. Order #1042 Collection Issue',
+                  icon: Icons.subject_rounded,
+                  textInputAction: TextInputAction.next,
+                  textCapitalization: TextCapitalization.sentences,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Please add a subject'
+                      : null,
+                ),
+                const SizedBox(height: AppSpace.lg),
+                DsTextField(
+                  controller: _messageController,
+                  label: 'Detailed Message',
+                  hint: 'Tell us what happened',
+                  maxLines: 4,
+                  textCapitalization: TextCapitalization.sentences,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Please describe your issue'
+                      : null,
+                ),
+                const SizedBox(height: AppSpace.xxl),
+                DsButton(
+                  label: 'Send to support team',
+                  icon: Icons.send_rounded,
+                  loading: _isSubmitting,
+                  onPressed: _isSubmitting ? null : _submitTicket,
+                ),
+                const SizedBox(height: AppSpace.x4),
+              ],
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _messageController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                labelText: "Detailed Message",
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                filled: true,
-                fillColor: AppTheme.lightGrey,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              ),
-            ),
-            const SizedBox(height: 28),
-            ElevatedButton(
-              onPressed: _isSubmitting ? null : _submitTicket,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryGreen,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(0, 56),
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              ),
-              child: _isSubmitting
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text("SEND TO SUPPORT TEAM", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, letterSpacing: 0.5)),
-            ),
-            const SizedBox(height: 36),
-          ],
+          ),
         ),
       ),
     );
@@ -124,246 +164,270 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
   @override
   Widget build(BuildContext context) {
     final tickets = ref.watch(appStateProvider.select((s) => s.supportTickets));
+    const sectionPad = EdgeInsets.fromLTRB(
+      AppSpace.xs,
+      AppSpace.xxl,
+      AppSpace.xs,
+      AppSpace.md,
+    );
 
     return Scaffold(
       backgroundColor: AppTheme.cream,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.charcoal, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('Help & Support', style: TextStyle(color: AppTheme.charcoal, fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -0.5)),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Hero Help Banner
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF0F5B3C), Color(0xFF16A34A)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+      appBar: dsScreenBar(context, title: 'Help & Support'),
+      body: ResponsiveCenter(
+        maxWidth: 720,
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpace.gutter,
+            AppSpace.lg,
+            AppSpace.gutter,
+            AppSpace.x4,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Hero ────────────────────────────────────────────────────
+              DsHeroCard(
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          DsPill(
+                            label: '24/7 customer care',
+                            icon: Icons.schedule_rounded,
+                            compact: true,
+                          ),
+                          SizedBox(height: AppSpace.md),
+                          Text(
+                            'How can we assist your food rescue?',
+                            style: TextStyle(
+                              color: AppTheme.pureWhite,
+                              fontSize: 21,
+                              fontWeight: FontWeight.w800,
+                              height: 1.2,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          SizedBox(height: AppSpace.sm),
+                          Text(
+                            'Need help with collection codes or surplus deals? Reach out directly.',
+                            style: TextStyle(
+                              color: AppTheme.mintGreen,
+                              fontSize: 14,
+                              height: 1.45,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppSpace.lg),
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: AppTheme.pureWhite.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.support_agent_rounded,
+                        color: AppTheme.limeAccent,
+                        size: 34,
+                      ),
+                    ),
+                  ],
                 ),
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(color: AppTheme.primaryGreen.withValues(alpha: 0.25), blurRadius: 20, offset: const Offset(0, 8)),
-                ],
               ),
-              child: Row(
+
+              // ── Contact ─────────────────────────────────────────────────
+              const DsSectionHeader(
+                title: 'Contact Options',
+                padding: sectionPad,
+              ),
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: _ContactCard(
+                        icon: Icons.add_comment_rounded,
+                        label: 'Open Ticket',
+                        detail: 'Fastest response',
+                        onTap: _showNewTicketSheet,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpace.md),
+                    Expanded(
+                      child: _ContactCard(
+                        icon: Icons.email_outlined,
+                        label: 'Email Support',
+                        detail: 'Direct mail inquiry',
+                        tone: DsTone.info,
+                        onTap: () => _launchEmail(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Tickets ─────────────────────────────────────────────────
+              if (tickets.isNotEmpty) ...[
+                const DsSectionHeader(
+                  title: 'My Active Requests',
+                  padding: sectionPad,
+                ),
+                for (final t in tickets) _buildTicketTile(t),
+              ],
+
+              // ── FAQ ─────────────────────────────────────────────────────
+              const DsSectionHeader(
+                title: 'Frequently Asked Questions',
+                padding: sectionPad,
+              ),
+              for (final (q, a) in _faqs) _buildFaqTile(question: q, answer: a),
+
+              // ── Legal ───────────────────────────────────────────────────
+              const DsSectionHeader(
+                title: 'Legal & Documentation',
+                padding: sectionPad,
+              ),
+              DsMenuGroup(
+                margin: EdgeInsets.zero,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(20)),
-                          child: const Text("24/7 CUSTOMER CARE", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text("How can we assist your food rescue?", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, height: 1.2)),
-                        const SizedBox(height: 6),
-                        Text("Need help with collection codes or surplus deals? Reach out directly.", style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13, height: 1.4)),
-                      ],
+                  DsMenuTile(
+                    icon: Icons.description_rounded,
+                    label: 'Terms of Service',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const TermsOfServiceScreen(),
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), shape: BoxShape.circle),
-                    child: const Icon(Icons.support_agent_rounded, color: Colors.white, size: 36),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Quick Actions
-            const Text("Contact Options", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: AppTheme.charcoal, letterSpacing: -0.3)),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                _buildContactCard(
-                  icon: Icons.add_comment_rounded,
-                  label: "Open Ticket",
-                  sublabel: "Fastest response",
-                  color: AppTheme.primaryGreen,
-                  onTap: _showNewTicketSheet,
-                ),
-                const SizedBox(width: 14),
-                _buildContactCard(
-                  icon: Icons.email_outlined,
-                  label: "Email Support",
-                  sublabel: "Direct mail inquiry",
-                  color: const Color(0xFF0284C7),
-                  onTap: () => _launchEmail(context),
-                ),
-              ],
-            ),
-            const SizedBox(height: 28),
-
-            // Active Tickets
-            if (tickets.isNotEmpty) ...[
-              const Text("My Active Requests", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: AppTheme.charcoal, letterSpacing: -0.3)),
-              const SizedBox(height: 14),
-              ...tickets.map((t) => InkWell(
-                    onTap: () => _showTicketChat(context, t),
-                    borderRadius: BorderRadius.circular(18),
-                    child: _buildTicketTile(t),
-                  )),
-              const SizedBox(height: 28),
-            ],
-
-            const Text("Frequently Asked Questions", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: AppTheme.charcoal, letterSpacing: -0.3)),
-            const SizedBox(height: 14),
-            _buildFAQTile(question: "How do I rescue a meal?", answer: "Browse available deals, add them to your basket, and complete checkout. You'll receive a digital collection code to show at the store during their pickup window."),
-            _buildFAQTile(question: "What if the store is closed upon arrival?", answer: "Always arrive within the merchant's specified window. If the store is unexpectedly closed, open a support ticket immediately for a verified refund."),
-            _buildFAQTile(question: "How do mystery bags work?", answer: "Mystery bags contain high-quality surplus meals selected by the chef each day. While exact contents vary, the retail value is guaranteed to exceed the discounted price!"),
-            const SizedBox(height: 32),
-
-            const Text("Legal & Documentation", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 17, color: AppTheme.charcoal, letterSpacing: -0.3)),
-            const SizedBox(height: 14),
-            Container(
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.05))),
-              child: Column(
-                children: [
-                  _buildLegalRow(
-                    icon: Icons.description_rounded,
-                    label: "Terms of Service",
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsOfServiceScreen())),
-                  ),
-                  Divider(height: 1, color: AppTheme.charcoal.withValues(alpha: 0.05)),
-                  _buildLegalRow(
+                  DsMenuTile(
                     icon: Icons.privacy_tip_rounded,
-                    label: "Privacy Policy",
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
+                    label: 'Privacy Policy',
+                    tone: DsTone.info,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const PrivacyPolicyScreen(),
+                      ),
+                    ),
                   ),
-                  Divider(height: 1, color: AppTheme.charcoal.withValues(alpha: 0.05)),
-                  _buildLegalRow(
+                  DsMenuTile(
                     icon: Icons.info_outline_rounded,
-                    label: "App Version ${AppConfig.appVersion}",
-                    onTap: null,
+                    label: 'App Version ${AppConfig.appVersion}',
+                    tone: DsTone.neutral,
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 40),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildTicketTile(SupportTicket t) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.06)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: AppTheme.lightGreenBg, shape: BoxShape.circle),
-            child: Icon(Icons.forum_rounded, size: 20, color: t.status == 'resolved' ? AppTheme.mutedGrey : AppTheme.primaryGreen),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(t.subject, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.charcoal)),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: t.status == 'open' ? AppTheme.warningOrange.withValues(alpha: 0.15) : AppTheme.primaryGreen.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
+    final open = t.status == 'open';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpace.md),
+      child: DsCard(
+        onTap: () => _showTicketChat(context, t),
+        padding: const EdgeInsets.all(AppSpace.lg),
+        radius: AppRadius.md,
+        child: Row(
+          children: [
+            DsIconBadge(
+              icon: Icons.forum_rounded,
+              tone: open ? DsTone.brand : DsTone.neutral,
+              size: 44,
+            ),
+            const SizedBox(width: AppSpace.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    t.subject,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15.5,
+                      color: AppTheme.charcoal,
+                      letterSpacing: -0.2,
+                    ),
                   ),
-                  child: Text("Status: ${t.status.toUpperCase()}", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: t.status == 'open' ? AppTheme.warningOrange : AppTheme.primaryGreen)),
-                ),
-              ],
+                  const SizedBox(height: AppSpace.xs),
+                  DsPill(
+                    label: t.status.toUpperCase(),
+                    tone: open ? DsTone.warn : DsTone.brand,
+                    compact: true,
+                  ),
+                ],
+              ),
             ),
-          ),
-          Text(DateFormat('MMM d').format(t.createdAt), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.mutedGrey)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContactCard({required IconData icon, required String label, required String sublabel, required Color color, required VoidCallback onTap}) {
-    return Expanded(
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: color.withValues(alpha: 0.15), width: 1.5),
+            const SizedBox(width: AppSpace.sm),
+            Text(
+              DateFormat('MMM d').format(t.createdAt),
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.mutedGrey,
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
-                  child: Icon(icon, color: color, size: 24),
-                ),
-                const SizedBox(height: 14),
-                Text(label, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.charcoal)),
-                const SizedBox(height: 2),
-                Text(sublabel, style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500)),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildFAQTile({required String question, required String answer}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.05))),
-      child: ExpansionTile(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text(question, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: AppTheme.charcoal)),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        expandedAlignment: Alignment.topLeft,
-        children: [Text(answer, style: const TextStyle(fontSize: 13, color: AppTheme.mutedGrey, height: 1.5))],
-      ),
-    );
-  }
-
-  Widget _buildLegalRow({required IconData icon, required String label, VoidCallback? onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Row(
-          children: [
-            Icon(icon, size: 22, color: AppTheme.primaryGreen),
-            const SizedBox(width: 16),
-            Expanded(child: Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.charcoal))),
-            if (onTap != null) const Icon(Icons.chevron_right_rounded, color: AppTheme.mutedGrey, size: 22),
-          ],
+  Widget _buildFaqTile({required String question, required String answer}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpace.md),
+      child: DsCard(
+        padding: EdgeInsets.zero,
+        radius: AppRadius.md,
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            shape: RoundedRectangleBorder(borderRadius: AppRadius.rMd),
+            collapsedShape: RoundedRectangleBorder(borderRadius: AppRadius.rMd),
+            tilePadding: const EdgeInsets.symmetric(
+              horizontal: AppSpace.lg,
+              vertical: AppSpace.xs,
+            ),
+            title: Text(
+              question,
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                color: AppTheme.charcoal,
+                letterSpacing: -0.2,
+              ),
+            ),
+            childrenPadding: const EdgeInsets.fromLTRB(
+              AppSpace.lg,
+              0,
+              AppSpace.lg,
+              AppSpace.lg,
+            ),
+            expandedAlignment: Alignment.topLeft,
+            children: [
+              Text(
+                answer,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.mutedGrey,
+                  height: 1.55,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -373,7 +437,9 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
     final Uri emailLaunchUri = Uri(
       scheme: 'mailto',
       path: AppConfig.supportEmail,
-      query: _encodeQueryParameters(<String, String>{'subject': 'DreamEats Support Request'}),
+      query: _encodeQueryParameters(<String, String>{
+        'subject': 'DreamEats Support Request',
+      }),
     );
     try {
       if (await canLaunchUrl(emailLaunchUri)) {
@@ -383,18 +449,24 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Email: ${AppConfig.supportEmail}")));
+        AppToast.info(context, 'Email: ${AppConfig.supportEmail}');
       }
     }
   }
 
   String? _encodeQueryParameters(Map<String, String> params) {
-    return params.entries.map((MapEntry<String, String> e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}').join('&');
+    return params.entries
+        .map(
+          (MapEntry<String, String> e) =>
+              '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}',
+        )
+        .join('&');
   }
 
   void _showTicketChat(BuildContext context, SupportTicket ticket) {
     final replyController = TextEditingController();
-    Future<List<TicketReply>> repliesFuture = SupabaseService().fetchTicketReplies(ticket.id);
+    Future<List<TicketReply>> repliesFuture = SupabaseService()
+        .fetchTicketReplies(ticket.id);
 
     showModalBottomSheet(
       context: context,
@@ -403,19 +475,22 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
           return Container(
-            height: MediaQuery.of(context).size.height * 0.85,
+            height: MediaQuery.sizeOf(context).height * 0.85,
             decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              color: AppTheme.pureWhite,
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(AppRadius.lg),
+              ),
             ),
             clipBehavior: Clip.antiAlias,
             child: Scaffold(
-              backgroundColor: const Color(0xFFE5DDD5), // Standard WhatsApp chat background
+              backgroundColor: AppTheme.cream,
               appBar: AppBar(
-                backgroundColor: Colors.white,
-                elevation: 1,
+                backgroundColor: AppTheme.pureWhite,
+                centerTitle: false,
                 leading: IconButton(
-                  icon: const Icon(Icons.close_rounded, color: AppTheme.charcoal),
+                  tooltip: 'Close',
+                  icon: const Icon(Icons.close_rounded),
                   onPressed: () => Navigator.pop(context),
                 ),
                 title: Column(
@@ -423,20 +498,34 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
                   children: [
                     Text(
                       ticket.subject,
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.charcoal),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        color: AppTheme.charcoal,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpace.xxs),
                     Text(
-                      "Status: ${ticket.status.toUpperCase()}",
+                      'Status: ${ticket.status.toUpperCase()}',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: ticket.status == 'open' ? AppTheme.warningOrange : AppTheme.primaryGreen,
+                        color: ticket.status == 'open'
+                            ? AppTheme.goldAccent
+                            : AppTheme.primaryGreen,
                       ),
                     ),
                   ],
+                ),
+                bottom: const PreferredSize(
+                  preferredSize: Size.fromHeight(1),
+                  child: Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: AppTheme.hairline,
+                  ),
                 ),
               ),
               body: Column(
@@ -445,17 +534,21 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
                     child: FutureBuilder<List<TicketReply>>(
                       future: repliesFuture,
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting && snapshot.data == null) {
-                          return const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen));
+                        if (snapshot.connectionState ==
+                                ConnectionState.waiting &&
+                            snapshot.data == null) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
                         }
 
                         final replies = snapshot.data ?? [];
 
                         return ListView(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(AppSpace.lg),
                           children: [
-                            // 1. Customer's own initial message
-                            _buildModalChatBubble(
+                            // 1. The customer's own opening message
+                            _buildChatBubble(
                               senderName: ticket.userName,
                               message: ticket.message,
                               timestamp: ticket.createdAt,
@@ -463,69 +556,106 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
                               isInitial: true,
                             ),
                             // 2. Replies
-                            ...replies.map((reply) => _buildModalChatBubble(
-                                  senderName: reply.senderName,
-                                  message: reply.message,
-                                  timestamp: reply.createdAt,
-                                  isStaffReply: reply.isStaffReply,
-                                  isInitial: false,
-                                )),
+                            ...replies.map(
+                              (reply) => _buildChatBubble(
+                                senderName: reply.senderName,
+                                message: reply.message,
+                                timestamp: reply.createdAt,
+                                isStaffReply: reply.isStaffReply,
+                                isInitial: false,
+                              ),
+                            ),
                           ],
                         );
                       },
                     ),
                   ),
-                  // Bottom send bar (Only if ticket is not resolved!)
+                  // Reply bar — only while the ticket is still open
                   if (ticket.status != 'resolved')
                     Container(
-                      padding: EdgeInsets.fromLTRB(16, 10, 16, 10 + MediaQuery.of(context).viewInsets.bottom),
+                      padding: EdgeInsets.fromLTRB(
+                        AppSpace.lg,
+                        AppSpace.md,
+                        AppSpace.lg,
+                        AppSpace.md + MediaQuery.viewInsetsOf(context).bottom,
+                      ),
                       decoration: const BoxDecoration(
-                        color: Color(0xFFF0F0F0),
-                        border: Border(top: BorderSide(color: Color(0xFFE0E0E0))),
+                        color: AppTheme.pureWhite,
+                        border: Border(
+                          top: BorderSide(color: AppTheme.hairline),
+                        ),
                       ),
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Expanded(
                             child: TextField(
                               controller: replyController,
                               minLines: 1,
                               maxLines: 4,
+                              textCapitalization: TextCapitalization.sentences,
                               decoration: InputDecoration(
-                                hintText: "Type a reply...",
-                                hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(24),
-                                  borderSide: BorderSide.none,
+                                hintText: 'Type a reply...',
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpace.xl,
+                                  vertical: AppSpace.md,
                                 ),
-                                filled: true,
-                                fillColor: Colors.white,
+                                border: OutlineInputBorder(
+                                  borderRadius: AppRadius.rPill,
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.hairline,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: AppRadius.rPill,
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.hairline,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: AppRadius.rPill,
+                                  borderSide: const BorderSide(
+                                    color: AppTheme.primaryGreen,
+                                    width: 2,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: AppSpace.md),
                           Container(
                             decoration: const BoxDecoration(
-                              color: Color(0xFF00A884),
+                              color: AppTheme.primaryGreen,
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
+                              tooltip: 'Send reply',
                               onPressed: () async {
                                 if (replyController.text.trim().isEmpty) return;
                                 final text = replyController.text.trim();
                                 replyController.clear();
-                                await ref.read(appStateProvider.notifier).replyToTicket(
+                                await ref
+                                    .read(appStateProvider.notifier)
+                                    .replyToTicket(
                                       ticket.id,
                                       text,
                                       isStaff: false,
                                     );
                                 setModalState(() {
-                                  repliesFuture = SupabaseService().fetchTicketReplies(ticket.id);
+                                  repliesFuture = SupabaseService()
+                                      .fetchTicketReplies(ticket.id);
                                 });
                               },
-                              icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-                              padding: const EdgeInsets.all(12),
-                              constraints: const BoxConstraints(),
+                              icon: const Icon(
+                                Icons.send_rounded,
+                                color: AppTheme.pureWhite,
+                                size: 20,
+                              ),
+                              padding: const EdgeInsets.all(AppSpace.md),
+                              constraints: const BoxConstraints(
+                                minWidth: 48,
+                                minHeight: 48,
+                              ),
                             ),
                           ),
                         ],
@@ -540,84 +670,128 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
     );
   }
 
-  Widget _buildModalChatBubble({
+  Widget _buildChatBubble({
     required String senderName,
     required String message,
     required DateTime timestamp,
     required bool isStaffReply,
     bool isInitial = false,
   }) {
-    // For the customer screen: Customer messages (isStaffReply = false) are on the right (greenish bubble)
-    // Staff replies (isStaffReply = true) are on the left (white bubble)
+    // Customer messages sit on the right in a green bubble; staff replies on the left in white.
     final isMe = !isStaffReply;
-    final alignment = isMe ? Alignment.centerRight : Alignment.centerLeft;
-    final bubbleColor = isMe ? const Color(0xFFD9FDD3) : Colors.white;
-    final textColor = const Color(0xFF111B21);
     final timeStr = DateFormat('hh:mm a').format(timestamp);
 
     return Align(
-      alignment: alignment,
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        margin: const EdgeInsets.symmetric(vertical: AppSpace.xs),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.sizeOf(context).width * 0.78,
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.md + 2,
+          vertical: AppSpace.sm + 2,
+        ),
         decoration: BoxDecoration(
-          color: bubbleColor,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(12),
-            topRight: const Radius.circular(12),
-            bottomLeft: isMe ? const Radius.circular(12) : const Radius.circular(0),
-            bottomRight: isMe ? const Radius.circular(0) : const Radius.circular(12),
+          color: isMe ? AppTheme.lightGreenBg : AppTheme.pureWhite,
+          border: Border.all(
+            color: isMe ? AppTheme.mintGreen : AppTheme.hairline,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(AppRadius.sm),
+            topRight: const Radius.circular(AppRadius.sm),
+            bottomLeft: Radius.circular(isMe ? AppRadius.sm : AppSpace.xs),
+            bottomRight: Radius.circular(isMe ? AppSpace.xs : AppRadius.sm),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Sender identifier header
             if (!isMe || isInitial) ...[
               Text(
-                isMe ? "You" : "Support Agent ($senderName)",
+                isMe ? 'You' : 'Support Agent ($senderName)',
                 style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  color: isMe ? AppTheme.primaryGreen : const Color(0xFF0284C7),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: isMe ? AppTheme.primaryGreen : AppTheme.infoBlue,
                 ),
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: AppSpace.xs),
             ],
             Text(
               message,
-              style: TextStyle(color: textColor, fontSize: 13.5, height: 1.4),
+              style: const TextStyle(
+                color: AppTheme.charcoal,
+                fontSize: 14.5,
+                height: 1.45,
+              ),
             ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  timeStr,
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 9.5),
+            const SizedBox(height: AppSpace.xs),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                timeStr,
+                style: const TextStyle(
+                  color: AppTheme.mutedGrey,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
                 ),
-                if (isMe) ...[
-                  const SizedBox(width: 4),
-                  const Icon(
-                    Icons.done_all_rounded,
-                    color: Color(0xFF53BDEB),
-                    size: 14,
-                  ),
-                ],
-              ],
+              ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// A tappable contact option: icon, label, one line of detail.
+class _ContactCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String detail;
+  final DsTone tone;
+  final VoidCallback onTap;
+
+  const _ContactCard({
+    required this.icon,
+    required this.label,
+    required this.detail,
+    required this.onTap,
+    this.tone = DsTone.brand,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DsCard(
+      onTap: onTap,
+      padding: const EdgeInsets.all(AppSpace.lg),
+      radius: AppRadius.md,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DsIconBadge(icon: icon, tone: tone, size: 44),
+          const SizedBox(height: AppSpace.md),
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 15.5,
+              color: AppTheme.charcoal,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: AppSpace.xxs),
+          Text(
+            detail,
+            style: const TextStyle(
+              fontSize: 13,
+              color: AppTheme.mutedGrey,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -20,8 +20,8 @@ class DesktopLandingPage extends StatefulWidget {
 
 class _DesktopLandingPageState extends State<DesktopLandingPage> {
   static const _ink = AppTheme.deepGreen;
-  static const _border = Color(0xFFE5E7EB);
-  static const _surface = Color(0xFFF7F8F7);
+  static const _border = AppTheme.hairline;
+  static const _surface = AppTheme.cream;
   static const _maxWidth = 1180.0;
 
   final _howItWorksKey = GlobalKey();
@@ -53,8 +53,8 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.rLg),
+        backgroundColor: AppTheme.pureWhite,
         contentPadding: const EdgeInsets.all(28),
         content: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480),
@@ -68,7 +68,7 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: AppTheme.lightGreenBg,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: AppRadius.rMd,
                     ),
                     child: const Icon(Icons.headset_mic_rounded, color: AppTheme.primaryGreen, size: 26),
                   ),
@@ -141,7 +141,7 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: AppTheme.cream,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: AppRadius.rMd,
                   border: Border.all(color: AppTheme.hairline),
                 ),
                 child: const Row(
@@ -175,8 +175,8 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: AppTheme.pureWhite,
+        borderRadius: AppRadius.rMd,
         border: Border.all(color: AppTheme.hairline),
       ),
       child: Row(
@@ -185,7 +185,7 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: const Color(0xFFF1F8F4),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: AppRadius.rSm,
             ),
             child: Icon(icon, size: 20, color: AppTheme.primaryGreen),
           ),
@@ -210,7 +210,7 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
             onPressed: onAction,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryGreen,
-              foregroundColor: Colors.white,
+              foregroundColor: AppTheme.pureWhite,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               minimumSize: const Size(0, 36),
@@ -229,7 +229,7 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
     final isDesktop = width >= 1000;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.pureWhite,
       body: Column(
         children: [
           _buildNavBar(isDesktop),
@@ -262,7 +262,7 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
     );
   }
 
-  Widget _section({Key? key, Color background = Colors.white, required Widget child}) {
+  Widget _section({Key? key, Color background = AppTheme.pureWhite, required Widget child}) {
     return Container(
       key: key,
       width: double.infinity,
@@ -322,7 +322,7 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
 
   Widget _buildNavBar(bool isDesktop) {
     return Material(
-      color: Colors.white,
+      color: AppTheme.pureWhite,
       child: SafeArea(
         bottom: false,
         child: Container(
@@ -355,10 +355,10 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
                   onPressed: () => _openAuth(tab: 1),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryGreen,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppTheme.pureWhite,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    shape: RoundedRectangleBorder(borderRadius: AppRadius.rLg),
                     textStyle: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600),
                   ),
                   child: const Text('Get started'),
@@ -422,10 +422,10 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
               onPressed: () => _openAuth(tab: 1),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryGreen,
-                foregroundColor: Colors.white,
+                foregroundColor: AppTheme.pureWhite,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.rSm),
                 textStyle: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600),
               ),
               child: const Text('Find deals near you'),
@@ -437,7 +437,7 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
                 foregroundColor: _ink,
                 side: const BorderSide(color: Color(0xFFD1D5DB)),
                 padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.rSm),
                 textStyle: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600),
               ),
               child: const Text('List your business'),
@@ -461,7 +461,7 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
       width: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFFF1F8F4), Colors.white],
+          colors: [Color(0xFFF1F8F4), AppTheme.pureWhite],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -517,7 +517,7 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
                         Container(
                           width: 44,
                           height: 44,
-                          decoration: BoxDecoration(color: _surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: _border)),
+                          decoration: BoxDecoration(color: _surface, borderRadius: AppRadius.rSm, border: Border.all(color: _border)),
                           child: Icon(steps[i].$1, size: 22, color: _ink),
                         ),
                         const SizedBox(width: 12),
@@ -568,8 +568,8 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
                   child: Container(
                     padding: const EdgeInsets.all(28),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
+                      color: AppTheme.pureWhite,
+                      borderRadius: AppRadius.rMd,
                       border: Border.all(color: _border),
                     ),
                     child: Column(
@@ -602,12 +602,12 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
       children: [
         Text(
           'FOR BUSINESSES',
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: Colors.white.withValues(alpha: 0.7)),
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: AppTheme.pureWhite.withValues(alpha: 0.7)),
         ),
         const SizedBox(height: 12),
         const Text(
           'Turn your surplus into revenue',
-          style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -0.6, height: 1.2),
+          style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: AppTheme.pureWhite, letterSpacing: -0.6, height: 1.2),
         ),
         const SizedBox(height: 20),
         for (final b in bullets)
@@ -617,7 +617,7 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
               children: [
                 const Icon(Icons.check_rounded, size: 18, color: Color(0xFFA7F3D0)),
                 const SizedBox(width: 10),
-                Text(b, style: TextStyle(fontSize: 15.5, color: Colors.white.withValues(alpha: 0.9))),
+                Text(b, style: TextStyle(fontSize: 15.5, color: AppTheme.pureWhite.withValues(alpha: 0.9))),
               ],
             ),
           ),
@@ -628,11 +628,11 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
       key: const Key('landing_become_partner'),
       onPressed: () => _openAuth(tab: 1),
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.pureWhite,
         foregroundColor: _ink,
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.rSm),
         textStyle: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600),
       ),
       child: const Text('Become a partner'),
@@ -641,7 +641,7 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
     return Container(
       padding: const EdgeInsets.all(48),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: AppRadius.rLg,
         gradient: const LinearGradient(
           colors: [AppTheme.primaryGreen, AppTheme.deepGreen],
           begin: Alignment.topLeft,
@@ -657,13 +657,13 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
   // ── Footer ─────────────────────────────────────────────────────────────────
 
   Widget _buildFooter(bool isDesktop) {
-    final muted = Colors.white.withValues(alpha: 0.65);
+    final muted = AppTheme.pureWhite.withValues(alpha: 0.65);
 
     Widget column(String title, List<(String, VoidCallback)> links) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
+          Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.pureWhite)),
           const SizedBox(height: 16),
           for (final l in links)
             Padding(
@@ -680,7 +680,7 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
     final brandBlock = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _brand(textColor: Colors.white),
+        _brand(textColor: AppTheme.pureWhite),
         const SizedBox(height: 16),
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 300),
@@ -727,7 +727,7 @@ class _DesktopLandingPageState extends State<DesktopLandingPage> {
               ],
             ),
             const SizedBox(height: 40),
-            Divider(height: 1, color: Colors.white.withValues(alpha: 0.12)),
+            Divider(height: 1, color: AppTheme.pureWhite.withValues(alpha: 0.12)),
             const SizedBox(height: 24),
             Wrap(
               alignment: WrapAlignment.spaceBetween,
@@ -766,7 +766,7 @@ class _HeroFact extends StatelessWidget {
       children: [
         Icon(icon, size: 18, color: AppTheme.primaryGreen),
         const SizedBox(width: 8),
-        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
+        Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.charcoal)),
       ],
     );
   }
@@ -783,8 +783,8 @@ class _DealPreviewCard extends StatelessWidget {
       constraints: const BoxConstraints(maxWidth: 380),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          color: AppTheme.pureWhite,
+          borderRadius: AppRadius.rLg,
           border: Border.all(color: const Color(0xFFE5E7EB)),
           boxShadow: [
             BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 40, offset: const Offset(0, 20)),
@@ -807,13 +807,13 @@ class _DealPreviewCard extends StatelessWidget {
               ),
               child: Stack(
                 children: [
-                  Center(child: Icon(Icons.bakery_dining_outlined, size: 64, color: Colors.white.withValues(alpha: 0.9))),
+                  Center(child: Icon(Icons.bakery_dining_outlined, size: 64, color: AppTheme.pureWhite.withValues(alpha: 0.9))),
                   Positioned(
                     top: 14,
                     left: 14,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+                      decoration: BoxDecoration(color: AppTheme.pureWhite, borderRadius: AppRadius.rLg),
                       child: const Text('3 left', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: ink)),
                     ),
                   ),
@@ -858,7 +858,7 @@ class _DealPreviewCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(color: AppTheme.primaryGreen, borderRadius: BorderRadius.circular(8)),
-                        child: const Text('Reserve', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
+                        child: const Text('Reserve', style: TextStyle(color: AppTheme.pureWhite, fontWeight: FontWeight.w600, fontSize: 13)),
                       ),
                     ],
                   ),

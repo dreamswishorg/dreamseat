@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme.dart';
+import '../../core/ui_utils.dart';
 import '../../core/config.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -18,16 +19,12 @@ class TermsOfServiceScreen extends StatelessWidget {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Could not open web link"), backgroundColor: AppTheme.errorRed),
-          );
+          AppToast.error(context, "Could not open web link");
         }
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e"), backgroundColor: AppTheme.errorRed),
-        );
+        AppToast.error(context, "Error: $e");
       }
     }
   }
@@ -70,9 +67,7 @@ class TermsOfServiceScreen extends StatelessWidget {
             tooltip: "Copy Link",
             onPressed: () {
               Clipboard.setData(ClipboardData(text: AppConfig.termsOfServiceUrl));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Terms of Service link copied to clipboard!"), backgroundColor: AppTheme.primaryGreen),
-              );
+              AppToast.success(context, "Terms of Service link copied to clipboard!");
             },
           ),
           const SizedBox(width: 8),
@@ -92,7 +87,7 @@ class TermsOfServiceScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(28),
                   decoration: BoxDecoration(
                     color: cardBg,
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: AppRadius.rLg,
                     border: Border.all(color: borderColor),
                     boxShadow: [
                       BoxShadow(
@@ -115,7 +110,7 @@ class TermsOfServiceScreen extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
                               color: AppTheme.primaryGreen.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: AppRadius.rMd,
                               border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.2)),
                             ),
                             child: const Row(
@@ -151,8 +146,8 @@ class TermsOfServiceScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF0F2B1D) : const Color(0xFFF1F8F4),
-                          borderRadius: BorderRadius.circular(16),
+                          color: isDark ? const Color(0xFF0F2B1D) : AppTheme.lightGreenBg,
+                          borderRadius: AppRadius.rMd,
                           border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.2)),
                         ),
                         child: Row(
@@ -173,7 +168,7 @@ class TermsOfServiceScreen extends StatelessWidget {
                                     "1. Meals must be collected within the designated store pickup window.\n"
                                     "2. All payments are secured in Ghanaian Cedis (GHS) via Ghana MoMo & Cards.\n"
                                     "3. Food quality adheres to Ghana Food & Drugs Authority (FDA) standards.",
-                                    style: TextStyle(fontSize: 12.5, color: isDark ? Colors.white70 : const Color(0xFF064E3B), height: 1.5),
+                                    style: TextStyle(fontSize: 12.5, color: isDark ? Colors.white70 : AppTheme.deepGreen, height: 1.5),
                                   ),
                                 ],
                               ),
@@ -280,16 +275,12 @@ class PrivacyPolicyScreen extends StatelessWidget {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Could not open web link"), backgroundColor: AppTheme.errorRed),
-          );
+          AppToast.error(context, "Could not open web link");
         }
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e"), backgroundColor: AppTheme.errorRed),
-        );
+        AppToast.error(context, "Error: $e");
       }
     }
   }
@@ -354,7 +345,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(28),
                   decoration: BoxDecoration(
                     color: cardBg,
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: AppRadius.rLg,
                     border: Border.all(color: borderColor),
                     boxShadow: [
                       BoxShadow(
@@ -377,7 +368,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
                               color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: AppRadius.rMd,
                               border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.25)),
                             ),
                             child: const Row(
@@ -414,7 +405,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                         padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
                           color: isDark ? const Color(0xFF13233A) : const Color(0xFFEFF6FF),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: AppRadius.rMd,
                           border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.2)),
                         ),
                         child: Row(
@@ -537,7 +528,7 @@ Widget _buildLegalCard({
     padding: const EdgeInsets.all(24),
     decoration: BoxDecoration(
       color: isDark ? AppTheme.charcoal : Colors.white,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: AppRadius.rMd,
       border: Border.all(color: borderColor),
     ),
     child: Row(
@@ -547,8 +538,8 @@ Widget _buildLegalCard({
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF0F2B1D) : const Color(0xFFF1F8F4),
-            borderRadius: BorderRadius.circular(12),
+            color: isDark ? const Color(0xFF0F2B1D) : AppTheme.lightGreenBg,
+            borderRadius: AppRadius.rSm,
             border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.15)),
           ),
           child: Center(
@@ -591,7 +582,7 @@ Widget _buildLegalContactCard(
     padding: const EdgeInsets.all(24),
     decoration: BoxDecoration(
       color: isDark ? AppTheme.charcoal : Colors.white,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: AppRadius.rMd,
       border: Border.all(color: borderColor),
     ),
     child: Column(
@@ -603,7 +594,7 @@ Widget _buildLegalContactCard(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: AppTheme.lightGreenBg,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: AppRadius.rSm,
               ),
               child: const Icon(Icons.headset_mic_rounded, color: AppTheme.primaryGreen, size: 22),
             ),
@@ -638,7 +629,7 @@ Widget _buildLegalContactCard(
                 foregroundColor: primaryText,
                 side: BorderSide(color: borderColor),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.rSm),
               ),
               onPressed: () async {
                 final uri = Uri(scheme: 'mailto', path: AppConfig.supportEmail, query: 'subject=Legal%20Inquiry');
@@ -652,7 +643,7 @@ Widget _buildLegalContactCard(
                 foregroundColor: primaryText,
                 side: BorderSide(color: borderColor),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.rSm),
               ),
               onPressed: () async {
                 final uri = Uri(scheme: 'tel', path: '+233245678901');

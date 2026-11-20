@@ -90,8 +90,11 @@ Widget buildCustomerAvatarMenuAnchor({
     ),
     builder: (context, controller, child) {
       return GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: () => controller.isOpen ? controller.close() : controller.open(),
-        child: Container(
+        child: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+        child: Center(child: Container(
           padding: EdgeInsets.all(showRing ? 2 : 0),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
@@ -142,7 +145,8 @@ Widget buildCustomerAvatarMenuAnchor({
                     ),
                   ),
           ),
-        ),
+        )),
+      ),
       );
     },
     menuChildren: [
@@ -1070,14 +1074,14 @@ class AppToast {
           behavior: SnackBarBehavior.floating,
           backgroundColor: Colors.transparent,
           elevation: 0,
-          margin: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+          margin: const EdgeInsets.fromLTRB(AppSpace.gutter, 0, AppSpace.gutter, AppSpace.x3),
           duration: const Duration(seconds: 3),
           padding: EdgeInsets.zero,
           content: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
             decoration: BoxDecoration(
               color: color,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: AppRadius.rMd,
               boxShadow: [
                 BoxShadow(
                   color: color.withValues(alpha: 0.35),
@@ -1089,15 +1093,15 @@ class AppToast {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, color: Colors.white, size: 18),
-                const SizedBox(width: 10),
+                Icon(icon, color: AppTheme.pureWhite, size: 20),
+                const SizedBox(width: AppSpace.md),
                 Expanded(
                   child: Text(
                     message,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppTheme.pureWhite,
                       fontWeight: FontWeight.w800,
-                      fontSize: 13,
+                      fontSize: 14,
                       letterSpacing: -0.2,
                     ),
                   ),

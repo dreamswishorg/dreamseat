@@ -1,8 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../core/ds_kit.dart';
+import '../../core/branded_empty_state.dart';
 import '../../core/responsive.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
@@ -16,6 +16,7 @@ class PartnersDirectoryScreen extends ConsumerStatefulWidget {
 }
 
 class _PartnersDirectoryScreenState extends ConsumerState<PartnersDirectoryScreen> {
+  final _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedCategory = 'All';
 
@@ -27,6 +28,12 @@ class _PartnersDirectoryScreenState extends ConsumerState<PartnersDirectoryScree
     'Hotel',
     'Grocery',
   ];
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   bool _matchesCategory(String bizCat, String filterCat) {
     if (filterCat == 'All') return true;
@@ -56,108 +63,58 @@ class _PartnersDirectoryScreenState extends ConsumerState<PartnersDirectoryScree
 
     // Filter businesses by search query & category
     final filtered = allBusinesses.where((b) {
+      final q = _searchQuery.toLowerCase();
       final matchesSearch = _searchQuery.isEmpty ||
-          b.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          b.location.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          b.category.toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesCat = _matchesCategory(b.category, _selectedCategory);
-      return matchesSearch && matchesCat;
+          b.name.toLowerCase().contains(q) ||
+          b.location.toLowerCase().contains(q) ||
+          b.category.toLowerCase().contains(q);
+      return matchesSearch && _matchesCategory(b.category, _selectedCategory);
     }).toList();
 
     return Scaffold(
       backgroundColor: AppTheme.cream,
+      appBar: Navigator.canPop(context) ? dsScreenBar(context, title: 'Our Partners') : null,
       body: SafeArea(
         child: ResponsiveCenter(
           maxWidth: 1100,
           child: Column(
             children: [
-              // Header Bar
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                padding: const EdgeInsets.fromLTRB(AppSpace.gutter, AppSpace.lg, AppSpace.gutter, AppSpace.md),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Row(
-                      children: [
-                        if (Navigator.canPop(context))
-                          IconButton(
-                            tooltip: 'Back',
-                            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-                            padding: EdgeInsets.zero,
-                            icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.charcoal),
-                            onPressed: () => Navigator.pop(context),
-                          ),
-                        const Expanded(
-                          child: Text(
-                            'Our Partners',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.charcoal,
-                              letterSpacing: -0.6,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
+                    if (!Navigator.canPop(context)) ...[
+                      const Text(
+                        'Our Partners',
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: AppTheme.charcoal, letterSpacing: -0.6),
+                      ),
+                      const SizedBox(height: AppSpace.xs),
+                    ],
                     const Text(
-                      "Discover restaurants, bakeries & supermarkets rescuing food across Ghana.",
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.mutedGrey,
-                        height: 1.3,
-                      ),
+                      'Discover restaurants, bakeries & supermarkets rescuing food across Ghana.',
+                      style: TextStyle(fontSize: 14, color: AppTheme.mutedGrey, height: 1.4),
                     ),
-                    const SizedBox(height: 16),
-                    // Search Bar
-                    TextField(
+                    const SizedBox(height: AppSpace.lg),
+                    DsSearchField(
+                      controller: _searchController,
+                      hint: 'Search partner name, category, location...',
                       onChanged: (val) => setState(() => _searchQuery = val),
-                      decoration: InputDecoration(
-                        hintText: "Search partner name, category, location...",
-                        hintStyle: const TextStyle(fontSize: 13.5, color: AppTheme.mutedGrey),
-                        prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.primaryGreen, size: 22),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear_rounded, size: 18),
-                                onPressed: () => setState(() => _searchQuery = ''),
-                              )
-                            : null,
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.08)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.08)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
-                        ),
-                      ),
                     ),
-                    const SizedBox(height: 14),
-                    // Category Filter Chips
+                    const SizedBox(height: AppSpace.md),
                     SizedBox(
-                      height: 44,
-                      child: ListView.builder(
+                      height: 48,
+                      child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         physics: const BouncingScrollPhysics(),
                         itemCount: _categories.length,
+                        separatorBuilder: (_, _) => const SizedBox(width: AppSpace.sm),
                         itemBuilder: (context, idx) {
                           final cat = _categories[idx];
-                          final isSelected = cat == _selectedCategory;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: AppSpace.sm),
-                            child: DsFilterChip(
-                              label: cat,
-                              selected: isSelected,
-                              onTap: () => setState(() => _selectedCategory = cat),
-                            ),
+                          return DsFilterChip(
+                            label: cat,
+                            selected: cat == _selectedCategory,
+                            onTap: () => setState(() => _selectedCategory = cat),
                           );
                         },
                       ),
@@ -165,28 +122,13 @@ class _PartnersDirectoryScreenState extends ConsumerState<PartnersDirectoryScree
                   ],
                 ),
               ),
-              const Divider(height: 1, color: AppTheme.hairline),
-
-              // Partners List
+              const Divider(),
               Expanded(
                 child: filtered.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.storefront_outlined, size: 64, color: AppTheme.mutedGrey.withValues(alpha: 0.4)),
-                            const SizedBox(height: 16),
-                            const Text(
-                              "No partners found",
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.charcoal),
-                            ),
-                            const SizedBox(height: 6),
-                            const Text(
-                              "Try searching with a different keyword or category.",
-                              style: TextStyle(fontSize: 13, color: AppTheme.mutedGrey),
-                            ),
-                          ],
-                        ),
+                    ? const BrandedEmptyState(
+                        icon: Icons.storefront_outlined,
+                        title: 'No partners found',
+                        description: 'Try searching with a different keyword or category.',
                       )
                     : LayoutBuilder(
                         builder: (context, constraints) {
@@ -194,29 +136,24 @@ class _PartnersDirectoryScreenState extends ConsumerState<PartnersDirectoryScree
                           if (isWide) {
                             final cols = constraints.maxWidth >= 960 ? 3 : 2;
                             return GridView.builder(
-                              padding: const EdgeInsets.all(20),
+                              padding: const EdgeInsets.all(AppSpace.gutter),
                               physics: const BouncingScrollPhysics(),
                               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: cols,
-                                crossAxisSpacing: 16,
-                                mainAxisSpacing: 16,
-                                mainAxisExtent: 150,
+                                crossAxisSpacing: AppSpace.lg,
+                                mainAxisSpacing: AppSpace.lg,
+                                mainAxisExtent: 124,
                               ),
                               itemCount: filtered.length,
-                              itemBuilder: (context, index) {
-                                return _PartnerCard(partner: filtered[index]);
-                              },
+                              itemBuilder: (context, index) => _PartnerCard(partner: filtered[index]),
                             );
                           }
                           return ListView.separated(
-                            padding: const EdgeInsets.all(20),
+                            padding: const EdgeInsets.all(AppSpace.gutter),
                             physics: const BouncingScrollPhysics(),
                             itemCount: filtered.length,
-                            separatorBuilder: (_, _) => const SizedBox(height: 16),
-                            itemBuilder: (context, index) {
-                              final partner = filtered[index];
-                              return _PartnerCard(partner: partner);
-                            },
+                            separatorBuilder: (_, _) => const SizedBox(height: AppSpace.md),
+                            itemBuilder: (context, index) => _PartnerCard(partner: filtered[index]),
                           );
                         },
                       ),
@@ -235,107 +172,68 @@ class _PartnerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => MerchantStorefrontScreen(business: partner),
+    return DsCard(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => MerchantStorefrontScreen(business: partner)),
+      ),
+      padding: const EdgeInsets.all(AppSpace.lg),
+      radius: AppRadius.md,
+      child: Row(
+        children: [
+          SizedBox(
+            width: 64,
+            height: 64,
+            child: ClipOval(
+              child: DsMedia(url: partner.logoUrl, category: partner.category, height: 64),
+            ),
           ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.06)),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x06000000),
-              blurRadius: 16,
-              offset: Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            // Logo
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                shape: BoxShape.circle,
-                border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.2), width: 1.5),
-              ),
-              child: ClipOval(
-                child: partner.logoUrl.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: partner.logoUrl,
-                        fit: BoxFit.cover,
-                        placeholder: (_, _) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                        errorWidget: (_, _, _) => const Icon(Icons.storefront_rounded, color: AppTheme.primaryGreen, size: 28),
-                      )
-                    : const Icon(Icons.storefront_rounded, color: AppTheme.primaryGreen, size: 28),
-              ),
-            ),
-            const SizedBox(width: 16),
-
-            // Details
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: AppTheme.lightGreenBg,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          partner.category.toUpperCase(),
-                          style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen, letterSpacing: 0.5),
-                        ),
+          const SizedBox(width: AppSpace.lg),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(child: DsPill(label: partner.category, compact: true)),
+                    const SizedBox(width: AppSpace.sm),
+                    const Icon(Icons.star_rounded, color: AppTheme.warningOrange, size: 18),
+                    const SizedBox(width: AppSpace.xxs),
+                    Text(
+                      partner.rating > 0 ? partner.rating.toStringAsFixed(1) : 'New',
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.charcoal),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpace.xs),
+                Text(
+                  partner.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.charcoal, letterSpacing: -0.3),
+                ),
+                const SizedBox(height: AppSpace.xxs),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on_rounded, color: AppTheme.mutedGrey, size: 16),
+                    const SizedBox(width: AppSpace.xs),
+                    Expanded(
+                      child: Text(
+                        partner.location,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 13, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500),
                       ),
-                      const Spacer(),
-                      const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        partner.rating > 0 ? partner.rating.toStringAsFixed(1) : 'New',
-                        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppTheme.charcoal),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    partner.name,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.charcoal),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on_rounded, color: AppTheme.mutedGrey, size: 14),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          partner.location,
-                          style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey, fontWeight: FontWeight.w500),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.primaryGreen, size: 16),
-          ],
-        ),
+          ),
+          const SizedBox(width: AppSpace.sm),
+          const Icon(Icons.chevron_right_rounded, color: AppTheme.mutedGrey, size: 22),
+        ],
       ),
     );
   }

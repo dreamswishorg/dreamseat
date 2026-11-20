@@ -607,8 +607,8 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                       MaterialPageRoute(builder: (_) => const OrderHistoryScreen()),
                     ),
                     child: SizedBox(
-                      width: 44,
-                      height: 44,
+                      width: 48,
+                      height: 48,
                       child: Stack(
                         clipBehavior: Clip.none,
                         alignment: Alignment.center,
@@ -904,7 +904,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
     ];
 
     return SizedBox(
-      height: 44,
+      height: 48,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),

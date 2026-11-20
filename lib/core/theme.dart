@@ -50,6 +50,12 @@ class AppMotion {
 }
 
 class AppTheme {
+  /// Material *replaces* (does not merge) the text style of buttons, app bars,
+  /// dialogs, tabs, snackbars and tooltips, so a style written without a font
+  /// family falls back to the system face. Route those styles through here to
+  /// keep them in the brand face.
+  static TextStyle _brand(TextStyle style) => GoogleFonts.plusJakartaSans(textStyle: style);
+
   // ── Brand colours ──────────────────────────────────────────────────────────
   static const Color primaryGreen = Color(0xFF2E7D32); // Forest Eco Green
   static const Color secondaryGreen = Color(0xFF4CAF50); // Muted Green
@@ -63,14 +69,14 @@ class AppTheme {
   static const Color cream = Color(0xFFFAF9F6); // Page background
   static const Color lightGrey = Color(0xFFF5F7F6); // Soft off-white, green hue
   static const Color charcoal = Color(0xFF1E293B); // Slate text
-  static const Color mutedGrey = Color(0xFF64748B); // Subtitle / details
+  static const Color mutedGrey = Color(0xFF5A6A81); // Subtitle / details (>=4.9:1 on every surface)
   static const Color hairline = Color(0xFFE7E5E0); // Warm hairline border
 
   // ── Status & accent ────────────────────────────────────────────────────────
-  static const Color errorRed = Color(0xFFEF4444); // Cancel / strikeouts
+  static const Color errorRed = Color(0xFFC81E1E); // Cancel / strikeouts (>=5:1 on white and tint)
   static const Color warningOrange = Color(0xFFF59E0B); // Amber warning
-  static const Color goldAccent = Color(0xFFD97706); // Premium status
-  static const Color dealOrange = Color(0xFFEA580C); // Discounts & price tags
+  static const Color goldAccent = Color(0xFFB45309); // Premium status (>=4.6:1)
+  static const Color dealOrange = Color(0xFFC2410C); // Discounts & price tags (>=4.6:1)
   static const Color dealOrangeBg = Color(0xFFFFF1E6); // Discount tint
   static const Color infoBlue = Color(0xFF2563EB);
   static const Color infoBlueBg = Color(0xFFEAF1FF);
@@ -174,19 +180,19 @@ class AppTheme {
           TargetPlatform.fuchsia: FadeForwardsPageTransitionsBuilder(),
         },
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: cream,
         foregroundColor: charcoal,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
         surfaceTintColor: Colors.transparent,
-        titleTextStyle: TextStyle(
+        titleTextStyle: _brand(const TextStyle(
           color: charcoal,
           fontSize: 19,
           fontWeight: FontWeight.w800,
           letterSpacing: -0.4,
-        ),
+        )),
       ),
       cardTheme: CardThemeData(
         color: pureWhite,
@@ -210,7 +216,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(borderRadius: AppRadius.rMd),
           elevation: 0,
           shadowColor: Colors.transparent,
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: -0.1),
+          textStyle: _brand(const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: -0.1)),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -219,7 +225,7 @@ class AppTheme {
           foregroundColor: pureWhite,
           minimumSize: const Size(64, 54),
           shape: RoundedRectangleBorder(borderRadius: AppRadius.rMd),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: -0.1),
+          textStyle: _brand(const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: -0.1)),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -228,20 +234,20 @@ class AppTheme {
           side: const BorderSide(color: primaryGreen, width: 1.5),
           minimumSize: const Size(64, 54),
           shape: RoundedRectangleBorder(borderRadius: AppRadius.rMd),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: -0.1),
+          textStyle: _brand(const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: -0.1)),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: primaryGreen,
-          minimumSize: const Size(48, 44),
+          minimumSize: const Size(48, 48),
           shape: RoundedRectangleBorder(borderRadius: AppRadius.rSm),
-          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          textStyle: _brand(const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
         ),
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
-          minimumSize: const Size(44, 44),
+          minimumSize: const Size(48, 48),
           foregroundColor: charcoal,
         ),
       ),
@@ -274,8 +280,8 @@ class AppTheme {
         disabledColor: lightGrey,
         side: const BorderSide(color: hairline),
         shape: RoundedRectangleBorder(borderRadius: AppRadius.rPill),
-        labelStyle: const TextStyle(color: charcoal, fontSize: 13.5, fontWeight: FontWeight.w700),
-        secondaryLabelStyle: const TextStyle(color: pureWhite, fontSize: 13.5, fontWeight: FontWeight.w700),
+        labelStyle: _brand(const TextStyle(color: charcoal, fontSize: 13.5, fontWeight: FontWeight.w700)),
+        secondaryLabelStyle: _brand(const TextStyle(color: pureWhite, fontSize: 13.5, fontWeight: FontWeight.w700)),
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         showCheckmark: false,
       ),
@@ -294,8 +300,8 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: AppRadius.rLg),
-        titleTextStyle: const TextStyle(color: charcoal, fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.4),
-        contentTextStyle: const TextStyle(color: mutedGrey, fontSize: 15, height: 1.5),
+        titleTextStyle: _brand(const TextStyle(color: charcoal, fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.4)),
+        contentTextStyle: _brand(const TextStyle(color: mutedGrey, fontSize: 15, height: 1.5)),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: pureWhite,
@@ -314,13 +320,13 @@ class AppTheme {
               color: states.contains(WidgetState.selected) ? primaryGreen : mutedGrey,
             )),
       ),
-      tabBarTheme: const TabBarThemeData(
+      tabBarTheme: TabBarThemeData(
         labelColor: primaryGreen,
         unselectedLabelColor: mutedGrey,
         indicatorColor: primaryGreen,
         dividerColor: hairline,
-        labelStyle: TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5),
-        unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5),
+        labelStyle: _brand(const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5)),
+        unselectedLabelStyle: _brand(const TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5)),
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.all(pureWhite),
@@ -349,17 +355,17 @@ class AppTheme {
       ),
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(color: charcoal, borderRadius: AppRadius.rXs),
-        textStyle: const TextStyle(color: pureWhite, fontSize: 12.5, fontWeight: FontWeight.w600),
+        textStyle: _brand(const TextStyle(color: pureWhite, fontSize: 12.5, fontWeight: FontWeight.w600)),
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: charcoal,
-        contentTextStyle: const TextStyle(
+        contentTextStyle: _brand(const TextStyle(
           color: pureWhite,
           fontWeight: FontWeight.w700,
           fontSize: 14,
           letterSpacing: -0.1,
-        ),
+        )),
         shape: RoundedRectangleBorder(borderRadius: AppRadius.rMd),
         elevation: 6,
       ),

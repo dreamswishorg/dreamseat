@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/branded_empty_state.dart';
+import '../../core/ds_kit.dart';
+import '../../core/responsive.dart';
 import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
@@ -12,124 +15,77 @@ class NotificationScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifications = ref.watch(appStateProvider).notifications;
-    final unreadCount = notifications.where((n) => !n.isRead).length;
+    final unread = notifications.where((n) => !n.isRead).toList();
+    final earlier = notifications.where((n) => n.isRead).toList();
 
     return Scaffold(
       backgroundColor: AppTheme.cream,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.charcoal, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          "Activity & Alerts",
-          style: TextStyle(color: AppTheme.charcoal, fontWeight: FontWeight.w900, fontSize: 19, letterSpacing: -0.4),
-        ),
-        centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          // Sleek Status Header Card
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(bottom: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.06))),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: unreadCount > 0 ? AppTheme.warningOrange.withValues(alpha: 0.12) : AppTheme.lightGreenBg,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        unreadCount > 0 ? Icons.notifications_active_rounded : Icons.check_circle_rounded,
-                        color: unreadCount > 0 ? AppTheme.warningOrange : AppTheme.primaryGreen,
-                        size: 18,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      unreadCount > 0 ? "$unreadCount unread alerts" : "All caught up!",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                        color: unreadCount > 0 ? AppTheme.charcoal : AppTheme.primaryGreen,
-                      ),
-                    ),
-                  ],
-                ),
-                if (unreadCount > 0)
-                  Material(
-                    color: AppTheme.primaryGreen.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    child: InkWell(
-                      onTap: () => ref.read(appStateProvider.notifier).markAllNotificationsAsRead(),
-                      borderRadius: BorderRadius.circular(12),
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        child: Text(
-                          "Mark all read",
-                          style: TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.bold, fontSize: 12),
+      appBar: dsScreenBar(context, title: 'Activity & Alerts'),
+      body: ResponsiveCenter(
+        maxWidth: 720,
+        child: notifications.isEmpty
+            ? const BrandedEmptyState(
+                icon: Icons.notifications_none_rounded,
+                title: 'No Recent Activity',
+                description:
+                    "We'll notify you when new surplus meal packs are listed, collection codes are issued, or your support tickets update.",
+              )
+            : ListView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(AppSpace.gutter, AppSpace.lg, AppSpace.gutter, AppSpace.x4),
+                children: [
+                  // ── Status strip ────────────────────────────────────────
+                  DsCard(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.md),
+                    radius: AppRadius.md,
+                    elevated: false,
+                    child: Row(
+                      children: [
+                        DsIconBadge(
+                          icon: unread.isNotEmpty ? Icons.notifications_active_rounded : Icons.check_circle_rounded,
+                          tone: unread.isNotEmpty ? DsTone.deal : DsTone.brand,
+                          size: 40,
                         ),
-                      ),
+                        const SizedBox(width: AppSpace.md),
+                        Expanded(
+                          child: Text(
+                            unread.isNotEmpty
+                                ? (unread.length == 1 ? '1 unread alert' : '${unread.length} unread alerts')
+                                : 'All caught up!',
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.charcoal, letterSpacing: -0.2),
+                          ),
+                        ),
+                        if (unread.isNotEmpty)
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 132),
+                            child: TextButton(
+                              onPressed: () => ref.read(appStateProvider.notifier).markAllNotificationsAsRead(),
+                              child: const Text('Mark all read', maxLines: 1, overflow: TextOverflow.ellipsis),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-              ],
-            ),
-          ),
 
-          // Notifications List
-          Expanded(
-            child: notifications.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-                    itemCount: notifications.length,
-                    itemBuilder: (context, index) {
-                      final notification = notifications[index];
-                      return _NotificationTile(notification: notification);
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
+                  // ── New ─────────────────────────────────────────────────
+                  if (unread.isNotEmpty) ...[
+                    const DsSectionHeader(
+                      title: 'New',
+                      padding: EdgeInsets.fromLTRB(AppSpace.xs, AppSpace.xl, AppSpace.xs, AppSpace.md),
+                    ),
+                    for (final n in unread) _NotificationTile(notification: n),
+                  ],
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryGreen.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
+                  // ── Earlier ─────────────────────────────────────────────
+                  if (earlier.isNotEmpty) ...[
+                    const DsSectionHeader(
+                      title: 'Earlier',
+                      padding: EdgeInsets.fromLTRB(AppSpace.xs, AppSpace.xl, AppSpace.xs, AppSpace.md),
+                    ),
+                    for (final n in earlier) _NotificationTile(notification: n),
+                  ],
+                ],
               ),
-              child: const Icon(Icons.notifications_none_rounded, size: 56, color: AppTheme.primaryGreen),
-            ),
-            const SizedBox(height: 24),
-            const Text("No Recent Activity", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: AppTheme.charcoal)),
-            const SizedBox(height: 8),
-            const Text(
-              "We'll notify you when new surplus meal packs are listed, collection codes are issued, or your support tickets update.",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.mutedGrey, fontSize: 13.5, height: 1.5),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -141,11 +97,16 @@ class _NotificationTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
+    final unread = !notification.isRead;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpace.md),
+      child: DsCard(
+        color: unread ? AppTheme.lightGreenBg : AppTheme.pureWhite,
+        elevated: !unread,
+        radius: AppRadius.md,
+        padding: const EdgeInsets.all(AppSpace.lg),
         onTap: () async {
-          if (!notification.isRead) {
+          if (unread) {
             await ref.read(appStateProvider.notifier).markNotificationAsRead(notification.id);
           }
           final target = _targetScreen(ref);
@@ -153,93 +114,71 @@ class _NotificationTile extends ConsumerWidget {
             Navigator.push(context, MaterialPageRoute(builder: (_) => target));
           }
         },
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: notification.isRead ? Colors.white : const Color(0xFFF2FDF5),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: notification.isRead ? AppTheme.charcoal.withValues(alpha: 0.05) : AppTheme.primaryGreen.withValues(alpha: 0.25),
-              width: notification.isRead ? 1 : 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.charcoal.withValues(alpha: 0.02),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (unread)
+              // The card itself is tinted green, so the badge goes white to stay visible.
               Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: notification.isRead ? const Color(0xFFF1F5F9) : AppTheme.primaryGreen.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(
-                  _getIcon(notification.screen),
-                  color: notification.isRead ? AppTheme.mutedGrey : AppTheme.primaryGreen,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            notification.title,
-                            style: TextStyle(
-                              fontWeight: notification.isRead ? FontWeight.w700 : FontWeight.w900,
-                              fontSize: 14.5,
-                              color: AppTheme.charcoal,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _formatTime(notification.createdAt),
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(color: AppTheme.pureWhite, borderRadius: BorderRadius.circular(44 * 0.34)),
+                child: Icon(_getIcon(notification.screen), size: 22, color: AppTheme.primaryGreen),
+              )
+            else
+              DsIconBadge(icon: _getIcon(notification.screen), tone: DsTone.neutral, size: 44),
+            const SizedBox(width: AppSpace.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          notification.title,
                           style: TextStyle(
-                            fontSize: 11,
-                            color: notification.isRead ? AppTheme.mutedGrey : AppTheme.primaryGreen,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: unread ? FontWeight.w800 : FontWeight.w700,
+                            fontSize: 15.5,
+                            color: AppTheme.charcoal,
+                            letterSpacing: -0.2,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      notification.body,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: notification.isRead ? AppTheme.mutedGrey : AppTheme.charcoal.withValues(alpha: 0.8),
-                        height: 1.45,
                       ),
+                      const SizedBox(width: AppSpace.sm),
+                      Text(
+                        _formatTime(notification.createdAt),
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: unread ? AppTheme.primaryGreen : AppTheme.mutedGrey,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpace.xs),
+                  Text(
+                    notification.body,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: unread ? AppTheme.charcoal : AppTheme.mutedGrey,
+                      height: 1.45,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              if (!notification.isRead) ...[
-                const SizedBox(width: 8),
-                Container(
-                  width: 8,
-                  height: 8,
-                  margin: const EdgeInsets.only(top: 4),
-                  decoration: const BoxDecoration(color: AppTheme.primaryGreen, shape: BoxShape.circle),
-                ),
-              ],
+            ),
+            if (unread) ...[
+              const SizedBox(width: AppSpace.sm),
+              Container(
+                width: 10,
+                height: 10,
+                margin: const EdgeInsets.only(top: AppSpace.xs),
+                decoration: const BoxDecoration(color: AppTheme.primaryGreen, shape: BoxShape.circle),
+              ),
             ],
-          ),
+          ],
         ),
       ),
     );
@@ -280,10 +219,10 @@ class _NotificationTile extends ConsumerWidget {
   }
 
   String _formatTime(DateTime date) {
-    final now = DateTime.now();
-    final diff = now.difference(date);
-    if (diff.inMinutes < 60) return "${diff.inMinutes}m ago";
-    if (diff.inHours < 24) return "${diff.inHours}h ago";
-    return "${diff.inDays}d ago";
+    final diff = DateTime.now().difference(date);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
   }
 }

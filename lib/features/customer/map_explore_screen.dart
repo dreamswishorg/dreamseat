@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart';
+import '../../core/ds_kit.dart';
 import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../providers/app_state.dart';
@@ -20,7 +21,7 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
   final MapController _mapController = MapController();
   final PageController _pageController = PageController(viewportFraction: 0.88);
 
-  bool _isDelivery = true; // Delivery vs Pickup toggle
+  final _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedFilter = 'All';
   int _selectedIndex = 0;
@@ -30,9 +31,7 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
 
   final List<String> _quickFilters = [
     'All',
-    'Open now',
     '4 Stars and up',
-    'Offers',
     'Bakery',
     'Meals',
   ];
@@ -40,6 +39,7 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
   @override
   void dispose() {
     _pageController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -48,8 +48,8 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
     setState(() => _selectedIndex = index);
     _pageController.animateToPage(
       index,
-      duration: const Duration(milliseconds: 320),
-      curve: Curves.easeInOutCubic,
+      duration: AppMotion.slow,
+      curve: AppMotion.enter,
     );
     _mapController.move(LatLng(biz.latitude, biz.longitude), 14.8);
   }
@@ -62,35 +62,23 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
     // Filter businesses based on search & filters
     final filteredBusinesses = allBusinesses.where((biz) {
       if (_searchQuery.isNotEmpty) {
-        final matchesName = biz.name.toLowerCase().contains(_searchQuery.toLowerCase());
-        final matchesCat = biz.category.toLowerCase().contains(_searchQuery.toLowerCase());
-        if (!matchesName && !matchesCat) return false;
+        final q = _searchQuery.toLowerCase();
+        if (!biz.name.toLowerCase().contains(q) && !biz.category.toLowerCase().contains(q)) return false;
       }
-      if (_selectedFilter == '4 Stars and up' && biz.rating < 4.0) {
-        return false;
-      }
-      if (_selectedFilter == 'Bakery' && !biz.category.toLowerCase().contains('bakery')) {
-        return false;
-      }
-      if (_selectedFilter == 'Meals' && !biz.category.toLowerCase().contains('restaurant')) {
-        return false;
-      }
+      if (_selectedFilter == '4 Stars and up' && biz.rating < 4.0) return false;
+      if (_selectedFilter == 'Bakery' && !biz.category.toLowerCase().contains('bakery')) return false;
+      if (_selectedFilter == 'Meals' && !biz.category.toLowerCase().contains('restaurant')) return false;
       return true;
     }).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.pureWhite,
       body: Stack(
         children: [
-          // ── 1. MAP VIEW ───────────────────────────────────────────────
+          // ── 1. MAP ────────────────────────────────────────────────────
           FlutterMap(
             mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _kAccra,
-              initialZoom: 13.5,
-              maxZoom: 18,
-              minZoom: 10,
-            ),
+            options: MapOptions(initialCenter: _kAccra, initialZoom: 13.5, maxZoom: 18, minZoom: 10),
             children: [
               TileLayer(
                 urlTemplate: 'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
@@ -98,51 +86,33 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
                 userAgentPackageName: 'com.dreameats.dreameats',
                 tileProvider: CancellableNetworkTileProvider(),
               ),
-
-              // Restaurant Markers
               MarkerLayer(
                 markers: List.generate(filteredBusinesses.length, (idx) {
                   final biz = filteredBusinesses[idx];
                   final isSelected = idx == _selectedIndex;
-
                   return Marker(
                     point: LatLng(biz.latitude, biz.longitude),
-                    width: isSelected ? 52 : 42,
-                    height: isSelected ? 52 : 42,
-                    child: GestureDetector(
-                      onTap: () => _onMarkerTapped(idx, biz),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 240),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppTheme.primaryGreen
-                              : Colors.white,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isSelected ? Colors.white : AppTheme.primaryGreen,
-                            width: 2.5,
+                    width: isSelected ? 52 : 44,
+                    height: isSelected ? 52 : 44,
+                    child: Semantics(
+                      button: true,
+                      label: biz.name,
+                      child: GestureDetector(
+                        onTap: () => _onMarkerTapped(idx, biz),
+                        child: AnimatedContainer(
+                          duration: AppMotion.base,
+                          decoration: BoxDecoration(
+                            color: isSelected ? AppTheme.primaryGreen : AppTheme.pureWhite,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: isSelected ? AppTheme.pureWhite : AppTheme.primaryGreen, width: 2.5),
+                            boxShadow: AppTheme.softShadow,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: isSelected
-                                  ? AppTheme.primaryGreen.withValues(alpha: 0.45)
-                                  : const Color(0x1A000000),
-                              blurRadius: isSelected ? 14 : 8,
-                              offset: const Offset(0, 4),
+                          child: Center(
+                            child: Icon(
+                              Icons.restaurant_rounded,
+                              color: isSelected ? AppTheme.pureWhite : AppTheme.primaryGreen,
+                              size: isSelected ? 22 : 18,
                             ),
-                            if (!isSelected)
-                              BoxShadow(
-                                color: AppTheme.primaryGreen.withValues(alpha: 0.15),
-                                blurRadius: 10,
-                                offset: const Offset(0, 2),
-                              ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Icon(
-                            Icons.restaurant_rounded,
-                            color: isSelected ? Colors.white : AppTheme.primaryGreen,
-                            size: isSelected ? 22 : 18,
                           ),
                         ),
                       ),
@@ -153,32 +123,21 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
             ],
           ),
 
-          // ── 2. TOP FLOATING CONTROLS (Toggle, Search & Filters) ────────
+          // ── 2. FLOATING CONTROLS: back + search, then filters ─────────
           SafeArea(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Delivery / Pickup Toggle Pill & Back/Info Header
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.xs),
                   child: Row(
                     children: [
                       Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.12),
-                              blurRadius: 10,
-                            ),
-                          ],
-                        ),
+                        decoration: BoxDecoration(color: AppTheme.pureWhite, shape: BoxShape.circle, boxShadow: AppTheme.softShadow),
                         child: IconButton(
-                          icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.charcoal),
+                          icon: const Icon(Icons.arrow_back_rounded),
                           tooltip: 'Back to Home',
                           onPressed: () {
-                            // Reset map zoom
                             try {
                               _mapController.move(_kAccra, 13.5);
                             } catch (_) {}
@@ -190,142 +149,33 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
                           },
                         ),
                       ),
-                      const Spacer(),
-
-                      // Delivery vs Pickup Pill Switch (Mockup 2 Center)
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(30),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.12),
-                              blurRadius: 14,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            GestureDetector(
-                              onTap: () => setState(() => _isDelivery = true),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-                                decoration: BoxDecoration(
-                                  color: _isDelivery ? AppTheme.primaryGreen : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                                child: Text(
-                                  'Delivery',
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.bold,
-                                    color: _isDelivery ? Colors.white : AppTheme.charcoal,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () => setState(() => _isDelivery = false),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-                                decoration: BoxDecoration(
-                                  color: !_isDelivery ? AppTheme.primaryGreen : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                                child: Text(
-                                  'Pickup',
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.bold,
-                                    color: !_isDelivery ? Colors.white : AppTheme.charcoal,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                      const SizedBox(width: AppSpace.md),
+                      Expanded(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(borderRadius: AppRadius.rMd, boxShadow: AppTheme.softShadow),
+                          child: DsSearchField(
+                            controller: _searchController,
+                            hint: 'Search for food, store, and restaurants',
+                            onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-
-                // Search Bar Input
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 14,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: TextField(
-                      onChanged: (val) => setState(() => _searchQuery = val.trim()),
-                      decoration: const InputDecoration(
-                        hintText: 'Search for food, store, and restaurants',
-                        hintStyle: TextStyle(fontSize: 13, color: AppTheme.mutedGrey),
-                        prefixIcon: Icon(Icons.search_rounded, color: AppTheme.mutedGrey, size: 20),
-                        contentPadding: EdgeInsets.symmetric(vertical: 12),
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        errorBorder: InputBorder.none,
-                        disabledBorder: InputBorder.none,
-                        filled: false,
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Filter Chips Row
                 SizedBox(
-                  height: 44,
+                  height: 52,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.xs),
                     itemCount: _quickFilters.length,
-                    separatorBuilder: (context, index) => const SizedBox(width: 8),
+                    separatorBuilder: (_, _) => const SizedBox(width: AppSpace.sm),
                     itemBuilder: (context, idx) {
                       final f = _quickFilters[idx];
-                      final isSelected = _selectedFilter == f;
-
-                      return GestureDetector(
+                      return DsFilterChip(
+                        label: f,
+                        selected: _selectedFilter == f,
                         onTap: () => setState(() => _selectedFilter = f),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: isSelected ? AppTheme.charcoal : Colors.white,
-                            borderRadius: BorderRadius.circular(24),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.08),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Text(
-                              f,
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.bold,
-                                color: isSelected ? Colors.white : AppTheme.charcoal,
-                              ),
-                            ),
-                          ),
-                        ),
                       );
                     },
                   ),
@@ -334,18 +184,17 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
             ),
           ),
 
-          // ── 3. BOTTOM FLOATING RESTAURANT PREVIEW CARD ─────────────────
-          if (_selectedIndex >= 0 && _selectedIndex < filteredBusinesses.length) ...[
+          // ── 3. PREVIEW CARD ───────────────────────────────────────────
+          if (_selectedIndex >= 0 && _selectedIndex < filteredBusinesses.length)
             Positioned(
-              bottom: 16,
-              left: 16,
-              right: 16,
+              bottom: MediaQuery.paddingOf(context).bottom + AppSpace.lg,
+              left: AppSpace.lg,
+              right: AppSpace.lg,
               child: _buildTopRestaurantCard(
                 filteredBusinesses[_selectedIndex],
                 favoriteIds.contains(filteredBusinesses[_selectedIndex].id),
               ),
             ),
-          ],
         ],
       ),
     );
@@ -353,61 +202,43 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
 
   Widget _buildTopRestaurantCard(BusinessProfile biz, bool isFavorite) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpace.md),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        color: AppTheme.pureWhite,
+        borderRadius: AppRadius.rLg,
         border: Border.all(color: AppTheme.hairline),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x18000000),
-            blurRadius: 20,
-            offset: Offset(0, 8),
-          ),
-          BoxShadow(
-            color: Color(0x0A2E7D32),
-            blurRadius: 16,
-            offset: Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppTheme.clientElevatedShadow,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Store Thumbnail with Rating Badge
               ClipRRect(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: AppRadius.rMd,
                 child: SizedBox(
-                  width: 82,
-                  height: 82,
+                  width: 88,
+                  height: 88,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
                       _buildStoreThumbnail(biz),
                       Positioned(
-                        bottom: 4,
-                        left: 4,
+                        bottom: AppSpace.xs,
+                        left: AppSpace.xs,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.75),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(color: AppTheme.charcoal.withValues(alpha: 0.8), borderRadius: AppRadius.rXs),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.star_rounded, color: AppTheme.warningOrange, size: 11),
-                              const SizedBox(width: 2),
+                              const Icon(Icons.star_rounded, color: AppTheme.warningOrange, size: 13),
+                              const SizedBox(width: AppSpace.xxs),
                               Text(
                                 biz.rating > 0 ? biz.rating.toStringAsFixed(1) : 'New',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: const TextStyle(color: AppTheme.pureWhite, fontSize: 11.5, fontWeight: FontWeight.w700),
                               ),
                             ],
                           ),
@@ -417,9 +248,7 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-
-              // Details Column
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -431,115 +260,61 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
                             biz.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              color: AppTheme.charcoal,
-                              letterSpacing: -0.3,
-                            ),
+                            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppTheme.charcoal, letterSpacing: -0.3),
                           ),
                         ),
-                        // Favorite Heart
-                        InkWell(
-                          onTap: () => ref.read(appStateProvider.notifier).toggleFavorite(biz.id),
-                          borderRadius: BorderRadius.circular(24),
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: Icon(
-                              isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                              color: isFavorite ? AppTheme.errorRed : AppTheme.mutedGrey,
-                              size: 20,
-                            ),
+                        IconButton(
+                          tooltip: isFavorite ? 'Remove from favourites' : 'Save to favourites',
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () => ref.read(appStateProvider.notifier).toggleFavorite(biz.id),
+                          icon: Icon(
+                            isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                            color: isFavorite ? AppTheme.errorRed : AppTheme.mutedGrey,
+                            size: 22,
                           ),
                         ),
-                        // Dismiss (X)
-                        InkWell(
-                          onTap: () => setState(() => _selectedIndex = -1),
-                          borderRadius: BorderRadius.circular(24),
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: Icon(
-                              Icons.close_rounded,
-                              color: AppTheme.mutedGrey.withValues(alpha: 0.8),
-                              size: 20,
-                            ),
-                          ),
+                        IconButton(
+                          tooltip: 'Dismiss',
+                          visualDensity: VisualDensity.compact,
+                          onPressed: () => setState(() => _selectedIndex = -1),
+                          icon: const Icon(Icons.close_rounded, color: AppTheme.mutedGrey, size: 22),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      _isDelivery
-                          ? 'GHS 8.50 Delivery fee • 25–35 min'
-                          : 'Free Pickup • Ready in 15 min',
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        color: AppTheme.mutedGrey,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: AppSpace.xs),
                     Row(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppTheme.lightGreenBg,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            biz.category,
-                            style: const TextStyle(
-                              color: AppTheme.primaryGreen,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10.5,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        const Text('•', style: TextStyle(color: AppTheme.mutedGrey)),
-                        const SizedBox(width: 6),
+                        Flexible(child: DsPill(label: biz.category, compact: true)),
+                        const SizedBox(width: AppSpace.sm),
+                        const Icon(Icons.near_me_rounded, size: 14, color: AppTheme.primaryGreen),
+                        const SizedBox(width: AppSpace.xs),
                         Text(
-                          '${biz.distance.toStringAsFixed(1)} km away',
-                          style: const TextStyle(fontSize: 11, color: AppTheme.mutedGrey),
+                          '${biz.distance.toStringAsFixed(1)} km',
+                          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppTheme.charcoal),
                         ),
                       ],
                     ),
+                    if (biz.location.isNotEmpty) ...[
+                      const SizedBox(height: AppSpace.xs),
+                      Text(
+                        biz.location,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 12.5, color: AppTheme.mutedGrey),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-
-          // Action Button
-          SizedBox(
-            width: double.infinity,
-            height: 38,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => MerchantStorefrontScreen(business: biz),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryGreen,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('View Menu & Rescue Food', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  SizedBox(width: 6),
-                  Icon(Icons.arrow_forward_rounded, size: 16),
-                ],
-              ),
+          const SizedBox(height: AppSpace.md),
+          DsButton(
+            label: 'View menu & rescue food',
+            icon: Icons.arrow_forward_rounded,
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => MerchantStorefrontScreen(business: biz)),
             ),
           ),
         ],
@@ -574,7 +349,7 @@ class _MapExploreScreenState extends ConsumerState<MapExploreScreen> {
       imageUrl: candidateUrl,
       fit: BoxFit.cover,
       placeholder: (context, url) => Container(
-        color: const Color(0xFFF1F5F9),
+        color: AppTheme.lightGrey,
         child: const Center(
           child: SizedBox(
             width: 22,

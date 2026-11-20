@@ -100,16 +100,17 @@ class _BiometricSwitchTileState extends ConsumerState<BiometricSwitchTile> {
       child: SwitchListTile(
         value: bioState.isEnabled,
         onChanged: _toggleBiometrics,
-        activeThumbColor: AppTheme.primaryGreen,
-        activeTrackColor: AppTheme.primaryGreen.withValues(alpha: 0.5),
         contentPadding: EdgeInsets.zero,
         title: Text(
           "$label Sign-In",
-          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppTheme.charcoal),
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15.5, color: AppTheme.charcoal, letterSpacing: -0.2),
         ),
-        subtitle: Text(
-          "Use $label to unlock and sign in instantly without typing your password",
-          style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey),
+        subtitle: const Padding(
+          padding: EdgeInsets.only(top: AppSpace.xxs),
+          child: Text(
+            "Unlock and sign in instantly without typing your password",
+            style: TextStyle(fontSize: 13, color: AppTheme.mutedGrey, height: 1.3),
+          ),
         ),
         secondary: DynamicBiometricIcon(
           size: 26,

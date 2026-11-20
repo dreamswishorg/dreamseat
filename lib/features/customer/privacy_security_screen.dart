@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../core/ds_kit.dart';
 import '../../core/theme.dart';
 import '../../core/responsive.dart';
+import '../../core/ui_utils.dart';
 import '../../providers/app_state.dart';
 import '../../providers/biometric_provider.dart';
 import '../common/legal_screens.dart';
@@ -121,9 +123,14 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
   }
 
   Future<void> _changePassword() async {
+    final currentPw = _currentPasswordController.text;
     final newPw = _newPasswordController.text;
     final confirmPw = _confirmPasswordController.text;
 
+    if (currentPw.isEmpty) {
+      _showSnackBar('Please enter your current password', isError: true);
+      return;
+    }
     if (newPw.isEmpty) {
       _showSnackBar('Please enter a new password', isError: true);
       return;
@@ -138,8 +145,23 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
     }
 
     setState(() => _isSavingPassword = true);
+
+    // Prove it's really the account owner before changing anything.
+    final user = ref.read(appStateProvider).currentUser;
+    if (user != null) {
+      final wrong = await ref.read(appStateProvider.notifier).validateCurrentPassword(
+            email: user.email,
+            password: currentPw,
+          );
+      if (wrong != null) {
+        if (mounted) setState(() => _isSavingPassword = false);
+        _showSnackBar('Your current password is incorrect', isError: true);
+        return;
+      }
+    }
+
     final error = await ref.read(appStateProvider.notifier).updatePassword(newPw);
-    setState(() => _isSavingPassword = false);
+    if (mounted) setState(() => _isSavingPassword = false);
 
     if (!mounted) return;
     if (error != null) {
@@ -153,237 +175,133 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
   }
 
   void _showSnackBar(String text, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
-        backgroundColor: isError ? AppTheme.errorRed : AppTheme.primaryGreen,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      ),
-    );
+    if (isError) {
+      AppToast.error(context, text);
+    } else {
+      AppToast.success(context, text);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final locationOk = _locationStatus == 'Allowed';
+    final showBiometrics = ref.watch(biometricStateProvider.select((b) => b.isSupported || !b.isInitialized));
+    const sectionPad = EdgeInsets.fromLTRB(AppSpace.xs, AppSpace.xxl, AppSpace.xs, AppSpace.md);
+
     return Scaffold(
       backgroundColor: AppTheme.cream,
-      appBar: AppBar(
-        backgroundColor: AppTheme.cream,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.charcoal, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Privacy & Security',
-          style: TextStyle(color: AppTheme.charcoal, fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -0.4),
-        ),
-        centerTitle: true,
-      ),
-      body: SafeArea(
+      appBar: dsScreenBar(context, title: 'Privacy & Security'),
+      body: ResponsiveCenter(
+        maxWidth: 720,
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: ResponsiveCenter(
-            maxWidth: 760,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-              // ── Section: Device Permissions ─────────────────────────
-              const Text(
-                "Device Permissions",
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.charcoal, letterSpacing: -0.3),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.06)),
-                  boxShadow: const [
-                    BoxShadow(color: Color(0x06000000), blurRadius: 16, offset: Offset(0, 6)),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: _locationStatus == 'Allowed' ? AppTheme.lightGreenBg : AppTheme.warningOrange.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(
-                        Icons.location_on_rounded,
-                        color: _locationStatus == 'Allowed' ? AppTheme.primaryGreen : AppTheme.warningOrange,
-                        size: 26,
-                      ),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.fromLTRB(AppSpace.gutter, AppSpace.sm, AppSpace.gutter, AppSpace.x4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Device permissions ──────────────────────────────────────
+              const DsSectionHeader(title: 'Device Permissions', padding: EdgeInsets.fromLTRB(AppSpace.xs, AppSpace.md, AppSpace.xs, AppSpace.md)),
+              DsMenuGroup(
+                margin: EdgeInsets.zero,
+                children: [
+                  DsMenuTile(
+                    icon: Icons.location_on_rounded,
+                    tone: locationOk ? DsTone.brand : DsTone.warn,
+                    label: 'GPS & Location Access',
+                    subtitle: 'Status: $_locationStatus',
+                    onTap: _handleLocationPermissionTap,
+                    trailing: DsPill(
+                      label: locationOk ? 'Verify' : 'Enable',
+                      tone: locationOk ? DsTone.neutral : DsTone.brand,
+                      solid: !locationOk,
+                      compact: true,
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("GPS & Location Access", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: AppTheme.charcoal)),
-                          const SizedBox(height: 4),
-                          Text(
-                            "Status: $_locationStatus",
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
-                              color: _locationStatus == 'Allowed' ? AppTheme.primaryGreen : AppTheme.mutedGrey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: _handleLocationPermissionTap,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _locationStatus == 'Allowed' ? const Color(0xFFF1F5F9) : AppTheme.primaryGreen,
-                        foregroundColor: _locationStatus == 'Allowed' ? AppTheme.charcoal : Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      ),
-                      child: Text(_locationStatus == 'Allowed' ? "Verify" : "Enable", style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 28),
-
-              if (ref.watch(biometricStateProvider.select((b) => b.isSupported || !b.isInitialized))) ...[
-              // ── Section: Biometrics Security ────────────────────────
-                const Text(
-                  "Biometrics Security",
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.charcoal, letterSpacing: -0.3),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.06)),
-                    boxShadow: const [
-                      BoxShadow(color: Color(0x06000000), blurRadius: 16, offset: Offset(0, 6)),
-                    ],
                   ),
-                  child: const BiometricSwitchTile(),
+                ],
+              ),
+
+              // ── Biometrics ──────────────────────────────────────────────
+              if (showBiometrics) ...[
+                const DsSectionHeader(title: 'Biometrics Security', padding: sectionPad),
+                const DsMenuGroup(
+                  margin: EdgeInsets.zero,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: AppSpace.xs),
+                      child: BiometricSwitchTile(),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 28),
               ],
 
-              // ── Section: Account Password Security ──────────────────
-              const Text(
-                "Password Security",
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.charcoal, letterSpacing: -0.3),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.06)),
-                  boxShadow: const [
-                    BoxShadow(color: Color(0x06000000), blurRadius: 16, offset: Offset(0, 6)),
-                  ],
-                ),
+              // ── Password ────────────────────────────────────────────────
+              const DsSectionHeader(title: 'Password Security', padding: sectionPad),
+              DsCard(
+                padding: const EdgeInsets.all(AppSpace.lg),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildPasswordField(
+                    _passwordField(
                       controller: _currentPasswordController,
                       label: 'Current Password',
                       obscure: _obscureCurrent,
                       onToggle: () => setState(() => _obscureCurrent = !_obscureCurrent),
                     ),
-                    Divider(height: 28, color: AppTheme.charcoal.withValues(alpha: 0.06)),
-                    _buildPasswordField(
+                    const SizedBox(height: AppSpace.lg),
+                    _passwordField(
                       controller: _newPasswordController,
                       label: 'New Password',
                       obscure: _obscureNew,
                       onToggle: () => setState(() => _obscureNew = !_obscureNew),
                     ),
-                    Divider(height: 28, color: AppTheme.charcoal.withValues(alpha: 0.06)),
-                    _buildPasswordField(
+                    const SizedBox(height: AppSpace.lg),
+                    _passwordField(
                       controller: _confirmPasswordController,
                       label: 'Confirm New Password',
                       obscure: _obscureConfirm,
                       onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
                     ),
-                    const SizedBox(height: 22),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0F172A),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        onPressed: _isSavingPassword ? null : _changePassword,
-                        icon: _isSavingPassword
-                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                            : const Icon(Icons.lock_reset_rounded, size: 20),
-                        label: Text(
-                          _isSavingPassword ? "UPDATING PASSWORD..." : "UPDATE PASSWORD",
-                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, letterSpacing: 0.5),
-                        ),
-                      ),
+                    const SizedBox(height: AppSpace.xl),
+                    DsButton(
+                      label: 'Update password',
+                      icon: Icons.lock_reset_rounded,
+                      variant: DsButtonVariant.dark,
+                      loading: _isSavingPassword,
+                      onPressed: _isSavingPassword ? null : _changePassword,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 28),
 
-              // ── Section: Data Protection & Legal ──────────────────
-              const Text(
-                "Data Protection & Legal",
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.charcoal, letterSpacing: -0.3),
+              // ── Data protection & legal ────────────────────────────────
+              const DsSectionHeader(title: 'Data Protection & Legal', padding: sectionPad),
+              DsMenuGroup(
+                margin: EdgeInsets.zero,
+                children: [
+                  DsMenuTile(
+                    icon: Icons.privacy_tip_outlined,
+                    label: 'Privacy Policy',
+                    subtitle: 'Read how we protect and manage your data',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
+                  ),
+                  DsMenuTile(
+                    icon: Icons.description_outlined,
+                    label: 'Terms of Service',
+                    subtitle: 'Understand your rights and user agreement',
+                    tone: DsTone.info,
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsOfServiceScreen())),
+                  ),
+                  DsMenuTile(
+                    icon: Icons.delete_forever_outlined,
+                    label: 'Delete Account',
+                    subtitle: 'Permanently delete your profile and account data',
+                    tone: DsTone.danger,
+                    onTap: _showDeleteAccountConfirmation,
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppTheme.charcoal.withValues(alpha: 0.06)),
-                  boxShadow: const [
-                    BoxShadow(color: Color(0x06000000), blurRadius: 16, offset: Offset(0, 6)),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    _buildLegalTile(
-                      icon: Icons.privacy_tip_outlined,
-                      title: "Privacy Policy",
-                      subtitle: "Read how we protect and manage your data",
-                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
-                    ),
-                    Divider(height: 1, color: AppTheme.charcoal.withValues(alpha: 0.06)),
-                    _buildLegalTile(
-                      icon: Icons.description_outlined,
-                      title: "Terms of Service",
-                      subtitle: "Understand your rights and user agreement",
-                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsOfServiceScreen())),
-                    ),
-                    Divider(height: 1, color: AppTheme.charcoal.withValues(alpha: 0.06)),
-                    _buildLegalTile(
-                      icon: Icons.delete_forever_outlined,
-                      title: "Delete Account",
-                      subtitle: "Permanently delete your profile and account data",
-                      onTap: _showDeleteAccountConfirmation,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 36),
             ],
-          ),
           ),
         ),
       ),
@@ -400,15 +318,12 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
       barrierDismissible: false,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
-          final messenger = ScaffoldMessenger.of(context);
           return AlertDialog(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             title: const Row(
               children: [
                 Icon(Icons.warning_amber_rounded, color: AppTheme.errorRed, size: 28),
-                SizedBox(width: 12),
-                Text("Delete Account", style: TextStyle(fontWeight: FontWeight.w900, color: AppTheme.charcoal)),
+                SizedBox(width: AppSpace.md),
+                Expanded(child: Text("Delete Account")),
               ],
             ),
             content: Form(
@@ -419,26 +334,15 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
                 children: [
                   const Text(
                     "WARNING: This action is permanent. All your profile data, orders history, reward points, and credits will be permanently deleted and cannot be recovered.",
-                    style: TextStyle(fontSize: 13, height: 1.4, color: AppTheme.charcoal, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 14, height: 1.45, color: AppTheme.charcoal, fontWeight: FontWeight.w600),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    "Please enter your password to confirm account deletion:",
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.mutedGrey),
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
+                  const SizedBox(height: AppSpace.lg),
+                  DsTextField(
                     controller: passwordCtrl,
+                    label: "Enter your password to confirm",
+                    hint: "••••••••",
+                    icon: Icons.lock_outline_rounded,
                     obscureText: true,
-                    style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600, color: AppTheme.charcoal),
-                    decoration: InputDecoration(
-                      hintText: "••••••••",
-                      prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppTheme.primaryGreen, size: 20),
-                      filled: true,
-                      fillColor: AppTheme.cream,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                    ),
                     validator: (v) => (v == null || v.isEmpty) ? "Password is required" : null,
                   ),
                 ],
@@ -448,7 +352,7 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
             actions: [
               TextButton(
                 onPressed: isDeleting ? null : () => Navigator.pop(ctx),
-                child: const Text("Cancel", style: TextStyle(color: AppTheme.mutedGrey, fontWeight: FontWeight.bold)),
+                child: const Text("Cancel", style: TextStyle(color: AppTheme.mutedGrey)),
               ),
               ElevatedButton(
                 onPressed: isDeleting
@@ -470,9 +374,7 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
 
                         if (error != null) {
                           setModalState(() => isDeleting = false);
-                          messenger.showSnackBar(
-                            SnackBar(content: Text("Incorrect password: $error"), backgroundColor: AppTheme.errorRed),
-                          );
+                          AppToast.error(context, "Incorrect password: $error");
                           return;
                         }
 
@@ -488,23 +390,18 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
                             MaterialPageRoute(builder: (_) => const WelcomeScreen()),
                             (route) => false,
                           );
-                          messenger.showSnackBar(
-                            const SnackBar(content: Text("Your account has been deleted successfully."), backgroundColor: AppTheme.primaryGreen),
-                          );
+                          AppToast.success(context, "Your account has been deleted successfully.");
                         } else {
-                          messenger.showSnackBar(
-                            const SnackBar(content: Text("Failed to delete account. Please try again later."), backgroundColor: AppTheme.errorRed),
-                          );
+                          AppToast.error(context, "Failed to delete account. Please try again later.");
                         }
                       },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.errorRed,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  foregroundColor: AppTheme.pureWhite,
                 ),
                 child: isDeleting
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text("Delete Permanently", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: AppTheme.pureWhite, strokeWidth: 2))
+                    : const Text("Delete Permanently"),
               ),
             ],
           );
@@ -513,92 +410,19 @@ class _PrivacySecurityScreenState extends ConsumerState<PrivacySecurityScreen> {
     );
   }
 
-  Widget _buildPasswordField({
+  Widget _passwordField({
     required TextEditingController controller,
     required String label,
     required bool obscure,
     required VoidCallback onToggle,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.charcoal),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          obscureText: obscure,
-          style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600, color: AppTheme.charcoal),
-          decoration: InputDecoration(
-            hintText: 'Enter $label',
-            hintStyle: const TextStyle(fontSize: 13.5, color: AppTheme.mutedGrey, fontWeight: FontWeight.normal),
-            prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppTheme.primaryGreen, size: 20),
-            suffixIcon: IconButton(
-              icon: Icon(obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: AppTheme.mutedGrey, size: 20),
-              onPressed: onToggle,
-            ),
-            filled: true,
-            fillColor: AppTheme.cream,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.08)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: AppTheme.charcoal.withValues(alpha: 0.08)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLegalTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(24),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppTheme.lightGreenBg,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(icon, color: AppTheme.primaryGreen, size: 22),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppTheme.charcoal)),
-                    const SizedBox(height: 2),
-                    Text(subtitle, style: const TextStyle(fontSize: 12, color: AppTheme.mutedGrey)),
-                  ],
-                ),
-              ),
-              const Icon(Icons.chevron_right_rounded, color: AppTheme.mutedGrey, size: 20),
-            ],
-          ),
-        ),
-      ),
+    return DsTextField(
+      controller: controller,
+      label: label,
+      hint: '••••••••',
+      icon: Icons.lock_outline_rounded,
+      obscureText: obscure,
+      suffix: DsObscureToggle(obscured: obscure, onToggle: onToggle),
     );
   }
 }
