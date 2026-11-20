@@ -146,6 +146,11 @@ void main() {
   testWidgets('partners directory lists the partner and filters by search', (tester) async {
     await _pump(tester, const Size(390, 844), const PartnersDirectoryScreen());
     expect(find.text('Sweet Tooth Bakery'), findsOneWidget);
+    expect(find.text('1 deal available'), findsOneWidget); // live count from real deals
+    expect(find.text('1 partner'), findsOneWidget);
+    await tester.tap(find.text('Top rated'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<DsSegmented>(find.byType(DsSegmented)).selected, 1);
     await tester.enterText(find.byType(TextField), 'zzz');
     await tester.pump();
     expect(find.text('No partners found'), findsOneWidget);
